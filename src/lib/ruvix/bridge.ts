@@ -1,6 +1,5 @@
 import { spawn, ChildProcess } from "child_process";
 import { promisify } from "util";
-import { createConnection, Socket } from "net";
 
 const sleep = promisify(setTimeout);
 
@@ -16,6 +15,14 @@ export interface HealthStatus {
   latencyMicros: number;
 }
 
+export interface Proof {
+  tier: ProofTier;
+  hash: string;
+  signature?: string;
+  timestamp: number;
+  nonce: number;
+}
+
 export interface EventRecordRequest {
   eventId: string;
   eventType: string;
@@ -25,9 +32,16 @@ export interface EventRecordRequest {
   metadata: Record<string, unknown>;
   timestamp: Date;
   proofTier: ProofTier;
+  proof?: Proof;
 }
 
 export type ProofTier = "reflex" | "standard" | "deep";
+
+export interface ProofVerificationResult {
+  valid: boolean;
+  latencyMicros?: number;
+  error?: string;
+}
 
 export class RuvixBridge {
   private process: ChildProcess | null = null;
@@ -111,7 +125,55 @@ export class RuvixBridge {
     return response.json();
   }
 
-  async recordEvent(event: EventRecordRequest): Promise<{ status: string; eventId: string }> {
+  async generateProof(
+    data: Record<string, unknown>,
+    tier: ProofTier
+  ): Promise<Proof> {
+    const response = await fetch(`http://127.0.0.1:${this.config.port}/v1/proofs/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data, tier }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to generate proof: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  async verifyProof(
+    data: Record<string, unknown>,
+    proof: Proof,
+    expectedTier: ProofTier
+  ): Promise<ProofVerificationResult> {
+    const response = await fetch(`http://127.0.0.1:${this.config.port}/v1/proofs/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data, proof, expected_tier: expectedTier }),
+    });
+
+    if (!response.ok) {
+      return { valid: false, error: response.statusText };
+    }
+
+    return response.json();
+  }
+
+  async recordEvent(event: EventRecordRequest): Promise<{ status: string; eventId: string; proof?: Proof }> {
+    if (!event.proof) {
+      const eventData = {
+        event_id: event.eventId,
+        event_type: event.eventType,
+        agent_id: event.agentId,
+        group_id: event.groupId,
+        workflow_id: event.workflowId,
+        metadata: event.metadata,
+        timestamp: event.timestamp.toISOString(),
+      };
+      event.proof = await this.generateProof(eventData, event.proofTier);
+    }
+
     const response = await fetch(`http://127.0.0.1:${this.config.port}/v1/events`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -124,6 +186,7 @@ export class RuvixBridge {
         metadata: event.metadata,
         timestamp: event.timestamp.toISOString(),
         proof_tier: event.proofTier,
+        proof: event.proof,
       }),
     });
 
@@ -139,7 +202,6 @@ export class RuvixBridge {
   }
 }
 
-// Singleton instance for application-wide use
 let bridgeInstance: RuvixBridge | null = null;
 
 export function getRuvixBridge(): RuvixBridge {

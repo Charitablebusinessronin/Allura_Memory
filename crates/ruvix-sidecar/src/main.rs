@@ -1,6 +1,7 @@
 mod ipc;
 mod protocol;
 mod ring_buffer;
+mod proof_engine;
 
 use axum::{
     routing::{get, post},
@@ -13,22 +14,21 @@ use tokio::sync::Mutex;
 use tracing::{info, error};
 
 use ipc::{IpcBridge, HealthStatus};
+use proof_engine::{ProofEngine, ProofTier, Proof};
 
-/// Application state shared across HTTP handlers
 struct AppState {
     bridge: Arc<Mutex<IpcBridge>>,
+    proof_engine: Arc<Mutex<ProofEngine>>,
 }
 
 #[tokio::main]
 async fn main() {
-    // Initialize tracing
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
         .init();
     
     info!("RuVix Sidecar starting...");
     
-    // Create IPC bridge
     let bridge = match IpcBridge::new("/tmp/ruvix_shm").await {
         Ok(b) => {
             info!("IPC bridge created successfully");
@@ -40,16 +40,17 @@ async fn main() {
         }
     };
     
-    let state = AppState { bridge };
+    let proof_engine = Arc::new(Mutex::new(ProofEngine::new()));
+    let state = AppState { bridge, proof_engine };
     
-    // Build router
     let app = Router::new()
         .route("/health", get(health_check))
         .route("/health/ruvix", get(ruvix_health))
         .route("/v1/events", post(record_event))
+        .route("/v1/proofs/generate", post(generate_proof))
+        .route("/v1/proofs/verify", post(verify_proof))
         .with_state(Arc::new(state));
     
-    // Start server
     let listener = tokio::net::TcpListener::bind("127.0.0.1:9001")
         .await
         .expect("Failed to bind to port 9001");
@@ -61,7 +62,6 @@ async fn main() {
         .expect("Server failed");
 }
 
-/// Basic health check endpoint
 async fn health_check() -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "status": "ok",
@@ -70,7 +70,6 @@ async fn health_check() -> Json<serde_json::Value> {
     }))
 }
 
-/// Detailed RuVix kernel health check
 async fn ruvix_health(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<HealthStatus>, axum::http::StatusCode> {
@@ -82,18 +81,109 @@ async fn ruvix_health(
     }
 }
 
-/// Record event endpoint (Phase 2)
 async fn record_event(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    // TODO: Phase 2 - integrate with IpcBridge
     info!("Received event: {:?}", payload);
     
-    Json(serde_json::json!({
-        "status": "received",
-        "event_id": payload.get("event_id").cloned().unwrap_or(serde_json::Value::Null),
-    }))
+    let proof_tier = payload.get("proof_tier")
+        .and_then(|v| v.as_str())
+        .unwrap_or("reflex");
+    
+    let tier = match proof_tier {
+        "standard" => ProofTier::Standard,
+        "deep" => ProofTier::Deep,
+        _ => ProofTier::Reflex,
+    };
+    
+    let data = payload.to_string().into_bytes();
+    let engine = state.proof_engine.lock().await;
+    
+    match engine.generate_proof(&data, tier) {
+        Ok(proof) => {
+            Json(serde_json::json!({
+                "status": "received",
+                "event_id": payload.get("event_id").cloned().unwrap_or(serde_json::Value::Null),
+                "proof": proof,
+            }))
+        }
+        Err(e) => {
+            error!("Failed to generate proof: {}", e);
+            Json(serde_json::json!({
+                "status": "error",
+                "error": e.to_string(),
+            }))
+        }
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct GenerateProofRequest {
+    data: serde_json::Value,
+    tier: String,
+}
+
+async fn generate_proof(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<GenerateProofRequest>,
+) -> Json<serde_json::Value> {
+    let tier = match req.tier.as_str() {
+        "standard" => ProofTier::Standard,
+        "deep" => ProofTier::Deep,
+        _ => ProofTier::Reflex,
+    };
+    
+    let data = req.data.to_string().into_bytes();
+    let engine = state.proof_engine.lock().await;
+    
+    match engine.generate_proof(&data, tier) {
+        Ok(proof) => Json(serde_json::json!({ "proof": proof })),
+        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct VerifyProofRequest {
+    data: serde_json::Value,
+    proof: Proof,
+    expected_tier: String,
+}
+
+async fn verify_proof(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<VerifyProofRequest>,
+) -> Json<serde_json::Value> {
+    let expected_tier = match req.expected_tier.as_str() {
+        "standard" => ProofTier::Standard,
+        "deep" => ProofTier::Deep,
+        _ => ProofTier::Reflex,
+    };
+    
+    let data = req.data.to_string().into_bytes();
+    let engine = state.proof_engine.lock().await;
+    let result = engine.verify_proof(&data, &req.proof, expected_tier);
+    
+    match result {
+        proof_engine::ProofResult::Valid { latency_micros } => {
+            Json(serde_json::json!({
+                "valid": true,
+                "latency_micros": latency_micros,
+            }))
+        }
+        proof_engine::ProofResult::Invalid { reason } => {
+            Json(serde_json::json!({
+                "valid": false,
+                "error": reason,
+            }))
+        }
+        proof_engine::ProofResult::TierMismatch { expected, actual } => {
+            Json(serde_json::json!({
+                "valid": false,
+                "error": format!("Tier mismatch: expected {:?}, got {:?}", expected, actual),
+            }))
+        }
+    }
 }
 
 #[cfg(test)]
