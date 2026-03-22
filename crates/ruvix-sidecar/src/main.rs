@@ -2,6 +2,7 @@ mod ipc;
 mod protocol;
 mod ring_buffer;
 mod proof_engine;
+mod checkpoint;
 
 use axum::{
     routing::{get, post},
@@ -15,10 +16,12 @@ use tracing::{info, error};
 
 use ipc::{IpcBridge, HealthStatus};
 use proof_engine::{ProofEngine, ProofTier, Proof};
+use checkpoint::CheckpointManager;
 
 struct AppState {
     bridge: Arc<Mutex<IpcBridge>>,
     proof_engine: Arc<Mutex<ProofEngine>>,
+    checkpoint_manager: Arc<Mutex<CheckpointManager>>,
 }
 
 #[tokio::main]
@@ -41,7 +44,12 @@ async fn main() {
     };
     
     let proof_engine = Arc::new(Mutex::new(ProofEngine::new()));
-    let state = AppState { bridge, proof_engine };
+    let checkpoint_manager = Arc::new(Mutex::new(CheckpointManager::new()));
+    let state = AppState { 
+        bridge, 
+        proof_engine,
+        checkpoint_manager,
+    };
     
     let app = Router::new()
         .route("/health", get(health_check))
@@ -49,6 +57,8 @@ async fn main() {
         .route("/v1/events", post(record_event))
         .route("/v1/proofs/generate", post(generate_proof))
         .route("/v1/proofs/verify", post(verify_proof))
+        .route("/v1/checkpoints", post(create_checkpoint))
+        .route("/v1/checkpoints/:id/replay", post(replay_checkpoint))
         .with_state(Arc::new(state));
     
     let listener = tokio::net::TcpListener::bind("127.0.0.1:9001")
@@ -181,6 +191,61 @@ async fn verify_proof(
             Json(serde_json::json!({
                 "valid": false,
                 "error": format!("Tier mismatch: expected {:?}, got {:?}", expected, actual),
+            }))
+        }
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct CreateCheckpointRequest {
+    label: Option<String>,
+    group_id: String,
+    event_count: u64,
+    last_event_id: Option<String>,
+}
+
+async fn create_checkpoint(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<CreateCheckpointRequest>,
+) -> Json<serde_json::Value> {
+    let mut manager = state.checkpoint_manager.lock().await;
+    
+    match manager.create_checkpoint(
+        req.label,
+        req.group_id,
+        req.event_count,
+        req.last_event_id,
+        None,
+    ) {
+        Ok(checkpoint) => Json(serde_json::json!({ "checkpoint": checkpoint })),
+        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct ReplayRequest {
+    checkpoint_id: String,
+}
+
+async fn replay_checkpoint(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<ReplayRequest>,
+) -> Json<serde_json::Value> {
+    let manager = state.checkpoint_manager.lock().await;
+    
+    match manager.replay_from_checkpoint(&req.checkpoint_id) {
+        checkpoint::ReplayResult::Success { events_replayed, last_event_id } => {
+            Json(serde_json::json!({
+                "success": true,
+                "events_replayed": events_replayed,
+                "last_event_id": last_event_id,
+            }))
+        }
+        checkpoint::ReplayResult::Failed { reason, events_replayed } => {
+            Json(serde_json::json!({
+                "success": false,
+                "error": reason,
+                "events_replayed": events_replayed,
             }))
         }
     }
