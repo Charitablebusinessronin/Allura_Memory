@@ -7,13 +7,12 @@ This file provides guidance for AI coding agents working on the Memory project. 
 ```bash
 # Development
 npm run dev                    # Start Next.js dev server
-
-# Build & Run
 npm run build                  # Production build
 npm run start                  # Start production server
 
-# Type Checking
+# Type Checking & Linting
 npm run typecheck             # Run TypeScript type checking (noEmit)
+npm run lint                  # Run Next.js lint
 
 # Testing
 npm test                       # Run all tests once (vitest run)
@@ -25,16 +24,11 @@ npx vitest run src/lib/postgres/queries/insert-trace.test.ts
 
 # Run a single test by name
 npx vitest run -t "should build connection config"
+
+# E2E Tests (requires databases)
+npm run test:e2e              # Full system integration tests
+RUN_E2E_TESTS=true npm test   # Behavioral stress tests
 ```
-
-## Project Structure
-
-- `src/app/` - Next.js App Router pages and layouts
-- `src/components/ui/` - shadcn/ui component library
-- `src/lib/` - Shared utilities, database connections, preferences
-- `src/stores/` - Zustand stores for client state
-- `src/server/` - Server actions (Next.js)
-- `src/hooks/` - Custom React hooks
 
 ## Code Style Guidelines
 
@@ -46,13 +40,15 @@ This project uses **strict TypeScript**. All compiler options enforce strict typ
 {
   "strict": true,
   "noEmit": true,
-  "isolatedModules": true
+  "isolatedModules": true,
+  "target": "ES2022"
 }
 ```
 
 - **Always use explicit types** for function parameters and return types
 - **Use Zod** for runtime validation of external data (API responses, form inputs, config)
 - **Avoid `any`** - use `unknown` if type is truly unknown
+- **Use `type` imports** for types only, `import` for values
 
 ### Import Conventions
 
@@ -62,7 +58,7 @@ Use the `@` path alias for project imports:
 // Good
 import { Button } from "@/components/ui/button";
 import { getPool } from "@/lib/postgres/connection";
-import type { ThemeMode } from "@/lib/preferences/theme";
+import type { ConnectionConfig } from "@/lib/postgres/connection";
 
 // Avoid
 import { Button } from "../../components/ui/button";
@@ -87,7 +83,6 @@ import { Button } from "../../components/ui/button";
 ```typescript
 // Client component
 "use client";
-
 import { useState } from "react";
 ```
 
@@ -96,9 +91,7 @@ import { useState } from "react";
 Use Next.js server actions for state persistence:
 
 ```typescript
-// src/server/server-actions.ts
 "use server";
-
 import { cookies } from "next/headers";
 
 export async function setValueToCookie(
@@ -119,42 +112,12 @@ export async function setValueToCookie(
 Database modules must check for browser environment:
 
 ```typescript
-// connection.ts
 if (typeof window !== "undefined") {
   throw new Error("PostgreSQL connection module can only be used server-side");
 }
 ```
 
 Always import database modules only in server contexts.
-
-### State Management
-
-Use **Zustand** for client state:
-
-```typescript
-// stores/preferences/preferences-store.ts
-import { createStore } from "zustand/vanilla";
-
-export type PreferencesState = {
-  themeMode: ThemeMode;
-  setThemeMode: (mode: ThemeMode) => void;
-};
-
-export const createPreferencesStore = (init?: Partial<PreferencesState>) =>
-  createStore<PreferencesState>()((set) => ({
-    themeMode: init?.themeMode ?? "system",
-    setThemeMode: (mode) => set({ themeMode: mode }),
-  }));
-```
-
-### UI Components
-
-Use **shadcn/ui** components from `src/components/ui/`. These are built on Radix UI primitives with Tailwind CSS.
-
-```typescript
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";  // twMerge + clsx utility
-```
 
 ### Error Handling
 
@@ -171,51 +134,64 @@ if (!password) {
 // Good: Graceful database error handling
 pool.on("error", (err: Error) => {
   console.error("[PostgreSQL Pool] Unexpected error on idle client:", err.message);
-  // Don't exit - let application handle recovery
 });
 ```
 
-### Testing
+## Project Structure
 
-Tests use **Vitest** with the following patterns:
-
-```typescript
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-
-describe("PostgreSQL Connection Layer", () => {
-  beforeAll(async () => {
-    // Setup test environment
-  });
-
-  afterAll(async () => {
-    // Cleanup
-  });
-
-  it("should description", async () => {
-    expect(actual).toBe(expected);
-  });
-});
 ```
-
-- Test files: `*.test.ts` in the same directory as the code being tested
-- Environment: Set `process.env` variables in `beforeAll`
+src/
+├── app/                    # Next.js App Router pages and layouts
+├── components/ui/          # shadcn/ui component library
+├── lib/
+│   ├── postgres/           # PostgreSQL connection and queries (server-only)
+│   ├── neo4j/              # Neo4j queries and semantic memory
+│   ├── ralph/              # Self-correcting execution loops
+│   ├── circuit-breaker/    # Cascade failure prevention
+│   ├── adas/               # Automated Design of Agent Systems
+│   └── adr/                # Agent Decision Records (5-layer audit)
+├── curator/                # Knowledge promotion pipeline, HITL curation
+├── mcp/                    # MCP server (memory tools for OpenClaw)
+├── server/                 # Next.js server actions
+├── stores/                 # Zustand stores for client state
+└── hooks/                  # Custom React hooks
+```
 
 ## Database Patterns
 
-### PostgreSQL
+### PostgreSQL (Raw Memory)
 
 - **Append-only** for traces - never mutate existing records
 - Use connection pooling (pg Pool)
 - Always include `group_id` for tenant isolation
+- Always use `.toNumber()` on Neo4j Integer fields
 
-### Neo4j (future)
+### Neo4j (Semantic Memory)
 
 - **SUPERSEDES** pattern for versioning Insights (immutable)
 - Every node MUST have a `group_id` property
+- Use `neo4jInt()` for LIMIT/SKIP parameters
+
+## BMAD Workflow Orchestration
+
+### Plan First
+Write plan to `tasks/todo.md` with checkable items before starting implementation. Verify plan before beginning.
+
+### Subagent Strategy
+Use subagents liberally to keep main context window clean. Offload research, exploration, and parallel analysis. One task per subagent for focused execution.
+
+### Verification Before Done
+Never mark a task complete without proving it works. Run tests, check logs, demonstrate correctness.
+
+### Autonomous Bug Fixing
+When given a bug report: just fix it. Point at logs, errors, failing tests — then resolve them. Zero hand-holding required.
+
+### Self-Improvement Loop
+After any correction from the user: update `tasks/lessons.md` with the pattern. Write rules to prevent the same mistake.
 
 ## Memory Bank Integration
 
-Before starting work, read these files in order:
+Read files in this order at session start:
 
 1. `memory-bank/activeContext.md` - Current task and blockers
 2. `memory-bank/progress.md` - What's been done
@@ -226,13 +202,15 @@ After completing work:
 - Update `progress.md` with completed items
 - Update `activeContext.md` if starting new work
 
-## Important Files
+## Key Design Principles
 
-| File | Purpose |
-|------|---------|
-| `docker-compose.yml` | PostgreSQL and Neo4j containers |
-| `_bmad-output/planning-artifacts/epics.md` | Story definitions |
-| `_bmad-output/implementation-artifacts/tech-spec-*.md` | Technical specifications |
+| Principle | Implementation |
+|-----------|----------------|
+| group_id | Every database operation must include group_id for tenant isolation |
+| Append-only | PostgreSQL traces are immutable - never UPDATE or DELETE |
+| SUPERSEDES | Neo4j insights use versioning - new versions link to old |
+| HITL | Agents require human approval before behavior-changing actions |
+| ADR | Every architectural decision logged with 5-layer audit trail |
 
 ## Verification Commands
 
@@ -258,3 +236,5 @@ npm test
 4. Use **group_id** in all database operations for tenant isolation
 5. Use **append-only** for PostgreSQL traces - never mutate
 6. Use **SUPERSEDES** for Neo4j versioning - never edit Insights
+7. Write **tests first** (TDD) for new functionality
+8. All code goes through **Ralph Loop** pattern for complex operations
