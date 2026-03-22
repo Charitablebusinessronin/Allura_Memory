@@ -3,25 +3,18 @@ mod protocol;
 mod ring_buffer;
 mod proof_engine;
 mod checkpoint;
-
-use axum::{
-    routing::{get, post},
-    Router,
-    Json,
-    extract::State,
-};
-use std::sync::Arc;
-use tokio::sync::Mutex;
-use tracing::{info, error};
+mod capability;
 
 use ipc::{IpcBridge, HealthStatus};
 use proof_engine::{ProofEngine, ProofTier, Proof};
 use checkpoint::CheckpointManager;
+use capability::CapabilityManager;
 
 struct AppState {
     bridge: Arc<Mutex<IpcBridge>>,
     proof_engine: Arc<Mutex<ProofEngine>>,
     checkpoint_manager: Arc<Mutex<CheckpointManager>>,
+    capability_manager: Arc<Mutex<CapabilityManager>>,
 }
 
 #[tokio::main]
@@ -45,10 +38,12 @@ async fn main() {
     
     let proof_engine = Arc::new(Mutex::new(ProofEngine::new()));
     let checkpoint_manager = Arc::new(Mutex::new(CheckpointManager::new()));
+    let capability_manager = Arc::new(Mutex::new(CapabilityManager::new()));
     let state = AppState { 
         bridge, 
         proof_engine,
         checkpoint_manager,
+        capability_manager,
     };
     
     let app = Router::new()
@@ -59,6 +54,9 @@ async fn main() {
         .route("/v1/proofs/verify", post(verify_proof))
         .route("/v1/checkpoints", post(create_checkpoint))
         .route("/v1/checkpoints/:id/replay", post(replay_checkpoint))
+        .route("/v1/capabilities", post(grant_capability))
+        .route("/v1/capabilities/:id/revoke", post(revoke_capability))
+        .route("/v1/capabilities/verify", post(verify_capability))
         .with_state(Arc::new(state));
     
     let listener = tokio::net::TcpListener::bind("127.0.0.1:9001")
@@ -96,6 +94,31 @@ async fn record_event(
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
     info!("Received event: {:?}", payload);
+    
+    let group_id = payload.get("group_id")
+        .and_then(|v| v.as_str())
+        .unwrap_or("default");
+    
+    let capability_token = payload.get("capability_token")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    
+    let manager = state.capability_manager.lock().await;
+    
+    let verification = manager.verify(
+        capability_token,
+        &capability::Capability::EventCreate { group_id: group_id.to_string() },
+    );
+    
+    match verification {
+        capability::CapabilityResult::Valid { .. } => {},
+        _ => {
+            return Json(serde_json::json!({
+                "status": "denied",
+                "error": "Capability verification failed",
+            }));
+        }
+    }
     
     let proof_tier = payload.get("proof_tier")
         .and_then(|v| v.as_str())
@@ -246,6 +269,93 @@ async fn replay_checkpoint(
                 "success": false,
                 "error": reason,
                 "events_replayed": events_replayed,
+            }))
+        }
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct GrantCapabilityRequest {
+    capability: capability::Capability,
+    granted_to: String,
+    expires_in_secs: Option<u64>,
+}
+
+async fn grant_capability(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<GrantCapabilityRequest>,
+) -> Json<serde_json::Value> {
+    let mut manager = state.capability_manager.lock().await;
+    
+    match manager.grant(
+        req.granted_to,
+        "system".to_string(),
+        req.capability,
+        req.expires_in_secs,
+    ) {
+        Ok(token) => Json(serde_json::json!({ "token": token })),
+        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+    }
+}
+
+async fn revoke_capability(
+    State(state): State<Arc<AppState>>,
+    path: axum::extract::Path<String>,
+) -> Json<serde_json::Value> {
+    let token_id = path.0;
+    let mut manager = state.capability_manager.lock().await;
+    
+    if manager.revoke(&token_id) {
+        Json(serde_json::json!({ "revoked": true }))
+    } else {
+        Json(serde_json::json!({ "error": "Token not found" }))
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct VerifyCapabilityRequest {
+    token_id: String,
+    required_capability: capability::Capability,
+}
+
+async fn verify_capability(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<VerifyCapabilityRequest>,
+) -> Json<serde_json::Value> {
+    let manager = state.capability_manager.lock().await;
+    
+    match manager.verify(&req.token_id, &req.required_capability) {
+        capability::CapabilityResult::Valid { token } => {
+            Json(serde_json::json!({
+                "valid": true,
+                "token": token,
+            }))
+        }
+        capability::CapabilityResult::Invalid { reason } => {
+            Json(serde_json::json!({
+                "valid": false,
+                "error": reason,
+            }))
+        }
+        capability::CapabilityResult::Expired { expired_at } => {
+            Json(serde_json::json!({
+                "valid": false,
+                "error": "Expired",
+                "expired_at": expired_at,
+            }))
+        }
+        capability::CapabilityResult::Revoked => {
+            Json(serde_json::json!({
+                "valid": false,
+                "error": "Revoked",
+            }))
+        }
+        capability::CapabilityResult::Denied { required, held } => {
+            Json(serde_json::json!({
+                "valid": false,
+                "error": "Capability denied",
+                "required": required,
+                "held": held,
             }))
         }
     }
