@@ -4,17 +4,23 @@ mod ring_buffer;
 mod proof_engine;
 mod checkpoint;
 mod capability;
+mod vector_store;
+mod graph_store;
 
 use ipc::{IpcBridge, HealthStatus};
 use proof_engine::{ProofEngine, ProofTier, Proof};
 use checkpoint::CheckpointManager;
 use capability::CapabilityManager;
+use vector_store::VectorStoreManager;
+use graph_store::GraphStoreManager;
 
 struct AppState {
     bridge: Arc<Mutex<IpcBridge>>,
     proof_engine: Arc<Mutex<ProofEngine>>,
     checkpoint_manager: Arc<Mutex<CheckpointManager>>,
     capability_manager: Arc<Mutex<CapabilityManager>>,
+    vector_store_manager: Arc<Mutex<VectorStoreManager>>,
+    graph_store_manager: Arc<Mutex<GraphStoreManager>>,
 }
 
 #[tokio::main]
@@ -39,11 +45,15 @@ async fn main() {
     let proof_engine = Arc::new(Mutex::new(ProofEngine::new()));
     let checkpoint_manager = Arc::new(Mutex::new(CheckpointManager::new()));
     let capability_manager = Arc::new(Mutex::new(CapabilityManager::new()));
+    let vector_store_manager = Arc::new(Mutex::new(VectorStoreManager::new()));
+    let graph_store_manager = Arc::new(Mutex::new(GraphStoreManager::new()));
     let state = AppState { 
         bridge, 
         proof_engine,
         checkpoint_manager,
         capability_manager,
+        vector_store_manager,
+        graph_store_manager,
     };
     
     let app = Router::new()
@@ -57,6 +67,13 @@ async fn main() {
         .route("/v1/capabilities", post(grant_capability))
         .route("/v1/capabilities/:id/revoke", post(revoke_capability))
         .route("/v1/capabilities/verify", post(verify_capability))
+        .route("/v1/vectors/stores", post(create_vector_store))
+        .route("/v1/vectors/put", post(vector_put))
+        .route("/v1/vectors/search", post(vector_search))
+        .route("/v1/graphs/stores", post(create_graph_store))
+        .route("/v1/graphs/nodes", post(create_node))
+        .route("/v1/graphs/edges", post(create_edge))
+        .route("/v1/graphs/query", post(graph_query))
         .with_state(Arc::new(state));
     
     let listener = tokio::net::TcpListener::bind("127.0.0.1:9001")
@@ -358,6 +375,203 @@ async fn verify_capability(
                 "held": held,
             }))
         }
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct CreateVectorStoreRequest {
+    store_id: String,
+    dimensions: usize,
+    capacity: usize,
+    group_id: String,
+}
+
+async fn create_vector_store(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<CreateVectorStoreRequest>,
+) -> Json<serde_json::Value> {
+    let mut manager = state.vector_store_manager.lock().await;
+    let config = vector_store::VectorStoreConfig::new(req.dimensions, req.capacity);
+    
+    match manager.create_store(req.store_id, config, req.group_id) {
+        Ok(store) => {
+            let stats = store.stats();
+            Json(serde_json::json!({ "store": stats }))
+        }
+        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct VectorPutRequest {
+    store_id: String,
+    key: u64,
+    data: Vec<f64>,
+    metadata: serde_json::Value,
+    group_id: String,
+}
+
+async fn vector_put(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<VectorPutRequest>,
+) -> Json<serde_json::Value> {
+    let manager = state.vector_store_manager.lock().await;
+    let store = manager.get_store(&req.store_id);
+    
+    match store {
+        Some(mut arc_store) => {
+            let store_ref = Arc::make_mut(&mut arc_store);
+            let key = vector_store::VectorKey::new(req.key);
+            match store_ref.put(key.clone(), req.data, req.metadata) {
+                Ok(_) => Json(serde_json::json!({ "stored": true, "key": req.key })),
+                Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+            }
+        }
+        None => Json(serde_json::json!({ "error": "Store not found" })),
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct VectorSearchRequest {
+    store_id: String,
+    query: Vec<f64>,
+    limit: usize,
+}
+
+async fn vector_search(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<VectorSearchRequest>,
+) -> Json<serde_json::Value> {
+    let manager = state.vector_store_manager.lock().await;
+    let store = manager.get_store(&req.store_id);
+    
+    match store {
+        Some(arc_store) => {
+            let results = arc_store.search(&req.query, req.limit);
+            Json(serde_json::json!({ "results": results }))
+        }
+        None => Json(serde_json::json!({ "error": "Store not found" })),
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct CreateGraphStoreRequest {
+    store_id: String,
+    max_nodes: usize,
+    max_edges: usize,
+    group_id: String,
+}
+
+async fn create_graph_store(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<CreateGraphStoreRequest>,
+) -> Json<serde_json::Value> {
+    let mut manager = state.graph_store_manager.lock().await;
+    let config = graph_store::GraphStoreConfig {
+        max_nodes: req.max_nodes,
+        max_edges: req.max_edges,
+    };
+    
+    match manager.create_store(req.store_id, config, req.group_id) {
+        Ok(store) => {
+            let stats = store.stats();
+            Json(serde_json::json!({ "store": stats }))
+        }
+        Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct CreateNodeRequest {
+    store_id: String,
+    node_id: String,
+    labels: Vec<String>,
+    properties: serde_json::Value,
+    group_id: String,
+}
+
+async fn create_node(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<CreateNodeRequest>,
+) -> Json<serde_json::Value> {
+    let manager = state.graph_store_manager.lock().await;
+    let store = manager.get_store(&req.store_id);
+    
+    match store {
+        Some(mut arc_store) => {
+            let store_ref = Arc::make_mut(&mut arc_store);
+            let id = graph_store::NodeId(req.node_id);
+            match store_ref.create_node(id.clone(), req.labels, req.properties) {
+                Ok(_) => Json(serde_json::json!({ "created": true, "node_id": req.node_id })),
+                Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+            }
+        }
+        None => Json(serde_json::json!({ "error": "Store not found" })),
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct CreateEdgeRequest {
+    store_id: String,
+    edge_id: String,
+    source: String,
+    target: String,
+    relation_type: String,
+    properties: serde_json::Value,
+    group_id: String,
+}
+
+async fn create_edge(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<CreateEdgeRequest>,
+) -> Json<serde_json::Value> {
+    let manager = state.graph_store_manager.lock().await;
+    let store = manager.get_store(&req.store_id);
+    
+    match store {
+        Some(mut arc_store) => {
+            let store_ref = Arc::make_mut(&mut arc_store);
+            let id = graph_store::EdgeId(req.edge_id);
+            match store_ref.create_edge(
+                id.clone(),
+                graph_store::NodeId(req.source),
+                graph_store::NodeId(req.target),
+                req.relation_type,
+                req.properties,
+            ) {
+                Ok(_) => Json(serde_json::json!({ "created": true, "edge_id": req.edge_id })),
+                Err(e) => Json(serde_json::json!({ "error": e.to_string() })),
+            }
+        }
+        None => Json(serde_json::json!({ "error": "Store not found" })),
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct GraphQueryRequest {
+    store_id: String,
+    node_labels: Option<Vec<String>>,
+    relation_type: Option<String>,
+    limit: usize,
+}
+
+async fn graph_query(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<GraphQueryRequest>,
+) -> Json<serde_json::Value> {
+    let manager = state.graph_store_manager.lock().await;
+    let store = manager.get_store(&req.store_id);
+    
+    match store {
+        Some(arc_store) => {
+            let result = arc_store.query(
+                req.node_labels.as_deref(),
+                req.relation_type.as_deref(),
+                req.limit,
+            );
+            Json(serde_json::json!({ "result": result }))
+        }
+        None => Json(serde_json::json!({ "error": "Store not found" })),
     }
 }
 
