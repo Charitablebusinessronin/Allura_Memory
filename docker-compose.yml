@@ -114,5 +114,6 @@ services:
 
 volumes:
   postgres_data:
+    name: memory_postgres_data
   neo4j_data:
   neo4j_logs:
