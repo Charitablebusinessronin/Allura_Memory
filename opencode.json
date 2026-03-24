@@ -77,6 +77,5 @@
       "enabled": true
     }
   },
-  "agents": ".opencode/agents",
   "skills": ".opencode/skills"
 }
