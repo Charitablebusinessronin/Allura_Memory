@@ -77,7 +77,7 @@ cd memory
 npm install
 
 # Start databases
-docker-compose up -d
+docker compose up -d
 
 # Run tests
 npm test
@@ -85,6 +85,26 @@ npm test
 # Run behavioral stress tests (requires databases)
 RUN_E2E_TESTS=true npm test
 ```
+
+### Docker Volume Management
+
+The project uses named volumes with the `memory_` prefix:
+
+```bash
+# List project volumes
+docker volume ls | grep -E "(postgres|neo4j)"
+
+# Clean up orphaned volumes
+docker volume prune -f
+
+# Reset databases (WARNING: destroys all data)
+docker compose down -v
+docker compose up -d
+```
+
+**Active volumes:**
+- `memory_postgres_data` — PostgreSQL raw traces
+- `neo4j_data` — Neo4j semantic insights</think>
 
 ### Environment Variables
 
