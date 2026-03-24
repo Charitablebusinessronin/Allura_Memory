@@ -565,6 +565,23 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       
       // Insight Curator tools
       {
+        name: "run_curation",
+        description: "Run the knowledge curator to scan PostgreSQL traces and promote insights to Neo4j/Notion",
+        inputSchema: {
+          type: "object",
+          properties: {
+            batch_size: {
+              type: "number",
+              description: "Number of insights to process (default: 50)"
+            },
+            dry_run: {
+              type: "boolean",
+              description: "Preview what would be promoted without making changes"
+            }
+          }
+        }
+      },
+      {
         name: "promote_insight",
         description: "Promote a Neo4j insight to Notion for human review (curator agent only)",
         inputSchema: {

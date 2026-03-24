@@ -63,53 +63,28 @@ export class NotionClientImpl implements NotionClient {
   ) {}
 
   async createPage(payload: Record<string, unknown>): Promise<{ pageId: string }> {
-    // Use notion-create-pages (plural) as per Smithery tool
     const result = await this.mcp.callTool<NotionCreatePageResponse>(
-      "notion-create-pages",
+      "API-post-page",
       payload
     );
 
-    // Handle response format - result is the parsed JSON from Smithery
     console.log("[NotionClient] createPage result:", JSON.stringify(result, null, 2));
     
-    // Check for pages array
-    if (result.pages && Array.isArray(result.pages) && result.pages.length > 0) {
-      return { pageId: result.pages[0].id };
+    if (result.id) {
+      return { pageId: result.id };
     }
 
-    // Check for direct id
-    const pageId = (result as any).pageId ?? (result as any).id;
-    if (pageId) {
-      return { pageId };
-    }
-
-    // Check for nested content
-    if ((result as any).content?.[0]?.text) {
-      try {
-        const nested = JSON.parse((result as any).content[0].text);
-        if (nested.pages?.[0]?.id) {
-          return { pageId: nested.pages[0].id };
-        }
-        if (nested.id) {
-          return { pageId: nested.id };
-        }
-      } catch {
-        // Not JSON
-      }
-    }
-
-    throw new Error(`notion-create-pages did not return a page id: ${JSON.stringify(result)}`);
+    throw new Error(`API-post-page did not return a page id: ${JSON.stringify(result)}`);
   }
 
   async updatePage(payload: Record<string, unknown>): Promise<void> {
     await this.mcp.callTool<void>(
-      "notion-update-page",
+      "API-patch-page",
       payload
     );
   }
 
   async findExistingInsights(canonicalTag?: string): Promise<NotionInsightRecord[]> {
-    // Build filter for Approved or Pending Review status
     const filter: any = {
       or: [
         { property: "Status", select: { equals: "Approved" } },
@@ -124,7 +99,7 @@ export class NotionClientImpl implements NotionClient {
     }
 
     const result = await this.mcp.callTool<NotionFetchResponse>(
-      "notion-fetch",
+      "API-query-data-source",
       {
         id: this.insightsDatabaseId,
         filter
