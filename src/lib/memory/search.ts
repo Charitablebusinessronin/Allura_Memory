@@ -157,7 +157,7 @@ export async function getMemoriesByType(
     MATCH (m:${type})
     WHERE m.group_id = $group_id
       AND m.status = 'active'
-      AND NOT ((), {SUPERSEDES})-(m)
+      AND NOT (())-[:SUPERSEDES]->(m)
     RETURN m.topic_key AS topic_key,
            m.group_id AS group_id,
            m.type AS type,

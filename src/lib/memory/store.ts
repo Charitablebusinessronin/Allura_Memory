@@ -69,7 +69,7 @@ export async function storeMemory(
   if (superseded_id) {
     // Get current version of the memory being superseded
     const versionCypher = `
-      MATCH (old:Insight {topic_key: $superseded_id})
+      MATCH (old {topic_key: $superseded_id})
       RETURN old.version AS current_version
     `;
 
@@ -100,7 +100,7 @@ export async function storeMemory(
     })
     ${superseded_id ? `
       WITH m
-      MATCH (old:Insight {topic_key: $superseded_id})
+      MATCH (old {topic_key: $superseded_id})
       CREATE (m)-[:SUPERSEDES]->(old)
     ` : ""}
     RETURN m.topic_key AS id, m.version AS version, m.created_at AS created_at, m.status AS status

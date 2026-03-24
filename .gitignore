@@ -26,6 +26,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# TypeScript build cache
+tsconfig.tsbuildinfo
+
 # Environment variables
 .env
 .env.*
