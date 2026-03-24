@@ -51,24 +51,23 @@ export class McpClientImpl implements McpToolCaller {
     return this.callSmitheryTool<T>(toolName, args);
   }
 
-  /**
-   * Call tool via Smithery CLI (standalone mode)
-   */
   private async callSmitheryTool<T>(toolName: string, args: Record<string, unknown>): Promise<T> {
     const { exec } = require('child_process');
     const { promisify } = require('util');
     const execAsync = promisify(exec);
 
+    // Map tool names to Smithery tool names
+    const smitheryToolName = this.mapToolName(toolName);
     const argsJson = JSON.stringify(args);
     
     try {
+      // Use Smithery CLI to call Notion tools
       const { stdout, stderr } = await execAsync(
-        `smithery tool call notion ${toolName} '${argsJson}'`,
+        `smithery tool call notion-memory ${smitheryToolName} '${argsJson}'`,
         { maxBuffer: 1024 * 1024 * 10 }
       );
       
-      // Parse the Smithery CLI output
-      // The output format is typically: {"content":[{"type":"text","text":"{...}"}]}
+      // Parse the Smithery output
       const output = stdout.trim();
       
       // Try to parse as direct JSON first
@@ -86,9 +85,9 @@ export class McpClientImpl implements McpToolCaller {
         return this.extractResult<T>(parsed);
       }
       
-      throw new Error(`Could not parse Smithery output: ${output.substring(0, 200)}`);
+      throw new Error(`Could not parse MCP output: ${output.substring(0, 200)}`);
     } catch (error: any) {
-      // If Smithery fails, try to parse partial output
+      // If MCP fails, try to parse partial output
       const match = error.stdout?.match(/\{"content".*\}/s);
       if (match) {
         try {
@@ -100,6 +99,21 @@ export class McpClientImpl implements McpToolCaller {
       }
       throw new Error(`MCP tool ${toolName} failed: ${error.message}`);
     }
+  }
+
+  /**
+   * Map internal tool names to Smithery Notion tool names
+   */
+  private mapToolName(toolName: string): string {
+    const toolMap: Record<string, string> = {
+      'API-post-page': 'notion-create-pages',
+      'API-patch-page': 'notion-update-page',
+      'API-query-data-source': 'notion-search',
+      'API-post-search': 'notion-search',
+      'API-get-page': 'notion-fetch',
+      'API-retrieve-a-database': 'notion-fetch',
+    };
+    return toolMap[toolName] || toolName;
   }
 
   /**

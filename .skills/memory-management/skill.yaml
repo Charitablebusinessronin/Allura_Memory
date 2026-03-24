@@ -1,0 +1,118 @@
+name: memory-management
+version: 1.0.0
+description: |
+  Production memory system for AI agents with dual-layer persistence:
+  raw events in PostgreSQL, curated insights in Neo4j, with human-in-the-loop governance.
+
+category: memory
+author: ronin4life
+tags:
+  - memory
+  - persistence
+  - knowledge-graph
+  - governance
+  - audit
+
+# Entry points for different agent frameworks
+entryPoints:
+  mcp:
+    server: ./src/mcp/memory-server.ts
+    transport: stdio
+  
+  openclaw:
+    adapter: ./src/integrations/openclaw/adapter.ts
+    tools:
+      - memory_search
+      - memory_store
+      - memory_get
+      - memory_promote
+      - memory_deprecate
+      - memory_archive
+      - memory_list_by_type
+      - agent_search
+
+# Required infrastructure
+infrastructure:
+  databases:
+    - postgresql:
+        purpose: Raw event logs (episodic memory)
+        required: true
+    - neo4j:
+        purpose: Knowledge graph (semantic memory)
+        required: true
+  
+  optional:
+    - notion:
+        purpose: Human workspace mirroring
+        required: false
+
+# Capabilities exposed
+capabilities:
+  store:
+    description: Persist agent memory with versioning
+    input: key, value, group_id, type
+    output: stored_memory
+  
+  retrieve:
+    description: Get memory by key or search
+    input: query or key
+    output: memory_record
+  
+  search:
+    description: Semantic search across memories
+    input: query, group_id, filters
+    output: ranked_results
+  
+  promote:
+    description: Promote draft to active (HITL approval)
+    input: memory_id, approved_by
+    output: promoted_memory
+  
+  govern:
+    description: Lifecycle management (approve/reject/supersede)
+    workflows:
+      - approval
+      - rejection
+      - supersession
+      - revocation
+
+# Configuration
+configuration:
+  environment:
+    POSTGRES_HOST: "localhost"
+    POSTGRES_PORT: "5432"
+    POSTGRES_DB: "memory"
+    POSTGRES_USER: "ronin4life"
+    POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    NEO4J_URI: "bolt://localhost:7687"
+    NEO4J_USER: "neo4j"
+    NEO4J_PASSWORD: "${NEO4J_PASSWORD}"
+  
+  runtime:
+    maxMemorySize: "1GB"
+    defaultPageSize: 50
+
+# Example usage
+examples:
+  - name: "Store session context"
+    code: |
+      await memory.store({
+        key: "session.abc123.context",
+        value: { userIntent: "build API", entities: ["user", "API"] },
+        group_id: "myproject",
+        type: "Insight"
+      })
+  
+  - name: "Search relevant memories"
+    code: |
+      const results = await memory.search({
+        query: "API authentication best practices",
+        group_id: "myproject",
+        limit: 5
+      })
+
+# Documentation
+documentation:
+  readme: ./README.md
+  agents: ./AGENTS.md
+  architecture: ./_bmad-output/INDEX.md

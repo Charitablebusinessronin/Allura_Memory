@@ -1,18 +1,20 @@
 ---
-title: 'Unified Knowledge System - Core Schema and Steel Frame'
-slug: 'unified-knowledge-system-core-schema-steel-frame'
+title: 'Memory Card - Self-Improving AI Knowledge System'
+slug: 'memory-card-self-improving-knowledge-system'
 created: '2026-03-15'
+updated: '2026-03-24'
 status: 'ready-for-dev'
 stepsCompleted: [1, 2, 3, 4]
-tech_stack: ['Next.js 16', 'TypeScript', 'Zustand', 'Zod', 'shadcn/ui', 'Tailwind CSS v4', 'PostgreSQL 16', 'Neo4j 5.26', 'Docker', 'Ubuntu']
+tech_stack: ['Next.js 16', 'TypeScript', 'Zustand', 'Zod', 'shadcn/ui', 'Tailwind CSS v4', 'PostgreSQL 16', 'Neo4j 5.26', 'Docker', 'Ubuntu', 'MCP_DOCKER']
 files_to_modify: ['docker-compose.yml', 'src/lib/knowledge/', 'src/lib/neo4j/', 'src/lib/postgres/', 'src/lib/mcp/', 'src/stores/', 'src/lib/workers/']
 code_patterns: ['Zustand state management', 'Server actions', 'App Router route groups', 'shadcn/ui components']
 test_patterns: ['Vitest + Playwright - needs setup']
 ---
 
-# Tech-Spec: Unified Knowledge System - Core Schema and Steel Frame
+# Tech-Spec: Memory Card - Self-Improving AI Knowledge System
 
-**Created:** 2026-03-15
+**Created:** 2026-03-15  
+**Updated:** 2026-03-24 - Added Memory Card concept, OhMyOpenCode/OpenClaw toolchain, MCP_DOCKER integration
 
 ## Overview
 
@@ -27,16 +29,178 @@ The `memory` project needs a **Unified AI Engineering Brain** - a goal-directed,
 
 Without the Steel Frame, the knowledge graph becomes chaos with stale, conflicting data. Without entity deduplication, search accuracy degrades. Without promotion gates, behavior-changing knowledge enters the system without human oversight.
 
+### The Memory Card Concept
+
+This system implements a **Memory Card** for AI agents - inspired by the Reddit post about "Building a unified AI knowledge system with Notion + Neo4j". The key insight:
+
+> **"Separate 'raw traces' from 'promoted knowledge'. Let agents dump noisy Event/Outcome detail into a cheaper store (PostgreSQL), then run a periodic 'knowledge curator' agent that proposes normalized Insights back into Neo4j and Notion, with humans approving anything that changes behavior."**
+
+**The Memory Card enables:**
+1. **Persistent Memory** - Every action remembered in PostgreSQL
+2. **Learning & Improvement** - Insights promoted to Neo4j via HITL curation
+3. **Self-Correction** - Ralph loops enable bounded self-improvement
+4. **Cross-Session Recall** - Knowledge persists across agent sessions
+5. **Unified Toolchain** - Works with OhMyOpenCode (CLI) and OpenClaw (MCP)
+
 ### Solution
 
 Build the **Core Cognitive Kernel** as a **Goal-Directed System** with clean separation of reasoning from execution:
 
-**4-Layer Stack Architecture:**
+**4-Layer Stack Architecture (Memory Card):**
 
-1. **AI Reasoning (OpenClaw)** - The "cognitive kernel" responsible for task reasoning and workflow suggestions
-2. **Raw Trace Layer (PostgreSQL)** - Durable store for "noisy" data: raw events, workflow traces, temporary execution logs
-3. **Promoted Knowledge Layer (Neo4j)** - Persistent memory graph for reviewed, behavior-changing entities, relationships, architectural decisions
-4. **Human Workspace (Notion)** - Source of truth for structured documentation, dashboards, curated knowledge items
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     AI Agent Layer                               │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
+│  │ OhMyOpenCode │  │   OpenClaw   │  │  Human Operators     │  │
+│  │   (Agent)    │  │   (Agent)    │  │  (Mission Control)   │  │
+│  └──────┬───────┘  └──────┬───────┘  └──────────────────────┘  │
+└─────────┼──────────────────┼───────────────────────────────────┘
+          │                  │
+          ▼                  ▼
+┌──────────────────────────────────────────────────────────────────┐
+│              MCP_DOCKER Layer (Docker Hub MCP)                  │
+│    ┌─────────────────────────────────────────────────────────┐  │
+│    │  mcp-add, mcp-exec, mcp-find, mcp-config-set, etc.   │  │
+│    └────────────────────────┬────────────────────────────────┘  │
+└─────────────────────────────┼────────────────────────────────────┘
+                              │
+                              ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                    MCP Server Layer                              │
+│    ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
+│    │ ronin-memory │  │ notion-mcp   │  │   github-mcp     │  │
+│    │ (custom)     │  │ (docker hub) │  │  (docker hub)    │  │
+│    └──────┬───────┘  └──────┬───────┘  └────────┬─────────┘  │
+└───────────┼──────────────────┼────────────────────┼────────────┘
+            │                │                    │
+            ▼                ▼                    ▼
+┌──────────────────┐ ┌──────────────┐ ┌──────────────────┐
+│   PostgreSQL     │ │    Neo4j     │ │     Notion       │
+│ (Layer 1: Raw)   │ │(Layer 2/3/4: │ │ (Human Workspace)│
+│                  │ │  Semantic)   │ │                  │
+│  • Events        │ │              │ │  • Approvals     │
+│  • Outcomes      │ │  • Insights  │ │  • Documentation │
+│  • Traces        │ │  • Agents    │ │  • Registry      │
+│  • ADAS Runs     │ │  • Knowledge │ │                  │
+└──────────────────┘ └──────────────┘ └──────────────────┘
+          │                │                │
+          └────────────────┴────────────────┘
+                           │
+                           ▼
+                 ┌──────────────────┐
+                 │ Knowledge        │
+                 │ Curator Pipeline │
+                 │ (HITL Promotion) │
+                 └──────────────────┘
+```
+
+**Toolchain Flow:**
+
+```
+Agents (OhMyOpenCode, OpenClaw)
+    ↓ use MCP_DOCKER commands
+MCP_DOCKER (mcp-add, mcp-exec from Docker Hub MCP registry)
+    ↓ connects to
+MCP Servers (ronin-memory, notion-mcp, github-mcp, etc.)
+    ↓ read/write
+Data Sources (PostgreSQL, Neo4j, Notion, GitHub)
+```
+
+**How MCP_DOCKER works:**
+- `MCP_DOCKER_mcp-find` - Search Docker Hub MCP registry
+- `MCP_DOCKER_mcp-add` - Add an MCP server to session
+- `MCP_DOCKER_mcp-exec` - Execute tools on a server
+- `MCP_DOCKER_mcp-config-set` - Configure server settings
+- `MCP_DOCKER_tavily_*` - Web search tools
+- `MCP_DOCKER_resolve-library-id` - Library docs lookup
+
+All MCP servers are pulled from [Docker Hub MCP](https://hub.docker.com/mcp) - this saves context window by using pre-built containers instead of inline tool definitions.
+┌─────────────────────────────────────────────────────────────────┐
+│                     AI Agent Layer                               │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
+│  │ OhMyOpenCode │  │   OpenClaw   │  │  Human Operators     │  │
+│  │  (CLI)       │  │ (MCP Reasoner)│  │  (Mission Control)   │  │
+│  └──────┬───────┘  └──────┬───────┘  └──────────────────────┘  │
+└─────────┼──────────────────┼───────────────────────────────────┘
+          │                  │
+          │    ┌─────────────▼─────────────────────────────────┐
+          │    │         Policy Gateway                       │
+          │    │    (RBAC, allow/deny rules)                  │
+          │    └─────────────────┬─────────────────────────────┘
+          │                      │
+          ▼                      ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                    MCP Server Layer                              │
+│              ronin-memory (src/mcp/memory-server.ts)             │
+│     ┌──────────────────────────────────────────────────────┐     │
+│     │  Tools: search_events, create_insight, promote_     │     │
+│     │        get_context, record_decision, ...             │     │
+│     └────────────────────┬─────────────────────────────────┘     │
+└──────────────────────────┼──────────────────────────────────────┘
+                           │
+          ┌────────────────┼────────────────┐
+          │                │                │
+          ▼                ▼                ▼
+┌──────────────────┐ ┌──────────────┐ ┌──────────────────┐
+│   PostgreSQL     │ │    Neo4j     │ │     Notion       │
+│ (Layer 1: Raw)   │ │(Layer 2/3/4: │ │ (Human Workspace)│
+│                  │ │  Semantic)   │ │                  │
+│  • Events        │ │              │ │  • Approvals     │
+│  • Outcomes      │ │  • Insights  │ │  • Documentation │
+│  • Traces        │ │  • Agents      │ │  • Registry      │
+│  • ADAS Runs     │ │  • Knowledge │ │                  │
+└──────────────────┘ └──────────────┘ └──────────────────┘
+          │                │                │
+          └────────────────┴────────────────┘
+                           │
+                           ▼
+                 ┌──────────────────┐
+                 │ Knowledge        │
+                 │ Curator Pipeline │
+                 │ (HITL Promotion) │
+                 └──────────────────┘
+```
+
+**Toolchain Flow:**
+
+```
+OhMyOpenCode (CLI Agent Runner)
+    ↓ invokes
+OpenClaw (MCP Reasoner)
+    ↓ calls tools via MCP_DOCKER
+ronin-memory MCP Server
+    ↓ reads/writes
+PostgreSQL (Raw Traces) + Neo4j (Knowledge Graph)
+```
+
+**Layer Responsibilities:**
+
+1. **AI Agent Layer** - Entry points for agent sessions
+   - **OhMyOpenCode**: CLI agent session runner
+   - **OpenClaw**: MCP reasoner that processes tool calls
+   - **Human Operators**: Mission Control for approvals
+
+2. **Policy Gateway** - Enforces RBAC, allow/deny rules
+   - Mediates all tool calls
+   - Circuit breakers for operational safety
+   - Budget enforcement for bounded autonomy
+
+3. **MCP Server Layer** - Unified memory interface
+   - `ronin-memory` exposes memory tools via MCP protocol
+   - Tools accessed through MCP_DOCKER
+   - Type-safe, versioned interfaces
+
+4. **Data Layer** - Dual storage with separation of concerns
+   - **PostgreSQL (Layer 1)**: Append-only raw traces, events, outcomes
+   - **Neo4j (Layer 2/3/4)**: Versioned insights, knowledge graph, agent relationships
+   - **Notion**: Human workspace for approvals and documentation
+
+5. **Knowledge Curator Pipeline** - HITL promotion flow
+   - Scans PostgreSQL traces for promotable insights
+   - Creates candidates in Neo4j with "pending" status
+   - Mirrors to Notion for human review
+   - On approval: updates status to "active"
 
 **Memory Layer Architecture:**
 

@@ -1,7 +1,7 @@
 /**
  * OpenClaw Integration Adapter
  * 
- * Maps OpenClaw tool calls to Ronin Memory kernel operations.
+ * Maps OpenClaw tool calls to Ronin Memory service operations.
  * Provides Zod-validated input/output for external agent use.
  */
 
@@ -17,7 +17,7 @@ import {
 
 /**
  * OpenClaw-compatible tool definitions
- * Each tool wraps the kernel function with Zod validation
+ * Each tool wraps the service function with Zod validation
  */
 export const openclawTools = {
   /**
