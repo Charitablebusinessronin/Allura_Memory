@@ -10,9 +10,9 @@ registry:
     type: reasoning
     description: General-purpose reasoning model for agent cognition
     agents:
-      - knowledge-curator
+      - bmad-master
     skills:
-      - knowledge-curator
+      - bmad-master
     status: active
 
   kimi-k2:
@@ -41,10 +41,9 @@ registry:
     provider: ollama
     type: embedding
     description: Embedding model for semantic search and deduplication
-    agents:
-      - knowledge-curator
+    agents: []
     skills:
-      - knowledge-curator
+      - code-context-retrieval
     status: active
 
   # Specialized models (from your environment)
