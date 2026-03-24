@@ -6,9 +6,54 @@
       "command": ["docker", "mcp", "gateway", "run"],
       "enabled": true
     },
-    "ronin-memory": {
+    "neo4j": {
       "type": "local",
-      "command": ["docker", "exec", "-i", "knowledge-mcp", "node", "dist/mcp/memory-server.js"],
+      "command": ["docker", "run", "-i", "--rm",
+        "-e", "NEO4J_URI",
+        "-e", "NEO4J_USERNAME",
+        "-e", "NEO4J_PASSWORD",
+        "-e", "NEO4J_DATABASE",
+        "mcp/neo4j"
+      ],
+      "env": {
+        "NEO4J_URI": "${NEO4J_URI}",
+        "NEO4J_USERNAME": "${NEO4J_USER}",
+        "NEO4J_PASSWORD": "${NEO4J_PASSWORD}",
+        "NEO4J_DATABASE": "neo4j"
+      },
+      "enabled": true
+    },
+    "postgres": {
+      "type": "local",
+      "command": ["docker", "run", "-i", "--rm",
+        "-e", "DATABASE_URL",
+        "mcp/postgres"
+      ],
+      "env": {
+        "DATABASE_URL": "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}"
+      },
+      "enabled": true
+    },
+    "notion": {
+      "type": "local",
+      "command": ["docker", "run", "-i", "--rm",
+        "-e", "NOTION_API_TOKEN",
+        "mcp/notion"
+      ],
+      "env": {
+        "NOTION_API_TOKEN": "${NOTION_API_TOKEN}"
+      },
+      "enabled": true
+    },
+    "tavily": {
+      "type": "local",
+      "command": ["docker", "run", "-i", "--rm",
+        "-e", "TAVILY_API_KEY",
+        "mcp/tavily"
+      ],
+      "env": {
+        "TAVILY_API_KEY": "${TAVILY_API_KEY}"
+      },
       "enabled": true
     }
   },
