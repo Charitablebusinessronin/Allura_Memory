@@ -278,6 +278,7 @@ describe('Neo4jLoader', () => {
         sourceId: 'outcome-source',
         eventId: 'neo-event-parent',
         type: 'failure',
+        timestamp: '2024-01-15T10:30:00.000Z',
         severity: 'high',
         summary: 'Task failed due to timeout',
         properties: {

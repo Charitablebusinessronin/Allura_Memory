@@ -8,12 +8,16 @@ Custom persona override is limited to the **Brooks** BMad Master only:
 
 All other BMAD agents should use their base definitions unless explicitly customized later.
 
+## Primary Skill
+The `memory` skill is a **primary skill** — auto-loaded and always available. No explicit invocation needed.
+
 ## Mandatory memory retrieval order
 1. **Memory Bank files** (`memory-bank/`) - Project context, patterns, progress
-2. `memory_search` for prior work/decisions/dates/preferences/todos
-3. `memory_get` for only the needed lines/snippets
-4. Project artifacts under `_bmad-output/` (planning/implementation/test)
-5. Sidecars under `_bmad/_memory/`
+2. `memory search insights` for prior knowledge
+3. `memory search events` for historical traces
+4. `memory log decision` for decision history
+5. Project artifacts under `_bmad-output/` (planning/implementation/test)
+6. Sidecars under `_bmad/_memory/`
 
 ## Memory Bank Structure
 The project uses a structured memory bank following the Tweag agentic coding handbook pattern:
@@ -27,57 +31,52 @@ The project uses a structured memory bank following the Tweag agentic coding han
 | `activeContext.md` | Current task, context, and working notes |
 | `progress.md` | Status log of what's done and what's pending |
 
-## Memory Skills (bmad-memory-*)
+## Memory Skill (unified)
 
-### bmad-memory-store
-Store new memories (insights, decisions, research, patterns) into the knowledge graph.
+### Commands
 
-**Usage:**
-- "Save this insight..."
-- "Store this decision..."
-- "Remember this..."
+| Command | Layer | Purpose |
+|---------|-------|---------|
+| `memory search events "query"` | 1 | Search PostgreSQL traces |
+| `memory log event <type> <data>` | 1 | Log event to PostgreSQL |
+| `memory search insights "query"` | 2 | Search Neo4j knowledge |
+| `memory create insight <summary>` | 2 | Create Neo4j insight |
+| `memory create entity <name> <type>` | 2 | Create knowledge graph entity |
+| `memory create relation <from> <to> <type>` | 2 | Link entities |
+| `memory log decision <title>` | 3 | Log ADR with counterfactuals |
+| `memory health` | All | Check system connections |
+| `memory graph` | 2 | Read full knowledge graph |
 
-**Key topic_key format:** `{group_id}.{type}.{identifier}`
-- Example: `roninos.insight.deepseek-cost-efficiency`
+### Usage Patterns
 
-### bmad-memory-search
-Search for existing memories by content, type, or keywords.
+**Search for prior knowledge:**
+```
+memory search insights "authentication"
+memory search events "mistake"
+```
 
-**Usage:**
-- "Search for anything about..."
-- "Find previous decisions about..."
-- "What do we know about..."
+**Store learned knowledge:**
+```
+memory create insight "Use group_id for all database operations"
+memory create entity "Qwen3" "Model"
+memory create relation "Qwen3" "Ollama" "RUNS_ON"
+```
 
-**Parameters:**
-- `query` (required): Search terms
-- `group_id` (required): Tenant identifier (e.g., `roninos`, `faith-meats`)
-- `types` (optional): Filter by node type
-- `confidence_min` (optional): Minimum confidence threshold
-
-### bmad-memory-get
-Retrieve a specific memory by topic_key with optional history and evidence.
-
-**Usage:**
-- "Get the DeepSeek insight"
-- "Show memory roninos.insight.deepseek"
-- "What's the current version of..."
-
-**Parameters:**
-- `topic_key` (required): Memory identifier
-- `group_id` (required): Tenant identifier
-- `include_history` (optional): Show all versions
-- `include_evidence` (optional): Show supporting traces
+**Record decisions:**
+```
+memory log decision "Use Ollama for embeddings"
+  --alternatives "OpenAI: cost, Custom: effort"
+  --context "Reduce API costs"
+```
 
 ## Memory Types
 
-| Type | Use Case | Example topic_key |
-|------|----------|-------------------|
-| Insight | Learned knowledge, best practices | `roninos.insight.deepseek-cost` |
-| Decision | Architectural/process decisions | `roninos.decision.neo4j-storage` |
-| Research | Domain research findings | `roninos.research.agent-lifecycle` |
-| ADR | Agent Decision Records | `roninos.adr.001-auth-pattern` |
-| Pattern | Code/process patterns | `roninos.pattern.steel-frame` |
-| Agent | Agent definitions | `roninos.agent.bmad-master` |
+| Type | Use Case | Example |
+|------|----------|---------|
+| Insight | Learned knowledge, best practices | `ins_17540` |
+| Decision | Architectural/process decisions | `adr_001` |
+| Event | Raw execution traces | `evt_17530` |
+| Entity | Knowledge graph nodes | `Qwen3` |
 
 ## Group IDs
 
@@ -94,14 +93,13 @@ Retrieve a specific memory by topic_key with optional history and evidence.
 ## Memory Lifecycle
 
 ```
-draft → testing → active → deprecated → archived
-           ↓
-    promotion (requires approval)
+proposed → active → deprecated → archived
+              ↓
+         revision (creates new version via SUPERSEDES)
 ```
 
 ### Status Meanings
-- `draft`: Created but not validated
-- `testing`: Under evaluation
+- `proposed`: Created but not validated
 - `active`: Approved for production use
 - `deprecated`: No longer recommended
 - `archived`: Historical reference only
@@ -121,24 +119,16 @@ draft → testing → active → deprecated → archived
 
 ## MCP Integration
 
-The memory system exposes an MCP server for tool integration:
+The memory system exposes MCP tools for direct invocation:
 
-```json
-{
-  "mcpServers": {
-    "memory": {
-      "url": "http://127.0.0.1:3001/mcp",
-      "description": "Neo4j + PostgreSQL memory"
-    }
-  }
-}
-```
-
-### Available MCP Tools
-
-1. **memory_search** - Search knowledge graph
-2. **memory_get** - Retrieve specific memory
-3. **memory_store** - Create new memory
-4. **memory_promote** - Activate a draft memory
-5. **memory_deprecate** - Mark memory as deprecated
-6. **memory_archive** - Archive a memory
+| Tool | Layer | Purpose |
+|------|-------|---------|
+| `MCP_DOCKER_create_entities` | 2 | Create entities in knowledge graph |
+| `MCP_DOCKER_create_relations` | 2 | Link entities |
+| `MCP_DOCKER_search_memories` | 2 | Search knowledge graph |
+| `MCP_DOCKER_read_graph` | 2 | Read full graph |
+| `unified-memory_log_event` | 1 | Log event to PostgreSQL |
+| `unified-memory_search_events` | 1 | Search PostgreSQL traces |
+| `unified-memory_create_insight` | 2 | Create Neo4j insight |
+| `unified-memory_search_insights` | 2 | Search Neo4j insights |
+| `unified-memory_log_decision` | 3 | Log ADR decision |

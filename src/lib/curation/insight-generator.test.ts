@@ -5,8 +5,8 @@ import {
   summarizeDraft,
   calculateDraftQuality,
   type DraftInsight,
-  type DetectedPattern,
 } from "./insight-generator";
+import type { DetectedPattern } from "./pattern-detector";
 import type { InsightRecord } from "../neo4j/queries/insert-insight";
 
 describe("insight-generator", () => {
@@ -50,7 +50,7 @@ describe("insight-generator", () => {
       const drafts = generateDraftInsights(patterns, { min_confidence: 0.7 });
 
       expect(drafts.length).toBe(1);
-      expect(drafts[0].event_type).not.toBe("low-conf");
+      expect(drafts[0].source_pattern.event_type).not.toBe("low-conf");
     });
 
     it("should limit to max_drafts", () => {

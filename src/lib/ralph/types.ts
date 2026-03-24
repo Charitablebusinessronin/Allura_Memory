@@ -166,6 +166,7 @@ export interface AdaptationDecision {
  */
 export interface RalphConfig {
   maxIterations: number;
+  kmax?: number; // Maximum steps budget (optional, for ADAS sandbox compatibility)
   completionPromise: CompletionPromise;
   initialPlan?: RalphPlan;
   onProgress?: (step: RalphStep) => void;
@@ -173,6 +174,7 @@ export interface RalphConfig {
   onCompletion?: (output: unknown, iterations: number) => void;
   onHalt?: (reason: HaltReason) => void;
   enableSelfCorrection: boolean;
+  enableLogging?: boolean; // Enable debug logging
   errorClassificationEnabled: boolean;
   backoffStrategy: BackoffStrategy;
   stuckDetectionEnabled: boolean;

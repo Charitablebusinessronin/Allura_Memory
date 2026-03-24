@@ -147,9 +147,9 @@ function neo4jToRecord(record: Record<string, unknown>): InsightRecord {
       }
       // Handle Neo4j Date object
       if (dateTime.year && dateTime.month && dateTime.day) {
-        const y = typeof dateTime.year === "object" && "toNumber" in dateTime.year ? dateTime.year.toNumber() : dateTime.year;
-        const m = typeof dateTime.month === "object" && "toNumber" in dateTime.month ? dateTime.month.toNumber() : dateTime.month;
-        const d = typeof dateTime.day === "object" && "toNumber" in dateTime.day ? dateTime.day.toNumber() : dateTime.day;
+        const y = typeof dateTime.year === "object" && dateTime.year.toNumber ? dateTime.year.toNumber() : dateTime.year as number;
+        const m = typeof dateTime.month === "object" && dateTime.month.toNumber ? dateTime.month.toNumber() : dateTime.month as number;
+        const d = typeof dateTime.day === "object" && dateTime.day.toNumber ? dateTime.day.toNumber() : dateTime.day as number;
         return new Date(y, m - 1, d);
       }
     }
@@ -178,19 +178,35 @@ function neo4jToRecord(record: Record<string, unknown>): InsightRecord {
     return {};
   };
 
+  // Type assertion for props with known Insight properties
+  const p = props as {
+    id: unknown;
+    insight_id: unknown;
+    version: unknown;
+    content: unknown;
+    confidence: unknown;
+    group_id: unknown;
+    source_type: unknown;
+    source_ref: unknown;
+    created_at: unknown;
+    created_by: unknown;
+    status: unknown;
+    metadata: unknown;
+  };
+
   return {
-    id: props.id as string,
-    insight_id: props.insight_id as string,
-    version: convertValue(props.version) as number,
-    content: props.content as string,
-    confidence: convertValue(props.confidence) as number,
-    group_id: props.group_id as string,
-    source_type: props.source_type as InsightSourceType,
-    source_ref: props.source_ref as string | null,
-    created_at: convertDate(props.created_at) as Date,
-    created_by: props.created_by as string | null,
-    status: props.status as InsightStatus,
-    metadata: convertMetadata(props.metadata),
+    id: p.id as string,
+    insight_id: p.insight_id as string,
+    version: convertValue(p.version) as number,
+    content: p.content as string,
+    confidence: convertValue(p.confidence) as number,
+    group_id: p.group_id as string,
+    source_type: p.source_type as InsightSourceType,
+    source_ref: p.source_ref as string | null,
+    created_at: convertDate(p.created_at) as Date,
+    created_by: p.created_by as string | null,
+    status: p.status as InsightStatus,
+    metadata: convertMetadata(p.metadata),
   };
 }
 

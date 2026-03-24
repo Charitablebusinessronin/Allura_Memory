@@ -138,9 +138,9 @@ export class AgentConfidence {
       [agentId]
     );
 
-    return result.rows.map(row => ({
+    return result.rows.map((row: Record<string, unknown>) => ({
       agent_id: row.agent_id,
-      confidence_score: parseFloat(row.confidence_score),
+      confidence_score: parseFloat(row.confidence_score as string),
       success_rate: 0, // Not stored in versions table
       usage_factor: 0,
       feedback_factor: 0,

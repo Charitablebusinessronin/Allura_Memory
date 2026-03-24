@@ -43,7 +43,7 @@ export class AgentDiscovery {
     const candidates = await this.pgClient.listAgents({
       module: filters?.module,
       platform: filters?.platform,
-      status: filters?.status || 'Active',
+      status: (filters?.status || 'Active') as 'Draft' | 'Testing' | 'Active' | 'Deprecated' | 'Archived',
       min_confidence: filters?.min_confidence,
       limit: filters?.limit || 100
     });

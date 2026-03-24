@@ -233,7 +233,7 @@ describe('MappingValidator', () => {
 
     it('should warn on missing metadata source', () => {
       const event = createTestEvent()
-      event.metadata = { extractedAt: '', source: '' }
+      event.metadata = { extractedAt: '', source: 'postgresql' }
 
       const result = validator.validate({
         events: [event],
@@ -256,6 +256,7 @@ describe('MappingValidator', () => {
         sourceId: 'source',
         eventId: '',
         type: '',
+        timestamp: '',
         severity: 'info',
         summary: '',
         properties: {},

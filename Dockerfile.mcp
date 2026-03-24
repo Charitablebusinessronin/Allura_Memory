@@ -1,0 +1,56 @@
+# MCP Memory Server Dockerfile
+# Builds a standalone MCP server container for the Unified AI Engineering Brain
+
+# Build stage - compile TypeScript
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files first for better caching
+COPY package*.json ./
+COPY tsconfig.json ./
+
+# Install all dependencies (including devDependencies for tsc)
+RUN npm ci
+
+# Copy source files
+COPY src/ ./src/
+COPY postgres-init/ ./postgres-init/
+
+# Build TypeScript to JavaScript
+RUN npm run build 2>/dev/null || npx tsc --project tsconfig.json 2>/dev/null || true
+
+# Production stage
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Copy package files and install ALL dependencies (tsx needs some dev deps)
+COPY package*.json ./
+RUN npm ci
+
+# Copy source files needed by MCP server
+COPY src/mcp/memory-server.ts ./src/mcp/memory-server.ts
+COPY src/lib/ ./src/lib/
+COPY src/integrations/ ./src/integrations/
+COPY src/curator/ ./src/curator/
+COPY tsconfig.json ./
+
+# Install tsx for running TypeScript directly
+RUN npm install tsx dotenv
+
+# Create non-root user for security
+RUN addgroup --system --gid 1001 mcp \
+    && adduser --system --uid 1001 --ingroup mcp mcp
+
+# Health check - verifies the process is running
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD pgrep -f "memory-server" > /dev/null || exit 1
+
+# Switch to non-root user
+USER mcp
+
+# Run the MCP server
+CMD ["npx", "tsx", "src/mcp/memory-server.ts"]

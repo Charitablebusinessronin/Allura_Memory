@@ -168,7 +168,7 @@ export class AgentApproval {
       `SELECT * FROM agent_approvals WHERE status = 'pending' ORDER BY created_at ASC`
     );
 
-    return result.rows.map(row => this.rowToApproval(row));
+    return result.rows.map((row: Record<string, unknown>) => this.rowToApproval(row));
   }
 
   async getApprovalHistory(agentId: string): Promise<ApprovalRequest[]> {
@@ -177,7 +177,7 @@ export class AgentApproval {
       [agentId]
     );
 
-    return result.rows.map(row => this.rowToApproval(row));
+    return result.rows.map((row: Record<string, unknown>) => this.rowToApproval(row));
   }
 
   async getApprovalStats(): Promise<ApprovalStats> {

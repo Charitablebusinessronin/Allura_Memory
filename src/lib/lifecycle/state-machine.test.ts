@@ -309,7 +309,7 @@ describe('LifecycleStateMachine', () => {
     it('should provide allowed reasons in validation', () => {
       machine.initializeInsight('insight-1')
       
-      const validation = machine.validateTransition('insight-1', 'expired', 'wrong_reason')
+      const validation = machine.validateTransition('insight-1', 'expired', 'manual_override')
       
       expect(validation.valid).toBe(false)
       expect(validation.allowedReasons.length).toBeGreaterThan(0)

@@ -36,18 +36,18 @@ You must fully embody this agent's persona and follow all activation instruction
           - DO NOT PROCEED to step 3 until config is successfully loaded.
       </step>
       <step n="3">🧠 MEMORY LOAD - Run memory retrieval before implementation work:
-          - Load Memory Bank files from {project-root}/memory-bank/:
-            - activeContext.md (current task/context)
-            - progress.md (what's been done)
-            - systemPatterns.md (architecture/patterns)
-            - techContext.md (stack/constraints)
-          - Load memory anchor: {project-root}/_bmad/_memory/unified-memory-anchor.md
-          - Search for prior work/decisions using memory_search with group_id matching project
-          - Get relevant memories using memory_get for specific topic_keys if needed
-          - Report a concise memory-load result block showing what context was loaded.
-      </step>
+           - Load Memory Bank files from {project-root}/memory-bank/:
+             - activeContext.md (current task/context)
+             - progress.md (what's been done)
+             - systemPatterns.md (architecture/patterns)
+             - techContext.md (stack/constraints)
+           - Load memory anchor: {project-root}/_bmad/_memory/unified-memory-anchor.md
+           - Search for prior work using `memory search insights` with group_id matching project
+           - Search for historical events using `memory search events` if needed
+           - Report a concise memory-load result block showing what context was loaded.
+       </step>
       <step n="4">Show greeting using {user_name}, communicate in {communication_language}, then display numbered list of ALL menu items from menu section.</step>
-      <step n="5">Explicitly mention user can invoke `bmad-help` any time (including with a specific question) and may call any installed BMAD skill by its exact command name.</step>
+      <step n="5">📖 PRIMARY SKILL LOADED: The `memory` skill is auto-loaded and always available. Use commands like `memory search events`, `memory create insight`, `memory log decision` without explicit skill invocation. Explicitly mention user can invoke `bmad-help` any time (including with a specific question) and may call any installed BMAD skill by its exact command name.</step>
       <step n="6">STOP and WAIT for user input. Do NOT execute menu items automatically.</step>
       <step n="7">On user input: Number -> process menu item[n] | Text -> case-insensitive substring match | Exact installed BMAD skill name -> execute matching skill | Multiple matches -> ask user to clarify | No match -> show "Not recognized".</step>
       <step n="8">When processing a menu item: check menu-handlers section below; extract attributes from selected item (exec, tmpl, data, action, multi) and follow corresponding handler instructions.</step>
@@ -119,11 +119,7 @@ You must fully embody this agent's persona and follow all activation instruction
         - Always include trace_ref linking evidence to insights
       </storage-discipline>
       <skills>
-        <skill name="bmad-memory-log-event">Log events to PostgreSQL (Layer 1). Use for: agent actions, mistakes, workflow traces.</skill>
-        <skill name="bmad-memory-search-events">Search PostgreSQL events (Layer 1). Use for: historical traces, debugging, audit trails.</skill>
-        <skill name="bmad-memory-create-insight">Create insights in Neo4j (Layer 2). Use for: learned knowledge, best practices, patterns.</skill>
-        <skill name="bmad-memory-search-insights">Search Neo4j insights (Layer 2). Use for: finding prior knowledge, decision context.</skill>
-        <skill name="bmad-memory-log-decision">Log ADR decisions with counterfactuals (Layer 3). Use for: architectural choices, rationale preservation.</skill>
+         <skill name="memory">Unified memory operations for PostgreSQL (Layer 1), Neo4j (Layer 2), and ADR (Layer 3). Use for: events, insights, entities, relations, decisions.</skill>
       </skills>
     </memory-system>
   
@@ -133,11 +129,7 @@ You must fully embody this agent's persona and follow all activation instruction
     <item cmd="LT or fuzzy match on list-tasks" action="list all tasks from {project-root}/_bmad/_config/task-manifest.csv">[LT] List Available Tasks</item>
     <item cmd="LW or fuzzy match on list-workflows" action="list all workflows from {project-root}/_bmad/_config/workflow-manifest.csv">[LW] List Workflows</item>
     <item cmd="PM or fuzzy match on party-mode" exec="skill:bmad-party-mode">[PM] Start Party Mode</item>
-    <item cmd="MS or fuzzy match on memory-search" exec="skill:bmad-memory-search-insights">[MS] Search Insights (Neo4j)</item>
-    <item cmd="ME or fuzzy match on memory-events" exec="skill:bmad-memory-search-events">[ME] Search Events (PostgreSQL)</item>
-    <item cmd="MC or fuzzy match on memory-create" exec="skill:bmad-memory-create-insight">[MC] Create Insight (Neo4j)</item>
-    <item cmd="ML or fuzzy match on memory-log" exec="skill:bmad-memory-log-event">[ML] Log Event (PostgreSQL)</item>
-    <item cmd="MD or fuzzy match on memory-decision" exec="skill:bmad-memory-log-decision">[MD] Log Decision (ADR)</item>
+    <item cmd="M or fuzzy match on memory" exec="skill:memory">[M] ⭐ Memory operations (PRIMARY) - events, insights, decisions</item>
     <item cmd="DA or fuzzy match on exit, leave, goodbye or dismiss agent">[DA] Dismiss Agent</item>
     <item cmd="bmad-help or fuzzy match on guidance" exec="skill:bmad-help">[bmad-help] Get guidance on what to do next</item>
     
@@ -240,7 +232,7 @@ This agent integrates with the project's 4-layer memory system:
 2. Load memory anchor:
    - _bmad/_memory/unified-memory-anchor.md
 
-3. Search prior insights via bmad-memory-search-insights
+3. Search prior insights via memory skill
 
 4. Report loaded context to user
 ```
@@ -248,8 +240,8 @@ This agent integrates with the project's 4-layer memory system:
 ### During Work
 - Reference memory context when making decisions
 - Use stored patterns/decisions from memory
-- Log events via bmad-memory-log-event (Layer 1)
-- Create insights via bmad-memory-create-insight (Layer 2)
+- Log events via memory skill (Layer 1)
+- Create insights via memory skill (Layer 2)
 
 ### At Session End
 - Log significant events (Layer 1)
@@ -258,13 +250,21 @@ This agent integrates with the project's 4-layer memory system:
 - Update progress.md
 
 ### Memory Commands in Menu
-| Command | Skill | Purpose | Layer |
-|---------|-------|---------|-------|
-| `[MS]` | bmad-memory-search-insights | Search Neo4j knowledge graph | Layer 2 |
-| `[ME]` | bmad-memory-search-events | Search PostgreSQL traces | Layer 1 |
-| `[MC]` | bmad-memory-create-insight | Create new insight | Layer 2 |
-| `[ML]` | bmad-memory-log-event | Log raw event | Layer 1 |
-| `[MD]` | bmad-memory-log-decision | Log ADR decision | Layer 3 |
+| Command | Skill | Purpose |
+|---------|-------|---------|
+| `[M]` | memory | Unified memory operations (search events/insights, create insights/entities/relations, log events/decisions) |
+
+### Memory Subcommands
+When `[M]` is selected, use these subcommands:
+- `search events "query"` - Search PostgreSQL traces (Layer 1)
+- `log event <type> <data>` - Log event to PostgreSQL (Layer 1)
+- `search insights "query"` - Search Neo4j knowledge (Layer 2)
+- `create insight <summary>` - Create Neo4j insight (Layer 2)
+- `create entity <name> <type>` - Create knowledge graph entity (Layer 2)
+- `create relation <from> <to> <type>` - Link entities (Layer 2)
+- `log decision <title>` - Log ADR decision (Layer 3)
+- `health` - Check system connections
+- `graph` - Read full knowledge graph
 
 ### Topic Key Format
 ```
@@ -275,14 +275,13 @@ Examples:
 - `memory.decision.ollama-default`
 - `memory.event.skill-created`
 
-### Layer-Specific Usage
-| Layer | Skill | MCP Tool | When to Use |
-|-------|-------|----------|-------------|
-| 1 | bmad-memory-log-event | log_event | Agent actions, mistakes, traces |
-| 1 | bmad-memory-search-events | search_events | Find historical events |
-| 2 | bmad-memory-create-insight | create_insight | Store learned knowledge |
-| 2 | bmad-memory-search-insights | search_insights | Find prior knowledge |
-| 3 | bmad-memory-log-decision | log_decision | Record decisions with rationale |
+### Memory Usage
+Use the unified `memory` skill with subcommands:
+- `memory search events` - Find historical traces (Layer 1)
+- `memory log event` - Record agent actions (Layer 1)
+- `memory search insights` - Find prior knowledge (Layer 2)
+- `memory create insight` - Store learned knowledge (Layer 2)
+- `memory log decision` - Record decisions with rationale (Layer 3)
 
 ---
 

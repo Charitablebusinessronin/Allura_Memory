@@ -128,11 +128,11 @@ export class AgentLineage {
       [agentId]
     );
 
-    return result.rows.map(row => ({
+    return result.rows.map((row: Record<string, unknown>) => ({
       agent_id: row.agent_id,
       version: row.version,
       status: row.status,
-      confidence_score: parseFloat(row.confidence_score),
+      confidence_score: parseFloat(row.confidence_score as string),
       created_at: row.created_at,
       notes: row.notes || ''
     }));
@@ -222,7 +222,7 @@ export class AgentLineage {
         { agent_id: agentId }
       );
 
-      return result.records.map(record => {
+      return result.records.map((record: { get: (key: string) => { properties: Record<string, unknown> } }) => {
         const node = record.get('new');
         return {
           agent_id: node.properties.agent_id,
@@ -234,10 +234,10 @@ export class AgentLineage {
           version: node.properties.version,
           status: node.properties.status,
           confidence_score: typeof node.properties.confidence_score === 'object'
-            ? node.properties.confidence_score.toNumber()
-            : parseFloat(node.properties.confidence_score),
-          created_at: new Date(node.properties.created_at),
-          updated_at: new Date(node.properties.updated_at)
+            ? (node.properties.confidence_score as { toNumber: () => number }).toNumber()
+            : parseFloat(node.properties.confidence_score as string),
+          created_at: new Date(node.properties.created_at as string),
+          updated_at: new Date(node.properties.updated_at as string)
         };
       });
     } finally {

@@ -21,7 +21,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 
 import { Pool } from "pg";
-import neo4j from "neo4j-driver";
+import neo4j, { Driver } from "neo4j-driver";
 import { config } from "dotenv";
 import { DUPLICATE_THRESHOLD } from "@/lib/dedup/insight-duplicate";
 import {
@@ -190,7 +190,7 @@ function canPromoteInsight(insight: {
 
 // Connection pools
 let pgPool: Pool | null = null;
-let neo4jDriver: neo4j.Driver | null = null;
+let neo4jDriver: Driver | null = null;
 const curatorRuntime = createCuratorRuntime();
 
 async function initializeConnections() {
@@ -952,7 +952,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           params.limit = neo4j.int(Math.trunc(limit));
           
           const result = await session.run(cypher, params);
-          const insights = result.records.map(r => r.get('i').properties);
+          const insights = result.records.map((r: { get: (key: string) => { properties: Record<string, unknown> } }) => r.get('i').properties);
           
           return { content: [{ type: "text", text: JSON.stringify(insights, null, 2) }] };
         } finally {
@@ -1152,7 +1152,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             LIMIT $limit
           `, { query, limit: neo4j.int(Math.trunc(limit)) });
           
-          const decisions = result.records.map(r => r.get('adr').properties);
+          const decisions = result.records.map((r: { get: (key: string) => { properties: Record<string, unknown> } }) => r.get('adr').properties);
           return { content: [{ type: "text", text: JSON.stringify(decisions, null, 2) }] };
         } finally {
           await session.close();
@@ -1419,7 +1419,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
       
       case "reject_insight": {
-        const { insight_id, reason } = args as any;
+        const { insight_id, reason, revoked_by } = args as { insight_id: string; reason: string; revoked_by?: string };
 
         await curatorRuntime.approvalSyncService.rejectInsight(insight_id, reason);
         await pgPool!.query(`
@@ -1513,7 +1513,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           
           const result = await session.run(cypher, params);
           
-          const insights = result.records.map(r => {
+          const insights = result.records.map((r: { get: (key: string) => { properties: Record<string, unknown> } }) => {
             const props = r.get('i').properties;
             return {
                 id: props.insight_id,
@@ -1578,7 +1578,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           params.limit = neo4j.int(Math.trunc(limit));
           
           const result = await session.run(cypher, params);
-          const items = result.records.map(r => r.get('k').properties);
+          const items = result.records.map((r: { get: (key: string) => { properties: Record<string, unknown> } }) => r.get('k').properties);
           
           return {
             content: [{
@@ -1586,7 +1586,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               text: JSON.stringify({
                 source: 'neo4j',
                 count: items.length,
-                items: items.map((k: any) => ({
+                items: items.map((k: Record<string, unknown>) => ({
                   id: k.id,
                   title: k.title,
                   summary: k.summary,
@@ -1727,9 +1727,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           `, { agent_id });
           
           // Filter by group_id if provided
-          let filteredKnowledge = knowledgeResult.records.map(r => r.get('k').properties);
+          let filteredKnowledge = knowledgeResult.records.map((r: { get: (key: string) => { properties: Record<string, unknown> } }) => r.get('k').properties);
           if (group_id) {
-            filteredKnowledge = filteredKnowledge.filter(k => 
+            filteredKnowledge = filteredKnowledge.filter((k: Record<string, unknown>) => 
               k.group_id === group_id || !k.group_id
             );
           }
@@ -1740,8 +1740,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               text: JSON.stringify({
                 agent_id,
                 knowledge_items: filteredKnowledge,
-                activation_prompts: promptsResult.records.map(r => r.get('p').properties),
-                recent_decisions: decisionsResult.records.map(r => r.get('d').properties)
+                activation_prompts: promptsResult.records.map((r: { get: (key: string) => { properties: Record<string, unknown> } }) => r.get('p').properties),
+                recent_decisions: decisionsResult.records.map((r: { get: (key: string) => { properties: Record<string, unknown> } }) => r.get('d').properties)
               }, null, 2)
             }]
           };
@@ -1762,14 +1762,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           cypher += ` RETURN a ORDER BY a.created_at DESC`;
           
           const result = await session.run(cypher);
-          const agents = result.records.map(r => r.get('a').properties);
+          const agents = result.records.map((r: { get: (key: string) => { properties: Record<string, unknown> } }) => r.get('a').properties);
           
           return {
             content: [{
               type: "text",
               text: JSON.stringify({
                 count: agents.length,
-                agents: agents.map(a => ({
+                agents: agents.map((a: Record<string, unknown>) => ({
                   id: a.id,
                   name: a.name,
                   status: a.status,
@@ -1946,14 +1946,14 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
     const session = neo4jDriver!.session();
     try {
       const result = await session.run(`MATCH (a:AIAgent) RETURN a ORDER BY a.created_at DESC`);
-      const agents = result.records.map(r => r.get('a').properties);
+      const agents = result.records.map((r: { get: (key: string) => { properties: Record<string, unknown> } }) => r.get('a').properties);
       return {
         contents: [{
           uri,
           mimeType: "application/json",
           text: JSON.stringify({
             count: agents.length,
-            agents: agents.map(a => ({
+            agents: agents.map((a: Record<string, unknown>) => ({
               id: a.id,
               name: a.name,
               status: a.status,
@@ -1978,7 +1978,7 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
         ORDER BY k.confidence DESC
         LIMIT 50
       `);
-      const items = result.records.map(r => ({
+      const items = result.records.map((r: { get: (key: string) => unknown }) => ({
         id: r.get('id'),
         title: r.get('title'),
         category: r.get('category'),

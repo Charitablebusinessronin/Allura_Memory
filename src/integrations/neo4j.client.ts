@@ -5,11 +5,11 @@
  */
 
 import { Neo4jInsight } from "../curator/types";
-import neo4j from "neo4j-driver";
+import neo4j, { Driver, int } from "neo4j-driver";
 
-let driver: neo4j.Driver | null = null;
+let driver: Driver | null = null;
 
-function getDriver(): neo4j.Driver {
+function getDriver(): Driver {
   if (!driver) {
     const uri = process.env.NEO4J_URI || "bolt://localhost:7687";
     const user = process.env.NEO4J_USER || "neo4j";
@@ -49,21 +49,35 @@ export class Neo4jClientImpl implements Neo4jClient {
         ORDER BY i.confidence DESC
         LIMIT $limit
         `,
-        { limit: neo4j.int(limit) }
+        { limit: int(limit) }
       );
 
-      return result.records.map((r) => {
-        const props = r.get('i').properties;
+      return result.records.map((r: { get: (key: string) => { properties: Record<string, unknown> } }) => {
+        const props = r.get('i').properties as {
+          id?: string;
+          insight_id?: string;
+          summary?: string;
+          confidence?: number;
+          canonical_tag?: string;
+          display_tag?: string;
+          source_project?: string;
+          status?: string;
+          promoted_to_notion?: boolean;
+          notion_page_id?: string;
+          promoted_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
         return {
-          id: props.id || props.insight_id,
-          title: props.title || props.summary?.substring(0, 100) || '',
-          summary: props.summary,
-          confidence: props.confidence,
-          canonicalTag: props.canonical_tag,
+          id: props.id || props.insight_id || '',
+          title: props.summary?.substring(0, 100) || '',
+          summary: props.summary || '',
+          confidence: props.confidence || 0,
+          canonicalTag: props.canonical_tag || '',
           displayTag: props.display_tag,
-          sourceProject: props.source_project || props.canonical_tag,
-          status: props.status,
-          promotedToNotion: props.promoted_to_notion,
+          sourceProject: props.source_project || props.canonical_tag || '',
+          status: (props.status || 'Proposed') as Neo4jInsight['status'],
+          promotedToNotion: props.promoted_to_notion || false,
           notionPageId: props.notion_page_id,
           promotedAt: props.promoted_at,
           createdAt: props.created_at,

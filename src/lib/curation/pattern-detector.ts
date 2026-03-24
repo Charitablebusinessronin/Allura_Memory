@@ -283,6 +283,7 @@ export async function getEventTypes(
  * @returns Statistics about patterns detected
  */
 export async function getPatternStats(groupId: string): Promise<{
+  group_id: string;
   total_patterns: number;
   total_events: number;
   avg_success_rate: number;
@@ -318,6 +319,7 @@ export async function getPatternStats(groupId: string): Promise<{
     .map((p) => p.event_type);
 
   return {
+    group_id: groupId,
     total_patterns: totalPatterns,
     total_events: totalEvents,
     avg_success_rate: Math.round(avgSuccessRate * 100) / 100,

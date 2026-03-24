@@ -180,7 +180,7 @@ export class AgentLifecycle {
       [agentId]
     );
 
-    return result.rows.map(row => ({
+    return result.rows.map((row: Record<string, unknown>) => ({
       id: row.id,
       agent_id: row.agent_id,
       from_state: 'Unknown', // We don't store from_state in current schema

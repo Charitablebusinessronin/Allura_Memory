@@ -28,6 +28,15 @@ npx vitest run -t "should build connection config"
 # E2E Tests (requires databases)
 npm run test:e2e              # Full system integration tests
 RUN_E2E_TESTS=true npm test   # Behavioral stress tests
+
+# MCP Server
+npm run mcp                   # Start MCP server for OpenClaw integration
+npm run mcp:dev               # MCP server with watch mode
+
+# Curator Operations
+npm run curator:run           # Run knowledge promotion pipeline
+npm run curator:approve       # Approve pending insights
+npm run curator:reject        # Reject pending insights
 ```
 
 ## Code Style Guidelines
@@ -50,6 +59,17 @@ This project uses **strict TypeScript**. All compiler options enforce strict typ
 - **Avoid `any`** - use `unknown` if type is truly unknown
 - **Use `type` imports** for types only, `import` for values
 
+```typescript
+// Good - type-only import
+import type { ConnectionConfig } from "./connection";
+
+// Good - value import
+import { getPool } from "./connection";
+
+// Good - both together
+import { getPool, type ConnectionConfig } from "./connection";
+```
+
 ### Import Conventions
 
 Use the `@` path alias for project imports:
@@ -63,6 +83,11 @@ import type { ConnectionConfig } from "@/lib/postgres/connection";
 // Avoid
 import { Button } from "../../components/ui/button";
 ```
+
+**Import order:**
+1. External packages (React, Next.js, third-party)
+2. Internal aliases (`@/`)
+3. Relative imports (`./`, `../`)
 
 ### Naming Conventions
 
@@ -137,19 +162,70 @@ pool.on("error", (err: Error) => {
 });
 ```
 
+## Testing Patterns
+
+### Test Structure
+
+```typescript
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
+
+describe("Feature Name", () => {
+  beforeAll(async () => {
+    // Setup: environment, database connections
+    process.env.POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD || "testpassword";
+  });
+
+  afterAll(async () => {
+    // Cleanup: close connections, reset state
+    await closePool();
+  });
+
+  describe("functionName", () => {
+    it("should describe expected behavior", () => {
+      const result = functionUnderTest(input);
+      expect(result).toBe(expectedOutput);
+    });
+  });
+});
+```
+
+### Database Test Setup
+
+```typescript
+// beforeAll: Initialize schema and connections
+beforeAll(async () => {
+  const pool = getPool();
+  await initializeSchema(pool);
+});
+
+// afterAll: Clean up connections
+afterAll(async () => {
+  await closePool();
+});
+```
+
 ## Project Structure
 
 ```
 src/
 ├── app/                    # Next.js App Router pages and layouts
+│   ├── (main)/            # Main app routes (authenticated)
+│   └── (external)/        # Public routes
 ├── components/ui/          # shadcn/ui component library
 ├── lib/
 │   ├── postgres/           # PostgreSQL connection and queries (server-only)
+│   │   ├── connection.ts        # Pool management, server-only check
+│   │   └── queries/             # Event/outcome CRUD
 │   ├── neo4j/              # Neo4j queries and semantic memory
+│   │   └── queries/             # Insight versioning, SUPERSEDES edges
 │   ├── ralph/              # Self-correcting execution loops
 │   ├── circuit-breaker/    # Cascade failure prevention
 │   ├── adas/               # Automated Design of Agent Systems
-│   └── adr/                # Agent Decision Records (5-layer audit)
+│   ├── agents/             # Agent lifecycle, lineage, discovery
+│   ├── sync/               # Notion sync and drift detection
+│   ├── lifecycle/          # Insight state machine
+│   ├── policy/             # RBAC, allow/deny rules
+│   └── validation/         # Input validation, group governance
 ├── curator/                # Knowledge promotion pipeline, HITL curation
 ├── mcp/                    # MCP server (memory tools for OpenClaw)
 ├── server/                 # Next.js server actions
@@ -164,13 +240,42 @@ src/
 - **Append-only** for traces - never mutate existing records
 - Use connection pooling (pg Pool)
 - Always include `group_id` for tenant isolation
-- Always use `.toNumber()` on Neo4j Integer fields
+
+```typescript
+// Example: Insert event with group_id
+await insertEvent({
+  group_id: 'project_alpha',
+  event_type: 'agent_action',
+  agent_id: 'code_assistant',
+  metadata: { action: 'created_file' },
+  status: 'completed'
+});
+```
 
 ### Neo4j (Semantic Memory)
 
 - **SUPERSEDES** pattern for versioning Insights (immutable)
 - Every node MUST have a `group_id` property
+- Use `.toNumber()` on Neo4j Integer fields (they're objects, not numbers)
 - Use `neo4jInt()` for LIMIT/SKIP parameters
+
+```typescript
+// Good: Convert Neo4j Integers
+const count = result.records[0].get("count").toNumber();
+
+// Good: Version an insight
+(:Insight {version: 2})-[:SUPERSEDES]->(:Insight {version: 1, status: "deprecated"})
+```
+
+## Key Design Principles
+
+| Principle | Implementation |
+|-----------|----------------|
+| group_id | Every database operation must include group_id for tenant isolation |
+| Append-only | PostgreSQL traces are immutable - never UPDATE or DELETE |
+| SUPERSEDES | Neo4j insights use versioning - new versions link to old |
+| HITL | Agents require human approval before behavior-changing actions |
+| ADR | Every architectural decision logged with 5-layer audit trail |
 
 ## BMAD Workflow Orchestration
 
@@ -202,16 +307,6 @@ After completing work:
 - Update `progress.md` with completed items
 - Update `activeContext.md` if starting new work
 
-## Key Design Principles
-
-| Principle | Implementation |
-|-----------|----------------|
-| group_id | Every database operation must include group_id for tenant isolation |
-| Append-only | PostgreSQL traces are immutable - never UPDATE or DELETE |
-| SUPERSEDES | Neo4j insights use versioning - new versions link to old |
-| HITL | Agents require human approval before behavior-changing actions |
-| ADR | Every architectural decision logged with 5-layer audit trail |
-
 ## Verification Commands
 
 ```bash
@@ -221,11 +316,17 @@ docker exec knowledge-postgres pg_isready -U ronin4life -d memory
 # Check Neo4j
 curl -s http://localhost:7474 | jq .neo4j_version
 
+# Test Neo4j Cypher
+docker exec knowledge-neo4j cypher-shell -u neo4j -p 'Kamina2025*' "RETURN 1 AS test"
+
 # Run typecheck
 npm run typecheck
 
 # Run all tests
 npm test
+
+# Run specific test file
+npx vitest run src/lib/postgres/connection.test.ts
 ```
 
 ## Project-Specific Rules

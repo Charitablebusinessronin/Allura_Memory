@@ -109,7 +109,7 @@ docker exec knowledge-postgres pg_isready -U ronin4life -d memory
 curl -s http://localhost:7474 | jq .neo4j_version
 
 # Test Neo4j Cypher
-docker exec knowledge-neo4j cypher-shell -u neo4j -p 'KaminaTHC*' "RETURN 1 AS test"
+docker exec knowledge-neo4j cypher-shell -u neo4j -p 'Kamina2025*' "RETURN 1 AS test"
 ```
 
 ## Updating Memory Bank
