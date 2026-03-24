@@ -1,20 +1,15 @@
 {
-  "$schema": "https://opencode.ai/config.schema.json",
+  "$schema": "https://opencode.ai/config.json",
   "mcp": {
+    "MCP_DOCKER": {
+      "type": "local",
+      "command": ["docker", "mcp", "gateway", "run"],
+      "enabled": true
+    },
     "ronin-memory": {
       "type": "local",
-      "command": "npx",
-      "args": ["tsx", "src/mcp/memory-server.ts"],
-      "env": {
-        "NEO4J_URI": "${NEO4J_URI}",
-        "NEO4J_USER": "${NEO4J_USER}",
-        "NEO4J_PASSWORD": "${NEO4J_PASSWORD}",
-        "POSTGRES_HOST": "${POSTGRES_HOST}",
-        "POSTGRES_PORT": "${POSTGRES_PORT}",
-        "POSTGRES_DB": "${POSTGRES_DB}",
-        "POSTGRES_USER": "${POSTGRES_USER}",
-        "POSTGRES_PASSWORD": "${POSTGRES_PASSWORD}"
-      }
+      "command": ["docker", "exec", "-i", "knowledge-mcp", "node", "dist/mcp/memory-server.js"],
+      "enabled": true
     }
   },
   "agents": ".opencode/agents",
