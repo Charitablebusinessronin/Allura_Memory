@@ -81,7 +81,7 @@ The NFRs driving architecture are:
 ### Runtime / Orchestration Decisions
 
 - **BMAD is the governing method** for planning and implementation sequencing
-- **Sisyphus is the runtime orchestrator** inside the OpenCode/oh-my-openagent layer
+- **Sisyphus is the runtime orchestrator** inside the OhMyOpenCode layer
 - **Prometheus plans**, **Sisyphus orchestrates**, **Hephaestus executes deep coding**, **Oracle/Momus review hard logic**, **Explore/Librarian gather supporting context**
 - Ralph loops are bounded and may run only after BMAD has created stories
 - Ralph loops operate at story scope, not free-form repo scope
@@ -91,6 +91,32 @@ The NFRs driving architecture are:
   - no premature abstraction
   - one epic at a time
   - minimize communication overhead by centralizing decisions in architecture and stories
+
+### Toolchain Architecture
+
+**Complete execution flow:**
+
+```
+Agent Layer (OhMyOpenCode, OpenClaw, etc.)
+    ↓ use memory via
+MCP_DOCKER (Docker-based MCP tool runtime)
+    ↓ connects to
+ronin-memory MCP Server (src/mcp/memory-server.ts)
+    ↓ reads/writes
+PostgreSQL (Layer 1 - Raw Traces)
+    ↓ promotion (HITL)
+Neo4j (Layer 2/3/4 - Semantic Knowledge)
+    ↓ mirroring
+Notion (Human Workspace)
+```
+
+**Key clarifications:**
+- **OhMyOpenCode** and **OpenClaw** are AI agents that consume memory tools
+- **MCP_DOCKER** is the Docker-based MCP tool runtime (not a CLI runner)
+- **ronin-memory** (`src/mcp/memory-server.ts`) is an MCP server providing memory tools
+- **ADAS** (`src/lib/adas/`) is a runtime library, NOT a CLI runner - it runs as part of the Next.js application
+
+The agents themselves (OhMyOpenCode, OpenClaw) are the entry points - they invoke MCP tools through MCP_DOCKER, which connects to the ronin-memory MCP server.
 
 ### Data Architecture
 

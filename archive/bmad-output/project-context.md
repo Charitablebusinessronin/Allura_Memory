@@ -1,7 +1,7 @@
 ---
 project_name: 'memory'
 user_name: 'Ronin704'
-date: '2026-03-17'
+date: '2026-03-24'
 sections_completed:
   - technology_stack
   - language_rules
@@ -16,7 +16,35 @@ optimized_for_llm: true
 
 # Project Context for AI Agents
 
-_This file contains critical rules and patterns that AI agents must follow when implementing code in this project. Focus on unobvious details that agents might otherwise miss._
+_This file contains critical rules and patterns that AI agents must follow when implementing code in this project. Focus on unobsolet details that agents might otherwise miss._
+
+## The Memory Card Vision
+
+This project implements a **self-improving AI knowledge system** (the "Memory Card") that:
+
+1. **Separates noise from signal** - Raw traces in PostgreSQL, curated knowledge in Neo4j
+2. **Learns continuously** - A "knowledge curator" periodically promotes insights from raw traces to semantic memory
+3. **Self-corrects** - Ralph loops enable bounded self-improvement
+4. **Human-in-the-loop** - Critical changes require human approval (HITL)
+5. **Powers AI agents** - Provides persistent memory for OhMyOpenCode and OpenClaw agents
+
+**Architecture:**
+```
+Agent Layer (OhMyOpenCode, OpenClaw)
+    ↓ uses MCP_DOCKER commands
+MCP_DOCKER CLI (mcp-add, mcp-exec, etc.)
+    ↓ pulls from Docker Hub MCP registry
+MCP Servers (ronin-memory, notion-mcp, github-mcp, etc.)
+    ↓ connect to
+Data Sources (PostgreSQL, Neo4j, Notion, GitHub)
+```
+Agent Layer (OhMyOpenCode, OpenClaw)
+    ↓ uses memory via
+MCP_DOCKER (MCP tool runtime)
+    ↓ connects to
+ronin-memory MCP Server
+    ↓ reads/writes
+PostgreSQL (Layer 1 - Raw Traces) + Neo4j (Layer 2/3/4)
 
 ---
 
@@ -344,7 +372,7 @@ src/
 │   ├── postgres/         # PostgreSQL client and queries
 │   ├── neo4j/            # Neo4j client and queries
 │   ├── notion/           # Notion API client
-│   ├── adas/             # ADAS pipeline modules
+│   ├── adas/             # ADAS runtime library (NOT a CLI runner - internal backend logic only)
 │   ├── policy/           # Policy gateway
 │   ├── validation/       # Validation utilities (group_id, trace_ref)
 │   ├── budget/           # Budget enforcement
@@ -508,6 +536,55 @@ if (typeof window !== "undefined") {
 - Environment variables with passwords are REQUIRED at startup
 - Validate all external data with Zod before use
 
+**MCP_DOCKER Architecture**
+
+```
+Agent Layer (OhMyOpenCode, OpenClaw, etc.)
+    ↓ use MCP_DOCKER commands
+MCP_DOCKER CLI (mcp-add, mcp-exec, mcp-find, etc.)
+    ↓ pulls from Docker Hub MCP registry
+MCP Servers (ronin-memory, notion-mcp, github-mcp, tavily-mcp, etc.)
+    ↓ connect to
+Data Sources (PostgreSQL, Neo4j, Notion, GitHub, Web, etc.)
+```
+
+**MCP_DOCKER Commands:**
+- `MCP_DOCKER_mcp-find` - Search Docker Hub MCP registry for available servers
+- `MCP_DOCKER_mcp-add` - Add an MCP server to the session
+- `MCP_DOCKER_mcp-exec` - Execute a tool on an MCP server
+- `MCP_DOCKER_mcp-config-set` - Configure an MCP server
+- `MCP_DOCKER_mcp-remove` - Remove an MCP server from the session
+
+**Benefits:**
+- Pre-built MCP servers from Docker Hub save context window
+- No inline tool definitions needed
+- Containerized execution for isolation
+- Easy to add/remove servers dynamically
+
+**ronin-memory MCP Server**
+
+ronin-memory (`src/mcp/memory-server.ts`) is our **custom MCP server** that provides memory tools. It's containerized in `Dockerfile.mcp`:
+
+```bash
+# Build the MCP server image
+docker build -f Dockerfile.mcp -t ronin-memory-mcp:latest .
+
+# Add to MCP_DOCKER
+MCP_DOCKER_mcp-add ronin-memory-mcp
+```
+
+**Dockerfile.mcp structure:**
+- Multi-stage build (builder + runner)
+- Runs TypeScript directly with tsx
+- Security: runs as non-root user
+- Health checks enabled
+- Includes all memory system dependencies (`src/lib/`, `src/integrations/`, `src/curator/`)
+
+**Why custom vs Docker Hub?**
+- Docker Hub MCP servers are pre-built for common tools (GitHub, Notion, etc.)
+- ronin-memory is custom because it connects to YOUR PostgreSQL/Neo4j instances
+- It provides project-specific tools like `search_memories`, `create_insight`, `promote_knowledge`
+
 ### Key Project Files
 
 | File | Purpose |
@@ -535,4 +612,50 @@ if (typeof window !== "undefined") {
 - Review quarterly for outdated rules
 - Remove rules that become obvious over time
 
-**Last Updated:** 2026-03-17
+**Last Updated:** 2026-03-24
+
+---
+
+## Critical Clarifications
+
+### MCP_DOCKER Architecture
+
+**IMPORTANT:** This project uses MCP_DOCKER to manage MCP servers from [Docker Hub MCP](https://hub.docker.com/mcp).
+
+**Architecture:**
+```
+Agent Layer (OhMyOpenCode, OpenClaw, etc.)
+    ↓ use MCP_DOCKER commands
+MCP_DOCKER CLI (mcp-add, mcp-exec, mcp-find, etc.)
+    ↓ pull from Docker Hub MCP registry
+MCP Servers (ronin-memory, notion-mcp, github-mcp, tavily-mcp, etc.)
+    ↓ connect to
+Data Sources (PostgreSQL, Neo4j, Notion, GitHub, Web, etc.)
+```
+
+**MCP_DOCKER Commands:**
+- `MCP_DOCKER_mcp-find` - Search Docker Hub MCP registry for available servers
+- `MCP_DOCKER_mcp-add` - Add an MCP server to the session
+- `MCP_DOCKER_mcp-exec` - Execute a tool on an MCP server
+- `MCP_DOCKER_mcp-config-set` - Configure an MCP server
+- `MCP_DOCKER_mcp-remove` - Remove an MCP server from the session
+
+**Benefits:**
+- Pre-built MCP servers from Docker Hub save context window
+- No inline tool definitions needed
+- Containerized execution for isolation
+- Easy to add/remove servers dynamically
+
+**ronin-memory** (`src/mcp/memory-server.ts`) is our custom MCP server that provides memory tools to agents. It's accessed via MCP_DOCKER like any other MCP server.
+
+### ADAS Module is NOT a CLI Runner
+
+**IMPORTANT:** The `src/lib/adas/` module is a **backend runtime library** for agent evaluation, promotion detection, and sandboxed testing. It is **NOT** an external CLI runner or agent orchestrator.
+
+**Component Types:**
+- **Agents**: OhMyOpenCode, OpenClaw - AI agents that execute tasks
+- **MCP_DOCKER**: CLI tool for managing MCP servers from Docker Hub
+- **MCP Servers**: ronin-memory, notion-mcp, etc. - Provide tools to agents
+- **Backend Library**: ADAS (`src/lib/adas/`) - Internal logic only, not a CLI tool
+
+Do not confuse the ADAS library with the outer agent layer. ADAS code runs as part of the Next.js application, consumed by the memory system's internal processes.
