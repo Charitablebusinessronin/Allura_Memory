@@ -92,7 +92,7 @@ import { Button } from "../../components/ui/button";
 ### Naming Conventions
 
 | Element | Convention | Example |
-|---------|------------|---------|
+|---------|------------|---------||
 | Files | kebab-case | `connection.test.ts` |
 | Components | PascalCase | `Button.tsx` |
 | Hooks | camelCase with `use` prefix | `useMobile.ts` |
@@ -220,7 +220,7 @@ src/
 │   │   └── queries/             # Insight versioning, SUPERSEDES edges
 │   ├── ralph/              # Self-correcting execution loops
 │   ├── circuit-breaker/    # Cascade failure prevention
-│   ├── adas/               # Automated Design of Agent Systems
+│   ├── adas/               # Backend runtime library: agent evaluation, promotion detection, sandboxed testing (NOT a CLI runner)
 │   ├── agents/             # Agent lifecycle, lineage, discovery
 │   ├── sync/               # Notion sync and drift detection
 │   ├── lifecycle/          # Insight state machine
@@ -276,6 +276,25 @@ const count = result.records[0].get("count").toNumber();
 | SUPERSEDES | Neo4j insights use versioning - new versions link to old |
 | HITL | Agents require human approval before behavior-changing actions |
 | ADR | Every architectural decision logged with 5-layer audit trail |
+| Toolchain | opencode (CLI session runner) → OpenClaw (MCP reasoner) → ronin-memory MCP server |
+| ADAS Module | `src/lib/adas/` is a backend runtime library (agent evaluation, promotion detection, sandboxed testing) — NOT an external CLI runner or agent orchestrator |
+
+## Toolchain Context
+
+This project is developed using **opencode** as the CLI agent session runner.
+**OpenClaw** consumes the `ronin-memory` MCP server (defined in `opencode.json`) for all memory read/write operations.
+`src/lib/adas/` is internal backend logic for agent evaluation, promotion detection, and sandboxed testing —
+it is not an external agent runner or CLI tool. Do not confuse the ADAS library with the outer agent toolchain.
+
+```
+opencode (CLI)
+    ↓ invokes
+OpenClaw (MCP reasoner)
+    ↓ calls tools on
+ronin-memory MCP server (src/mcp/memory-server.ts)
+    ↓ reads/writes
+PostgreSQL (Layer 1) + Neo4j (Layer 2/3/4)
+```
 
 ## BMAD Workflow Orchestration
 
@@ -334,8 +353,9 @@ npx vitest run src/lib/postgres/connection.test.ts
 1. Use **Zustand** for client state management
 2. Use **shadcn/ui** for UI components
 3. Use **server actions** for state persistence
-4. Use **group_id** in all database operations for tenant isolation
-5. Use **append-only** for PostgreSQL traces - never mutate
-6. Use **SUPERSEDES** for Neo4j versioning - never edit Insights
-7. Write **tests first** (TDD) for new functionality
-8. All code goes through **Ralph Loop** pattern for complex operations
+4. Use **Zustand** for client state management (existing pattern in `src/stores/`)
+5. Use **group_id** in all database operations for tenant isolation
+6. Use **append-only** for PostgreSQL traces - never mutate
+7. Use **SUPERSEDES** for Neo4j versioning - never edit Insights
+8. Write **tests first** (TDD) for new functionality
+9. All code goes through **Ralph Loop** pattern for complex operations
