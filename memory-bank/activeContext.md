@@ -23,12 +23,17 @@
 
 ## Current Focus
 
-**Documentation Consolidation & Maintenance**
+**OpenCode Configuration Migration**
 
-Following archival of `bmad-output/` to `archive/`, consolidating documentation:
-- ✅ Merged `project-context.md` into `AGENTS.md`
-- ⏳ Update `progress.md` with completion status
-- ⏳ Update archive INDEX.md with current doc references
+Migrated from global to project-only OpenCode setup:
+- ✅ Created `.opencode/` directory structure
+- ✅ Copied `oh-my-opencode.json` to project (project precedence)
+- ✅ Removed `oh-my-opencode@latest` plugin from global config
+- ✅ Migrated 10 user-installed skills to `.opencode/skills/`
+- ✅ Removed all skills from `.opencode/skills/` (using built-ins only)
+- ✅ Added `.opencode/oh-my-opencode.json` to `.gitignore`
+
+**Result**: Project now uses built-in OpenCode skills only (playwright, git-master, frontend-ui-ux, dev-browser).
 
 ---
 
@@ -116,7 +121,8 @@ Neo4j Insight (active)
 
 1. **Qwen3-Embedding-8B Integration** — Local embeddings available for semantic search
 2. **Documentation Polish** — Consolidate remaining archive references
+3. **OpenCode Skills Strategy** — Decide which skills to re-install to project (if any)
 
 ---
 
-*Last Updated: 2026-03-24*
+*Last Updated: 2026-03-25*
