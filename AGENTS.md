@@ -239,6 +239,35 @@ Read at session start:
 3. `memory-bank/systemPatterns.md` - Architecture
 4. `memory-bank/techContext.md` - Stack
 
+## Documentation Structure
+
+The `docs/` directory contains project documentation artifacts organized by project or feature folder, following template-based documentation standards.
+
+### Project Folder Structure
+
+Each project or feature gets its own folder under `docs/<project-name>/`.
+
+| Document | Purpose | Template |
+|----------|---------|----------|
+| `<project-name>/BLUEPRINT.md` | Core design intent, requirements, architecture | `templates/BLUEPRINT.template.md` |
+| `<project-name>/SOLUTION-ARCHITECTURE.md` | System topology, component interactions | `templates/SOLUTION-ARCHITECTURE.template.md` |
+| `<project-name>/DATA-DICTIONARY.md` | Canonical field-level definitions for all entities | `templates/DATA-DICTIONARY.template.md` |
+| `<project-name>/REQUIREMENTS-MATRIX.md` | Business-to-functional requirement traceability | `templates/REQUIREMENTS-MATRIX.template.md` |
+| `<project-name>/RISKS-AND-DECISIONS.md` | Architectural decisions (AD-##) and risk register (RK-##) | `templates/RISKS-AND-DECISIONS.template.md` |
+| `<project-name>/TASKS.md` | Implementation tasks and tracking | Follow the project task format used in `docs/Carlos_plan_framework/TASKS.md` |
+
+### Example
+
+Use `docs/Carlos_plan_framework/` as the reference structure for project documentation folders.
+
+### Documentation Rules
+
+- Start from templates in `templates/` directory - never from scratch
+- Use Requirement IDs: B1, B2 (Business), F1, F2 (Functional), AD-01 (Decision), RK-01 (Risk)
+- Include Mermaid diagrams for component, data flow, and sequence diagrams
+- Cross-reference related documents with explicit links
+- Keep each project folder flat - no nested `plans/`, `drafts/`, or `adas/` directories inside project documentation folders
+
 ## Copilot Rules Reference
 
 See `.github/copilot-instructions.md` for:

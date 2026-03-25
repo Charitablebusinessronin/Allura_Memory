@@ -25,6 +25,7 @@ import {
   type ConstraintContext,
   type OptionContext,
   type BudgetSnapshot,
+  type AgentDecisionRecord,
   createDefaultReproducibilityInfo,
 } from "./types";
 
@@ -98,6 +99,100 @@ describe("ADR Capture", () => {
       expect(adr!.reproducibility.prompt.promptId).toBe("prompt-123");
       expect(adr!.reproducibility.tools).toHaveLength(1);
       expect(adr!.reproducibility.tools[0].toolName).toBe("search");
+    });
+
+    it("should check for existing ID before insert (W2)", async () => {
+      const options: ADRCreationOptions = {
+        groupId: "group-1",
+        sessionId: testSessionId,
+        actionType: "tool_invocation",
+        reproducibility: createDefaultReproducibilityInfo(),
+      };
+
+      const adrId1 = await capture.beginDecision(options);
+      await capture.finalize();
+
+      const existingADR = await storage.findById(adrId1);
+      expect(existingADR).not.toBeNull();
+
+      const capture2 = createADRCapture(storage);
+      const adrId2 = await capture2.beginDecision(options);
+
+      expect(adrId2).toBeDefined();
+      expect(adrId2).not.toBe(adrId1);
+    });
+
+    it("should generate unique IDs on retry (W3)", async () => {
+      const options: ADRCreationOptions = {
+        groupId: "group-1",
+        sessionId: testSessionId,
+        actionType: "tool_invocation",
+        reproducibility: createDefaultReproducibilityInfo(),
+      };
+
+      const ids = new Set<string>();
+      for (let i = 0; i < 100; i++) {
+        const adrId = await capture.beginDecision(options);
+        await capture.finalize();
+        ids.add(adrId);
+      }
+
+      expect(ids.size).toBe(100);
+    });
+  });
+
+  describe("beginDecision retry logic", () => {
+    it("should retry on duplicate key error", async () => {
+      let saveAttempts = 0;
+
+      class MockDuplicateStorage extends InMemoryADRStorage {
+        override async save(adr: AgentDecisionRecord): Promise<string> {
+          saveAttempts++;
+          if (saveAttempts === 1) {
+            const error = new Error('duplicate key value violates unique constraint "agent_decision_records_adr_id_key"');
+            throw error;
+          }
+          return super.save(adr);
+        }
+      }
+
+      const mockStorage = new MockDuplicateStorage();
+      const mockCapture = createADRCapture(mockStorage);
+
+      const options: ADRCreationOptions = {
+        groupId: "group-1",
+        sessionId: testSessionId,
+        actionType: "tool_invocation",
+        reproducibility: createDefaultReproducibilityInfo(),
+      };
+
+      const adrId = await mockCapture.beginDecision(options);
+      expect(adrId).toBeDefined();
+      expect(saveAttempts).toBe(2);
+    });
+
+    it("should throw after max retries on persistent duplicate key", async () => {
+      let saveAttempts = 0;
+
+      class PersistentDuplicateStorage extends InMemoryADRStorage {
+        override async save(adr: AgentDecisionRecord): Promise<string> {
+          saveAttempts++;
+          throw new Error('duplicate key value violates unique constraint "agent_decision_records_adr_id_key"');
+        }
+      }
+
+      const mockStorage = new PersistentDuplicateStorage();
+      const mockCapture = createADRCapture(mockStorage);
+
+      const options: ADRCreationOptions = {
+        groupId: "group-1",
+        sessionId: testSessionId,
+        actionType: "tool_invocation",
+        reproducibility: createDefaultReproducibilityInfo(),
+      };
+
+      await expect(mockCapture.beginDecision(options)).rejects.toThrow();
+      expect(saveAttempts).toBe(3);
     });
   });
 
