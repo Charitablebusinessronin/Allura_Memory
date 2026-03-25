@@ -1,0 +1,313 @@
+#!/usr/bin/env python3
+"""
+Mission Control CLI - Agent Harness
+CLI interface for OpenClaw Mission Control
+Ports: 5420 (Frontend), 5002 (API)
+
+Usage:
+    mc-cli board create --name "Research Queue" --description "Pending tasks"
+    mc-cli agent create --name ronin-researcher --config agent.yaml
+    mc-cli gateway create --name "Ronin Gateway" --url http://gateway:3002
+    mc-cli setup  # Complete automated setup
+    mc-cli  # Enter REPL mode
+"""
+
+import argparse
+import json
+import os
+import sys
+from typing import Optional
+import urllib.request
+import urllib.error
+
+DEFAULT_FRONTEND_PORT = 5420
+DEFAULT_API_PORT = 5002
+API_BASE = f"http://localhost:{DEFAULT_API_PORT}"
+
+
+def get_auth_token():
+    return os.environ.get(
+        "MISSION_CONTROL_TOKEN", 
+        "5KsX6-7qREpWKrxUFpKP9NEFW2RP2ByjVP-xxG0EcsQDzIiqFgFAcfMfMoSfnNUal4E"
+    )
+
+
+def api_request(method: str, endpoint: str, data: Optional[dict] = None):
+    url = f"{API_BASE}{endpoint}"
+    headers = {
+        "Authorization": f"Bearer {get_auth_token()}",
+        "Content-Type": "application/json"
+    }
+    
+    try:
+        if data:
+            req = urllib.request.Request(
+                url, 
+                data=json.dumps(data).encode(), 
+                headers=headers, 
+                method=method
+            )
+        else:
+            req = urllib.request.Request(url, headers=headers, method=method)
+        
+        with urllib.request.urlopen(req) as response:
+            return json.loads(response.read().decode())
+    except urllib.error.HTTPError as e:
+        print(f"Error: {e.code} - {e.read().decode()}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+
+
+def cmd_board_create(args):
+    data = {
+        "name": args.name,
+        "slug": args.slug or args.name.lower().replace(" ", "-"),
+        "description": args.description,
+        "board_type": args.type,
+        "board_group_id": args.board_group_id,
+        "require_approval_for_done": True,
+        "max_agents": args.max_agents
+    }
+    
+    result = api_request("POST", "/boards", data)
+    print(f"Board created: {result.get('id')}")
+    print(f"  Name: {result.get('name')}")
+    print(f"  Slug: {result.get('slug')}")
+
+
+def cmd_board_list(args):
+    result = api_request("GET", "/boards")
+    boards = result.get("items", [])
+    
+    print(f"Boards ({len(boards)} total):")
+    for board in boards:
+        print(f"  - {board.get('name')} ({board.get('slug')}) [{board.get('id')[:8]}...]")
+
+
+def cmd_agent_create(args):
+    with open(args.config, 'r') as f:
+        config = f.read()
+    
+    data = {
+        "name": args.name,
+        "board_id": args.board_id,
+        "config_yaml": config,
+        "schedule": args.schedule,
+        "enabled": True
+    }
+    
+    result = api_request("POST", "/agents", data)
+    print(f"Agent created: {result.get('id')}")
+    print(f"  Name: {result.get('name')}")
+    print(f"  Schedule: {args.schedule}")
+
+
+def cmd_agent_list(args):
+    result = api_request("GET", "/agents")
+    agents = result.get("items", [])
+    
+    print(f"Agents ({len(agents)} total):")
+    for agent in agents:
+        status = "enabled" if agent.get("enabled") else "disabled"
+        print(f"  - {agent.get('name')} ({status}) [{agent.get('id')[:8]}...]")
+
+
+def cmd_gateway_create(args):
+    data = {
+        "name": args.name,
+        "endpoint_url": args.url,
+        "gateway_type": args.type,
+        "status": "active"
+    }
+    
+    result = api_request("POST", "/gateways", data)
+    print(f"Gateway created: {result.get('id')}")
+    print(f"  Name: {result.get('name')}")
+    print(f"  URL: {result.get('endpoint_url')}")
+
+
+def cmd_gateway_list(args):
+    result = api_request("GET", "/gateways")
+    gateways = result.get("items", [])
+    
+    print(f"Gateways ({len(gateways)} total):")
+    for gw in gateways:
+        print(f"  - {gw.get('name')} ({gw.get('gateway_type')}) [{gw.get('id')[:8]}...]")
+
+
+def cmd_setup(args):
+    print("Setting up Mission Control for Ronin Memory...\n")
+    
+    org = api_request("GET", "/organizations")
+    org_id = org.get("items", [{}])[0].get("id")
+    if not org_id:
+        print("No organization found")
+        sys.exit(1)
+    print(f"Organization: {org.get('items')[0].get('name')} ({org_id})\n")
+    
+    board_groups = api_request("GET", f"/board-groups?organization_id={org_id}")
+    research_group = next(
+        (bg for bg in board_groups.get("items", []) if "Research" in bg.get("name", "")),
+        None
+    )
+    if not research_group:
+        print("Research Queue & ADAS Discoveries group not found")
+        sys.exit(1)
+    print(f"Board Group: {research_group.get('name')}\n")
+    
+    print("Creating boards...")
+    board1 = api_request("POST", "/boards", {
+        "name": "Research Queue",
+        "slug": "research-queue",
+        "description": "Pending research tasks and discoveries awaiting processing",
+        "board_type": "goal",
+        "board_group_id": research_group.get("id"),
+        "require_approval_for_done": True,
+        "max_agents": 5
+    })
+    print(f"  Research Queue: {board1.get('id')[:8]}...")
+    
+    board2 = api_request("POST", "/boards", {
+        "name": "ADAS Discoveries",
+        "slug": "adas-discoveries",
+        "description": "Automated Design of Agentic Systems - discovered agent designs",
+        "board_type": "goal",
+        "board_group_id": research_group.get("id"),
+        "require_approval_for_done": True,
+        "max_agents": 5
+    })
+    print(f"  ADAS Discoveries: {board2.get('id')[:8]}...\n")
+    
+    print("Connecting gateway...")
+    gateway = api_request("POST", "/gateways", {
+        "name": "Ronin Memory Gateway",
+        "endpoint_url": "http://openclaw-gateway:3002",
+        "gateway_type": "mcp",
+        "status": "active"
+    })
+    print(f"  Gateway: {gateway.get('id')[:8]}...\n")
+    
+    print("Setup complete!")
+    print(f"\nFrontend: http://localhost:{DEFAULT_FRONTEND_PORT}")
+    print(f"API: http://localhost:{DEFAULT_API_PORT}")
+
+
+def cmd_repl():
+    print(f"\nMission Control CLI - REPL Mode")
+    print(f"Connected to: {API_BASE}\n")
+    print("Commands: board, agent, gateway, setup, help, quit\n")
+    
+    while True:
+        try:
+            cmd = input("mc-cli> ").strip()
+            if not cmd:
+                continue
+            if cmd in ("quit", "exit", "q"):
+                break
+            if cmd == "help":
+                print("\nAvailable commands:")
+                print("  board list - List all boards")
+                print("  agent list - List all agents")
+                print("  gateway list - List all gateways")
+                print("  setup - Complete Ronin Memory setup")
+                print("  quit - Exit REPL\n")
+                continue
+            
+            parts = cmd.split()
+            if parts[0] == "board" and len(parts) > 1 and parts[1] == "list":
+                cmd_board_list(None)
+            elif parts[0] == "agent" and len(parts) > 1 and parts[1] == "list":
+                cmd_agent_list(None)
+            elif parts[0] == "gateway" and len(parts) > 1 and parts[1] == "list":
+                cmd_gateway_list(None)
+            elif parts[0] == "setup":
+                cmd_setup(None)
+            else:
+                print(f"Unknown command: {cmd}")
+        except KeyboardInterrupt:
+            print("\n")
+            break
+        except EOFError:
+            break
+    
+    print("Goodbye!")
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Mission Control CLI",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  mc-cli board create --name "Research Queue" --description "Pending tasks"
+  mc-cli agent create --name ronin-researcher --config agent.yaml --board-id <id>
+  mc-cli gateway create --name "Ronin Gateway" --url http://gateway:3002
+  mc-cli setup  # Complete automated setup
+        """
+    )
+    
+    subparsers = parser.add_subparsers(dest="command", help="Commands")
+    
+    board_parser = subparsers.add_parser("board", help="Board management")
+    board_subparsers = board_parser.add_subparsers(dest="board_command")
+    
+    create_board = board_subparsers.add_parser("create", help="Create a board")
+    create_board.add_argument("--name", required=True, help="Board name")
+    create_board.add_argument("--slug", help="Board slug")
+    create_board.add_argument("--description", required=True, help="Board description")
+    create_board.add_argument("--type", default="goal", choices=["goal", "project"])
+    create_board.add_argument("--board-group-id", help="Board group ID")
+    create_board.add_argument("--max-agents", type=int, default=5)
+    
+    board_subparsers.add_parser("list", help="List all boards")
+    
+    agent_parser = subparsers.add_parser("agent", help="Agent management")
+    agent_subparsers = agent_parser.add_subparsers(dest="agent_command")
+    
+    create_agent = agent_subparsers.add_parser("create", help="Create an agent")
+    create_agent.add_argument("--name", required=True, help="Agent name")
+    create_agent.add_argument("--config", required=True, help="Path to agent YAML config")
+    create_agent.add_argument("--board-id", required=True, help="Board ID")
+    create_agent.add_argument("--schedule", default="0 */6 * * *", help="Cron schedule")
+    
+    agent_subparsers.add_parser("list", help="List all agents")
+    
+    gateway_parser = subparsers.add_parser("gateway", help="Gateway management")
+    gateway_subparsers = gateway_parser.add_subparsers(dest="gateway_command")
+    
+    create_gateway = gateway_subparsers.add_parser("create", help="Create a gateway")
+    create_gateway.add_argument("--name", required=True, help="Gateway name")
+    create_gateway.add_argument("--url", required=True, help="Gateway endpoint URL")
+    create_gateway.add_argument("--type", default="mcp", choices=["mcp", "openclaw"])
+    
+    gateway_subparsers.add_parser("list", help="List all gateways")
+    
+    subparsers.add_parser("setup", help="Complete Ronin Memory setup")
+    
+    args = parser.parse_args()
+    
+    if args.command == "board":
+        if args.board_command == "create":
+            cmd_board_create(args)
+        elif args.board_command == "list":
+            cmd_board_list(args)
+    elif args.command == "agent":
+        if args.agent_command == "create":
+            cmd_agent_create(args)
+        elif args.agent_command == "list":
+            cmd_agent_list(args)
+    elif args.command == "gateway":
+        if args.gateway_command == "create":
+            cmd_gateway_create(args)
+        elif args.gateway_command == "list":
+            cmd_gateway_list(args)
+    elif args.command == "setup":
+        cmd_setup(args)
+    else:
+        cmd_repl()
+
+
+if __name__ == "__main__":
+    main()

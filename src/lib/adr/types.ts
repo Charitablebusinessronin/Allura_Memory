@@ -632,12 +632,27 @@ function sortObjectKeys(obj: unknown): unknown {
 }
 
 /**
+ * Counter for ID generation entropy
+ * Ensures uniqueness even when called multiple times within the same millisecond
+ */
+let idCounter = 0;
+
+/**
  * Generate unique ID for ADR components
+ * Uses timestamp + random + counter for maximum uniqueness
  */
 export function generateId(prefix: string): string {
   const timestamp = Date.now().toString(36);
   const random = Math.random().toString(36).substring(2, 10);
-  return `${prefix}_${timestamp}_${random}`;
+  const counter = (idCounter++).toString(36);
+  return `${prefix}_${timestamp}_${random}_${counter}`;
+}
+
+/**
+ * Reset the ID counter (for testing purposes)
+ */
+export function resetIdCounter(): void {
+  idCounter = 0;
 }
 
 /**
