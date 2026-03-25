@@ -17,6 +17,14 @@
 
 ## Completed Work
 
+### 2026-03-25: OpenCode Project-Only Migration
+- [x] Created `.opencode/` directory structure
+- [x] Migrated `oh-my-opencode.json` from global to project config
+- [x] Removed `oh-my-opencode@latest` plugin from global `~/.config/opencode/opencode.json`
+- [x] Migrated 10 user-installed skills to `.opencode/skills/`
+- [x] Removed all skills from `.opencode/skills/` (using built-ins only)
+- [x] Added `.opencode/oh-my-opencode.json` to `.gitignore`
+
 ### 2026-03-24: Documentation Consolidation
 - [x] Archived `bmad-output/` to `archive/bmad-output/`
 - [x] Merged `project-context.md` into `AGENTS.md`
@@ -141,4 +149,4 @@
 
 ---
 
-*Last Updated: 2026-03-24*
+*Last Updated: 2026-03-25*
