@@ -1,4 +1,4 @@
-# System Patterns: Unified AI Knowledge System
+# System Patterns: Allura's Memory
 
 ## Architecture Overview
 

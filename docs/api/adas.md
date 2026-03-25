@@ -1,911 +1,470 @@
-# adas
+# ADAS: Automated Agent Design & Assistant System
 
-> API documentation for `adas` module.
+> API documentation for the ADAS module. Handles evolutionary design, evaluation, and governance of AI agents.
 
-## Functions
-
-### `createAgentDesign`
-
-Create a new agent design
-
----
-
-### `generateSystemPrompt`
-
-Generate system prompt from configuration
-
----
-
-### `generateAgentCode`
-
-Generate executable code from agent design Returns TypeScript code representation
-
----
-
-### `generateImports`
-
-Generate imports section
-
----
-
-### `generateConfigSection`
-
-Generate configuration section
-
----
-
-### `generateImplementation`
-
-Generate implementation section
-
----
-
-### `generateCoTImplementation`
-
-Generate Chain-of-Thought implementation
-
----
-
-### `generateReActImplementation`
-
-Generate ReAct implementation
-
----
-
-### `generatePlanAndExecuteImplementation`
-
-Generate Plan-and-Execute implementation
-
----
-
-### `generateReflexionImplementation`
-
-Generate Reflexion implementation
-
----
-
-### `generateDefaultImplementation`
-
-Generate default implementation
-
----
-
-### `generateToolImplementations`
-
-Generate tool implementations
-
----
-
-### `generateExports`
-
-Generate exports section
-
----
-
-### `serializeDesign`
-
-Serialize agent design to JSON
-
----
-
-### `deserializeDesign`
-
-Deserialize agent design from JSON
-
----
-
-### `cloneDesign`
-
-Clone an agent design with modifications
-
----
-
-### `incrementVersion`
-
-Increment semantic version
-
----
-
-### `generateRandomDesign`
-
-Generate a random agent design from search space
-
----
-
-### `calculateDiversity`
-
-Calculate diversity between two designs
-
----
-
-### `convertNumber`
-
-Convert Neo4j node to AgentDesignNode
-
----
-
-### `createApprovalWorkflowManager`
-
-Create an approval workflow manager
-
----
-
-### `approveProposal`
-
-Convenience function to approve a proposal
-
----
-
-### `rejectProposal`
-
-Convenience function to reject a proposal
-
----
-
-### `getApprovalStatus`
-
-Convenience function to get approval status
-
----
-
-### `listProposalsByStatus`
-
-Convenience function to list proposals by status
-
----
-
-### `insertADASRun`
-
-ADAS Runs database operations
-
----
-
-### `updateADASRun`
-
-Update ADAS run status and results
-
----
-
-### `logEvaluationEvent`
-
-Log evaluation event to PostgreSQL
-
----
-
-### `logEvaluationOutcome`
-
-Log evaluation outcome to PostgreSQL
-
----
-
-### `createEvaluationHarness`
-
-Factory function to create an evaluation harness
-
----
-
-### `evaluateCandidate`
-
-Convenience function to evaluate a single candidate
-
----
-
-### `evaluateAndRankCandidates`
-
-Convenience function to evaluate and rank multiple candidates
-
----
-
-### `calculateCost`
-
-Calculate cost from token usage
-
----
-
-### `calculateAccuracy`
-
-Calculate accuracy from test results Supports both binary and weighted scoring
-
----
-
-### `calculateCompositeScore`
-
-Calculate composite score from metrics Weighted average of accuracy, cost, and latency  Cost and latency are normalized and inverted (lower is better)
-
----
-
-### `buildMetrics`
-
-Build complete metrics from evaluation results
-
----
-
-### `compareMetrics`
-
-Compare two sets of metrics Returns positive if a is better, negative if b is better
-
----
-
-### `rankCandidates`
-
-Rank candidates by composite score Implements AC3: rank candidates by composite score across accuracy, cost, latency
-
----
-
-### `meetsThresholds`
-
-Check if metrics meet minimum thresholds for a domain
-
----
-
-### `normalizeMetrics`
-
-Normalize metrics to 0-1 scale for comparison
-
----
-
-### `aggregateMetrics`
-
-Aggregate metrics across multiple evaluations
-
----
-
-### `applyRandomMutation`
-
-Apply a random mutation to a design
-
----
-
-### `mutatePrompt`
-
-Mutate the system prompt
-
----
-
-### `addTool`
-
-Add a random tool to the design
-
----
-
-### `removeTool`
-
-Remove a random tool from the design
-
----
-
-### `changeModel`
-
-Change the model configuration
-
----
-
-### `changeStrategy`
-
-Change the reasoning strategy
-
----
-
-### `mutateTemperature`
-
-Mutate model temperature
-
----
-
-### `mutateMaxTokens`
-
-Mutate max tokens
-
----
-
-### `crossoverDesigns`
-
-Crossover two designs to create offspring
-
----
-
-### `createMutationRecord`
-
-Create a mutation record for logging
-
----
-
-### `applyMutations`
-
-Apply multiple mutations in sequence
-
----
-
-### `createPromotionDetector`
-
-Create a promotion detector with configuration
-
----
-
-### `scanForPromotionCandidates`
-
-Convenience function to scan for promotion candidates
-
----
-
-### `getHighConfidenceDesigns`
-
-Convenience function to get high-confidence designs (AC3)
-
----
-
-### `convertNumber`
-
-Convert Neo4j node to AgentDesignNode
-
----
-
-### `createPromotionProposalManager`
-
-Create a promotion proposal manager
-
----
-
-### `createPromotionProposal`
-
-Convenience function to create a proposal
-
----
-
-### `getPendingProposals`
-
-Convenience function to get pending proposals
-
----
-
-### `memoryMB`
-
-Get resource usage from container
-
----
-
-### `createSafetyMonitor`
-
-Create a safety monitor with specified limits
-
----
-
-### `shouldTerminateExecution`
-
-Check if execution should be terminated based on violations
-
----
-
-### `formatViolation`
-
-Format violation for logging
-
----
-
-### `run`
-
-Generated Agent: ${design.name} Design ID: ${design.design_id} Domain: ${design.domain}
-
 ---
 
-### `main`
+## Overview
 
-Generate runner script
+ADAS is a Docker-native system for designing, evaluating, and evolving AI agents using evolutionary search. It uses Ollama cloud models for LLM inference and implements HITL (Human-in-the-Loop) governance for agent promotion.
 
----
-
-### `systemDelta`
-
-Get resource usage from container
-
----
-
-### `createSandboxExecutor`
-
-Create a sandbox executor
-
----
-
-### `executeInSandbox`
+### Architecture
 
-Execute design in sandbox with forward function Convenience function for evaluation harness integration
+```
+Meta Agent → Search Loop → Evaluation Harness → Sandbox → PostgreSQL/Neo4j
+                                                            ↓
+                                                    HITL Approval
+                                                            ↓
+                                                    Active AgentDesign
+```
 
 ---
 
-### `getDefaultSandboxExecutor`
+## Ollama Client (`src/lib/ollama/client.ts`)
 
-Get or create default sandbox executor
-
----
+### Setup
 
-### `createSandboxedForwardFn`
+```typescript
+import { OllamaClient, getOllamaClient } from '@/lib/ollama/client';
 
-Sandboxed forward function wrapper Creates a forward function that executes in the sandbox
+// From environment (OLLAMA_BASE_URL or OLLAMA_CLOUD_URL)
+const client = OllamaClient.fromEnv();
 
----
+// Direct configuration
+const client = new OllamaClient({
+  baseUrl: 'https://ollama.com',
+  timeoutMs: 120_000,
+});
+```
 
-### `evaluateCandidateInSandbox`
+### Methods
 
-Evaluate a candidate in sandbox AC1: Execution occurs in Docker container with restricted network/file access
+#### `listModels(): Promise<OllamaModel[]>`
+Returns available Ollama models.
 
----
+```typescript
+const models = await client.listModels();
+```
 
-### `createSandboxedEvaluationHarness`
+#### `complete(prompt, model, options?): Promise<OllamaCompletion>`
+Generate completion with token tracking (used by EvaluationHarness).
 
-Create a sandboxed evaluation harness
+```typescript
+const result = await client.complete(
+  'What is 2+2?',
+  'qwen3-coder-next:cloud',
+  { temperature: 0.7, num_predict: 4096 }
+);
 
----
+// result.text       — completion text
+// result.usage      — { promptTokens, completionTokens, totalTokens }
+// result.durationMs — execution time
+```
 
-### `executeCodeInSandbox`
+#### `generate(req): Promise<GenerateResponse>`
+Raw generate API with streaming support.
 
-Execute code safely in sandbox with result extraction
+#### `chat(req): Promise<OllamaChatResponse>`
+Chat completion for chat-optimized models.
 
 ---
 
-### `batchEvaluateInSandbox`
+## Model Configuration
 
-Batch evaluate candidates in sandbox
+### ModelTier
 
----
+```typescript
+type ModelTier = 'stable' | 'experimental';
+// Stable: proven models for baseline comparisons
+// Experimental: latest models, opt-in per search
+```
 
-### `createSearchConfig`
+### MODEL_CONFIGS
 
-Create a search configuration with defaults
+Located in `src/lib/adas/agent-design.ts`:
 
----
+| modelId | Tier | Description |
+|---------|------|-------------|
+| `qwen3-coder-next:cloud` | Stable | Code generation specialist (80B) |
+| `deepseek-v3.2:cloud` | Stable | General reasoning (671B) |
+| `minimax-m2.7:cloud` | Experimental | Fast reasoning |
+| `kimi-k2.5:cloud` | Experimental | Reasoning |
+| `glm-5:cloud` | Experimental | General reasoning |
+| `qwen3-vl:235b-cloud` | Experimental | Vision + reasoning (235B) |
 
-### `runMetaAgentSearch`
+### Helper Functions
 
-Run a meta agent search Convenience function for AC1, AC2, AC3
+```typescript
+import {
+  getModelsByTier,
+  getStableModels,
+  getExperimentalModels,
+} from '@/lib/adas/agent-design';
+
+// Filter by tier
+const stable = getStableModels();
+const experimental = getExperimentalModels();
+
+// Or use in search config
+const config = createSearchConfig({
+  searchSpace: {
+    availableModels: getModelsByTier('stable'), // baseline only
+  },
+});
+```
+
+### Adding New Models
+
+```typescript
+// src/lib/adas/agent-design.ts
+{
+  provider: "ollama",
+  modelId: "new-model:cloud",
+  temperature: 0.7,
+  maxTokens: 8192,
+  tier: "experimental",
+  description: "What this model excels at",
+}
+```
+
+---
+
+## Agent Design
+
+### AgentDesign Interface
+
+```typescript
+interface AgentDesign {
+  design_id: string;
+  name: string;
+  version: string;
+  domain: string;
+  description: string;
+  config: AgentDesignConfig;
+  metadata?: AgentDesignMetadata;
+}
+```
+
+### AgentDesignConfig
+
+```typescript
+interface AgentDesignConfig {
+  systemPrompt?: string;
+  tools?: AgentTool[];
+  model?: ModelConfig;
+  reasoningStrategy?: ReasoningStrategy;
+  parameters?: Record<string, unknown>;
+}
+```
+
+### ReasoningStrategy
+
+```typescript
+type ReasoningStrategy = 'cot' | 'react' | 'plan-and-execute' | 'reflexion' | 'custom';
+// cot: Chain of Thought
+// react: Reasoning + Acting
+// plan-and-execute: Plan then execute
+// reflexion: Self-correction loop
+```
+
+---
+
+## Evaluation Harness
+
+### Setup
+
+```typescript
+import { createEvaluationHarness } from '@/lib/adas';
+
+const harness = createEvaluationHarness({
+  groupId: 'my-project',
+  domain: {
+    domainId: 'math',
+    name: 'Math Domain',
+    description: 'Basic arithmetic evaluation',
+    groundTruth: [
+      { id: 't1', input: '2+2', expectedOutput: '4' },
+      { id: 't2', input: '3*3', expectedOutput: '9' },
+    ],
+    accuracyWeight: 0.5,
+    costWeight: 0.25,
+    latencyWeight: 0.25,
+  },
+});
+```
+
+### Evaluate Candidate
+
+```typescript
+const result = await harness.evaluateCandidate(design, forwardFn);
+
+// result.design      — the evaluated design
+// result.metrics     — { accuracy, cost, latencyMs, compositeScore, tokenUsage }
+// result.runId       — ADAS run ID
+// result.passed      — whether it met domain thresholds
+```
+
+### DomainConfig
+
+```typescript
+interface DomainConfig {
+  domainId: string;
+  name: string;
+  description: string;
+  groundTruth: GroundTruthCase[];
+  accuracyWeight: number;  // 0-1, default 0.5
+  costWeight: number;       // 0-1, default 0.25
+  latencyWeight: number;    // 0-1, default 0.25
+}
+
+interface GroundTruthCase {
+  id: string;
+  input: string;
+  expectedOutput: string;
+}
+```
+
+---
+
+## Sandbox Execution
+
+### Options
+
+```typescript
+interface SandboxOptions {
+  timeoutMs: number;              // Max execution time
+  maxCpuPercent: number;          // CPU limit (0-100)
+  maxMemoryMB: number;            // Memory limit
+  networkDisabled: boolean;       // No network access
+  readOnlyRootFilesystem: boolean;
+  maxProcesses: number;           // Max child processes
+  maxOpenFiles: number;           // Max file descriptors
+}
+```
+
+### Execute in Sandbox
+
+```typescript
+import {
+  createSandboxExecutor,
+  evaluateCandidateInSandbox,
+  DEFAULT_KMAX_STEPS,
+} from '@/lib/adas/sandbox';
+
+const result = await evaluateCandidateInSandbox(
+  design,
+  domain,
+  'my-project',
+  { timeoutMs: 30_000 },
+  DEFAULT_KMAX_STEPS  // 100
+);
+```
+
+---
+
+## Promotion Workflow
+
+### Create Proposal
+
+```typescript
+import { createPromotionProposalManager } from '@/lib/adas';
+
+const proposals = createPromotionProposalManager(session);
+
+const proposal = await proposals.createProposal({
+  designId: 'design-uuid',
+  evidence: evaluationMetrics,
+  submittedBy: 'adas-agent',
+});
+```
+
+### Approval Workflow
+
+```typescript
+import { createApprovalWorkflowManager } from '@/lib/adas';
+
+// Approve
+await workflow.approveProposal({
+  proposalId: proposal.id,
+  approvedBy: 'human-reviewer',
+  notes: 'Looks good',
+});
+
+// Reject
+await workflow.rejectProposal({
+  proposalId: proposal.id,
+  rejectedBy: 'human-reviewer',
+  reason: 'Needs more accuracy',
+});
+```
+
+### Status Transitions
+
+```
+candidate → pending_approval → approved → active
+                              ↘ rejected
+```
+
+---
+
+## Search Loop
+
+### Run Meta Agent Search
+
+```typescript
+import {
+  MetaAgentSearch,
+  createSearchConfig,
+  getStableModels,
+} from '@/lib/adas';
+
+const search = new MetaAgentSearch(
+  createSearchConfig({
+    searchId: 'search-001',
+    groupId: 'my-project',
+    domain: mathDomain,
+    maxIterations: 50,
+    populationSize: 10,
+    eliteCount: 2,
+    mutationsPerParent: 3,
+    crossoverRate: 0.3,
+    searchSpace: {
+      availableModels: getStableModels(),
+      availableStrategies: ['cot', 'react'],
+    },
+  })
+);
+
+const result = await search.run();
+
+// result.finalBestDesign   — best agent design found
+// result.finalBestScore    — composite score
+// result.totalCandidates   — number evaluated
+// result.converged        — whether search converged
+```
+
+---
+
+## Metrics
+
+### Calculate Metrics
+
+```typescript
+import {
+  calculateAccuracy,
+  calculateCost,
+  calculateCompositeScore,
+  rankCandidates,
+} from '@/lib/adas/metrics';
+
+// Accuracy (% passed)
+const accuracy = calculateAccuracy(results, groundTruth);
+
+// Cost from token usage
+const cost = calculateCost(tokenUsage, 'qwen3-coder-next:cloud');
+
+// Composite score
+const score = calculateCompositeScore(metrics, domainConfig);
+
+// Rank multiple candidates
+const ranked = rankCandidates(candidatesWithMetrics);
+```
+
+### MODEL_PRICING
+
+```typescript
+// Per 1M tokens (for cost calculation)
+MODEL_PRICING['qwen3-coder-next:cloud'] = { prompt: 0.001, completion: 0.003 };
+```
+
+---
+
+## Mutation & Crossover
+
+### Available Mutations
+
+```typescript
+import {
+  applyRandomMutation,
+  mutatePrompt,
+  changeModel,
+  changeStrategy,
+  mutateTemperature,
+  crossoverDesigns,
+} from '@/lib/adas/mutations';
+
+// Random mutation
+const mutated = applyRandomMutation(design, config);
+
+// Specific mutations
+const withNewModel = changeModel(design, newModelConfig);
+const withNewStrategy = changeStrategy(design, 'react');
+
+// Crossover (combine two designs)
+const offspring = crossoverDesigns(designA, designB);
+```
 
 ---
 
 ## Classes
 
-### `ApprovalWorkflowManager`
+### EvaluationHarness
+Core component for measuring candidate agent designs.
 
-Approval Workflow Manager Handles approve/reject actions with audit trail
+### SandboxExecutor
+Manages Docker-based isolated execution for agent candidates.
 
----
-
-### `EvaluationHarness`
-
-Evaluation Harness class The core component for measuring candidate agent designs
-
----
-
-### `TokenCounter`
-
-Token usage tracker for evaluating agents
-
----
-
-### `LatencyTracker`
-
-Latency tracker for evaluating agents
-
----
-
-### `PromotionDetector`
-
-Promotion Detector Scans ADAS runs and identifies promotion candidates
-
----
-
-### `PromotionProposalManager`
-
-Promotion Proposal Manager Creates and manages AgentDesign proposals in Neo4j
-
----
-
-### `SafetyMonitor`
-
-Safety Monitor class Monitors Docker containers for resource violations
-
----
-
-### `SandboxExecutor`
-
-Sandbox executor class Manages Docker-based isolated execution for agent candidates
-
----
-
-### `KmaxCounter`
-
-Kmax step counter for bounded autonomy
-
----
-
-### `SandboxedEvaluationHarness`
-
-Sandboxed evaluation harness wrapper Provides sandboxed execution for all evaluation operations
-
----
-
-### `MetaAgentSearch`
-
-Meta Agent Search class
-
----
-
-## Interfaces
-
-### `SearchSpace`
-
-Search space configuration Defines the space of possible agent configurations
-
----
-
-### `ApprovalResult`
-
-Approval result
-
----
-
-### `RejectionResult`
-
-Rejection result
-
----
-
-### `ApprovalStatus`
-
-Approval status check result
-
----
-
-### `MutationConfig`
-
-Mutation configuration
-
----
-
-### `MutationRecord`
-
-Mutation record for logging
-
----
-
-### `PromotionConfig`
-
-Promotion configuration
-
----
-
-### `PromotionCandidate`
-
-Promotion candidate identified from ADAS runs
-
----
-
-### `PromotionEvidence`
-
-Evidence collected for a promotion decision
-
----
-
-### `PromotionDetectionResult`
-
-Promotion detection result
-
----
-
-### `ADASRunWithEvidence`
-
-Query result from adas_runs joined with events/outcomes
-
----
-
-### `EventWithMetrics`
-
-Event result with metrics
-
----
-
-### `AgentDesignNode`
-
-AgentDesign node type Stored in Neo4j for versioned agent designs
-
----
-
-### `AgentDesignHead`
-
-AgentDesign head node (tracks current version)
-
----
-
-### `CreateProposalPayload`
-
-Proposal creation payload
-
----
-
-### `CreateProposalResult`
-
-Proposal creation result
-
----
-
-### `ApprovalAction`
-
-Approval action payload
-
----
-
-### `RejectionAction`
-
-Rejection action payload
-
----
-
-### `ApprovalHistoryRecord`
-
-Approval history record
-
----
-
-### `SafetyViolation`
-
-Safety violation record
-
----
-
-### `ResourceUsageStats`
-
-Resource usage statistics
-
----
-
-### `ResourceLimits`
-
-Resource limits configuration
-
----
-
-### `SafetyCheckResult`
-
-Safety check result
-
----
-
-### `SandboxOptions`
-
-Sandbox configuration options
-
----
-
-### `ExecutionResult`
+### SafetyMonitor
+Monitors Docker containers for resource violations.
 
-Execution result from sandbox AC3: Captures stdout, stderr, and exit code
+### PromotionDetector
+Scans ADAS runs and identifies promotion candidates.
 
----
-
-### `ResourceUsage`
-
-Resource usage statistics
-
----
-
-### `KmaxState`
-
-Kmax step counting for bounded autonomy
-
----
-
-### `SandboxExecutionRequest`
-
-Sandbox execution request
-
----
-
-### `DockerManager`
-
-Manager for Docker container operations
-
----
-
-### `SandboxedEvaluationConfig`
-
-Configuration for sandboxed evaluation
-
----
-
-### `SearchConfig`
-
-Search configuration
-
----
-
-### `SearchIteration`
-
-Search iteration result
-
----
-
-### `SearchResult`
-
-Search result
-
----
-
-### `SearchStateRecord`
-
-Search iteration result
-
----
-
-### `StoredDesign`
-
-Design storage for PostgreSQL Note: Design data is stored via events/outcomes tables for trace evidence
-
----
-
-### `AgentDesign`
-
-Agent Design candidate representation This is a serializable representation of an agent architecture that can be evaluated by the harness
-
----
-
-### `AgentDesignConfig`
-
-Agent design configuration Contains the actual architectural decisions
-
----
-
-### `AgentTool`
-
-Tool definition for an agent
-
----
-
-### `ModelConfig`
-
-Model configuration
-
----
-
-### `AgentDesignMetadata`
-
-Design metadata
-
----
-
-### `EvaluationMetrics`
-
-Evaluation metrics for a candidate agent design These form the structured score from AC1
-
----
-
-### `TokenUsage`
-
-Token usage tracking for cost calculation
-
----
+### PromotionProposalManager
+Creates and manages AgentDesign proposals in Neo4j.
 
-### `EvaluationDetails`
+### MetaAgentSearch
+Implements evolutionary search algorithm for agent design discovery.
 
-Detailed evaluation context
-
----
-
-### `EvaluationResult`
-
-Evaluation result combining design and metrics
-
----
-
-### `CandidateRanking`
-
-Comparison ranking result Used for AC3 - ranking candidates by composite score
-
----
-
-### `DomainConfig`
-
-Domain configuration for evaluation Configurable per-domain evaluation criteria from Task 1.2.3
-
----
-
-### `GroundTruthCase`
-
-Ground truth test case
-
----
-
-### `EvaluationHarnessConfig`
-
-Evaluation harness configuration
-
----
-
-### `ADASRun`
-
-ADAS run record - mirrors adas_runs table
-
----
-
-### `ADASRunInsert`
-
-ADAS run insert payload for PostgreSQL
-
----
-
-### `ADASRunRecord`
-
-ADAS run result record from PostgreSQL
-
----
-
-### `EvaluationEventInsert`
-
-Evaluation event insert payload
-
----
-
-### `EvaluationOutcomeInsert`
-
-Evaluation outcome insert payload
-
----
-
-## Type Definitions
-
-### `ManagedTransaction`
-
-Approval Workflow for ADAS Promotion Story 2.4: Automate Design Promotion Logic  Manages approval/rejection of promotion proposals. Implements AC2: Insight becomes active only after human approval in Mission Control
-
----
-
-### `MutationType`
-
-Mutation type for tracking
-
----
-
-### `PromotionStatus`
-
-Promotion status values following the state machine from Task 1: candidate -> pending_approval -> approved/rejected
-
----
-
-### `ManagedTransaction`
-
-Promotion Proposal Creation for ADAS Story 2.4: Automate Design Promotion Logic  Creates Neo4j AgentDesign proposals for high-confidence designs. Implements AC1: Creates candidate versioned Insight/AgentDesign with linked evidence
-
----
-
-### `ViolationType`
-
-Safety constraint violations
-
----
-
-### `of`
-
-Get the most severe violation
-
 ---
-
-### `SandboxOptions`
 
-Sandboxed Evaluation Integration Story 2.3: Integrate Sandboxed Execution for ADAS  Integrates sandbox execution with the evaluation harness to provide safe evaluation of untrusted agent candidates.
+## Environment Variables
 
----
+```bash
+# Ollama
+OLLAMA_BASE_URL=https://ollama.com
 
-### `ReasoningStrategy`
+# Memory Layer
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=memory
+POSTGRES_USER=ronin4life
+NEO4J_URI=bolt://localhost:7687
 
-Reasoning strategy types
+# ADAS Settings
+ADAS_DEFAULT_POPULATION=10
+ADAS_MAX_ITERATIONS=50
+ADAS_STABLE_ONLY=false
+```
 
 ---
 
-### `ForwardFn`
+## Docker Integration
 
-Forward function signature The core function that agents implement to solve domain tasks This is what the harness evaluates
+### Container
 
----
+```bash
+# Build ADAS container
+docker build -f skills/adas-agent/Dockerfile -t adas-agent:latest .
 
-### `EvaluationEventType`
+# Run with databases
+docker compose up -d postgres neo4j
+docker run --rm adas-agent:latest
+```
 
-Evaluation event types for tracking in PostgreSQL
+### Sandbox
 
----
+- Candidates execute in nested Docker container
+- Network disabled by default
+- Read-only filesystem
+- Resource limits enforced
