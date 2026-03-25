@@ -1,26 +1,5 @@
 # Agent Coding Guide
 
-## Allura's Memory
-
-**Allura's Memory** is a **self-improving AI knowledge system** — a persistent memory for AI agents that:
-
-1. **Separates noise from signal** - Raw traces in PostgreSQL, curated knowledge in Neo4j
-2. **Learns continuously** - A "knowledge curator" periodically promotes insights from raw traces to semantic memory
-3. **Self-corrects** - Ralph loops enable bounded self-improvement
-4. **Human-in-the-loop** - Critical changes require human approval (HITL)
-5. **Powers AI agents** - Provides persistent memory for OhMyOpenCode and OpenClaw agents
-
-**Architecture:**
-```
-Agent Layer (OhMyOpenCode, OpenClaw)
-    ↓ uses MCP_DOCKER commands
-MCP_DOCKER CLI (mcp-add, mcp-exec, etc.)
-    ↓ pulls from Docker Hub MCP registry
-MCP Servers (ronin-memory, notion-mcp, github-mcp, etc.)
-    ↓ connect to
-Data Sources (PostgreSQL, Neo4j, Notion, GitHub)
-```
-
 ## Build Commands
 
 ```bash
@@ -30,37 +9,37 @@ npm run build                  # Production build
 npm run start                  # Start production server
 
 # Type Checking & Linting
-npm run typecheck             # Run TypeScript type checking (noEmit)
-npm run lint                  # Run Next.js lint
+npm run typecheck             # TypeScript check (strict, noEmit)
+npm run lint                  # Next.js lint
 
-# Testing (uses bun/vitest)
+# Testing (Vitest + Bun)
 npm test                       # Run all tests once
-npm run test:watch             # Run tests in watch mode
+npm run test:watch             # Watch mode
 
-# Run a single test file
+# Run single test
 npx vitest run src/lib/postgres/connection.test.ts
 npx vitest run -t "should build connection config"
 
 # E2E Tests (requires databases)
-npm run test:e2e              # Full system integration tests
+npm run test:e2e              # Full system integration
 RUN_E2E_TESTS=true npm test   # Behavioral stress tests
 
 # MCP Server
-npm run mcp                   # Start MCP server for OpenClaw
+npm run mcp                   # Start MCP server
 npm run mcp:dev               # MCP server with watch mode
 
 # Curator Operations
 npm run curator:run           # Run knowledge promotion pipeline
-npm run curator:approve       # Approve pending insights
+npm run curator:approve         # Approve pending insights
 npm run curator:reject        # Reject pending insights
 ```
 
 ## TypeScript Standards
 
-This project uses **strict TypeScript** (ES2022 target, `strict: true`, `noEmit: true`).
+Strict TypeScript with `strict: true`, `noEmit: true`, ES2022 target.
 
 ```typescript
-// Explicit types for parameters and return values
+// Explicit types for all functions
 export function getPool(): Pool { ... }
 
 // Use Zod for runtime validation
@@ -77,7 +56,7 @@ function parseData(input: unknown): DataType { ... }
 
 ## Import Conventions
 
-Use the `@` path alias for all project imports:
+Use `@` path alias for all project imports:
 
 ```typescript
 // Good
@@ -163,12 +142,12 @@ describe("Feature Name", () => {
 });
 ```
 
-## Technology Stack & Versions
+## Technology Stack
 
 | Layer | Technology | Version | Purpose |
 |-------|------------|---------|---------|
 | Framework | Next.js | ^16.0.0 | App Router, Server Actions |
-| Language | TypeScript | ^5.9.2 | Strict mode (`strict: true`, `noEmit: true`) |
+| Language | TypeScript | ^5.9.2 | Strict mode, noEmit |
 | Runtime | Node.js | 20-alpine | Docker runtime |
 | UI | React | ^19.2.0 | Server/Client Components |
 | Styling | Tailwind CSS | v4 | `tailwind-merge` + `clsx` (`cn` utility) |
@@ -176,29 +155,10 @@ describe("Feature Name", () => {
 | Validation | Zod | ^4.1.5 | Runtime type validation |
 | Raw Traces | PostgreSQL | 16 (`pg` ^8.16.3) | Append-only event storage |
 | Knowledge Graph | Neo4j | 5.26 + APOC (`neo4j-driver` ^6.0.1) | Versioned insights |
-| Human Workspace | Notion API | 2022-06-28 | Approval workflows |
-| MCP Protocol | @modelcontextprotocol/sdk | ^1.27.1 | Tool interfaces |
-| Docker Execution | dockerode | ^4.0.9 | Sandboxed code execution |
 | Testing | Vitest | ^2.1.9 | Unit + integration tests |
-| Embeddings | Qwen3-Embedding-8B | local | Semantic similarity |
+| MCP Protocol | @modelcontextprotocol/sdk | ^1.27.1 | Tool interfaces |
 
-### Version Constraints
-
-- **TypeScript**: Must use `strict: true`. All function parameters and return types must be explicit.
-- **Neo4j**: Requires APOC plugin for advanced operations.
-- **Node.js**: 20-alpine for consistent Docker builds.
-
-## Key Design Principles
-
-| Principle | Implementation |
-|-----------|----------------|
-| group_id | Every DB operation must include group_id for tenant isolation |
-| Append-only | PostgreSQL traces are immutable - never UPDATE/DELETE |
-| SUPERSEDES | Neo4j insights use versioning: new versions link to old |
-| HITL | Human approval required before behavior-changing actions |
-| ADR | Every architectural decision logged with 5-layer audit trail |
-
-## Critical Architecture Rules (DON'T MISS)
+## Critical Architecture Rules
 
 **⚠️ These rules can break the system if violated.**
 
@@ -221,19 +181,14 @@ describe("Feature Name", () => {
 **Steel Frame Versioning Pattern:**
 ```cypher
 // Create new version (never edit old)
-CREATE (v2:Insight {
-  id: $id,
-  group_id: $group_id,
-  status: 'active',
-  confidence: 0.85
-})
+CREATE (v2:Insight { id: $id, group_id: $group_id, status: 'active', confidence: 0.85 })
 WITH v2
 MATCH (v1:Insight {id: $old_id})
 CREATE (v2)-[:SUPERSEDES]->(v1)
 SET v1.status = 'deprecated'
 ```
 
-### Notion Integration — Approval UX (CRITICAL)
+### Notion Integration — Approval UX
 
 **⚠️ Two separate fields serve different purposes:**
 
@@ -243,22 +198,12 @@ SET v1.status = 'deprecated'
 | `Review Status` | **Approval workflow** | `Pending` / `In Progress` / `Completed` / `Updated` |
 | `AI Accessible` | **Runtime approval flag** | Checkbox (`true`/`false`) |
 
-**Approval Flow:**
-1. New insight/design → `Status = Proposed`, `Review Status = Pending`, `AI Accessible = false`
-2. Under review → `Review Status = In Progress`
-3. **Approved** → `Status = Approved`, `Review Status = Completed`, `AI Accessible = true`
-
 **Code MUST check:**
 ```typescript
 // ✅ CORRECT: Use Review Status for approval workflow
 if (page.properties["Review Status"].select.name === "Completed" && 
     page.properties["AI Accessible"].checkbox === true) {
   // Agent/design is approved for use
-}
-
-// ✅ CORRECT: Use Status for lifecycle state
-if (page.properties.Status.select.name === "Active") {
-  // Agent is active and can run
 }
 ```
 
@@ -286,95 +231,6 @@ if (typeof window !== "undefined") {
 - Environment variables with passwords are REQUIRED at startup
 - Validate all external data with Zod before use
 
-## MCP_DOCKER Architecture
-
-```
-Agent Layer (OhMyOpenCode, OpenClaw, etc.)
-    ↓ use MCP_DOCKER commands
-MCP_DOCKER CLI (mcp-add, mcp-exec, mcp-find, etc.)
-    ↓ pulls from Docker Hub MCP registry
-MCP Servers (ronin-memory, notion-mcp, github-mcp, tavily-mcp, etc.)
-    ↓ connect to
-Data Sources (PostgreSQL, Neo4j, Notion, GitHub, Web, etc.)
-```
-
-**MCP_DOCKER Commands:**
-- `MCP_DOCKER_mcp-find` - Search Docker Hub MCP registry for available servers
-- `MCP_DOCKER_mcp-add` - Add an MCP server to the session
-- `MCP_DOCKER_mcp-exec` - Execute a tool on an MCP server
-- `MCP_DOCKER_mcp-config-set` - Configure an MCP server
-- `MCP_DOCKER_mcp-remove` - Remove an MCP server from the session
-
-**Benefits:**
-- Pre-built MCP servers from Docker Hub save context window
-- No inline tool definitions needed
-- Containerized execution for isolation
-- Easy to add/remove servers dynamically
-
-**Allura's Memory MCP Server**
-
-Allura's Memory (`src/mcp/memory-server.ts`) is the **custom MCP server** that provides memory tools. It's containerized in `Dockerfile.mcp`:
-
-```bash
-# Build the MCP server image
-docker build -f Dockerfile.mcp -t allura-memory-mcp:latest .
-
-# Add to MCP_DOCKER
-MCP_DOCKER_mcp-add allura-memory-mcp
-```
-
-**Why custom vs Docker Hub?**
-- Docker Hub MCP servers are pre-built for common tools (GitHub, Notion, etc.)
-- Allura's Memory is custom because it connects to YOUR PostgreSQL/Neo4j instances
-- It provides project-specific tools like `search_memories`, `create_insight`, `promote_knowledge`
-
-## ADAS Module is NOT a CLI Runner
-
-**IMPORTANT:** The `src/lib/adas/` module is a **backend runtime library** for agent evaluation, promotion detection, and sandboxed testing. It is **NOT** an external CLI runner or agent orchestrator.
-
-**Component Types:**
-- **Agents**: OhMyOpenCode, OpenClaw - AI agents that execute tasks
-- **MCP_DOCKER**: CLI tool for managing MCP servers from Docker Hub
-- **MCP Servers**: ronin-memory, notion-mcp, etc. - Provide tools to agents
-- **Backend Library**: ADAS (`src/lib/adas/`) - Internal logic only, not a CLI tool
-
-Do not confuse the ADAS library with the outer agent layer. ADAS code runs as part of the Next.js application, consumed by the memory system's internal processes.
-
-## Group ID Strategy
-
-Groups are dynamically discoverable from Neo4j. Known groups include (but are not limited to):
-
-| Group ID | Description |
-|----------|-------------|
-| `faith-meats` | Jerky business |
-| `difference-driven` | Non-profit organization |
-| `patriot-awning` | Freelance account |
-| `global` | Cross-project shared knowledge |
-
-**Rules:**
-- Every node MUST have a `group_id` property
-- Schema constraint rejects nodes without `group_id`
-- Queries use dual-context pattern: project-specific + global insights
-
-## Project Structure
-
-```
-src/
-├── app/                    # Next.js App Router
-├── components/ui/          # shadcn/ui components
-├── lib/
-│   ├── postgres/           # PostgreSQL connection (server-only)
-│   ├── neo4j/              # Neo4j semantic memory queries
-│   ├── ralph/              # Self-correcting execution loops
-│   ├── circuit-breaker/    # Cascade failure prevention
-│   ├── adas/               # Agent evaluation (backend library)
-│   └── policy/             # RBAC, allow/deny rules
-├── curator/                # Knowledge promotion pipeline
-├── mcp/                    # Allura's Memory MCP server
-├── server/                 # Next.js server actions
-└── stores/                 # Zustand client state
-```
-
 ## Memory Bank Integration
 
 Read at session start:
@@ -382,14 +238,6 @@ Read at session start:
 2. `memory-bank/progress.md` - Completed items
 3. `memory-bank/systemPatterns.md` - Architecture
 4. `memory-bank/techContext.md` - Stack
-
-## Toolchain Context
-
-```
-opencode (CLI) → OpenClaw (MCP reasoner) → Allura's Memory MCP → PostgreSQL + Neo4j
-```
-
-`src/lib/adas/` is internal backend logic — NOT an external CLI runner.
 
 ## Copilot Rules Reference
 

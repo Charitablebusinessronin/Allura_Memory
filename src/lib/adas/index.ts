@@ -144,3 +144,19 @@ export {
   executeCodeInSandbox,
   batchEvaluateInSandbox,
 } from "./sandboxed-evaluation";
+
+// Promotion Proposal exports (Story 2.4)
+export {
+  createPromotionProposalManager,
+  createPromotionProposal,
+  getPendingProposals,
+} from "./promotion-proposal";
+
+// Approval Workflow exports (Story 2.4)
+export {
+  createApprovalWorkflowManager,
+  approveProposal,
+  rejectProposal,
+  getApprovalStatus,
+  listProposalsByStatus,
+} from "./approval-workflow";
