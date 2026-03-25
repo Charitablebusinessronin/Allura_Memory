@@ -41,8 +41,9 @@ describe("AgentDesign Module", () => {
           systemPrompt: "Test prompt",
           reasoningStrategy: "react",
           model: {
-            provider: "openai",
-            modelId: "gpt-4o",
+            provider: "ollama",
+            modelId: "qwen3-coder-next:cloud",
+            tier: "stable",
           },
         },
         metadata: {
@@ -58,7 +59,8 @@ describe("AgentDesign Module", () => {
       expect(design.description).toBe("A custom agent design");
       expect(design.config.systemPrompt).toBe("Test prompt");
       expect(design.config.reasoningStrategy).toBe("react");
-      expect(design.config.model?.modelId).toBe("gpt-4o");
+      expect(design.config.model?.modelId).toBe("qwen3-coder-next:cloud");
+      expect(design.config.model?.tier).toBe("stable");
       expect(design.metadata?.createdBy).toBe("test");
       expect(design.metadata?.tags).toEqual(["test", "custom"]);
     });
@@ -365,8 +367,9 @@ describe("AgentDesign Module", () => {
 
     it("should have correct MODEL_CONFIGS", () => {
       expect(MODEL_CONFIGS.length).toBeGreaterThan(0);
-      expect(MODEL_CONFIGS[0]?.provider).toBe("openai");
-      expect(MODEL_CONFIGS[0]?.modelId).toBe("gpt-4o-mini");
+      expect(MODEL_CONFIGS[0]?.provider).toBe("ollama");
+      expect(MODEL_CONFIGS[0]?.modelId).toBe("qwen3-coder-next:cloud");
+      expect(MODEL_CONFIGS[0]?.tier).toBe("stable");
     });
 
     it("should have correct REASONING_STRATEGIES", () => {

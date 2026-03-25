@@ -54,6 +54,13 @@ export interface AgentTool {
 }
 
 /**
+ * Model tier classification
+ * Stable: proven models used for baseline comparisons
+ * Experimental: latest models, opt-in per search
+ */
+export type ModelTier = "stable" | "experimental";
+
+/**
  * Model configuration
  */
 export interface ModelConfig {
@@ -62,6 +69,13 @@ export interface ModelConfig {
   temperature?: number;
   maxTokens?: number;
   topP?: number;
+  tier: ModelTier;
+  /** Human-readable description of what this model excels at */
+  description?: string;
+  /** Supports vision/image inputs */
+  supportsVision?: boolean;
+  /** Supports function calling / tools */
+  supportsTools?: boolean;
 }
 
 /**
