@@ -24,6 +24,7 @@
 - [x] Migrated 10 user-installed skills to `.opencode/skills/`
 - [x] Removed all skills from `.opencode/skills/` (using built-ins only)
 - [x] Added `.opencode/oh-my-opencode.json` to `.gitignore`
+- [x] Updated model mappings: Qwen3-Coder-480B (Coding), GLM-5 (Planning), Kimi-2.5 (Allura)
 
 ### 2026-03-24: Documentation Consolidation
 - [x] Archived `bmad-output/` to `archive/bmad-output/`
