@@ -42,3 +42,7 @@ tsconfig.tsbuildinfo
 *.njsproj
 *.sln
 *.sw*
+
+
+# OpenCode project config
+.opencode/oh-my-opencode.json
