@@ -6,8 +6,8 @@
 
 import { NotionDisplayTagMap, CuratorConfig, DEFAULT_CURATOR_CONFIG } from "./types";
 
-// Notion Insights Database ID
-export const INSIGHTS_DATABASE_ID = "9fac87b0-6429-4144-80a4-c34d05bb5d02";
+// Notion Insights Database ID (from env with fallback for backwards compatibility)
+export const INSIGHTS_DATABASE_ID = process.env.NOTION_INSIGHTS_DB_ID || "9fac87b0-6429-4144-80a4-c34d05bb5d02";
 
 // Confidence threshold for promotion
 export const CONFIDENCE_THRESHOLD = 0.7;

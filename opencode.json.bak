@@ -1,0 +1,33 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["superpowers@git+https://github.com/obra/superpowers.git"],
+  "mcp": {
+    "MCP_DOCKER": {
+      "type": "local",
+      "command": ["docker", "mcp", "gateway", "run"],
+      "enabled": true
+    },
+    "ronin-memory": {
+      "type": "local",
+      "command": ["docker", "run", "-i", "--rm",
+        "--network", "roninmemory_default",
+        "-v", "${PWD}:/app",
+        "-w", "/app",
+        "-e", "NEO4J_URI=bolt://knowledge-neo4j:7687",
+        "-e", "NEO4J_USER=${NEO4J_USER}",
+        "-e", "NEO4J_PASSWORD=${NEO4J_PASSWORD}",
+        "-e", "POSTGRES_HOST=knowledge-postgres",
+        "-e", "POSTGRES_PORT=5432",
+        "-e", "POSTGRES_DB=${POSTGRES_DB}",
+        "-e", "POSTGRES_USER=${POSTGRES_USER}",
+        "-e", "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}",
+        "node:20-alpine",
+        "npx", "tsx", "src/mcp/memory-server.ts"
+      ],
+      "enabled": true
+    }
+  },
+  "skills": {
+    "paths": [".opencode/skills"]
+  }
+}

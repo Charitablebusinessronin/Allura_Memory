@@ -3,10 +3,11 @@
  * Story 3.5: Record Five-Layer Agent Decision Records
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import {
   computeChecksum,
   generateId,
+  resetIdCounter,
   createEmptyBudgetSnapshot,
   createDefaultReproducibilityInfo,
   createDefaultADR,
@@ -49,12 +50,16 @@ describe("ADR Types", () => {
   });
 
   describe("generateId", () => {
+    beforeEach(() => {
+      resetIdCounter();
+    });
+
     it("should generate unique IDs with prefix", () => {
       const id1 = generateId("test");
       const id2 = generateId("test");
 
-      expect(id1).toMatch(/^test_[a-z0-9]+_[a-z0-9]+$/);
-      expect(id2).toMatch(/^test_[a-z0-9]+_[a-z0-9]+$/);
+      expect(id1).toMatch(/^test_[a-z0-9]+_[a-z0-9]+_[a-z0-9]+$/);
+      expect(id2).toMatch(/^test_[a-z0-9]+_[a-z0-9]+_[a-z0-9]+$/);
       expect(id1).not.toBe(id2);
     });
 
@@ -64,6 +69,43 @@ describe("ADR Types", () => {
 
       expect(actionId).toMatch(/^action_/);
       expect(contextId).toMatch(/^context_/);
+    });
+
+    it("should generate 1000 unique IDs when called rapidly", () => {
+      resetIdCounter();
+      const ids = new Set<string>();
+
+      for (let i = 0; i < 1000; i++) {
+        const id = generateId("adr");
+        expect(ids.has(id)).toBe(false);
+        ids.add(id);
+      }
+
+      expect(ids.size).toBe(1000);
+    });
+
+    it("should include counter in ID for same-millisecond uniqueness", () => {
+      resetIdCounter();
+      const ids: string[] = [];
+
+      for (let i = 0; i < 10; i++) {
+        ids.push(generateId("test"));
+      }
+
+      const parsed = ids.map(id => {
+        const parts = id.split("_");
+        return {
+          prefix: parts[0],
+          timestamp: parts[1],
+          random: parts[2],
+          counter: parts[3],
+        };
+      });
+
+      const counters = parsed.map(p => parseInt(p.counter!, 36));
+      for (let i = 0; i < counters.length - 1; i++) {
+        expect(counters[i]! + 1).toBe(counters[i + 1]);
+      }
     });
   });
 

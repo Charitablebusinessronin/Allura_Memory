@@ -58,6 +58,40 @@ export class PostgreSQLADRStorage implements ADRStorage {
   }
 
   async save(adr: AgentDecisionRecord): Promise<string> {
+    const existing = await this.findById(adr.adrId);
+    
+    if (existing) {
+      const query = `
+        UPDATE agent_decision_records 
+        SET group_id = $1, session_id = $2, created_at = $3, updated_at = $4, lifecycle = $5,
+            action_layer = $6, context_layer = $7, reasoning_layer = $8, counterfactuals_layer = $9,
+            oversight_layer = $10, reproducibility = $11, overall_checksum = $12, previous_version_id = $13, archived_at = $14
+        WHERE adr_id = $15
+        RETURNING adr_id
+      `;
+
+      const values = [
+        adr.groupId,
+        JSON.stringify(adr.sessionId),
+        adr.createdAt,
+        adr.updatedAt,
+        adr.lifecycle,
+        JSON.stringify(adr.actionLayer),
+        JSON.stringify(adr.contextLayer),
+        JSON.stringify(adr.reasoningLayer),
+        JSON.stringify(adr.counterfactualsLayer),
+        JSON.stringify(adr.oversightLayer),
+        JSON.stringify(adr.reproducibility),
+        adr.overallChecksum,
+        adr.previousVersionId ?? null,
+        adr.archivedAt ?? null,
+        adr.adrId,
+      ];
+
+      const result = await this.pool.query(query, values);
+      return result.rows[0].adr_id;
+    }
+
     const query = `
       INSERT INTO agent_decision_records (
         adr_id, group_id, session_id, created_at, updated_at, lifecycle,
@@ -310,116 +344,149 @@ export class ADRCapture {
 
   /**
    * Begin capturing a new decision
+   * W2/W3: Checks for ID uniqueness and retries on duplicate key errors
    */
   async beginDecision(options: ADRCreationOptions): Promise<string> {
-    const adrId = generateId("adr");
-    const now = new Date();
+    const maxAttempts = 3;
+    let lastError: Error | null = null;
 
-    const actionLayer: ActionLayer = {
-      layerId: generateId("action"),
-      timestamp: now,
-      actionType: options.actionType,
-      actionId: generateId("act"),
-      inputs: {},
-      result: "pending",
-      durationMs: 0,
-      toolCalls: [],
-      checksum: "",
-    };
-    actionLayer.checksum = computeChecksum(actionLayer);
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const adrId = generateId("adr");
+      const now = new Date();
 
-    const contextLayer: ContextLayer = {
-      layerId: generateId("context"),
-      timestamp: now,
-      sessionState: {
+      const actionLayer: ActionLayer = {
+        layerId: generateId("action"),
+        timestamp: now,
+        actionType: options.actionType,
+        actionId: generateId("act"),
+        inputs: {},
+        result: "pending",
+        durationMs: 0,
+        toolCalls: [],
+        checksum: "",
+      };
+      actionLayer.checksum = computeChecksum(actionLayer);
+
+      const contextLayer: ContextLayer = {
+        layerId: generateId("context"),
+        timestamp: now,
+        sessionState: {
+          sessionId: options.sessionId,
+          currentStep: 0,
+          totalSteps: 0,
+          budgetRemaining: {
+            tokensRemaining: 0,
+            toolCallsRemaining: 0,
+            timeRemainingMs: 0,
+            costRemainingUsd: 0,
+          },
+          activePolicies: [],
+        },
+        goals: [],
+        constraints: [],
+        availableOptions: [],
+        selectedOption: "",
+        environmentalFactors: {},
+        checksum: "",
+      };
+      contextLayer.checksum = computeChecksum(contextLayer);
+
+      const adr: AgentDecisionRecord = {
+        adrId,
+        groupId: options.groupId,
         sessionId: options.sessionId,
-        currentStep: 0,
-        totalSteps: 0,
-        budgetRemaining: {
-          tokensRemaining: 0,
-          toolCallsRemaining: 0,
-          timeRemainingMs: 0,
-          costRemainingUsd: 0,
-        },
-        activePolicies: [],
-      },
-      goals: [],
-      constraints: [],
-      availableOptions: [],
-      selectedOption: "",
-      environmentalFactors: {},
-      checksum: "",
-    };
-    contextLayer.checksum = computeChecksum(contextLayer);
-
-    const adr: AgentDecisionRecord = {
-      adrId,
-      groupId: options.groupId,
-      sessionId: options.sessionId,
-      createdAt: now,
-      updatedAt: now,
-      lifecycle: "created",
-      reproducibility: options.reproducibility,
-      actionLayer,
-      contextLayer,
-      reasoningLayer: {
-        layerId: generateId("reasoning"),
-        timestamp: now,
-        reasoningType: "heuristic",
-        thoughtProcess: [],
-        evidence: [],
-        confidence: 0,
-        modelUsed: options.reproducibility.model,
-        promptUsed: options.reproducibility.prompt,
-        checksum: "",
-      },
-      counterfactualsLayer: {
-        layerId: generateId("counter"),
-        timestamp: now,
-        alternativesConsidered: [],
-        rejectedOptions: [],
-        riskAssessment: {
-          overallRiskLevel: "low",
-          identifiedRisks: [],
-          mitigationStrategies: [],
-          residualRisk: 0,
-        },
-        learningNotes: [],
-        checksum: "",
-      },
-      oversightLayer: {
-        layerId: generateId("oversight"),
-        timestamp: now,
-        humanInteractions: [],
-        approvals: [],
-        modifications: [],
-        escalationHistory: [],
-        versionTrail: [{
-          versionId: generateId("ver"),
-          version: 1,
+        createdAt: now,
+        updatedAt: now,
+        lifecycle: "created",
+        reproducibility: options.reproducibility,
+        actionLayer,
+        contextLayer,
+        reasoningLayer: {
+          layerId: generateId("reasoning"),
           timestamp: now,
-          changeType: "created",
-          changedBy: "system",
+          reasoningType: "heuristic",
+          thoughtProcess: [],
+          evidence: [],
+          confidence: 0,
+          modelUsed: options.reproducibility.model,
+          promptUsed: options.reproducibility.prompt,
           checksum: "",
-        }],
-        auditStatus: {
-          status: "pending",
-          complianceFlags: [],
         },
-        finalChecksum: "",
-      },
-      overallChecksum: "",
-    };
+        counterfactualsLayer: {
+          layerId: generateId("counter"),
+          timestamp: now,
+          alternativesConsidered: [],
+          rejectedOptions: [],
+          riskAssessment: {
+            overallRiskLevel: "low",
+            identifiedRisks: [],
+            mitigationStrategies: [],
+            residualRisk: 0,
+          },
+          learningNotes: [],
+          checksum: "",
+        },
+        oversightLayer: {
+          layerId: generateId("oversight"),
+          timestamp: now,
+          humanInteractions: [],
+          approvals: [],
+          modifications: [],
+          escalationHistory: [],
+          versionTrail: [{
+            versionId: generateId("ver"),
+            version: 1,
+            timestamp: now,
+            changeType: "created",
+            changedBy: "system",
+            checksum: "",
+          }],
+          auditStatus: {
+            status: "pending",
+            complianceFlags: [],
+          },
+          finalChecksum: "",
+        },
+        overallChecksum: "",
+      };
 
-    adr.reasoningLayer.checksum = computeChecksum(adr.reasoningLayer);
-    adr.counterfactualsLayer.checksum = computeChecksum(adr.counterfactualsLayer);
-    adr.oversightLayer.finalChecksum = computeChecksum(adr.oversightLayer);
-    adr.overallChecksum = computeChecksum(adr);
+      adr.reasoningLayer.checksum = computeChecksum(adr.reasoningLayer);
+      adr.counterfactualsLayer.checksum = computeChecksum(adr.counterfactualsLayer);
+      adr.oversightLayer.finalChecksum = computeChecksum(adr.oversightLayer);
+      adr.overallChecksum = computeChecksum(adr);
 
-    this.currentADR = adr;
-    
-    await this.storage.save(adr);
-    return adrId;
+      try {
+        const existing = await this.storage.findById(adrId);
+        if (existing) {
+          if (attempt < maxAttempts) {
+            continue;
+          }
+          throw new Error(`ADR ID collision after ${maxAttempts} attempts: ${adrId}`);
+        }
+
+        this.currentADR = adr;
+        await this.storage.save(adr);
+        return adrId;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+
+        const isDuplicateKeyError = error instanceof Error &&
+          (error.message.includes("duplicate key") ||
+           error.message.includes("unique constraint") ||
+           error.message.includes("already exists"));
+
+        if (isDuplicateKeyError) {
+          if (attempt < maxAttempts) {
+            console.warn(`[ADRCapture] Duplicate key on attempt ${attempt}, retrying...`);
+            continue;
+          }
+        }
+
+        throw error;
+      }
+    }
+
+    throw lastError ?? new Error(`Failed to begin ADR after ${maxAttempts} attempts`);
   }
 
   /**
