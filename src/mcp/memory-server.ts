@@ -29,6 +29,13 @@ import {
   createPromotionOrchestrator,
 } from "@/curator/promotion-orchestrator";
 import { createCuratorRuntime } from "@/curator/service-factory";
+import { 
+  runMetaAgentSearch, 
+  createSearchConfig,
+  getPendingProposals as getAdasProposals,
+  approveProposal,
+  rejectProposal
+} from "@/lib/adas";
 
 config();
 
@@ -883,6 +890,74 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "ISO date string to check drift since"
             }
           }
+        }
+      },
+      
+      // ADAS Tools
+      {
+        name: "mcp__adas__run_search",
+        description: "Run an evolutionary search for a new agent design (ADAS)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            domain: {
+              type: "string",
+              description: "Domain to target (e.g., 'math', 'reasoning', 'code')"
+            },
+            iterations: {
+              type: "number",
+              description: "Max evolutionary iterations (default 10)"
+            },
+            population: {
+              type: "number",
+              description: "Population size (default 20)"
+            },
+            group_id: {
+              type: "string",
+              description: "Canonical tag for tenant isolation"
+            }
+          },
+          required: ["domain", "group_id"]
+        }
+      },
+      {
+        name: "mcp__adas__get_proposals",
+        description: "List pending promotion proposals from ADAS searches",
+        inputSchema: {
+          type: "object",
+          properties: {
+            group_id: {
+              type: "string",
+              description: "Filter by canonical tag"
+            },
+            status: {
+              type: "string",
+              description: "Filter by status (pending, approved, rejected)"
+            }
+          }
+        }
+      },
+      {
+        name: "mcp__adas__approve_proposal",
+        description: "Approve or reject an ADAS promotion proposal",
+        inputSchema: {
+          type: "object",
+          properties: {
+            proposal_id: {
+              type: "string",
+              description: "UUID of the proposal to act on"
+            },
+            decision: {
+              type: "string",
+              enum: ["approved", "rejected"],
+              description: "The decision to make"
+            },
+            reviewer_notes: {
+              type: "string",
+              description: "Optional notes from the reviewer"
+            }
+          },
+          required: ["proposal_id", "decision"]
         }
       }
     ]
@@ -1840,6 +1915,101 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               }, null, 2)
             }]
           };
+        } finally {
+          await session.close();
+        }
+      }
+      // ========================================
+      // ADAS TOOLS
+      // ========================================
+      
+      case "mcp__adas__run_search": {
+        const { domain, iterations = 10, population = 20, group_id = 'global' } = args as any;
+        
+        // Helper to get domain configuration
+        const getDomainConfig = (domainId: string) => {
+          const domains: Record<string, any> = {
+            "code": { domainId: "code", name: "Code Generation", accuracyWeight: 0.7, costWeight: 0.15, latencyWeight: 0.15 },
+            "math": { domainId: "math", name: "Math Solving", accuracyWeight: 0.8, costWeight: 0.1, latencyWeight: 0.1 },
+            "reasoning": { domainId: "reasoning", name: "Reasoning", accuracyWeight: 0.6, costWeight: 0.2, latencyWeight: 0.2 }
+          };
+          return domains[domainId] || { domainId, name: domainId, accuracyWeight: 0.5, costWeight: 0.25, latencyWeight: 0.25 };
+        };
+
+        const domainConfig = getDomainConfig(domain);
+        
+        // Import sandboxed evaluation helpers
+        const { createSandboxExecutor, createSandboxedForwardFn } = await import("@/lib/adas");
+        const sandbox = createSandboxExecutor();
+        
+        try {
+          const result = await runMetaAgentSearch(
+            group_id,
+            domainConfig,
+            (design) => createSandboxedForwardFn(design, sandbox),
+            { maxIterations: iterations, populationSize: population }
+          );
+          
+          return { 
+            content: [{ 
+              type: "text", 
+              text: JSON.stringify({
+                domain,
+                best_design_id: result.finalBestDesign.design_id,
+                best_score: result.finalBestScore,
+                iterations_run: result.iterations.length,
+                status: "completed",
+                best_design: result.finalBestDesign
+              }, null, 2) 
+            }] 
+          };
+        } finally {
+          await sandbox.cleanup();
+        }
+      }
+      
+      case "mcp__adas__get_proposals": {
+        const { group_id, status } = args as any;
+        const proposals = await getAdasProposals(group_id || 'global');
+        
+        let filtered = proposals;
+        if (status) {
+          filtered = proposals.filter((p: any) => p.status === status);
+        }
+        
+        return { 
+          content: [{ 
+            type: "text", 
+            text: JSON.stringify(filtered, null, 2) 
+          }] 
+        };
+      }
+      
+      case "mcp__adas__approve_proposal": {
+        const { proposal_id, decision, reviewer_notes } = args as any;
+        
+        const session = neo4jDriver!.session();
+        try {
+          // Find the proposal to get design_id and group_id
+          const result = await session.run(
+            `MATCH (d:AgentDesign {id: $proposal_id}) RETURN d.design_id as design_id, d.group_id as group_id`,
+            { proposal_id }
+          );
+          
+          if (result.records.length === 0) {
+            return { content: [{ type: "text", text: `Proposal ${proposal_id} not found` }], isError: true };
+          }
+          
+          const designId = result.records[0].get('design_id');
+          const groupId = result.records[0].get('group_id');
+          
+          if (decision === 'approved') {
+            const approvalResult = await approveProposal(designId, groupId, 'mcp-user', reviewer_notes);
+            return { content: [{ type: "text", text: JSON.stringify(approvalResult, null, 2) }] };
+          } else {
+            const rejectionResult = await rejectProposal(designId, groupId, 'mcp-user', reviewer_notes || 'Rejected via MCP');
+            return { content: [{ type: "text", text: JSON.stringify(rejectionResult, null, 2) }] };
+          }
         } finally {
           await session.close();
         }
