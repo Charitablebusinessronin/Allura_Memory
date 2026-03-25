@@ -25,8 +25,7 @@ const mockDesign: AgentDesign = {
   config: {
     systemPrompt: "You are a test agent.",
     model: {
-      provider: "openai",
-      modelId: "gpt-4o-mini",
+      provider: "ollama", modelId: "qwen3-coder-next:cloud", tier: "stable",
       temperature: 0.7,
       maxTokens: 1000,
     },
@@ -278,11 +277,12 @@ describe("Integration with AgentDesign", () => {
           { name: "calculate", description: "Calculator function" },
         ],
         model: {
-          provider: "anthropic",
-          modelId: "claude-3-opus",
+          provider: "ollama",
+          modelId: "deepseek-v3.2:cloud",
           temperature: 0.9,
           maxTokens: 4000,
           topP: 0.95,
+          tier: "stable",
         },
         reasoningStrategy: "react",
         parameters: {

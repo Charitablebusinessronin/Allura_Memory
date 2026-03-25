@@ -1,8 +1,8 @@
-# Project Brief: Unified AI Knowledge System (memory)
+# Project Brief: Allura's Memory
 
 ## Overview
 
-The `memory` project is building a **Unified AI Engineering Brain** - a goal-directed, closed-loop control system that persists state across multiple projects. Unlike standard RAG systems, this system separates noisy events from promoted knowledge, enables dual-context queries, maintains audit-ready decision trails, and implements entity deduplication.
+**Allura's Memory** is a **persistent AI knowledge system** — a goal-directed, closed-loop control system that persists state across multiple projects. Unlike standard RAG systems, this system separates noisy events from promoted knowledge, enables dual-context queries, maintains audit-ready decision trails, and implements entity deduplication.
 
 ## Goals
 

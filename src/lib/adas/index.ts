@@ -55,6 +55,7 @@ export {
 
 // Agent Design exports (Story 2.2)
 export type { SearchSpace } from "./agent-design";
+export type { ModelTier } from "./types";
 export {
   PROMPT_TEMPLATES,
   TOOL_LIBRARY,
@@ -69,6 +70,9 @@ export {
   cloneDesign,
   generateRandomDesign,
   calculateDiversity,
+  getModelsByTier,
+  getStableModels,
+  getExperimentalModels,
 } from "./agent-design";
 
 // Mutation exports (Story 2.2)

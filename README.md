@@ -1,10 +1,10 @@
-# Memory - Unified Memory System for AI Agents
+# Allura's Memory
 
 ![Tests](https://img.shields.io/badge/tests-1854%20passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
 
-A production memory system for AI agents that persists knowledge across sessions. Separates raw execution traces (PostgreSQL) from curated insights (Neo4j) with human-in-the-loop governance.
+**A persistent memory system for AI agents** — separates raw execution traces (PostgreSQL) from curated insights (Neo4j) with human-in-the-loop governance.
 
 **The Problem:** AI agents start every session from zero. They can't remember past decisions, learn from mistakes, or build institutional knowledge.
 
@@ -82,7 +82,7 @@ The system operates across six layers:
     5. Governance - Policy Gateway, Circuit Breakers, HITL
          |
          v
-    4. Discovery (ADAS) - Automated agent design testing
+    4. Discovery (ADAS) - Automated agent design with Ollama + Docker
          |
          v
     3. Control (Ralph Loops) - Perceive/Plan/Act/Check/Adapt

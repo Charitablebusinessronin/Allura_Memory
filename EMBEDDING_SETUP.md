@@ -59,13 +59,22 @@ When you ask coding questions, OhMyOpenCode can now:
 
 ## Models Used
 
+### Embeddings (Local Ollama)
 | Purpose | Model | Dimensions |
 |---------|-------|------------|
 | Code Embeddings | qwen3-embedding:8b | 4096 |
-| Agent Reasoning | glm-5:cloud | N/A |
-| Code Analysis | kimi-k2.5:cloud | N/A |
 
-All models run locally via Ollama - zero cost, fully private.
+### ADAS Agent Models (Ollama Cloud)
+| Model | Tier | Purpose |
+|-------|------|---------|
+| qwen3-coder-next:cloud | Stable | Code generation specialist (80B) |
+| deepseek-v3.2:cloud | Stable | General reasoning (671B) |
+| minimax-m2.7:cloud | Experimental | Fast reasoning |
+| kimi-k2.5:cloud | Experimental | Reasoning |
+| glm-5:cloud | Experimental | General reasoning |
+| qwen3-vl:235b-cloud | Experimental | Vision + reasoning |
+
+See `src/lib/adas/agent-design.ts` for the full MODEL_CONFIGS registry.
 
 ## Files
 

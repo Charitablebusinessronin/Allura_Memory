@@ -17,7 +17,7 @@ Built a **6-layer memory architecture** that persists agent knowledge across ses
 | **Raw Memory** | PostgreSQL | Append-only event logs (episodic memory) |
 | **Semantic Memory** | Neo4j | Knowledge graph with versioned insights |
 | **Control** | TypeScript | Self-correcting execution loops (Ralph) |
-| **Discovery** | Sandboxed | Automated agent design evaluation (ADAS) |
+| **Discovery** | Ollama + Docker | Automated agent design with evolutionary search |
 | **Governance** | Policy Gateway | HITL approval gates, circuit breakers |
 | **Audit** | ADR | 5-layer decision records for compliance |
 
@@ -72,7 +72,7 @@ const results = await memory.search({
 - **Databases**: PostgreSQL 16, Neo4j 5.26 with APOC
 - **Protocol**: Model Context Protocol (MCP)
 - **Testing**: Vitest (1,854+ tests)
-- **Runtime**: Bun/Node.js
+- **Runtime**: Ollama (cloud + local), Bun/Node.js
 - **Infrastructure**: Docker, GitHub Actions CI
 
 ## Skills Demonstrated

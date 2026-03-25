@@ -5,6 +5,7 @@ import type {
   AgentDesignMetadata,
   AgentTool,
   ModelConfig,
+  ModelTier,
   ReasoningStrategy,
 } from "./types";
 
@@ -180,13 +181,69 @@ export const TOOL_LIBRARY: AgentTool[] = [
 
 /**
  * Model configurations available for selection
+ * Uses Ollama Cloud models — tiered for stable baselines vs experimental
+ *
+ * Stable: proven models used for consistent baseline comparisons
+ * Experimental: latest models, opt-in per search run
  */
 export const MODEL_CONFIGS: ModelConfig[] = [
-  { provider: "openai", modelId: "gpt-4o-mini", temperature: 0.7, maxTokens: 4096 },
-  { provider: "openai", modelId: "gpt-4o", temperature: 0.7, maxTokens: 8192 },
-  { provider: "openai", modelId: "gpt-4-turbo", temperature: 0.5, maxTokens: 4096 },
-  { provider: "anthropic", modelId: "claude-3-haiku", temperature: 0.7, maxTokens: 4096 },
-  { provider: "anthropic", modelId: "claude-3.5-sonnet", temperature: 0.7, maxTokens: 8192 },
+  // Stable tier — proven performers for baseline comparisons
+  {
+    provider: "ollama",
+    modelId: "qwen3-coder-next:cloud",
+    temperature: 0.7,
+    maxTokens: 8192,
+    tier: "stable",
+    description: "Code generation specialist (80B, FP8)",
+    supportsTools: false,
+  },
+  {
+    provider: "ollama",
+    modelId: "deepseek-v3.2:cloud",
+    temperature: 0.7,
+    maxTokens: 8192,
+    tier: "stable",
+    description: "General reasoning (671B, FP8)",
+    supportsTools: false,
+  },
+  // Experimental tier — latest models, opt-in
+  {
+    provider: "ollama",
+    modelId: "minimax-m2.7:cloud",
+    temperature: 0.7,
+    maxTokens: 8192,
+    tier: "experimental",
+    description: "Fast reasoning (MiniMax)",
+    supportsTools: false,
+  },
+  {
+    provider: "ollama",
+    modelId: "kimi-k2.5:cloud",
+    temperature: 0.7,
+    maxTokens: 8192,
+    tier: "experimental",
+    description: "Reasoning (Kimi's K2.5)",
+    supportsTools: false,
+  },
+  {
+    provider: "ollama",
+    modelId: "glm-5:cloud",
+    temperature: 0.7,
+    maxTokens: 8192,
+    tier: "experimental",
+    description: "General reasoning (GLM-5)",
+    supportsTools: false,
+  },
+  {
+    provider: "ollama",
+    modelId: "qwen3-vl:235b-cloud",
+    temperature: 0.7,
+    maxTokens: 4096,
+    tier: "experimental",
+    description: "Vision + reasoning (Qwen3 VL, 235B)",
+    supportsVision: true,
+    supportsTools: false,
+  },
 ];
 
 /**
@@ -198,6 +255,27 @@ export const REASONING_STRATEGIES: ReasoningStrategy[] = [
   "plan-and-execute",
   "reflexion",
 ];
+
+/**
+ * Filter models by tier
+ */
+export function getModelsByTier(tier: ModelTier): ModelConfig[] {
+  return MODEL_CONFIGS.filter((m) => m.tier === tier);
+}
+
+/**
+ * Get all stable models (default for baseline comparisons)
+ */
+export function getStableModels(): ModelConfig[] {
+  return getModelsByTier("stable");
+}
+
+/**
+ * Get all experimental models (opt-in for latest models)
+ */
+export function getExperimentalModels(): ModelConfig[] {
+  return getModelsByTier("experimental");
+}
 
 /**
  * Search space configuration

@@ -1,4 +1,4 @@
-# Technical Context: Unified AI Knowledge System
+# Technical Context: Allura's Memory
 
 ## Technology Stack
 

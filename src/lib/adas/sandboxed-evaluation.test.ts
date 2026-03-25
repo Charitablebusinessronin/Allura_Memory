@@ -39,8 +39,7 @@ const mockDesign: AgentDesign = {
   config: {
     systemPrompt: "You are a test agent.",
     model: {
-      provider: "openai",
-      modelId: "gpt-4o-mini",
+      provider: "ollama", modelId: "qwen3-coder-next:cloud", tier: "stable",
       temperature: 0.7,
       maxTokens: 1000,
     },

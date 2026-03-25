@@ -1,5 +1,5 @@
-# MCP Memory Server Dockerfile
-# Builds a standalone MCP server container for the Unified AI Engineering Brain
+# Allura's Memory - MCP Server Dockerfile
+# Builds a standalone MCP server container for persistent AI memory
 
 # Build stage - compile TypeScript
 FROM node:20-alpine AS builder

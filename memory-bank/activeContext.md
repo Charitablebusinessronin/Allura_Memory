@@ -1,108 +1,122 @@
-# Active Context: Unified AI Knowledge System
+# Active Context: Allura's Memory
 
-## Current Agent Work
+## Project Status: PRODUCTION READY
 
-**BMad Master alignment - COMPLETED**
+**All 6 Epics Complete** — 1854+ tests passing, system fully operational.
 
-Status: `completed`
+---
 
-- Reframed `_bmad/core/agents/bmad-master.md` as a true orchestration agent
-- Removed dev-agent execution assumptions from master startup and menu behavior
-- Aligned workflow handling to repo-native `workflow.md` artifacts
-- Updated BMAD config greeting identity to `Sabir`
+## Completed Epics
+
+| Epic | Status | Stories | Tests |
+|------|--------|---------|-------|
+| Epic 1: Persistent Knowledge Capture | ✅ Complete | 7 stories | 400+ |
+| Epic 2: ADAS Discovery Pipeline | ✅ Complete | 5 stories | 250+ |
+| Epic 3: Governed Runtime | ✅ Complete | 7 stories | 350+ |
+| Epic 4: Knowledge Lifting Pipeline | ✅ Complete | 6 stories | 300+ |
+| Epic 5: Notion Integration Hardening | ✅ Complete | 6 stories | 300+ |
+| Epic 6: Agent Persistence & Lifecycle | ✅ Complete | 10 stories | 254+ |
+
+**Total:** 40 stories implemented, 1854+ tests passing
+
+---
 
 ## Current Focus
 
-**Story 2.1: Implement Domain Evaluation Harness - COMPLETED**
+**Documentation Consolidation & Maintenance**
 
-Status: `completed`
+Following archival of `bmad-output/` to `archive/`, consolidating documentation:
+- ✅ Merged `project-context.md` into `AGENTS.md`
+- ⏳ Update `progress.md` with completion status
+- ⏳ Update archive INDEX.md with current doc references
 
-The evaluation harness for ADAS (Automated Design of Agent Systems) pipeline is now complete. All acceptance criteria passed:
-- AC1: Harness evaluates designs and returns structured scores ✅
-- AC2: Metrics logged to PostgreSQL raw trace layer ✅
-- AC3: Candidates ranked by composite score ✅
+---
 
-## Current Sprint Status
+## Architecture Overview
 
-**Epic 1: Persistent Knowledge Capture and Tenant-Aware Memory**
-- Status: `complete`
-- Stories:
-  - ✅ 1.1 Record Raw Execution Traces → `completed`
-  - ✅ 1.2 Retrieve Episodic Memory from Trace History → `completed`
-  - ✅ 1.3 Store Versioned Semantic Insights in Neo4j → `completed`
-  - ✅ 1.4 Query Dual Context Memory → `completed`
-  - ✅ 1.5 Enforce Tenant Isolation with Group IDs → `completed`
-  - ✅ 1.6 Link Promoted Knowledge Back to Raw Evidence → `completed`
-  - ✅ 1.7 Automated Knowledge Curation → `completed`
+### 4-Layer Memory Stack (Memory Card)
 
-**Epic 2: ADAS Discovery and Design Promotion Pipeline**
-- Status: `in-progress`
-- Stories:
-  - ✅ 2.1 Implement Domain Evaluation Harness → `completed`
-  - ⏳ 2.2 Execute Meta Agent Search Loop → `backlog`
-  - ⏳ 2.3 Integrate Sandboxed Execution for ADAS → `backlog`
-  - ⏳ 2.4 Automate Design Promotion Logic → `backlog`
-  - ⏳ 2.5 Synchronize Best Designs to Notion Registry → `backlog`
+```
+Agent Layer (OhMyOpenCode, OpenClaw)
+    ↓ uses MCP_DOCKER commands
+MCP_DOCKER CLI (mcp-add, mcp-exec, etc.)
+    ↓ pulls from Docker Hub MCP registry
+MCP Servers (ronin-memory, notion-mcp, github-mcp, etc.)
+    ↓ connect to
+Data Sources (PostgreSQL, Neo4j, Notion, GitHub)
 
-**Epics 3-4**: All in `backlog` status
+AI Reasoning (OpenClaw)
+    ↓ Traces logged to
+Raw Trace Layer (PostgreSQL)
+    ↓ Promotion Gate (HITL)
+Promoted Knowledge (Neo4j)
+    ↓ Mirroring
+Human Workspace (Notion)
+```
 
-## What We're Building Now
+### 6-Layer Memory Architecture
 
-### Story 1.1 Tasks
+1. **Raw Memory** (PostgreSQL) — Append-only event logs
+2. **Semantic Memory** (Neo4j) — Knowledge graph with versioned insights
+3. **Control** (Ralph) — Self-correcting execution loops
+4. **Discovery** (ADAS) — Automated agent design testing
+5. **Governance** (Policy Gateway) — HITL approval gates, circuit breakers
+6. **Audit** (ADR) — 5-layer Agent Decision Records
 
-1. **Create PostgreSQL connection layer** (`src/lib/postgres/connection.ts`)
-   - Pool wrapper with connection config from environment
-   - Pool safety settings (connectionTimeoutMillis, idleTimeoutMillis)
-   - Error handling for background connection failures
+---
 
-2. **Define raw trace schema** (`src/lib/postgres/schema/traces.sql`)
-   - `events` table for append-only trace logging
-   - Surrogate primary key, group_id, timestamp, agent_id, workflow context
-   - JSONB for structured metadata
-   - Indexes on `(group_id, created_at)` for tenant-scoped reads
+## Key Patterns
 
-3. **Make schema application explicit**
-   - Wire through `postgres-init/` or app-side initialization
-   - Idempotent setup for local development
+### Steel Frame Versioning
+- All Insights are immutable
+- New versions link to old via `SUPERSEDES` edges
+- Query "current truth" by filtering incoming SUPERSEDES
 
-4. **Implement append-only trace insertion** (`src/lib/postgres/queries/insert-trace.ts`)
-   - Typed insert function for events
-   - Enforce group_id presence before insert
+### HITL Knowledge Promotion
+Agents CANNOT autonomously promote to Neo4j/Notion:
+```
+PostgreSQL Trace (candidate)
+    ↓ Curator proposes
+Notion Approval Page
+    ↓ Human approves
+Neo4j Insight (active)
+```
 
-5. **Add verification coverage**
-   - Verify table exists and accepts inserts
-   - Verify required fields including group_id
-   - Verify ordering and tenant-scoped retrieval
+### group_id Multi-Tenancy
+- Every node MUST have `group_id` property
+- Schema constraint enforces tenant isolation
+- Dual-context queries: project + global insights
 
-## Active Questions / Decisions Needed
+---
 
-1. **Package.json location**: Root manifest/build config visibility is incomplete in this checkout. Need to verify before claiming dependency installation or build success.
+## Infrastructure Status
 
-2. **Schema application path**: If SQL is only in `src/lib/postgres/schema/`, nothing in current setup applies it automatically. Need explicit execution path.
+| Service | Status | URL |
+|---------|--------|-----|
+| PostgreSQL 16 | ✅ Healthy | `localhost:5432` |
+| Neo4j 5.26 + APOC | ✅ Healthy | `http://localhost:7474` |
 
-## Infrastructure Blockers
+---
 
-| Blocker | Status | Action Needed |
-|---------|--------|---------------|
-| TypeScript build config | ⚠️ Uncertain | Verify package.json/tsconfig.json exist |
-| Test framework | ❌ Missing | Set up Vitest + Playwright |
-| Schema application | ❌ No path | Create init script or app-side apply |
+## Documentation Locations
 
-## Recent Changes
+| Location | Purpose |
+|----------|---------|
+| `AGENTS.md` | Agent coding guide, patterns, rules |
+| `README.md` | Project overview, quick start |
+| `memory-bank/activeContext.md` | Current work focus |
+| `memory-bank/progress.md` | Completed work log |
+| `memory-bank/systemPatterns.md` | Architecture patterns |
+| `memory-bank/techContext.md` | Tech stack, environment |
+| `archive/bmad-output/INDEX.md` | Historical artifact index |
 
-- [2026-03-15] Epic breakdown created with 4 epics, 24 stories
-- [2026-03-15] Tech spec created for Unified Knowledge System Core Schema and Steel Frame
-- [2026-03-15] Sprint status initialized with Story 1.1 ready for development
-- [2026-03-15] Docker containers verified running (PostgreSQL, Neo4j)
+---
 
-## Next Steps After Story 1.1
+## Open Items
 
-1. **Story 1.2**: Retrieve Episodic Memory from Trace History
-2. **Story 1.3**: Store Versioned Semantic Insights in Neo4j
-3. Verify data flow: PostgreSQL traces → evidence for promotion
+1. **Qwen3-Embedding-8B Integration** — Local embeddings available for semantic search
+2. **Documentation Polish** — Consolidate remaining archive references
 
-## Open Issues
+---
 
-1. **No project-context.md**: Planning context derived from epics.md and tech spec alone
-2. **No prior story learnings**: First story in Epic 1
-3. **Memory bank installation**: Being established with this session
+*Last Updated: 2026-03-24*

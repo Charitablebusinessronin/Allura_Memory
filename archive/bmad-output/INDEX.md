@@ -1,40 +1,21 @@
-# Memory Project - Artifact Index
+# Allura's Memory - Artifact Index
 
 **Status:** All 6 Epics Complete (1854+ tests passing)  
 **Last Updated:** 2026-03-24
 
-This INDEX maps historical project artifacts. For current development, see:
-- **[README.md](../README.md)** - Quick start and overview
-- **[AGENTS.md](../AGENTS.md)** - Coding guidelines and architecture
-- **[.github/copilot-instructions.md](../.github/copilot-instructions.md)** - Memory Bank workflow
-
-## Project Status
-
-✅ **Epic 1:** Persistent Knowledge Capture - 7 stories complete  
-✅ **Epic 2:** ADAS Discovery Pipeline - 5 stories complete  
-✅ **Epic 3:** Governed Runtime - 6 stories complete  
-✅ **Epic 4:** Knowledge Lifting Pipeline - 6 stories complete  
-✅ **Epic 5:** Notion Integration Hardening - 6 stories complete  
-✅ **Epic 6:** Agent Persistence & Lifecycle - 10 stories complete  
-
-**Total:** 40 stories implemented, 1854+ tests passing
+> ⚠️ **This archive contains historical planning artifacts for Allura's Memory.**
+>
+> For **current documentation**, see:
+> - **[AGENTS.md](../AGENTS.md)** — Agent coding guide (merged with project-context)
+> - **[README.md](../README.md)** — Allura's Memory overview and quick start
+> - **[memory-bank/](../memory-bank/)** — Persistent AI context (6 files)
+> - **[docs/](../docs/)** — Architecture and deployment docs
 
 ---
 
-## Memory Bank (Persistent Context)
+## Historical Archive Contents
 
-The Memory Bank provides session-persistent context for AI agents:
-
-| File | Purpose |
-|------|---------|
-| [`memory-bank/projectbrief.md`](../memory-bank/projectbrief.md) | Overall scope and goals |
-| [`memory-bank/productContext.md`](../memory-bank/productContext.md) | UX, users, problems being solved |
-| [`memory-bank/systemPatterns.md`](../memory-bank/systemPatterns.md) | Architecture, patterns, decisions |
-| [`memory-bank/techContext.md`](../memory-bank/techContext.md) | Stack, dependencies, constraints |
-| [`memory-bank/activeContext.md`](../memory-bank/activeContext.md) | Current task, working notes |
-| [`memory-bank/progress.md`](../memory-bank/progress.md) | Status log, completed items |
-
-**Read these files first at the start of each session.**
+This directory preserves the planning and implementation artifacts from the 6-epic development cycle that built **Allura's Memory**.
 
 ---
 
