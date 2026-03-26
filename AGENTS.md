@@ -249,22 +249,17 @@ Each project or feature gets its own folder under `docs/<project-name>/`.
 
 | Document | Purpose | Template |
 |----------|---------|----------|
-| `<project-name>/BLUEPRINT.md` | Core design intent, requirements, architecture | `templates/BLUEPRINT.template.md` |
-| `<project-name>/SOLUTION-ARCHITECTURE.md` | System topology, component interactions | `templates/SOLUTION-ARCHITECTURE.template.md` |
-| `<project-name>/DATA-DICTIONARY.md` | Canonical field-level definitions for all entities | `templates/DATA-DICTIONARY.template.md` |
-| `<project-name>/REQUIREMENTS-MATRIX.md` | Business-to-functional requirement traceability | `templates/REQUIREMENTS-MATRIX.template.md` |
-| `<project-name>/RISKS-AND-DECISIONS.md` | Architectural decisions (AD-##) and risk register (RK-##) | `templates/RISKS-AND-DECISIONS.template.md` |
-| `<project-name>/TASKS.md` | Implementation tasks and tracking | Follow the project task format used in `docs/Carlos_plan_framework/TASKS.md` |
+| `<project-name>/PROJECT.md` | Single cohesive master doc containing Blueprint, Architecture, Tasks and Requirements | `templates/PROJECT.template.md` |
 
 ### Example
 
-Use `docs/Carlos_plan_framework/` as the reference structure for project documentation folders.
+Use `docs/Carlos_plan_framework/` as the historical reference structure, but for new projects, consolidate documentation into the single `PROJECT.md` file.
 
 ### Documentation Rules
 
-- Start from templates in `templates/` directory - never from scratch
+- Start from `PROJECT.template.md` in `templates/` directory - never from scratch
 - Use Requirement IDs: B1, B2 (Business), F1, F2 (Functional), AD-01 (Decision), RK-01 (Risk)
-- Include Mermaid diagrams for component, data flow, and sequence diagrams
+- Include Mermaid diagrams for component, data flow, and sequence diagrams inside the doc
 - Cross-reference related documents with explicit links
 - Keep each project folder flat - no nested `plans/`, `drafts/`, or `adas/` directories inside project documentation folders
 
