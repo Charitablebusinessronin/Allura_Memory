@@ -59,6 +59,8 @@ npm run mcp
 | **Multi-Tenant Isolation** | group_id prevents cross-project contamination |
 | **Audit Trail** | 5-layer Agent Decision Records (ADR) for compliance |
 | **MCP Protocol** | Works with Claude Desktop, OpenClaw, MCP-compatible agents |
+| **Superpowers Integration** | Agentic workflows with automatic memory logging |
+| **OpenCode Skills** | Custom skill library for memory-first development |
 
 ### Governance Features
 
@@ -164,6 +166,57 @@ const results = await searchMemories({
 
 ---
 
+### Superpowers Integration
+
+This project integrates with [Superpowers](https://github.com/obra/superpowers) for agentic development workflows with automatic memory logging.
+
+```bash
+# Global Superpowers config at ~/.config/opencode/opencode.json
+# Installed via: opencode plugins add superpowers
+
+# Skills with memory integration:
+# - brainstorming: Logs session start/end, design decisions
+# - writing-plans: Logs plan creation, links to originating spec
+# - executing-plans: Logs task execution with commit SHAs
+# - subagent-driven-development: Logs subagent dispatches and review outcomes
+```
+
+Each skill automatically:
+- **Hydrates context** at session start (searches previous work for group/workflow)
+- **Logs events** at checkpoints (MCP_DOCKER_insert_data to PostgreSQL)
+- **Creates insights** at session end (MCP_DOCKER_create_entities to Neo4j)
+- **Verifies writes** before completing
+
+See `.opencode/skills/superpowers-memory/SKILL.md` for complete patterns.
+
+### OpenCode Agent Setup
+
+This repository includes OpenCode agent configuration for memory-first development:
+
+```bash
+# Agent configuration
+.opencode/agents/roninmemory-project.md    # Primary agent definition
+.opencode/skills/                           # Custom skill library
+  ├── skill-creator/SKILL.md              # Create new skills
+  ├── memory-client/SKILL.md              # Memory system integration
+  ├── mcp-docker/SKILL.md               # MCP server discovery
+  ├── mcp-docker-memory-system/SKILL.md # Memory system operations
+  ├── superpowers-memory/SKILL.md         # Superpowers integration
+  └── superpowers-enhanced/*.md           # Enhanced Superpowers skills
+
+# Available agents
+opencode agents list                        # List configured agents
+opencode agents run roninmemory-project     # Run with agent context
+```
+
+**Key skills:**
+- `memory-client`: Search, log events, create insights via MCP
+- `mcp-docker`: Discover and configure MCP servers dynamically
+- `superpowers-memory`: Patterns for logging Superpowers workflows
+- `skill-creator`: Standardized skill creation with templates
+
+---
+
 ## API Reference
 
 ### Core Tools
@@ -216,6 +269,19 @@ Coverage: 1,854+ tests across 6 epics
 | docs/RESUME_SNIPPET.md | Resume summary |
 | .skills/ | Skill package for agents |
 | memory-bank/ | Persistent context |
+| superpowers/planning/** | Superpowers planning artifacts (load before major builds) |
+| README.md | Repo overview + memory usage guide |
+
+---
+
+## Using the memory system
+
+- **Automated session logging**: run `bunx tsx scripts/session-logger.ts --phase start --group <group_id> ...` at session start and again with `--phase end`. The script writes `log_event` entries with standardized metadata (task IDs, files touched, verification commands, notes). Use `--dry-run` to preview payloads.
+- **Link events to tasks**: pass `--task <TASK-ID>`, `--files a,b`, and `--verify cmd1,cmd2` so each event references the work performed. This makes `memory_search` results self-explanatory.
+- **Promote recurring insights**: after resolving a repeated bug/decision, call `create_insight` and `create_relation` (via MCP) so future sessions surface the knowledge automatically.
+- **Group IDs**: use the project slug as `group_id` (for example, `roninmemory`, `openclaw`, or client-specific IDs). Never mix tenant data.
+- **Traces vs. insights**: use `log_event` for raw traces (session start/end, verification commands, blockers) and `create_insight` + `create_relation` for curated takeaways worth reusing.
+- **Periodic cleanup**: run `scripts/audit-memory-storage.sh` weekly to review raw events, promote important ones to insights, and archive noise. This keeps the graph healthy.
 
 ---
 
@@ -256,6 +322,7 @@ memory/
 2. All changes require tests
 3. Follow patterns in AGENTS.md
 4. Use `group_id` for tenant isolation
+ 5. Document significant events via MCP tools (`log_event`, `create_insight`, `create_relation`)
 
 ---
 
