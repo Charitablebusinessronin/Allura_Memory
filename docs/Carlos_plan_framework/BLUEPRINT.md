@@ -134,7 +134,7 @@ Describes an Ollama model available for agent inference.
 | B1 | Design AI agents automatically via evolutionary search — generate candidate designs, evaluate them against ground truth, evolve via mutation/crossover |
 | B2 | Use real LLM inference (Ollama) for all agent execution — no mocked or stubbed responses in production |
 | B3 | Govern agent promotion via HITL — no agent autonomously promoted to production; human reviews proposals |
-| B4 | Provide a CLI entry point for standalone ADAS runs — `npx tsx src/lib/adas/cli.ts` |
+| B4 | Provide a CLI entry point for standalone ADAS runs — `bun tsx src/lib/adas/cli.ts` |
 | B5 | Persist all evaluation events and proposals to PostgreSQL — full audit trail of search history |
 | B6 | Support two-tier model selection — stable models for reproducible baselines, experimental models opt-in |
 
@@ -394,8 +394,8 @@ PostgreSQL table — HITL governance proposals.
 
 | Command | Description |
 |---------|-------------|
-| `npx tsx src/lib/adas/cli.ts --domain math --iterations 5 --population 5` | Run evolutionary search |
-| `npx tsx src/lib/adas/cli.ts --help` | Show CLI options |
+| `bun tsx src/lib/adas/cli.ts --domain math --iterations 5 --population 5` | Run evolutionary search |
+| `bun tsx src/lib/adas/cli.ts --help` | Show CLI options |
 
 **CLI Options:**
 - `--domain` — Domain name (default: `math`)
@@ -453,7 +453,7 @@ PostgreSQL table — HITL governance proposals.
 3. Run CLI:
    ```bash
    cd /home/ronin704/dev/projects/memory
-   npx tsx src/lib/adas/cli.ts --domain math --iterations 5 --population 5
+   bun tsx src/lib/adas/cli.ts --domain math --iterations 5 --population 5
    ```
 4. Review best design + metrics in output
 5. If proposal generated → review in PostgreSQL or via ADAS dashboard (future)
