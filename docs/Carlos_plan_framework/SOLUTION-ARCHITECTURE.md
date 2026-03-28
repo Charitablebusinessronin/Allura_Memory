@@ -85,7 +85,7 @@ graph TD
 ### 3.1 CLI Search Path
 
 **Actor:** Developer  
-**Trigger:** `npx tsx src/lib/adas/cli.ts [options]`  
+**Trigger:** `bun tsx src/lib/adas/cli.ts [options]`  
 **Frequency:** On-demand per search run
 
 ```mermaid
