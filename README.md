@@ -211,6 +211,25 @@ Common overrides:
 
 This workflow keeps doc ingestion deterministic and append-only so `memory-bank/ingestion.meta.json` always reflects the full history of session briefings.
 
+#### Quick bootstrap (one command)
+
+Run the full pipeline—build snapshot, then hydrate—in one step:
+
+```bash
+bun run session:bootstrap [--group-id roninmemory] [--dry-run] [--skip-snapshot]
+```
+
+- Builds snapshot incrementally from default sources (`docs/roninmemory`, `docs/Carlos_plan_framework`)
+- Hydrates session context with concurrency 5
+- Logs summary stats and exits with status code
+- Use `--skip-snapshot` if you already ran `snapshot:build` recently
+- Requires `POSTGRES_PASSWORD` and `NEO4J_PASSWORD` env vars (pull from MCP_DOCKER)
+
+Example with credentials:
+```bash
+POSTGRES_PASSWORD="..." NEO4J_PASSWORD="..." bun run session:bootstrap
+```
+
 ---
 
 ### Superpowers Integration
