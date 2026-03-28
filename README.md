@@ -164,6 +164,53 @@ const results = await searchMemories({
 });
 ```
 
+### Memory snapshot workflow
+
+Warm up long sessions by building a deterministic doc snapshot and using it to hydrate the MCP session loggers.
+
+```bash
+bun run snapshot:build \
+  --source docs/roninmemory \
+  --source docs/Carlos_plan_framework \
+  --output memory-bank \
+  --group-id roninmemory \
+  --max-summary-chars 600
+```
+
+- Inputs: one or more `--source` directories (repeat per root). Output: `memory-bank/index.json` with entries plus `memory-bank/index.meta.json` summarizing hashes, run stats, and append-only ingestion metadata, plus a console summary line showing file count/byte totals.
+- Incremental mode (default) reads the metadata file and skips unchanged hashes; use `--no-incremental` to force a rebuild or `--priority-override plan.md` (repeatable glob) to refresh specific docs despite matching hashes.
+- Summaries truncate at `--max-summary-chars` characters; `--summary-length` is a backwards-compatible alias. Pair with `--group-id` to stamp tenant ownership and `--output` to target a different cache directory.
+
+Hydrate sessions (PostgreSQL + Neo4j) from the generated snapshot:
+
+```bash
+GROUP_ID=roninmemory bun run session:hydrate \
+  --snapshot memory-bank/index.json \
+  --metadata memory-bank/index.meta.json \
+  --concurrency 4 \
+  --dry-run
+```
+
+- `GROUP_ID` env var is required so the script can enforce tenant isolation when creating session briefings.
+- `--snapshot` is the JSON artifact path; `--metadata` defaults to the sibling `.meta.json` when omitted and is used to track append-only ingestion metadata in `memory-bank/ingestion.meta.json` (only new rows append; never mutate history).
+- `--concurrency` controls parallel MCP writes; start at 4 and increase only if Neo4j/Postgres can keep up. `--dry-run` logs payloads without writing (ideal for QA or verifying priority overrides).
+
+Troubleshooting:
+
+- Missing snapshot file: ensure `memory-bank/index.json` exists (rerun `bun run snapshot:build`) and double-check your `--output` / `--snapshot` path; hydration exits early with an actionable error if the file is absent.
+- Metadata mismatch (e.g., stale group or schema): delete only the generated `memory-bank/index.meta.json` and rerun the builder, or pass `--no-incremental` so hashes rewrite; for ingestion metadata, never edit manually—each hydration appends a new block so audit trails remain intact.
+
+Common overrides:
+
+| Flag | Purpose |
+|------|---------|
+| `--max-summary-chars` / `--summary-length` | Set/alias summary truncation limit for each document entry. |
+| `--priority-override <pattern>` | Force rebuild of entries matching the pattern even if hashes match (repeat as needed). |
+| `--concurrency <n>` | Control number of concurrent hydration workers. |
+| `--dry-run` | Preview hydration payloads without touching databases. |
+
+This workflow keeps doc ingestion deterministic and append-only so `memory-bank/ingestion.meta.json` always reflects the full history of session briefings.
+
 ---
 
 ### Superpowers Integration

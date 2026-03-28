@@ -46,3 +46,8 @@ tsconfig.tsbuildinfo
 
 # OpenCode project config
 .opencode/oh-my-opencode.json
+
+# Memory snapshot artifacts
+memory-bank/index.json
+memory-bank/index.meta.json
+memory-bank/ingestion.meta.json
