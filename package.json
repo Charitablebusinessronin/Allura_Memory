@@ -18,7 +18,9 @@
     "curator:run": "bun src/curator/index.ts run",
     "curator:approve": "bun src/curator/index.ts approve",
     "curator:reject": "bun src/curator/index.ts reject",
-    "agent:create": "bun scripts/generate-agent.ts"
+    "agent:create": "bun scripts/generate-agent.ts",
+    "snapshot:build": "bun run scripts/build-memory-snapshot.ts",
+    "session:hydrate": "bun run scripts/hydrate-session-from-snapshot.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0-beta.4",
