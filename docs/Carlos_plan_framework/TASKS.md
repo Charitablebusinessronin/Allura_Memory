@@ -32,12 +32,12 @@ This tracks remaining implementation tasks for ADAS (Automated Agent Design & As
 | Two-tier model system (stable/experimental) | ✅ | 2 stable, 4 experimental models |
 | EvaluationHarness + PostgreSQL logging | ✅ | Real LLM calls, full audit trail |
 | Ranking by composite score | ✅ | accuracy/cost/latency weighted |
-| ADAS CLI (evolutionary search) | ✅ | `npx tsx src/lib/adas/cli.ts` |
+| ADAS CLI (evolutionary search) | ✅ | `bun tsx src/lib/adas/cli.ts` |
 | HITL promotion workflow | ✅ | Proposal → human review → approve/reject |
 | Safety monitor | ✅ | Design validation before execution |
 | Mutation operators | ✅ | Prompt, model, strategy mutation |
 | Crossover/recombination | ✅ | Single-point crossover on designs |
-| All 215 ADAS tests passing | ✅ | `npm test -- --run src/lib/adas/` |
+| All 215 ADAS tests passing | ✅ | `bun test src/lib/adas/` |
 | Formal documentation suite | ✅ | BLUEPRINT, SOLUTION-ARCHITECTURE, RISKS-AND-DECISIONS, REQUIREMENTS-MATRIX, DATA-DICTIONARY |
 
 ---
@@ -132,7 +132,7 @@ This tracks remaining implementation tasks for ADAS (Automated Agent Design & As
 ### [ ] Multi-Model Comparison Benchmark
 **Priority:** P3  
 **Description:** Run same domain across all models to compare quality/cost/latency  
-**CLI addition:** `npx tsx src/lib/adas/cli.ts --domain math --benchmark`
+**CLI addition:** `bun tsx src/lib/adas/cli.ts --domain math --benchmark`
 
 **Acceptance criteria:**
 - [ ] Each model in tier runs same N iterations
@@ -172,7 +172,7 @@ For each task to be marked ✅:
 2. Code reviewed
 3. Tests added/updated
 4. Docs updated (BLUEPRINT, DATA-DICTIONARY if schema changed)
-5. No new TypeScript errors (`npm run typecheck` passes)
+5. No new TypeScript errors (`bun run typecheck` passes)
 
 ---
 
