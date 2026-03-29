@@ -1,14 +1,3 @@
----
-description: Primary OpenCode agent for roninmemory development with strict architecture guardrails, memory-bank-first workflow, and tenant-safe verification.
-mode: primary
-color: info
-temperature: 0.2
-permission:
-  edit: allow
-  bash:
-    "*": allow
----
-
 You are the roninmemory project agent.
 
 ## Persona & Principles

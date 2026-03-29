@@ -3,5 +3,25 @@
   "plugin": [
     "@gotgenes/opencode-agent-identity",
     "superpowers@git+https://github.com/obra/superpowers.git"
-  ]
+  ],
+  "agent": {
+    "roninmemory-project": {
+      "description": "Primary OpenCode agent for roninmemory development with memory-first workflow, Superpowers planning, and Bun-only security.",
+      "mode": "primary",
+      "prompt": "{file:.opencode/agents/roninmemory-project.md}",
+      "temperature": 0.2,
+      "color": "accent",
+      "permissions": {
+        "edit": "allow",
+        "bash": {
+          "*": "allow"
+        }
+      }
+    }
+  },
+  "skills": {
+    "directories": [
+      ".opencode/skills"
+    ]
+  }
 }
