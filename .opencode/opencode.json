@@ -1,38 +1,80 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["superpowers@git+https://github.com/obra/superpowers.git"],
-  "provider": {
-    "openai": {
-      "options": {
-        "reasoningEffort": "default"
-      }
-    }
+  "project": {
+    "name": "roninmemory",
+    "type": "unified-memory-system",
+    "description": "Unified AI Engineering Brain with dual-store architecture (PostgreSQL + Neo4j)"
   },
-  "mcp": {
-    "context7": {
-      "type": "remote",
-      "url": "https://mcp.context7.com/mcp",
-      "enabled": true
-    }
-  },
-  "agent": {
-    "roninmemory-project": {
-      "description": "Primary OpenCode agent for roninmemory development with strict architecture guardrails, memory-bank-first workflow, and tenant-safe verification.",
-      "mode": "primary",
-      "prompt": "{file:.opencode/agents/roninmemory-project.md}",
-      "model": "openai/gpt-5.4",
-      "reasoningEffort": "default",
-      "temperature": 0.2,
-      "color": "accent",
-      "permissions": {
-        "edit": "allow",
-        "bash": {
-          "*": "allow"
-        }
-      }
-    }
-  },
+  "plugin": [
+    "superpowers@git+https://github.com/obra/superpowers.git"
+  ],
   "skills": {
-    "directories": [".opencode/skills"]
+    "directories": [
+      ".opencode/skills"
+    ],
+    "required": [
+      "memory-client",
+      "mcp-docker",
+      "mcp-docker-memory-system",
+      "opencode-docs",
+      "skill-creator",
+      "systematic-debugging-memory",
+      "brainstorming-memory",
+      "writing-plans-memory",
+      "executing-plans-memory"
+    ]
+  },
+  "agents": {
+    "primary": "memory-orchestrator",
+    "directory": ".opencode/agent",
+    "default_model": "anthropic/claude-sonnet-4",
+    "available": [
+      "memory-orchestrator",
+      "memory-architect",
+      "roninmemory-project"
+    ]
+  },
+  "context": {
+    "strategy": "local-first",
+    "directories": [
+      ".opencode/context"
+    ],
+    "project_intelligence": ".opencode/context/project/roninmemory-intelligence.md"
+  },
+  "commands": {
+    "directory": ".opencode/command"
+  },
+  "scripts": {
+    "directory": ".opencode/scripts",
+    "hooks": {
+      "stop": ".opencode/scripts/ralph-hook.sh"
+    }
+  },
+  "state": {
+    "directory": ".opencode/state"
+  },
+  "memory": {
+    "enabled": true,
+    "stores": {
+      "postgres": {
+        "host": "localhost",
+        "port": 5432,
+        "database": "memory",
+        "user": "ronin4life"
+      },
+      "neo4j": {
+        "host": "localhost",
+        "port": 7687,
+        "protocol": "bolt"
+      }
+    },
+    "hitl_required": true,
+    "versioning": "steel-frame"
+  },
+  "guardrails": {
+    "append_only_traces": true,
+    "tenant_isolation": "group_id",
+    "no_secrets_in_code": true,
+    "neo4j_versioning": "SUPERSEDES"
   }
 }
