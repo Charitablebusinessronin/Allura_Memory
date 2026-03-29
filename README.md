@@ -1,403 +1,222 @@
-# Allura's Memory
+# roninmemory
 
-![Tests](https://img.shields.io/badge/tests-1854%20passing-brightgreen)
-![License](https://img.shields.io/badge/license-MIT-blue)
-![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
-
-**A persistent memory system for AI agents** — separates raw execution traces (PostgreSQL) from curated insights (Neo4j) with human-in-the-loop governance.
-
-**The Problem:** AI agents start every session from zero. They can't remember past decisions, learn from mistakes, or build institutional knowledge.
-
-**The Solution:** A 6-layer memory system that persists agent knowledge with production-grade governance, audit trails, and multi-tenant isolation.
+> **Persistent memory infrastructure for the Allura AI ecosystem.**  
+> The shared data layer — Neo4j knowledge graphs, PostgreSQL structured memory, and MCP tool access — that powers every agent in [roninclaw](https://github.com/Charitablebusinessronin/roninclaw).
 
 ---
 
-## Table of Contents
+## What This Is
 
-- [Quick Start](#quick-start)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Installation](#installation)
-- [Usage](#usage)
-- [API Reference](#api-reference)
-- [Testing](#testing)
-- [Documentation](#documentation)
-- [Contributing](#contributing)
-- [License](#license)
+`roninmemory` is the **memory backbone** of the Allura agent system. It is not an agent itself — it is the infrastructure that agents read from and write to. Every autonomous agent in the Allura ecosystem (Paperclip, OpenClaw, AgentBreeder, and the Ronin Coordinator) depends on the services this repo provides to persist context, recall prior decisions, and grow smarter over time.
+
+The stack is an opinionated assembly of proven open-source tools — Neo4j, PostgreSQL, the Neo4j MCP server, and a custom Next.js research frontend. The orchestration, configuration, naming conventions, agent memory schema, and overall integration design are the work of **Sabir Asheed**.
 
 ---
 
-## Quick Start
+## Memory Architecture
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    ALLURA MEMORY LAYER                       │
+│                     (roninmemory)                            │
+├───────────────────────┬──────────────────────────────────────┤
+│   GRAPH MEMORY        │   STRUCTURED MEMORY                  │
+│                       │                                      │
+│  Neo4j (port 7687)    │  PostgreSQL (port 5432)              │
+│  ─────────────────    │  ──────────────────────              │
+│  • Entity nodes       │  • Conversation logs                 │
+│  • Relationship edges │  • Task history                      │
+│  • Project context    │  • Agent state snapshots             │
+│  • Skill knowledge    │  • Structured metadata               │
+│  • Agent memories     │                                      │
+│                       │  pgvector extension for              │
+│  Neo4j Browser        │  semantic embedding search           │
+│  (port 7474)          │                                      │
+├───────────────────────┴──────────────────────────────────────┤
+│                    MCP ACCESS LAYER                          │
+│                                                              │
+│  Neo4j MCP Server (port 3001)                                │
+│  Exposes graph read/write as MCP tools to any agent          │
+│  Compatible with Claude, OpenCode, Agent Zero, and any       │
+│  MCP-capable client                                          │
+├──────────────────────────────────────────────────────────────┤
+│                    OBSERVABILITY                              │
+│                                                              │
+│  Dozzle (port 9999) — real-time Docker log viewer            │
+└──────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Services
+
+| Service | Port(s) | Description |
+|---|---|---|
+| **Neo4j** | `7687` (Bolt), `7474` (Browser) | Graph database — primary knowledge store |
+| **PostgreSQL** | `5432` | Relational memory + pgvector embeddings |
+| **Neo4j MCP Server** | `3001` | Exposes Neo4j as MCP tools for AI agents |
+| **Dozzle** | `9999` | Docker log viewer for observability |
+| **Research Frontend** | `3000` (dev) | Next.js app for memory inspection and query |
+
+---
+
+## Repository Structure
+
+```
+roninmemory/
+├── src/                    # Next.js application (research frontend)
+├── agent/                  # Agent prompts and memory instructions
+├── config/                 # Service configuration files
+├── docker/                 # Docker-specific configs per service
+├── docs/                   # Architecture docs and guides
+├── memory-bank/            # Markdown-based agent memory bank
+├── postgres-init/          # PostgreSQL initialization SQL
+├── scripts/                # Dev and ops helper scripts
+├── templates/              # Memory prompt templates
+├── tests/                  # Test suite (Vitest)
+├── workflow/               # Workflow definitions
+├── archive/                # Archived experiments
+├── backups/                # Backup artifacts
+├── docker-compose.yml      # Primary service orchestration
+├── Dockerfile              # Research frontend image
+├── Dockerfile.mcp          # Neo4j MCP server image
+├── Dockerfile.researcher   # Researcher agent image
+├── package.json            # Node/Bun project manifest
+├── AGENTS.md               # AI agent instructions for this repo
+├── AI-GUIDELINES.md        # AI coding guidelines
+└── opencode.json           # OpenCode AI tool config
+```
+
+---
+
+## Prerequisites
+
+- **Docker** and **Docker Compose** (v2+)
+- **Node.js 20+** or **Bun** (for the frontend)
+- Ports `7474`, `7687`, `5432`, `3001`, `9999` available on your machine
+
+---
+
+## Getting Started
+
+### 1. Clone the repo
 
 ```bash
-# Clone and install
 git clone https://github.com/Charitablebusinessronin/roninmemory.git
 cd roninmemory
-npm install
+```
 
-# Start databases
+### 2. Configure environment
+
+```bash
+cp .env.example .env
+# Edit .env — set passwords for Neo4j and PostgreSQL
+```
+
+### 3. Start infrastructure
+
+```bash
+docker compose up -d
+```
+
+This brings up Neo4j, PostgreSQL, the MCP server, and Dozzle.
+
+### 4. Verify services
+
+| Check | URL |
+|---|---|
+| Neo4j Browser | http://localhost:7474 |
+| Dozzle (logs) | http://localhost:9999 |
+| MCP Server health | http://localhost:3001 |
+
+### 5. Start the research frontend
+
+```bash
+npm install   # or: bun install
+npm run dev   # or: bun dev
+```
+
+Frontend runs at http://localhost:3000.
+
+---
+
+## Integration with roninclaw
+
+`roninmemory` is a **required dependency** of [roninclaw](https://github.com/Charitablebusinessronin/roninclaw). Always start roninmemory first.
+
+```bash
+# In roninmemory/ — start memory layer first
 docker compose up -d
 
-# Run tests
-npm test
-
-# Start MCP server
-npm run mcp
-```
-
----
-
-## Features
-
-### Core Capabilities
-
-| Feature | Description |
-|---------|-------------|
-| **Dual-Layer Persistence** | Raw events in PostgreSQL, curated knowledge in Neo4j |
-| **Versioned Insights** | Immutable knowledge with SUPERSEDES relationships |
-| **Human-in-the-Loop** | Critical changes require approval before activation |
-| **Multi-Tenant Isolation** | group_id prevents cross-project contamination |
-| **Audit Trail** | 5-layer Agent Decision Records (ADR) for compliance |
-| **MCP Protocol** | Works with Claude Desktop, OpenClaw, MCP-compatible agents |
-| **Superpowers Integration** | Agentic workflows with automatic memory logging |
-| **OpenCode Skills** | Custom skill library for memory-first development |
-
-### Governance Features
-
-- **HITL Approval Gates** - Promote, deprecate, supersede with human review
-- **Circuit Breakers** - Halt execution when error rates spike
-- **Bounded Autonomy** - Kmax limits, token budgets, time constraints
-- **Steel Frame Versioning** - Knowledge lineage with immutable history
-
----
-
-## Architecture
-
-The system operates across six layers:
-
-    Agent (OpenClaw)
-         |
-         v
-    6. Audit (ADR Layer) - 5-layer decision records
-         |
-         v
-    5. Governance - Policy Gateway, Circuit Breakers, HITL
-         |
-         v
-    4. Discovery (ADAS) - Automated agent design with Ollama + Docker
-         |
-         v
-    3. Control (Ralph Loops) - Perceive/Plan/Act/Check/Adapt
-         |
-         v
-    2. Semantic Memory (Neo4j) <---> 1. Raw Memory (PostgreSQL)
-        Versioned Insights                Immutable Traces
-
----
-
-## Installation
-
-### Prerequisites
-
-- Node.js 18+ or Bun
-- Docker (for PostgreSQL + Neo4j)
-- 4GB RAM minimum
-
-### Setup
-
-```bash
-# Clone
-git clone https://github.com/Charitablebusinessronin/roninmemory.git
-cd roninmemory
-
-# Install
-npm install
-
-# Start databases
+# Then in roninclaw/ — start the agent layer
 docker compose up -d
-
-# Run tests
-npm test
 ```
 
-### Environment
-
-```bash
-POSTGRES_PASSWORD=your_password
-NEO4J_PASSWORD=your_password
-NOTION_API_KEY=optional
-```
+Agents in roninclaw connect to:
+- **Neo4j Bolt**: `bolt://localhost:7687`
+- **PostgreSQL**: `postgresql://localhost:5432`
+- **MCP Server**: `http://localhost:3001`
 
 ---
 
-## Usage
+## Memory Schema
 
-### MCP Server (Claude Desktop / OpenClaw)
+Neo4j stores agent memory as a knowledge graph. Core node types:
 
-```json
-{
-  "mcpServers": {
-    "memory": {
-      "command": "npx",
-      "args": ["tsx", "src/mcp/memory-server.ts"]
-    }
-  }
-}
-```
+| Node Label | Purpose |
+|---|---|
+| `Project` | Top-level project context |
+| `Task` | Individual tasks within a project |
+| `Decision` | Recorded architectural/design decisions |
+| `Skill` | Agent capabilities and learned behaviors |
+| `Entity` | People, systems, and concepts |
+| `Memory` | Episodic agent memories with timestamps |
 
-### Library
-
-```typescript
-import { storeMemory, searchMemories } from '@/lib/memory';
-
-await storeMemory({
-  type: "Insight",
-  topic_key: "project.auth.jwt-pattern",
-  content: "Use 15-minute token expiration for mobile apps",
-  group_id: "myproject",
-  confidence: 0.92
-});
-
-const results = await searchMemories({
-  query: "authentication",
-  group_id: "myproject"
-});
-```
-
-### Memory snapshot workflow
-
-Warm up long sessions by building a deterministic doc snapshot and using it to hydrate the MCP session loggers.
-
-```bash
-bun run snapshot:build \
-  --source docs/roninmemory \
-  --source docs/Carlos_plan_framework \
-  --output memory-bank \
-  --group-id roninmemory \
-  --max-summary-chars 600
-```
-
-- Inputs: one or more `--source` directories (repeat per root). Output: `memory-bank/index.json` with entries plus `memory-bank/index.meta.json` summarizing hashes, run stats, and append-only ingestion metadata, plus a console summary line showing file count/byte totals.
-- Incremental mode (default) reads the metadata file and skips unchanged hashes; use `--no-incremental` to force a rebuild or `--priority-override plan.md` (repeatable glob) to refresh specific docs despite matching hashes.
-- Summaries truncate at `--max-summary-chars` characters; `--summary-length` is a backwards-compatible alias. Pair with `--group-id` to stamp tenant ownership and `--output` to target a different cache directory.
-
-Hydrate sessions (PostgreSQL + Neo4j) from the generated snapshot:
-
-```bash
-GROUP_ID=roninmemory bun run session:hydrate \
-  --snapshot memory-bank/index.json \
-  --metadata memory-bank/index.meta.json \
-  --concurrency 4 \
-  --dry-run
-```
-
-- `GROUP_ID` env var is required so the script can enforce tenant isolation when creating session briefings.
-- `--snapshot` is the JSON artifact path; `--metadata` defaults to the sibling `.meta.json` when omitted and is used to track append-only ingestion metadata in `memory-bank/ingestion.meta.json` (only new rows append; never mutate history).
-- `--concurrency` controls parallel MCP writes; start at 4 and increase only if Neo4j/Postgres can keep up. `--dry-run` logs payloads without writing (ideal for QA or verifying priority overrides).
-
-Troubleshooting:
-
-- Missing snapshot file: ensure `memory-bank/index.json` exists (rerun `bun run snapshot:build`) and double-check your `--output` / `--snapshot` path; hydration exits early with an actionable error if the file is absent.
-- Metadata mismatch (e.g., stale group or schema): delete only the generated `memory-bank/index.meta.json` and rerun the builder, or pass `--no-incremental` so hashes rewrite; for ingestion metadata, never edit manually—each hydration appends a new block so audit trails remain intact.
-
-Common overrides:
-
-| Flag | Purpose |
-|------|---------|
-| `--max-summary-chars` / `--summary-length` | Set/alias summary truncation limit for each document entry. |
-| `--priority-override <pattern>` | Force rebuild of entries matching the pattern even if hashes match (repeat as needed). |
-| `--concurrency <n>` | Control number of concurrent hydration workers. |
-| `--dry-run` | Preview hydration payloads without touching databases. |
-
-This workflow keeps doc ingestion deterministic and append-only so `memory-bank/ingestion.meta.json` always reflects the full history of session briefings.
-
-#### Quick bootstrap (one command)
-
-Run the full pipeline—build snapshot, then hydrate—in one step:
-
-```bash
-bun run session:bootstrap [--group-id roninmemory] [--dry-run] [--skip-snapshot]
-```
-
-- Builds snapshot incrementally from default sources (`docs/roninmemory`, `docs/Carlos_plan_framework`)
-- Hydrates session context with concurrency 5
-- Logs summary stats and exits with status code
-- Use `--skip-snapshot` if you already ran `snapshot:build` recently
-- Requires `POSTGRES_PASSWORD` and `NEO4J_PASSWORD` env vars (pull from MCP_DOCKER)
-
-Example with credentials:
-```bash
-POSTGRES_PASSWORD="..." NEO4J_PASSWORD="..." bun run session:bootstrap
-```
+Relationships connect these nodes to form a navigable graph of context that agents can query with Cypher.
 
 ---
 
-### Superpowers Integration
+## AI Agent Guidelines
 
-This project integrates with [Superpowers](https://github.com/obra/superpowers) for agentic development workflows with automatic memory logging.
-
-```bash
-# Global Superpowers config at ~/.config/opencode/opencode.json
-# Installed via: opencode plugins add superpowers
-
-# Skills with memory integration:
-# - brainstorming: Logs session start/end, design decisions
-# - writing-plans: Logs plan creation, links to originating spec
-# - executing-plans: Logs task execution with commit SHAs
-# - subagent-driven-development: Logs subagent dispatches and review outcomes
-```
-
-Each skill automatically:
-- **Hydrates context** at session start (searches previous work for group/workflow)
-- **Logs events** at checkpoints (MCP_DOCKER_insert_data to PostgreSQL)
-- **Creates insights** at session end (MCP_DOCKER_create_entities to Neo4j)
-- **Verifies writes** before completing
-
-See `.opencode/skills/superpowers-memory/SKILL.md` for complete patterns.
-
-### OpenCode Agent Setup
-
-This repository includes OpenCode agent configuration for memory-first development:
-
-```bash
-# Agent configuration
-.opencode/agents/roninmemory-project.md    # Primary agent definition
-.opencode/skills/                           # Custom skill library
-  ├── skill-creator/SKILL.md              # Create new skills
-  ├── memory-client/SKILL.md              # Memory system integration
-  ├── mcp-docker/SKILL.md               # MCP server discovery
-  ├── mcp-docker-memory-system/SKILL.md # Memory system operations
-  ├── superpowers-memory/SKILL.md         # Superpowers integration
-  └── superpowers-enhanced/*.md           # Enhanced Superpowers skills
-
-# Available agents
-opencode agents list                        # List configured agents
-opencode agents run roninmemory-project     # Run with agent context
-```
-
-**Key skills:**
-- `memory-client`: Search, log events, create insights via MCP
-- `mcp-docker`: Discover and configure MCP servers dynamically
-- `superpowers-memory`: Patterns for logging Superpowers workflows
-- `skill-creator`: Standardized skill creation with templates
-
----
-
-## API Reference
-
-### Core Tools
-
-| Tool | Purpose |
-|------|---------|
-| store_memory | Create versioned knowledge node |
-| search_memories | Full-text semantic search |
-| get_memory | Retrieve by topic key |
-| promote_memory | Draft to Active (HITL) |
-| deprecate_memory | Mark deprecated |
-| archive_memory | Mark archived |
-
-### Governance Tools
-
-| Tool | Purpose |
-|------|---------|
-| log_decision | Record ADR with counterfactuals |
-| approve_insight | Human approval gate |
-| reject_insight | Reject proposed insight |
-| supersede_insight | Replace with newer version |
-
-Full API: .skills/memory-management/resources/tool-reference.md
-
----
-
-## Testing
-
-```bash
-# Unit tests
-npm test
-
-# E2E integration tests
-RUN_E2E_TESTS=true npm test
-
-# Behavioral stress tests
-npm run test:e2e
-```
-
-Coverage: 1,854+ tests across 6 epics
-
----
-
-## Documentation
-
-| Document | Purpose |
-|----------|---------|
-| AGENTS.md | Coding standards, patterns, TypeScript |
-| docs/PROJECT.md | Architecture, hiring profile |
-| docs/RESUME_SNIPPET.md | Resume summary |
-| .skills/ | Skill package for agents |
-| memory-bank/ | Persistent context |
-| superpowers/planning/** | Superpowers planning artifacts (load before major builds) |
-| README.md | Repo overview + memory usage guide |
-
----
-
-## Using the memory system
-
-- **Automated session logging**: run `bunx tsx scripts/session-logger.ts --phase start --group <group_id> ...` at session start and again with `--phase end`. The script writes `log_event` entries with standardized metadata (task IDs, files touched, verification commands, notes). Use `--dry-run` to preview payloads.
-- **Link events to tasks**: pass `--task <TASK-ID>`, `--files a,b`, and `--verify cmd1,cmd2` so each event references the work performed. This makes `memory_search` results self-explanatory.
-- **Promote recurring insights**: after resolving a repeated bug/decision, call `create_insight` and `create_relation` (via MCP) so future sessions surface the knowledge automatically.
-- **Group IDs**: use the project slug as `group_id` (for example, `roninmemory`, `openclaw`, or client-specific IDs). Never mix tenant data.
-- **Traces vs. insights**: use `log_event` for raw traces (session start/end, verification commands, blockers) and `create_insight` + `create_relation` for curated takeaways worth reusing.
-- **Periodic cleanup**: run `scripts/audit-memory-storage.sh` weekly to review raw events, promote important ones to insights, and archive noise. This keeps the graph healthy.
+See [`AGENTS.md`](./AGENTS.md) for instructions for AI coding agents working in this repo, and [`AI-GUIDELINES.md`](./AI-GUIDELINES.md) for the broader coding standards and conventions that apply.
 
 ---
 
 ## Tech Stack
 
 | Layer | Technology |
-|-------|-------------|
-| Language | TypeScript (strict, ES2022) |
+|---|---|
+| Graph database | Neo4j 5 |
+| Relational + vector | PostgreSQL 16 + pgvector |
+| MCP server | `@neo4j/neo4j-mcp-server` |
+| Research frontend | Next.js 14, TypeScript |
 | Runtime | Bun / Node.js |
-| Databases | PostgreSQL 16, Neo4j 5.26 + APOC |
-| Protocol | Model Context Protocol (MCP) |
+| Container orchestration | Docker Compose |
+| Log observability | Dozzle |
 | Testing | Vitest |
-| CI/CD | GitHub Actions |
 
 ---
 
-## Project Structure
+## Acknowledgements
 
-```
-memory/
-  src/
-    lib/memory/       # Core operations
-    lib/postgres/     # Raw storage
-    lib/neo4j/        # Knowledge graph
-    lib/ralph/        # Self-correcting loops
-    mcp/              # 30+ MCP tools
-    curator/          # Promotion pipeline
-  .skills/            # Skill package
-  memory-bank/        # Context files
-  docs/               # Documentation
-```
+This project is an integration layer built on top of exceptional open-source software:
 
----
+- [**Neo4j**](https://neo4j.com/) — graph database engine
+- [**PostgreSQL**](https://www.postgresql.org/) — relational database
+- [**pgvector**](https://github.com/pgvector/pgvector) — vector similarity search for Postgres
+- [**neo4j-mcp-server**](https://github.com/neo4j-contrib/neo4j-mcp) — MCP protocol adapter for Neo4j
+- [**Next.js**](https://nextjs.org/) — React framework for the research frontend
+- [**Dozzle**](https://dozzle.dev/) — Docker log viewer
+- [**Bun**](https://bun.sh/) — JavaScript runtime and package manager
+- [**Vitest**](https://vitest.dev/) — unit testing framework
+- [**Model Context Protocol (MCP)**](https://modelcontextprotocol.io/) — Anthropic's open standard for tool-use in AI systems
 
-## Contributing
-
-1. All code must pass `npm run typecheck`
-2. All changes require tests
-3. Follow patterns in AGENTS.md
-4. Use `group_id` for tenant isolation
- 5. Document significant events via MCP tools (`log_event`, `create_insight`, `create_relation`)
+The **orchestration, agent memory schema, integration design, and Allura ecosystem context** were created by **Sabir Asheed**.
 
 ---
 
 ## License
 
-MIT
+MIT — see [LICENSE](./LICENSE).
 
----
-
-## Author
-
-Built by [ronin4life](https://github.com/Charitablebusinessronin) for AI agent memory persistence.
+Copyright © 2025 Sabir Asheed. The integration, configuration, and original work in this repository are licensed under MIT. Bundled open-source components retain their own licenses.
