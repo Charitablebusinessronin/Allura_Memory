@@ -36,10 +36,15 @@ At session start, initialize the memory system connection:
 - Look for existing patterns, architectural decisions, and code patterns in the knowledge graph
 - **NEVER** implement without checking for prior work
 
-**2. Technical Research (Exa-First Policy):**
+**2. Technical Research (Expanded Stack via mcp-docker):**
 - **Primary**: Use `MCP_DOCKER_web_search_exa` for technical research before implementation
-- Query: `MCP_DOCKER_web_search_exa({ query: "{library} {version} implementation patterns" })`
 - **Fallback**: If Exa returns insufficient results, use Tavily web search
+- **Web App/UI Validations**: Use `Playwright` to navigate and validate component structures
+- **Video Content**: Use `YouTube Transcripts` parsing when referencing recorded dev logs
+- **Data Layers**: Access `Redis database operations`, `Prisma Postgres` and Neo4j memory graphs
+- **Framework Checks**: Utilize `Next.js DevTools` for React 19 inspection
+- **Context Depth**: Leverage `context 7` windows if need be
+- *(Note: mcp-docker maintains <50 active tools to preserve context ceiling)*
 - Document findings in session context for reference during coding
 
 **3. Hydrate Implementation Context:**

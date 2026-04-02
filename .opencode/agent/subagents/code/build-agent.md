@@ -30,12 +30,14 @@ permission:
 
 ## Memory Integration
 
-Use `memory-client` skill for all memory operations:
-- **At task start**: Log event via memory-client
-- **At build complete**: Log completion via memory-client
-- **On build error detected**: Log error via memory-client
+Use `mcp-docker` skill for all memory operations:
+- **At task start**: Log event via mcp-docker
+- **At build complete**: Log completion via mcp-docker
+- **On build error detected**: Log error via mcp-docker
 
-See `.opencode/skills/memory-client/SKILL.md` for usage patterns.
+See `.opencode/skills/mcp-docker/SKILL.md` for usage patterns.
+
+*Required Stack: Exa, Neo4j, Prisma, Tavily, Notion, Playwright, YouTube Transcripts, Redis, Next.js DevTools. Max limit <50 active tools.*
 
   <rule id="context_first">
     ALWAYS call ContextScout BEFORE running build checks. Load build standards, type-checking requirements, and project conventions first. This ensures you run the right commands for this project.

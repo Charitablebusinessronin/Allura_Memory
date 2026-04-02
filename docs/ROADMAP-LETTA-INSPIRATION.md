@@ -149,16 +149,16 @@ const insights = await memory.searchInsights({
 
 **Quick Start**:
 ```bash
-npm install roninmemory
+bun add roninmemory
 
 # Initialize
-npx roninmemory init
+bunx roninmemory init
 
 # Start databases
 docker compose up -d
 
 # Run reflection job
-npx roninmemory reflect --agent myagent --window 24h
+bunx roninmemory reflect --agent myagent --window 24h
 ```
 
 **Configuration** (`roninmemory.config.js`):

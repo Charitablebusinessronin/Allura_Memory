@@ -33,12 +33,14 @@ permission:
 
 ## Memory Integration
 
-Use `memory-client` skill for all memory operations:
-- **At task start**: Log event via memory-client
-- **At task complete**: Log completion via memory-client
-- **On test pattern discovered**: Create pattern entity via memory-client
+Use `mcp-docker` skill for all memory operations:
+- **At task start**: Log event via mcp-docker
+- **At task complete**: Log completion via mcp-docker
+- **On test pattern discovered**: Create pattern entity via mcp-docker
 
-See `.opencode/skills/memory-client/SKILL.md` for usage patterns.
+See `.opencode/skills/mcp-docker/SKILL.md` for usage patterns.
+
+*Required Stack: Exa, Neo4j, Prisma, Tavily, Notion, Playwright, YouTube Transcripts, Redis, Next.js DevTools. Max limit <50 active tools.*
 
   <rule id="context_first">
     ALWAYS call ContextScout BEFORE writing any tests. Load testing standards, coverage requirements, and TDD patterns first. Tests without standards = tests that don't match project conventions.

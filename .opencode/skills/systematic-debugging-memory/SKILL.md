@@ -23,7 +23,7 @@ This skill now integrates with the memory system to persist debugging knowledge 
 
 1. **Query Previous Debugging Sessions**
    ```
-   // Use memory-client skill or neo4j-cypher_* tools
+   // Use mcp-docker skill or neo4j-cypher_* tools
    search_insights({
      query: "debugging {component} {error_type}",
      group_id: "your-group"
@@ -32,7 +32,7 @@ This skill now integrates with the memory system to persist debugging knowledge 
 
 2. **Search for Similar Issues**
    ```javascript
-   // Use memory-client skill
+   // Use mcp-docker skill
    search_insights({
      query: "debugging {component} {error_type}",
      group_id: "your-group"
@@ -56,7 +56,7 @@ This skill now integrates with the memory system to persist debugging knowledge 
 **Log key findings at each phase:**
 
 ```javascript
-// Via memory-client skill
+// Via mcp-docker skill
 log_event({
   group_id: "group",
   event_type: "debug:phase1_complete",
@@ -430,14 +430,14 @@ This is NOT a failed hypothesis - this is a wrong architecture.
 
 | Debugging Task | Tool/Skill | Table/Entity |
 |----------------|------------|--------------|
-| Query previous sessions | `search_events` (memory-client) | `events` table |
-| Search for patterns | `search_insights` (memory-client) | Neo4j |
-| Log session start | `log_event` (memory-client) | `events` |
-| Log phase complete | `log_event` (memory-client) | `events` |
-| Log root cause found | `log_event` (memory-client) | `events` |
-| Create insight | `create_insight` (memory-client) | Neo4j `RootCause` |
-| Link to events | `create_relation` (memory-client) | Neo4j relations |
-| Verify persistence | `search_events` (memory-client) | Verify by event ID |
+| Query previous sessions | `search_events` (mcp-docker) | `events` table |
+| Search for patterns | `search_insights` (mcp-docker) | Neo4j |
+| Log session start | `log_event` (mcp-docker) | `events` |
+| Log phase complete | `log_event` (mcp-docker) | `events` |
+| Log root cause found | `log_event` (mcp-docker) | `events` |
+| Create insight | `create_insight` (mcp-docker) | Neo4j `RootCause` |
+| Link to events | `create_relation` (mcp-docker) | Neo4j relations |
+| Verify persistence | `search_events` (mcp-docker) | Verify by event ID |
 
 ## Event Type Naming Convention
 
@@ -528,7 +528,7 @@ These techniques are part of systematic debugging and available in this director
 **Related skills:**
 - **superpowers:test-driven-development** - For creating failing test case (Phase 4, Step 1)
 - **superpowers:verification-before-completion** - Verify fix worked before claiming success
-- **roninmemory:memory-client** - For querying and logging to memory system
+- **roninmemory:mcp-docker** - For querying and logging to memory system
 
 ## Real-World Impact
 

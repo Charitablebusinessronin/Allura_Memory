@@ -141,11 +141,9 @@ if (typeof window !== "undefined") {
 
 For agentic work in this repository, load and use these skills when applicable:
 
-- `memory-client`: `/home/ronin704/Projects/roninmemory/.opencode/skills/memory-client`
-  - Use for memory persistence, knowledge search, event logging, and context retrieval.
-  - Prefer `group_id`-scoped memory operations for all project work.
 - `mcp-docker`: `/home/ronin704/Projects/roninmemory/.opencode/skills/mcp-docker`
   - Use for discovering/configuring MCP servers and enabling additional tools on demand.
+  - Required memory and execution stack via `mcp-docker`: `Exa`, `Neo4j Memory`, `Prisma Postgres`, `Tavily`, `Notion default tools`, `Playwright`, `YouTube Transcripts`, `Redis database operations`, `Next.js DevTools`, and `context 7` (keep total under 50 tools).
   - Follow the workflow: `mcp-find` -> `mcp-config-set` -> `mcp-add` -> execute tool.
 - `opencode-docs`: `/home/ronin704/Projects/roninmemory/.opencode/skills/opencode-docs`
   - Use `https://opencode.ai/docs/` as the authoritative reference for OpenCode config, agents, plugins, and workflows.

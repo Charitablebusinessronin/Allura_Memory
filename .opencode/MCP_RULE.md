@@ -28,19 +28,19 @@ docker exec knowledge-neo4j cypher-shell ...
 query_database({ query: "..." })          // postgres-mcp
 read_neo4j_cypher({ query: "..." })      // neo4j-cypher
 
-// ✅ CORRECT - Via memory-client skill
+// ✅ CORRECT - Via mcp-docker skill
 search_insights({ query: "...", group_id: "..." })
 log_event({ group_id: "...", event_type: "...", agent_id: "..." })
 ```
 
-**Note:** The `memory-client` skill provides the canonical abstraction. Use configured servers directly only when the skill doesn't cover your use case.
+**Note:** The `mcp-docker` skill provides the canonical abstraction. Use configured servers directly only when the skill doesn't cover your use case.
 
 ## Verification Checklist
 
 Before claiming work is done:
 - [ ] Did I use MCP tools via configured servers for ALL database queries?
-- [ ] Did I log events via memory-client skill's `log_event`?
-- [ ] Did I create Neo4j insights via memory-client skill's `create_insight`?
+- [ ] Did I log events via mcp-docker skill's `log_event`?
+- [ ] Did I create Neo4j insights via mcp-docker skill's `create_insight`?
 - [ ] Did I NOT use docker exec for any database operation?
 
 ## Penalty

@@ -177,9 +177,9 @@ Log events at checkpoints:
 
 | Action | Tool |
 |--------|------|
-| Log start | `log_event` (memory-client skill) |
-| Create insight | `create_insight` (memory-client skill) |
-| Link to events | `create_relation` (memory-client skill) |
+| Log start | `log_event` (mcp-docker skill) |
+| Create insight | `create_insight` (mcp-docker skill) |
+| Link to events | `create_relation` (mcp-docker skill) |
 | Verify write | `search_events` or query events table |
 
 ## Visual Companion

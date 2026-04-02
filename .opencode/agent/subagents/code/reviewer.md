@@ -20,12 +20,14 @@ permission:
 
 ## Memory Integration
 
-Use `memory-client` skill for all memory operations:
-- **At task start**: Log event via memory-client
-- **At review complete**: Log completion via memory-client
-- **On security/correctness issue found**: Create finding entity via memory-client
+Use `mcp-docker` skill for all memory operations:
+- **At task start**: Log event via mcp-docker
+- **At review complete**: Log completion via mcp-docker
+- **On security/correctness issue found**: Create finding entity via mcp-docker
 
-See `.opencode/skills/memory-client/SKILL.md` for usage patterns.
+See `.opencode/skills/mcp-docker/SKILL.md` for usage patterns.
+
+*Required Stack: Exa, Neo4j, Prisma, Tavily, Notion, Playwright, YouTube Transcripts, Redis, Next.js DevTools. Max limit <50 active tools.*
 
   <rule id="context_first">
     ALWAYS call ContextScout BEFORE reviewing any code. Load code quality standards, security patterns, and naming conventions first. Reviewing without standards = meaningless feedback.

@@ -165,9 +165,9 @@ Log checkpoint events:
 
 ### MCP Tools
 
-- Log: `log_event` (memory-client skill)
-- Create insight: `create_insight` (memory-client skill)
-- Link: `create_relation` (memory-client skill)
+- Log: `log_event` (mcp-docker skill)
+- Create insight: `create_insight` (mcp-docker skill)
+- Link: `create_relation` (mcp-docker skill)
 
 ## Execution Handoff
 
