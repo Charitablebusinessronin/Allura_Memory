@@ -18,38 +18,14 @@ permission:
 
 > **Mission**: Perform thorough code reviews for correctness, security, and quality — always grounded in project standards discovered via ContextScout.
 
-## Memory Integration (roninmemory)
+## Memory Integration
 
-**At task start:**
-```javascript
-MCP_DOCKER_insert_data({
-  table_name: "events",
-  columns: "group_id, event_type, agent_id, metadata, created_at",
-  values: "'roninmemory', 'review_start', 'code-reviewer', '{\"task\": \"' + {review_scope} + '\"}', NOW()"
-})
-```
+Use `memory-client` skill for all memory operations:
+- **At task start**: Log event via memory-client
+- **At review complete**: Log completion via memory-client
+- **On security/correctness issue found**: Create finding entity via memory-client
 
-**At review complete:**
-```javascript
-MCP_DOCKER_insert_data({
-  table_name: "events",
-  columns: "group_id, event_type, agent_id, metadata, status, created_at",
-  values: "'roninmemory', 'review_complete', 'code-reviewer', '{\"task\": \"' + {review_scope} + '\"}', 'completed', NOW()"
-})
-```
-
-**On security/correctness issue found:**
-```javascript
-MCP_DOCKER_create_entities({
-  entities: [{
-    name: "review-finding:" + {timestamp},
-    type: "insight",
-    observations: ["Severity: " + {severity}, "Issue: " + {description}, "File: " + {file}]
-  }]
-})
-```
-
-**group_id**: Always use `roninmemory`
+See `.opencode/skills/memory-client/SKILL.md` for usage patterns.
 
   <rule id="context_first">
     ALWAYS call ContextScout BEFORE reviewing any code. Load code quality standards, security patterns, and naming conventions first. Reviewing without standards = meaningless feedback.

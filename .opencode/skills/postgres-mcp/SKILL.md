@@ -17,20 +17,22 @@ You manage PostgreSQL memory operations for roninmemory.
 
 ## Tools Available
 
-### Query Operations
+### Query Operations (via postgres-mcp server)
 ```typescript
 // Query events
-MCP_DOCKER_query_database: {
+query_database({
   query: "SELECT * FROM events WHERE group_id = 'mygroup' ORDER BY created_at DESC LIMIT 10"
-}
+})
 
 // Insert event
-MCP_DOCKER_insert_data: {
+insert_data({
   table_name: "events",
   columns: "group_id, event_type, agent_id, workflow_id, status, metadata",
   values: "'mygroup', 'task.complete', 'agent-1', 'workflow-1', 'completed', '{\"result\": \"success\"}'"
-}
+})
 ```
+
+> **Note:** These are tools provided by the configured `postgres-mcp` server, not direct `MCP_DOCKER_*` functions. Configure with `MCP_DOCKER_mcp-config-set` then `MCP_DOCKER_mcp-add`.
 
 ## Common Queries
 

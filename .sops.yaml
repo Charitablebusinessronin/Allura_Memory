@@ -1,0 +1,21 @@
+# SOPS Configuration for Allura Memory MCP
+# https://github.com/getsops/sops
+#
+# This configuration uses age for file encryption.
+# Public key: age1qxecdrckcnzhsrgj88ky8js5m5pun9kq7hh6xu4ras3n4d5t43js7tg7gh
+#
+# Usage:
+#   Encrypt: sops -e .env > .env.enc
+#   Decrypt: sops -d .env.enc > .env
+#   Edit:    sops .env.enc
+
+creation_rules:
+  # Encrypt all .env files
+  - path_regex: \.env$
+    age: age1qxecdrckcnzhsrgj88ky8js5m5pun9kq7hh6xu4ras3n4d5t43js7tg7gh
+    encrypted_suffix: _ENCRYPTED
+
+# Key Groups (allows key rotation without breaking existing files)
+key_groups:
+  - age:
+      - age1qxecdrckcnzhsrgj88ky8js5m5pun9kq7hh6xu4ras3n4d5t43js7tg7gh

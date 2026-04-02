@@ -185,14 +185,14 @@ At session end:
 
 ## MCP Tool Mapping
 
-| Action | MCP Tool |
-|--------|----------|
-| Log event | `MCP_DOCKER_insert_data` on `events` table |
-| Create insight | `MCP_DOCKER_create_entities` in Neo4j |
-| Link to events | `MCP_DOCKER_create_relations` |
-| Search events | `MCP_DOCKER_query_database` with SQL |
-| Search insights | `MCP_DOCKER_search_memories` |
-| Verify write | `MCP_DOCKER_query_database` by event ID |
+| Action | Tool |
+|--------|------|
+| Log event | `log_event` (memory-client skill) |
+| Create insight | `create_insight` (memory-client skill) |
+| Link to events | `create_relation` (memory-client skill) |
+| Search events | `search_events` (memory-client skill) |
+| Search insights | `search_insights` (memory-client skill) |
+| Verify write | Query events by event ID |
 
 ## Example: Complete Session Flow
 

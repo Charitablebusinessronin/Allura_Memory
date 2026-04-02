@@ -254,10 +254,10 @@ Log events for each task lifecycle:
 
 ### MCP Tools
 
-- Log events: `MCP_DOCKER_insert_data`
-- Create outcome: `MCP_DOCKER_create_entities` (Neo4j)
-- Link lineage: `MCP_DOCKER_create_relations` (DERIVED_FROM)
-- Query history: `MCP_DOCKER_query_database` + `MCP_DOCKER_search_memories`
+- Log events: `log_event` (memory-client skill)
+- Create outcome: `create_insight` (memory-client skill)
+- Link lineage: `create_relation` (memory-client skill)
+- Query history: `search_events` or `search_insights` (memory-client skill)
 
 ## Advantages
 
