@@ -187,11 +187,11 @@ At session end:
 
 | Action | Tool |
 |--------|------|
-| Log event | `log_event` (memory-client skill) |
-| Create insight | `create_insight` (memory-client skill) |
-| Link to events | `create_relation` (memory-client skill) |
-| Search events | `search_events` (memory-client skill) |
-| Search insights | `search_insights` (memory-client skill) |
+| Log event | `log_event` (mcp-docker skill) |
+| Create insight | `create_insight` (mcp-docker skill) |
+| Link to events | `create_relation` (mcp-docker skill) |
+| Search events | `search_events` (mcp-docker skill) |
+| Search insights | `search_insights` (mcp-docker skill) |
 | Verify write | Query events by event ID |
 
 ## Example: Complete Session Flow

@@ -254,10 +254,10 @@ Log events for each task lifecycle:
 
 ### MCP Tools
 
-- Log events: `log_event` (memory-client skill)
-- Create outcome: `create_insight` (memory-client skill)
-- Link lineage: `create_relation` (memory-client skill)
-- Query history: `search_events` or `search_insights` (memory-client skill)
+- Log events: `log_event` (mcp-docker skill)
+- Create outcome: `create_insight` (mcp-docker skill)
+- Link lineage: `create_relation` (mcp-docker skill)
+- Query history: `search_events` or `search_insights` (mcp-docker skill)
 
 ## Advantages
 

@@ -264,7 +264,6 @@ This repository includes OpenCode agent configuration for memory-first developme
 .opencode/agents/roninmemory-project.md    # Primary agent definition
 .opencode/skills/                           # Custom skill library
   ├── skill-creator/SKILL.md              # Create new skills
-  ├── memory-client/SKILL.md              # Memory system integration
   ├── mcp-docker/SKILL.md               # MCP server discovery
   ├── mcp-docker-memory-system/SKILL.md # Memory system operations
   ├── superpowers-memory/SKILL.md         # Superpowers integration
@@ -276,8 +275,7 @@ opencode agents run roninmemory-project     # Run with agent context
 ```
 
 **Key skills:**
-- `memory-client`: Search, log events, create insights via MCP
-- `mcp-docker`: Discover and configure MCP servers dynamically
+- `mcp-docker`: Discover and configure MCP servers (Provides stack: Exa, Neo4j Memory, Prisma Postgres, Tavily, Notion, Playwright, YouTube Transcripts, Redis, Next.js DevTools, Context 7 - keep under 50 tools)
 - `superpowers-memory`: Patterns for logging Superpowers workflows
 - `skill-creator`: Standardized skill creation with templates
 

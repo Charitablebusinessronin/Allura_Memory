@@ -14,7 +14,7 @@ allowed-tools: []
 |------|-------------|
 | MCP server lifecycle | [`mcp-docker`](https://opencode.ai/skills/mcp-docker) — use `MCP_DOCKER_mcp-find`, `MCP_DOCKER_mcp-config-set`, `MCP_DOCKER_mcp-add`, `MCP_DOCKER_mcp-exec` |
 | Database operations | Project-specific configured servers (e.g., `database-server`, `neo4j-cypher`) via `MCP_DOCKER_mcp-exec` |
-| Memory behavior | [`memory-client`](https://opencode.ai/skills/memory-client) |
+| Memory behavior | [`mcp-docker`](https://opencode.ai/skills/mcp-docker) |
 
 ## Universal Rule (Still Valid)
 

@@ -1,5 +1,5 @@
 ---
-description: "[DEPRECATED] Use mcp-docker, memory-client, and research policy directly"
+description: "[DEPRECATED] Use mcp-docker, mcp-docker, and research policy directly"
 argument-hint: ""
 allowed-tools: []
 ---
@@ -13,7 +13,7 @@ allowed-tools: []
 | Need | Use Instead |
 |------|-------------|
 | MCP orchestration (find/configure/add) | [`mcp-docker`](https://opencode.ai/skills/mcp-docker) |
-| Memory operations | [`memory-client`](https://opencode.ai/skills/memory-client) |
+| Memory operations | [`mcp-docker`](https://opencode.ai/skills/mcp-docker) |
 | Research queries | **Exa-first**, Tavily-fallback policy |
 
 ## Research Policy
@@ -34,7 +34,7 @@ MCP_DOCKER_mcp-config-set({ server: "...", config: {...} })
 MCP_DOCKER_mcp-add({ name: "...", activate: true })
 MCP_DOCKER_mcp-exec({ name: "...", tool: "..." })
 
-// Memory Operations (memory-client skill)
+// Memory Operations (mcp-docker skill)
 memory_create_entities({ entities: [...] })
 memory_search_knowledge({ query: "..." })
 ```

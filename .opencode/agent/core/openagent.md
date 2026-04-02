@@ -37,7 +37,7 @@ At session start, initialize the memory system connection:
 - Document research findings in session context
 
 **3. Hydrate Context from Memory:**
-- Query `MCP_DOCKER_mcp-exec` with appropriate memory-client tools
+- Query `MCP_DOCKER_mcp-exec` with appropriate mcp-docker tools
 - Use `neo4j-cypher_read_neo4j_cypher` for knowledge graph insights
 - Retrieve relevant entities and relationships
 

@@ -2,7 +2,7 @@
 description: "Session initialization - MUST run at start of every session"
 argument-hint: ""
 allowed-tools: ["bash", "read", "MCP_DOCKER_mcp-exec", "MCP_DOCKER_mcp-config-get", "MCP_DOCKER_mcp-find", "neo4j-cypher_read_neo4j_cypher", "neo4j-cypher_write_neo4j_cypher", "MCP_DOCKER_mcp-add", "MCP_DOCKER_notion-fetch", "MCP_DOCKER_web_search_exa", "MCP_DOCKER_code-mode"]
-skill: memory-client
+skill: mcp-docker
 global: false
 ---
 
@@ -28,7 +28,7 @@ This command initializes the memory system, hydrates context, and ensures all MC
 
 ## After Running
 
-Use canonical memory client tools for ALL memory operations (via memory-client skill):
+Use canonical memory client tools for ALL memory operations (via mcp-docker skill):
 
 ```javascript
 // Query Neo4j insights
@@ -43,7 +43,7 @@ neo4j-cypher_write_neo4j_cypher({
 
 // Use MCP discovery tools
 MCP_DOCKER_mcp-find({ query: "memory" })
-MCP_DOCKER_mcp-config-get({ server: "memory-client" })
+MCP_DOCKER_mcp-config-get({ server: "mcp-docker" })
 ```
 
 ## Never Do This
