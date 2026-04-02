@@ -235,6 +235,63 @@ Remove an MCP server from the session.
 5. **Clean up**: Remove servers when done if experiencing context bloat: `MCP_DOCKER_mcp-remove --name unused-server`
 6. **Check documentation**: Some servers have specific configuration requirements
 
+## Research Consistency Policy
+
+When searching the web within this skill, follow this strict hierarchy:
+
+### 1. Exa First (Primary)
+
+Always start with `MCP_DOCKER_web_search_exa` for web searches:
+
+```
+MCP_DOCKER_web_search_exa({
+  query: "your search query",
+  numResults: 5
+})
+```
+
+**Why Exa first?**
+- Purpose-built for AI/LLM workflows
+- High-quality, authoritative sources
+- Structured results optimized for context windows
+- Better semantic understanding of technical queries
+
+### 2. Tavily Fallback (Secondary)
+
+Only use Tavily when Exa returns insufficient results:
+
+```
+# First: Check if Exa results are adequate
+# Then: Only if needed, add and use Tavily
+MCP_DOCKER_mcp-config-set --server tavily --config '{"api_token":"tvly-xxxxx"}'
+MCP_DOCKER_mcp-add --name tavily --activate
+MCP_DOCKER_mcp-exec --name tavily --tool search --arguments '{"query":"..."}'
+```
+
+**When to fallback to Tavily:**
+- Exa returns zero results
+- Results lack required technical depth
+- Need broader web coverage for obscure topics
+
+### 3. Execution Lifecycle
+
+Always follow this sequence when adding MCP servers:
+
+```
+mcp-find → mcp-config-set → mcp-add → mcp-exec
+     ↑                                              
+     └──────────────────────────────────────────────┘
+                    (repeat for each server)
+```
+
+**Critical ordering:**
+1. **Find** (`MCP_DOCKER_mcp-find`) - Discover available servers
+2. **Configure** (`MCP_DOCKER_mcp-config-set`) - Set credentials/connection details
+3. **Add** (`MCP_DOCKER_mcp-add`) - Register and activate the server
+4. **Execute** (`MCP_DOCKER_mcp-exec`) - Use the server's tools
+
+**Never skip steps.** Configuration must precede adding; adding must precede execution.
+
 ## Troubleshooting
 
 ### Server not found

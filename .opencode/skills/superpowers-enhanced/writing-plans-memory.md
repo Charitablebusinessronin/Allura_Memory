@@ -165,9 +165,9 @@ Log checkpoint events:
 
 ### MCP Tools
 
-- Log: `MCP_DOCKER_insert_data` on `events`
-- Create insight: `MCP_DOCKER_create_entities` (Neo4j)
-- Link: `MCP_DOCKER_create_relations` (SUPERSEDES or DERIVED_FROM)
+- Log: `log_event` (memory-client skill)
+- Create insight: `create_insight` (memory-client skill)
+- Link: `create_relation` (memory-client skill)
 
 ## Execution Handoff
 

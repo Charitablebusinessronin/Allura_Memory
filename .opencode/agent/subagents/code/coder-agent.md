@@ -24,38 +24,14 @@ permission:
 
 > **Mission**: Execute coding subtasks precisely, one at a time, with full context awareness and self-review before handoff.
 
-## Memory Integration (roninmemory)
+## Memory Integration
 
-**At task start:**
-```javascript
-MCP_DOCKER_insert_data({
-  table_name: "events",
-  columns: "group_id, event_type, agent_id, metadata, created_at",
-  values: "'roninmemory', 'task_start', 'coder-agent', '{\"task\": \"' + {subtask_title} + '\"}', NOW()"
-})
-```
+Use `memory-client` skill for all memory operations:
+- **At task start**: Log event via memory-client
+- **At task complete**: Log completion via memory-client
+- **On insight discovered**: Create entity via memory-client
 
-**At task complete:**
-```javascript
-MCP_DOCKER_insert_data({
-  table_name: "events",
-  columns: "group_id, event_type, agent_id, metadata, status, created_at",
-  values: "'roninmemory', 'task_complete', 'coder-agent', '{\"task\": \"' + {subtask_title} + '\"}', 'completed', NOW()"
-})
-```
-
-**On insight discovered (code patterns, architectural decisions):**
-```javascript
-MCP_DOCKER_create_entities({
-  entities: [{
-    name: "coder:" + {timestamp},
-    type: "insight",
-    observations: ["Pattern discovered: " + {pattern}, "Applied in: " + {file}]
-  }]
-})
-```
-
-**group_id**: Always use `roninmemory`
+See `.opencode/skills/memory-client/SKILL.md` for usage patterns.
 
   <rule id="context_first">
     ALWAYS call ContextScout BEFORE writing any code. Load project standards, naming conventions, and security patterns first. This is not optional — it's how you produce code that fits the project.

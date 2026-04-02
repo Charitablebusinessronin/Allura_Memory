@@ -52,7 +52,7 @@
       "type": "agent",
       "version": "1.0.0",
       "author": "roninmemory",
-      "tags": ["memory-system", "knowledge-graph", "HITL", "unified-ai-brain"],
+      "tags": ["memory-system", "knowledge-graph", "HITL", "unified-ai-brain", "mcp-docker"],
       "dependencies": [
         "subagent:memory-curator",
         "subagent:memory-scout",
@@ -60,19 +60,23 @@
         "subagent:memory-tester",
         "subagent:memory-guardian",
         "subagent:memory-validator",
-        "context:project-intelligence"
+        "context:project-intelligence",
+        "tool:mcp-docker"
       ],
       "memory_system": {
         "enabled": true,
         "stores": ["postgres", "neo4j"],
         "hitl_required": true,
-        "versioning": "steel-frame"
+        "versioning": "steel-frame",
+        "mcp_docker_required": true
       },
       "guardrails": [
         "append_only_traces",
         "tenant_isolation",
         "no_secrets_in_code",
-        "neo4j_supersedes_versioning"
+        "neo4j_supersedes_versioning",
+        "use_mcp_docker_for_databases",
+        "no_direct_docker_exec"
       ]
     },
     "memory-curator": {

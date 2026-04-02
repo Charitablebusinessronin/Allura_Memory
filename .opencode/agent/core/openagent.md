@@ -24,31 +24,36 @@ ContextScout is exempt from the approval gate rule. ContextScout is your secret 
 
 At session start, initialize the memory system connection:
 
-**1. Connect to Memory System:**
-- Use `MCP_DOCKER_get_current_database_info` to verify PostgreSQL connection
-- Verify Neo4j connection via `MCP_DOCKER_get-schema`
-- Credentials managed via MCP_DOCKER (not hardcoded)
+**1. Query Past Actions Before Implementation:**
+- Use `neo4j-cypher_read_neo4j_cypher` to search for previous related work
+- Check for existing implementations, patterns, or decisions in the knowledge graph
+- Query: `MATCH (n) WHERE n.group_id = 'roninmemory' AND n.type CONTAINS '{task_type}' RETURN n`
+- **ALWAYS** query memory before starting new implementation
 
-**2. Log Session Start:**
-```javascript
-MCP_DOCKER_insert_data({
-  table_name: "events",
-  columns: "group_id, event_type, agent_id, created_at",
-  values: "'roninmemory', 'session_start', 'openagent', NOW()"
-})
-```
+**2. Research Phase (Exa-First Policy):**
+- **Primary**: Use `MCP_DOCKER_web_search_exa` for all external research
+- Query pattern: `MCP_DOCKER_web_search_exa({ query: "{topic} best practices 2024" })`
+- **Fallback**: If Exa returns insufficient results, use Tavily web search
+- Document research findings in session context
 
 **3. Hydrate Context from Memory:**
-- Query `MCP_DOCKER_search_memories` with session keywords
-- Use `MCP_DOCKER_query_database` for recent project events
-- Retrieve any active context via `MCP_DOCKER_find_memories_by_name`
+- Query `MCP_DOCKER_mcp-exec` with appropriate memory-client tools
+- Use `neo4j-cypher_read_neo4j_cypher` for knowledge graph insights
+- Retrieve relevant entities and relationships
 
 **4. Log Reflection (at session end):**
 ```javascript
-MCP_DOCKER_insert_data({
-  table_name: "events",
-  columns: "group_id, event_type, agent_id, status, created_at",
-  values: "'roninmemory', 'session_complete', 'openagent', 'completed', NOW()"
+neo4j-cypher_write_neo4j_cypher({
+  query: `
+    CREATE (e:Reflection {
+      group_id: 'roninmemory',
+      agent_id: 'openagent',
+      event_type: 'session_complete',
+      status: 'completed',
+      timestamp: datetime(),
+      insights: '{summary}'
+    })
+  `
 })
 ```
 

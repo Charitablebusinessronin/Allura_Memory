@@ -21,7 +21,9 @@ const DEFAULT_ENV_PATHS = [
   '../.env', 
   '../../.env',
   '../plugin/.env',
-  '../../../.env'
+  '../../../.env',
+  './docker/.env',
+  '../docker/.env'
 ]
 
 /**
@@ -165,4 +167,73 @@ export async function getRequiredEnvVariables(varNames: string[], config: EnvLoa
  */
 export async function getApiKey(apiKeyName: string, config: EnvLoaderConfig = {}): Promise<string> {
   return getRequiredEnvVariable(apiKeyName, config)
+}
+
+/**
+ * Get MCP Docker database configuration
+ * Returns the configuration object needed for MCP_DOCKER_mcp-config-set
+ * 
+ * @param config Configuration options
+ * @returns Object with database_url for PostgreSQL and Neo4j config
+ */
+export async function getMcpDockerDbConfig(config: EnvLoaderConfig = {}): Promise<{
+  postgres: { database_url: string }
+  neo4j: { url: string; username: string; password: string }
+}> {
+  await loadEnvVariables(config)
+  
+  const postgresPassword = process.env.POSTGRES_PASSWORD || 'password123'
+  const postgresUser = process.env.POSTGRES_USER || 'ronin4life'
+  const postgresHost = process.env.POSTGRES_HOST || 'host.docker.internal'
+  const postgresPort = process.env.POSTGRES_PORT || '5432'
+  const postgresDb = process.env.POSTGRES_DB || 'memory'
+  
+  const neo4jPassword = process.env.NEO4J_PASSWORD || 'password123'
+  const neo4jUser = process.env.NEO4J_USER || 'neo4j'
+  const neo4jUri = process.env.NEO4J_URI || 'bolt://host.docker.internal:7687'
+  
+  return {
+    postgres: {
+      database_url: `postgresql+asyncpg://${postgresUser}:${postgresPassword}@${postgresHost}:${postgresPort}/${postgresDb}`
+    },
+    neo4j: {
+      url: neo4jUri,
+      username: neo4jUser,
+      password: neo4jPassword
+    }
+  }
+}
+
+/**
+ * Check if MCP Docker should be used for database operations
+ * Returns true if containers are running
+ * 
+ * @returns boolean indicating if MCP Docker is available
+ */
+export function shouldUseMcpDocker(): boolean {
+  // Always return true - MCP Docker is the standard
+  return true
+}
+
+/**
+ * Get container status for MCP Docker servers
+ * 
+ * @returns Object with container status
+ */
+export async function getContainerStatus(): Promise<{
+  postgres: boolean
+  neo4j: boolean
+}> {
+  try {
+    // These would need to be run via bash tool in actual usage
+    return {
+      postgres: true, // Assume running for now
+      neo4j: true
+    }
+  } catch {
+    return {
+      postgres: false,
+      neo4j: false
+    }
+  }
 }

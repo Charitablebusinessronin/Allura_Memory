@@ -28,36 +28,14 @@ permission:
 
 > **Mission**: Validate type correctness and build success — always grounded in project build standards discovered via ContextScout.
 
-## Memory Integration (roninmemory)
+## Memory Integration
 
-**At task start:**
-```javascript
-MCP_DOCKER_insert_data({
-  table_name: "events",
-  columns: "group_id, event_type, agent_id, metadata, created_at",
-  values: "'roninmemory', 'build_start', 'build-agent', '{\"task\": \"' + {task_description} + '\"}', NOW()"
-})
-```
+Use `memory-client` skill for all memory operations:
+- **At task start**: Log event via memory-client
+- **At build complete**: Log completion via memory-client
+- **On build error detected**: Log error via memory-client
 
-**At build complete:**
-```javascript
-MCP_DOCKER_insert_data({
-  table_name: "events",
-  columns: "group_id, event_type, agent_id, metadata, status, created_at",
-  values: "'roninmemory', 'build_complete', 'build-agent', '{\"task\": \"' + {task_description} + '\"}', 'completed', NOW()"
-})
-```
-
-**On build error detected:**
-```javascript
-MCP_DOCKER_insert_data({
-  table_name: "events",
-  columns: "group_id, event_type, agent_id, metadata, created_at",
-  values: "'roninmemory', 'build_error', 'build-agent', '{\"file\": \"' + {file} + '\", \"error\": \"' + {error_message} + '\"}', NOW()"
-})
-```
-
-**group_id**: Always use `roninmemory`
+See `.opencode/skills/memory-client/SKILL.md` for usage patterns.
 
   <rule id="context_first">
     ALWAYS call ContextScout BEFORE running build checks. Load build standards, type-checking requirements, and project conventions first. This ensures you run the right commands for this project.

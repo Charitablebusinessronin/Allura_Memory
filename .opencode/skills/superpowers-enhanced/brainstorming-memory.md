@@ -175,12 +175,12 @@ Log events at checkpoints:
 
 ### MCP Tool Mapping
 
-| Action | Tool | Table/Entity |
-|--------|------|--------------|
-| Log start | `MCP_DOCKER_insert_data` | `events` |
-| Create insight | `MCP_DOCKER_create_entities` | Neo4j `Insight` |
-| Link to events | `MCP_DOCKER_create_relations` | Neo4j relations |
-| Verify write | `MCP_DOCKER_query_database` | `SELECT` from `events` |
+| Action | Tool |
+|--------|------|
+| Log start | `log_event` (memory-client skill) |
+| Create insight | `create_insight` (memory-client skill) |
+| Link to events | `create_relation` (memory-client skill) |
+| Verify write | `search_events` or query events table |
 
 ## Visual Companion
 

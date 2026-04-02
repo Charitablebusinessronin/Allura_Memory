@@ -23,23 +23,29 @@ This skill now integrates with the memory system to persist debugging knowledge 
 
 1. **Query Previous Debugging Sessions**
    ```
-   MCP_DOCKER_query_database: {
-     query: "SELECT * FROM events WHERE group_id = :group AND event_type LIKE 'debug:%' ORDER BY created_at DESC LIMIT 10"
-   }
+   // Use memory-client skill or neo4j-cypher_* tools
+   search_insights({
+     query: "debugging {component} {error_type}",
+     group_id: "your-group"
+   })
    ```
 
 2. **Search for Similar Issues**
-   ```
-   MCP_DOCKER_search_memories: {
-     query: "debugging {component} {error_type}"
-   }
+   ```javascript
+   // Use memory-client skill
+   search_insights({
+     query: "debugging {component} {error_type}",
+     group_id: "your-group"
+   })
    ```
 
 3. **Check for Known Root Causes**
-   ```
-   MCP_DOCKER_find_memories_by_name: {
-     names: ["Root Cause: {component}", "Bug Pattern: {pattern}"]
-   }
+   ```javascript
+   // Query specific patterns
+   search_insights({
+     query: "root cause {component} {pattern}",
+     group_id: "your-group"
+   })
    ```
 
 4. **Present Context**
@@ -49,12 +55,15 @@ This skill now integrates with the memory system to persist debugging knowledge 
 
 **Log key findings at each phase:**
 
-```
-MCP_DOCKER_insert_data: {
-  table_name: "events",
-  columns: "group_id, event_type, agent_id, workflow_id, status, metadata",
-  values: "'group', 'debug:phase1_complete', 'agent', 'debug-session', 'in_progress', '{\"phase\": 1, \"findings\": [...]}'"
-}
+```javascript
+// Via memory-client skill
+log_event({
+  group_id: "group",
+  event_type: "debug:phase1_complete",
+  agent_id: "agent",
+  workflow_id: "debug-session",
+  metadata: { phase: 1, findings: [] }
+})
 ```
 
 ### At Session End
@@ -62,34 +71,32 @@ MCP_DOCKER_insert_data: {
 **After completing Phase 4:**
 
 1. **Log Root Cause** (if found)
-   ```
-   MCP_DOCKER_insert_data: {
-     table_name: "events",
-     columns: "group_id, event_type, agent_id, workflow_id, status, metadata",
-     values: "'group', 'debug:root_cause_found', 'agent', 'debug-session', 'completed', '{\"root_cause\": \"...\", \"fix\": \"...\"}'"
-   }
+   ```javascript
+   log_event({
+     group_id: "group",
+     event_type: "debug:root_cause_found",
+     agent_id: "agent",
+     metadata: { root_cause: "...", fix: "..." }
+   })
    ```
 
 2. **Create Insight** (for significant findings)
-   ```
-   MCP_DOCKER_create_entities: {
-     entities: [{
-       name: "Root Cause: {brief description}",
-       entityType: "RootCause",
-       observations: ["Detailed description...", "Fix applied...", "Prevention..."]
-     }]
-   }
+   ```javascript
+   create_insight({
+     topic_key: "debug:root_cause.brief_description",
+     content: "Detailed root cause analysis including fix applied and prevention strategy",
+     group_id: "group"
+   })
    ```
 
 3. **Link to Events**
-   ```
-   MCP_DOCKER_create_relations: {
-     relations: [{
-       from: "Root Cause: {...}",
-       to: "Event: {...}",
-       relationType: "DERIVED_FROM"
-     }]
-   }
+   ```javascript
+   create_relation({
+     from_topic_key: "debug:root_cause.brief_description",
+     to_topic_key: "debug:event.session_id",
+     relation_type: "DERIVED_FROM",
+     group_id: "group"
+   })
    ```
 
 ## The Iron Law
@@ -220,11 +227,13 @@ You MUST complete each phase before proceeding to the next.
    - Fix at source, not at symptom
 
 **Log checkpoint:**
-```
-MCP_DOCKER_insert_data: {
-  event_type: 'debug:phase1_complete',
+```javascript
+log_event({
+  group_id: "group",
+  event_type: "debug:phase1_complete",
+  agent_id: "agent",
   metadata: { evidence_gathered, initial_hypotheses }
-}
+})
 ```
 
 ### Phase 2: Pattern Analysis
@@ -251,18 +260,21 @@ MCP_DOCKER_insert_data: {
    - What assumptions does it make?
 
 5. **Check Memory for Patterns**
-   ```
-   MCP_DOCKER_search_memories: {
-     query: "pattern {component} {symptom}"
-   }
+   ```javascript
+   search_insights({
+     query: "pattern {component} {symptom}",
+     group_id: "group"
+   })
    ```
 
 **Log checkpoint:**
-```
-MCP_DOCKER_insert_data: {
-  event_type: 'debug:phase2_complete',
+```javascript
+log_event({
+  group_id: "group",
+  event_type: "debug:phase2_complete",
+  agent_id: "agent",
   metadata: { patterns_identified, differences_found }
-}
+})
 ```
 
 ### Phase 3: Hypothesis and Testing
@@ -291,18 +303,21 @@ MCP_DOCKER_insert_data: {
    - Research more
 
 5. **Check Memory for Similar Hypotheses**
-   ```
-   MCP_DOCKER_search_memories: {
-     query: "hypothesis {component}"
-   }
+   ```javascript
+   search_insights({
+     query: "hypothesis {component}",
+     group_id: "group"
+   })
    ```
 
 **Log checkpoint:**
-```
-MCP_DOCKER_insert_data: {
-  event_type: 'debug:phase3_complete',
+```javascript
+log_event({
+  group_id: "group",
+  event_type: "debug:phase3_complete",
+  agent_id: "agent",
   metadata: { hypothesis, test_result, confirmed_or_rejected }
-}
+})
 ```
 
 ### Phase 4: Implementation
@@ -328,16 +343,18 @@ MCP_DOCKER_insert_data: {
    - Issue actually resolved?
 
 4. **Log Fix**
-   ```
-   MCP_DOCKER_insert_data: {
-     event_type: 'debug:fix_implemented',
+   ```javascript
+   log_event({
+     group_id: "group",
+     event_type: "debug:fix_implemented",
+     agent_id: "agent",
      metadata: { 
        root_cause: "...",
        fix: "...",
-       files_modified: [...],
-       test_verified: true/false
+       files_modified: [],
+       test_verified: true
      }
-   }
+   })
    ```
 
 5. **If Fix Doesn't Work**
@@ -352,44 +369,43 @@ MCP_DOCKER_insert_data: {
 **After successful fix:**
 
 1. **Create Insight**
-   ```
-   MCP_DOCKER_create_entities: {
-     entities: [{
-       name: "Root Cause: {brief}",
-       entityType: "RootCause",
-       observations: [
-         "Problem: {...}",
-         "Root Cause: {...}",
-         "Fix: {...}",
-         "Prevention: {...}"
-       ]
-     }]
-   }
+   ```javascript
+   create_insight({
+     topic_key: "debug:root_cause.brief",
+     content: JSON.stringify({
+       problem: "...",
+       root_cause: "...",
+       fix: "...",
+       prevention: "..."
+     }),
+     group_id: "group"
+   })
    ```
 
 2. **Link to Session**
-   ```
-   MCP_DOCKER_create_relations: {
-     relations: [{
-       from: "Root Cause: {...}",
-       to: "Event: {...}",
-       relationType: "DERIVED_FROM"
-     }]
-   }
+   ```javascript
+   create_relation({
+     from_topic_key: "debug:root_cause.brief",
+     to_topic_key: "debug:event.session_id",
+     relation_type: "DERIVED_FROM",
+     group_id: "group"
+   })
    ```
 
 3. **Log Session Complete**
-   ```
-   MCP_DOCKER_insert_data: {
-     event_type: 'debug:session_complete',
-     status: 'completed',
+   ```javascript
+   log_event({
+     group_id: "group",
+     event_type: "debug:session_complete",
+     agent_id: "agent",
+     status: "completed",
      metadata: { 
        duration_minutes,
        phases_completed,
        root_cause_found,
        insight_created
      }
-   }
+   })
    ```
 
 ### Phase 4.5: Architecture Questioning
@@ -412,16 +428,16 @@ This is NOT a failed hypothesis - this is a wrong architecture.
 
 ## MCP Tool Mapping for Debugging
 
-| Debugging Task | MCP Tool | Table/Entity |
-|----------------|----------|--------------|
-| Query previous sessions | `MCP_DOCKER_query_database` | `events` table |
-| Search for patterns | `MCP_DOCKER_search_memories` | Neo4j |
-| Log session start | `MCP_DOCKER_insert_data` | `events` |
-| Log phase complete | `MCP_DOCKER_insert_data` | `events` |
-| Log root cause found | `MCP_DOCKER_insert_data` | `events` |
-| Create insight | `MCP_DOCKER_create_entities` | Neo4j `RootCause` |
-| Link to events | `MCP_DOCKER_create_relations` | Neo4j relations |
-| Verify persistence | `MCP_DOCKER_query_database` | Verify by event ID |
+| Debugging Task | Tool/Skill | Table/Entity |
+|----------------|------------|--------------|
+| Query previous sessions | `search_events` (memory-client) | `events` table |
+| Search for patterns | `search_insights` (memory-client) | Neo4j |
+| Log session start | `log_event` (memory-client) | `events` |
+| Log phase complete | `log_event` (memory-client) | `events` |
+| Log root cause found | `log_event` (memory-client) | `events` |
+| Create insight | `create_insight` (memory-client) | Neo4j `RootCause` |
+| Link to events | `create_relation` (memory-client) | Neo4j relations |
+| Verify persistence | `search_events` (memory-client) | Verify by event ID |
 
 ## Event Type Naming Convention
 

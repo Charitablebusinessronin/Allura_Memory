@@ -82,6 +82,100 @@ get_agent_context({ group_id, agent_id, include_events?, include_insights? })
 | confidence | Quality 0-1. Filter with min_confidence |
 | versioning | Immutable insights. Use SUPERSEDES for updates |
 
+## Runtime Loop Pattern
+
+When using this skill in agent workflows, follow this explicit execution loop:
+
+### Phase 1: Query Past Actions (Memory First)
+
+Always check memory before acting:
+
+```javascript
+// 1. Search for relevant past insights
+const relevantInsights = search_insights({
+  query: "authentication patterns",
+  group_id: "project",
+  min_confidence: 0.8
+});
+
+// 2. Check agent context for session continuity
+const context = get_agent_context({
+  group_id: "session_001",
+  agent_id: "claude"
+});
+
+// 3. Query recent events for task history
+const recentEvents = search_events({
+  query: "task_start",
+  group_id: "project",
+  limit: 10
+});
+```
+
+### Phase 2: Execute Task
+
+Perform the actual work using gathered context:
+
+```javascript
+// Log task start
+log_event({
+  group_id: "project",
+  event_type: "task_start",
+  agent_id: "coder-agent",
+  metadata: { task: "implement-auth" }
+});
+
+// Execute work (your business logic here)
+// ... implementation ...
+```
+
+### Phase 3: Reflect and Log Outcomes
+
+After execution, capture outcomes and insights:
+
+```javascript
+// Log completion
+log_event({
+  group_id: "project",
+  event_type: "task_complete",
+  agent_id: "coder-agent",
+  status: "completed",
+  metadata: { task: "implement-auth", result: "success" }
+});
+
+// Store learned insight
+if (newPatternDiscovered) {
+  create_insight({
+    topic_key: "project.patterns.auth.jwt",
+    content: "Use refresh tokens alongside JWT for security",
+    group_id: "project",
+    confidence: 0.95,
+    tags: ["security", "authentication"],
+    source_event_id: eventId
+  });
+}
+
+// Link related concepts
+create_relation({
+  from_topic_key: "project.patterns.auth.jwt",
+  to_topic_key: "project.patterns.security",
+  relation_type: "DEPENDS_ON",
+  group_id: "project"
+});
+```
+
+### Summary: The Loop
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  Query Memory   │────▶│ Execute Task    │────▶│ Reflect & Log  │
+│  (context)      │     │ (work)          │     │ (outcomes)     │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+        ↑                                                   │
+        └───────────────────────────────────────────────────┘
+                           (loop continues)
+```
+
 ## Examples
 
 ### Session

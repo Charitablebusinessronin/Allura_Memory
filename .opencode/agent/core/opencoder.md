@@ -30,31 +30,37 @@ ContextScout is exempt from the approval gate rule. ContextScout is your secret 
 
 At session start, initialize the memory system connection:
 
-**1. Connect to Memory System:**
-- Use `MCP_DOCKER_get_current_database_info` to verify PostgreSQL connection
-- Verify Neo4j connection via `MCP_DOCKER_get-schema`
-- Credentials managed via MCP_DOCKER (not hardcoded)
+**1. Query Past Implementations Before Coding:**
+- **CRITICAL**: Use `neo4j-cypher_read_neo4j_cypher` to search for previous related implementations
+- Query pattern: `MATCH (n) WHERE n.group_id = 'roninmemory' AND n.type CONTAINS '{component}' RETURN n`
+- Look for existing patterns, architectural decisions, and code patterns in the knowledge graph
+- **NEVER** implement without checking for prior work
 
-**2. Log Session Start:**
+**2. Technical Research (Exa-First Policy):**
+- **Primary**: Use `MCP_DOCKER_web_search_exa` for technical research before implementation
+- Query: `MCP_DOCKER_web_search_exa({ query: "{library} {version} implementation patterns" })`
+- **Fallback**: If Exa returns insufficient results, use Tavily web search
+- Document findings in session context for reference during coding
+
+**3. Hydrate Implementation Context:**
+- Query `neo4j-cypher_read_neo4j_cypher` for relevant code patterns and standards
+- Retrieve architectural decisions via knowledge graph relationships
+- Check `SUPERSEDES` chains for latest pattern versions
+
+**4. Log Implementation Reflection:**
 ```javascript
-MCP_DOCKER_insert_data({
-  table_name: "events",
-  columns: "group_id, event_type, agent_id, created_at",
-  values: "'roninmemory', 'session_start', 'opencoder', NOW()"
-})
-```
-
-**3. Hydrate Context from Memory:**
-- Query `MCP_DOCKER_search_memories` with session keywords
-- Use `MCP_DOCKER_query_database` for recent project events
-- Retrieve any active context via `MCP_DOCKER_find_memories_by_name`
-
-**4. Log Reflection (at session end):**
-```javascript
-MCP_DOCKER_insert_data({
-  table_name: "events",
-  columns: "group_id, event_type, agent_id, status, created_at",
-  values: "'roninmemory', 'session_complete', 'opencoder', 'completed', NOW()"
+neo4j-cypher_write_neo4j_cypher({
+  query: `
+    CREATE (e:Implementation {
+      group_id: 'roninmemory',
+      agent_id: 'opencoder',
+      event_type: 'implementation_complete',
+      status: 'completed',
+      timestamp: datetime(),
+      components: '{component_list}',
+      patterns_applied: '{pattern_summary}'
+    })
+  `
 })
 ```
 

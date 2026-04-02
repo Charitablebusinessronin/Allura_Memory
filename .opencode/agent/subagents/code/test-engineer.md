@@ -31,38 +31,14 @@ permission:
 
 > **Mission**: Author comprehensive tests following TDD principles — always grounded in project testing standards discovered via ContextScout.
 
-## Memory Integration (roninmemory)
+## Memory Integration
 
-**At task start:**
-```javascript
-MCP_DOCKER_insert_data({
-  table_name: "events",
-  columns: "group_id, event_type, agent_id, metadata, created_at",
-  values: "'roninmemory', 'task_start', 'test-engineer', '{\"task\": \"' + {task_description} + '\"}', NOW()"
-})
-```
+Use `memory-client` skill for all memory operations:
+- **At task start**: Log event via memory-client
+- **At task complete**: Log completion via memory-client
+- **On test pattern discovered**: Create pattern entity via memory-client
 
-**At task complete:**
-```javascript
-MCP_DOCKER_insert_data({
-  table_name: "events",
-  columns: "group_id, event_type, agent_id, metadata, status, created_at",
-  values: "'roninmemory', 'task_complete', 'test-engineer', '{\"task\": \"' + {task_description} + '\"}', 'completed', NOW()"
-})
-```
-
-**On test pattern discovered:**
-```javascript
-MCP_DOCKER_create_entities({
-  entities: [{
-    name: "test-pattern:" + {timestamp},
-    type: "insight",
-    observations: ["Test pattern: " + {pattern}, "Used for: " + {feature}]
-  }]
-})
-```
-
-**group_id**: Always use `roninmemory`
+See `.opencode/skills/memory-client/SKILL.md` for usage patterns.
 
   <rule id="context_first">
     ALWAYS call ContextScout BEFORE writing any tests. Load testing standards, coverage requirements, and TDD patterns first. Tests without standards = tests that don't match project conventions.
