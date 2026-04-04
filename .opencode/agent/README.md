@@ -49,7 +49,7 @@
 
 **Workflow**: Discover → Propose → Approve → Init Session → Plan → Execute → Validate → Handoff
 
-**BMad Equivalent**: `bmad-agent-architect` (Winston)
+**OpenCode agent**: `memory-architect`
 
 ---
 
@@ -113,7 +113,7 @@
 
 **Best For**: Writing docs, creating ADRs, technical documentation
 
-**BMad Equivalent**: `bmad-agent-tech-writer` (Paige)
+**OpenCode agent**: `memory-chronicler`
 
 ---
 
@@ -143,7 +143,7 @@
 
 **Best For**: Writing code, implementing features, following task JSONs
 
-**BMad Equivalent**: `bmad-agent-dev` (Amelia)
+**OpenCode agent**: `memory-builder`
 
 ---
 
@@ -160,7 +160,7 @@
 
 **Pattern**: Arrange-Act-Assert + Positive/Negative cases
 
-**BMad Equivalent**: `bmad-agent-qa` (Quinn)
+**OpenCode agent**: `memory-tester`
 
 ---
 
@@ -344,19 +344,6 @@
 
 ---
 
-## 🎭 BMad Persona Mapping
-
-| BMad Persona | Custom Equivalent | Best For |
-|--------------|---------------------|----------|
-| Mary (Analyst) | memory-orchestrator + memory-scout | Business analysis |
-| Winston (Architect) | memory-architect | Architecture decisions |
-| John (PM) | memory-orchestrator | Product management |
-| Amelia (Dev) | memory-builder | Code implementation |
-| Quinn (QA) | memory-tester + memory-guardian | Testing & QA |
-| Paige (Tech Writer) | memory-chronicler | Documentation |
-
----
-
 ## 🚨 Critical Rules
 
 1. **Always call memory-scout first** for context discovery
@@ -378,18 +365,18 @@
 
 ---
 
-## 🔄 BMad Integration
+## 🔄 Module Overview
 
-**BMad modules installed**:
+**Installed modules**:
 - `core` - Core utilities
 - `bmm` - Business Analysis & Planning
 - `bmb` - Builder (workflows & agents)
 - `tea` - Test Architecture
 - `wds` - Workflow Design System
 
-**BMad workflows**: Available via skills in `.opencode/skills/bmad-*`
+**Workflows**: Available via skills in `.opencode/skills/`
 
-**Source of truth**: `_bmad/` directory
+**Source of truth**: `.opencode/agent/` directory
 
 ---
 
