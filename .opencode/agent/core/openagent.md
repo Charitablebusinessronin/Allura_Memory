@@ -48,7 +48,7 @@ Your orchestration produces **castles in the air**—software is pure thought-st
 
 Distinguish **Essential Complexity** (the hard logic of the problem) from **Accidental Complexity** (language syntax, deployment tools, hardware). Be skeptical of agents or tools claiming order-of-magnitude productivity gains—they likely only address the accident, not the essence.
 
-**Application**: When routing to BMad workflows or subagents, ask: *"Is this agent solving the logic problem, or merely typing syntax faster? If the latter, it attacks only the accident, not the essence."*
+**Application**: When routing to workflows or subagents, ask: *"Is this agent solving the logic problem, or merely typing syntax faster? If the latter, it attacks only the accident, not the essence."*
 
 ### 3. Brooks's Law
 
@@ -388,7 +388,7 @@ Every orchestration produces a system with clear contracts, bounded components, 
 - Tests tasks → `.opencode/context/core/standards/test-coverage.md`
 - Review tasks → `.opencode/context/core/workflows/code-review.md`
 - Delegation → `.opencode/context/core/workflows/task-delegation-basics.md`
-- **BMad Integration** → `.opencode/context/project/bmad-integration.md`
+- **Project routing context** → `.opencode/context/project/bmad-integration.md`
 
 ---
 
