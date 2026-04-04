@@ -1,23 +1,31 @@
-import { readFile, readdir } from "fs/promises";
+import { glob } from "glob";
+import { readFile } from "fs/promises";
 import { join, basename } from "path";
 import type { CanonicalSkill, SkillCategory, RequiredTool } from "../../src/lib/opencode-registry/types";
 
-function parseFrontmatter(yaml: string): Record<string, any> {
-  const result: Record<string, any> = {};
+function parseFrontmatter(yaml: string): Record<string, string> {
+  const result: Record<string, string> = {};
   const lines = yaml.split("\n");
   for (const line of lines) {
     const match = line.match(/^(\w+):\s*(.+)$/);
     if (match) {
-      result[match[1]] = match[2];
+      // Strip YAML quotes (single and double)
+      let value = match[2].trim();
+      if ((value.startsWith("'") && value.endsWith("'")) ||
+          (value.startsWith('"') && value.endsWith('"'))) {
+        value = value.slice(1, -1);
+      }
+      result[match[1]] = value;
     }
   }
   return result;
 }
 
 function mapSkillCategory(skillId: string): SkillCategory {
+  // Check tea/testarch BEFORE bmad to avoid short-circuit
+  if (skillId.startsWith("bmad-testarch") || skillId.startsWith("bmad-tea")) return "tea";
   if (skillId.startsWith("bmad-")) return "bmad";
   if (skillId.startsWith("wds-")) return "wds";
-  if (skillId.includes("testarch") || skillId.includes("tea")) return "tea";
   if (skillId.includes("review")) return "review";
   if (skillId.includes("test")) return "testing";
   if (skillId.includes("deploy") || skillId.includes("ci")) return "deployment";
@@ -26,49 +34,58 @@ function mapSkillCategory(skillId: string): SkillCategory {
 
 function extractRequiredTools(content: string): RequiredTool[] {
   const tools: RequiredTool[] = [];
-  if (content.includes("Read(") || content.includes("read tool")) tools.push("read");
-  if (content.includes("Write(") || content.includes("write tool")) tools.push("write");
-  if (content.includes("Edit(") || content.includes("edit tool")) tools.push("edit");
-  if (content.includes("Bash(") || content.includes("bash tool")) tools.push("bash");
-  if (content.includes("Grep(") || content.includes("grep tool")) tools.push("grep");
-  if (content.includes("Task(") || content.includes("task tool")) tools.push("task");
+  // Match tool references in various formats:
+  // - `Read` tool, Read tool, use Read, use the Read tool
+  // - Read(, Read(, tool: Read
+  const toolPatterns: Array<[RegExp, RequiredTool]> = [
+    [/\bRead\b|\bread tool\b/i, "read"],
+    [/\bWrite\b|\bwrite tool\b/i, "write"],
+    [/\bEdit\b|\bedit tool\b/i, "edit"],
+    [/\bBash\b|\bbash tool\b/i, "bash"],
+    [/\bGrep\b|\bgrep tool\b/i, "grep"],
+    [/\bTask\b|\btask tool\b/i, "task"],
+  ];
+
+  for (const [pattern, tool] of toolPatterns) {
+    if (pattern.test(content)) {
+      tools.push(tool);
+    }
+  }
   return tools;
 }
 
 export async function extractSkills(projectRoot: string): Promise<CanonicalSkill[]> {
   const skills: CanonicalSkill[] = [];
 
-  const skillsDir = join(projectRoot, ".opencode", "skills");
-  const skillDirs = await readdir(skillsDir);
+  const skillFiles = await glob(".opencode/skills/*/SKILL.md", {
+    cwd: projectRoot,
+    absolute: true,
+  });
 
-  for (const dir of skillDirs) {
-    if (dir === ".DS_Store") continue;
+  for (const skillPath of skillFiles) {
+    const skillDir = basename(join(skillPath, ".."));
+    const content = await readFile(skillPath, "utf-8");
 
-    const skillPath = join(skillsDir, dir, "SKILL.md");
-    try {
-      const content = await readFile(skillPath, "utf-8");
-      const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
-      const frontmatter = frontmatterMatch ? parseFrontmatter(frontmatterMatch[1]) : {};
+    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+    const frontmatter = frontmatterMatch ? parseFrontmatter(frontmatterMatch[1]) : {};
 
-      skills.push({
-        id: dir,
-        displayName: frontmatter.name || dir,
-        category: mapSkillCategory(dir),
-        description: frontmatter.description,
-        sourcePath: skillPath,
-        requiredTools: extractRequiredTools(content),
-        status: "active",
-        agents: [],
-        usageCount: 0,
-      });
-    } catch {
-      // Skip directories without SKILL.md
-    }
+    skills.push({
+      id: skillDir,
+      displayName: frontmatter.name || skillDir,
+      category: mapSkillCategory(skillDir),
+      description: frontmatter.description,
+      sourcePath: skillPath,
+      requiredTools: extractRequiredTools(content),
+      status: "active",
+      agents: [],
+      usageCount: 0,
+    });
   }
 
   return skills;
 }
 
+// CLI entry point
 if (import.meta.main) {
   const projectRoot = process.cwd();
   const skills = await extractSkills(projectRoot);
