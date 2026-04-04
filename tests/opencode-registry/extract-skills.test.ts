@@ -51,7 +51,10 @@ describe("extractSkills", () => {
 
   it("categorizes bmad skills correctly", async () => {
     const skills = await extractSkills(projectRoot);
-    const bmadSkills = skills.filter((s) => s.id.startsWith("bmad-"));
+    // Exclude tea/testarch skills which start with "bmad-" but should be "tea"
+    const bmadSkills = skills.filter(
+      (s) => s.id.startsWith("bmad-") && !s.id.startsWith("bmad-testarch") && !s.id.startsWith("bmad-tea")
+    );
     expect(bmadSkills.length).toBeGreaterThan(0);
     bmadSkills.forEach((s) => {
       expect(s.category).toBe("bmad");
@@ -65,6 +68,43 @@ describe("extractSkills", () => {
     wdsSkills.forEach((s) => {
       expect(s.category).toBe("wds");
     });
+  });
+
+  it("categorizes tea/testarch skills as 'tea' not 'bmad'", async () => {
+    const skills = await extractSkills(projectRoot);
+    const teaSkills = skills.filter(
+      (s) => s.id.startsWith("bmad-testarch") || s.id.startsWith("bmad-tea")
+    );
+    expect(teaSkills.length).toBeGreaterThan(0);
+    teaSkills.forEach((s) => {
+      expect(s.category).toBe("tea");
+    });
+  });
+
+  it("detects required tools from skill content", async () => {
+    const skills = await extractSkills(projectRoot);
+    // At least some skills should have detected tools
+    const skillsWithTools = skills.filter((s) => (s.requiredTools?.length ?? 0) > 0);
+    expect(skillsWithTools.length).toBeGreaterThan(0);
+    // Verify detected tools are valid enum values
+    const validTools = ["read", "write", "edit", "bash", "grep", "task"];
+    for (const skill of skillsWithTools) {
+      for (const tool of skill.requiredTools!) {
+        expect(validTools).toContain(tool);
+      }
+    }
+  });
+
+  it("strips YAML quotes from frontmatter descriptions", async () => {
+    const skills = await extractSkills(projectRoot);
+    for (const skill of skills) {
+      if (skill.description) {
+        // Should not start/end with YAML single or double quotes
+        // (but escaped quotes inside the string are fine)
+        expect(skill.description).not.toMatch(/^'[^']*'$/);
+        expect(skill.description).not.toMatch(/^"[^"]*"$/);
+      }
+    }
   });
 
   it("extracts displayName from frontmatter or falls back to id", async () => {
