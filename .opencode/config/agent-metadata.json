@@ -6,10 +6,11 @@
     "memory-orchestrator": {
       "id": "memory-orchestrator",
       "name": "MemoryOrchestrator",
-      "category": "core",
+      "category": "agent",
       "type": "agent",
       "version": "1.0.0",
       "author": "roninmemory",
+      "path": ".opencode/agent/MemoryOrchestrator.md",
       "tags": ["memory-system", "orchestration", "primary", "brooks", "planning", "governance"],
       "persona": {
         "name": "Frederick P. Brooks Jr.",
@@ -39,201 +40,115 @@
         "logging_mode": "dual",
         "readback_required": true
       },
-      "dependencies": [
-        "subagent:memory-curator",
-        "subagent:memory-scout",
-        "subagent:memory-archivist",
-        "subagent:memory-chronicler",
-        "skill:bmad-party-mode",
-        "context:standards-code",
-        "context:standards-docs",
-        "context:standards-tests",
-        "context:review-ref",
-        "context:delegation-ref"
-      ]
+      "scope": "OpenCode CLI Agent - Winston's hands for orchestration"
     },
     "memory-architect": {
       "id": "memory-architect",
       "name": "MemoryArchitect",
-      "category": "core",
+      "category": "agent",
       "type": "agent",
       "version": "1.0.0",
       "author": "roninmemory",
-      "tags": ["memory-system", "architecture", "implementation"],
+      "path": ".opencode/agent/MemoryArchitect.md",
+      "tags": ["memory-system", "architecture", "implementation", "design"],
+      "scope": "OpenCode CLI Agent - Winston's hands for system design",
       "dependencies": [
-        "subagent:memory-chronicler",
-        "subagent:memory-curator",
-        "subagent:memory-builder",
-        "subagent:memory-tester",
-        "subagent:memory-guardian",
-        "subagent:memory-validator",
-        "subagent:memory-scout",
-        "subagent:memory-archivist",
+        "skill:bmad-create-architecture",
         "context:standards-code",
-        "context:task-delegation-basics",
-        "context:component-planning"
-      ]
-    },
-    "roninmemory-project": {
-      "id": "roninmemory-project",
-      "name": "RoninMemory",
-      "category": "project",
-      "type": "agent",
-      "version": "1.0.0",
-      "author": "roninmemory",
-      "tags": ["memory-system", "knowledge-graph", "HITL", "unified-ai-brain", "mcp-docker"],
-      "dependencies": [
-        "subagent:memory-curator",
-        "subagent:memory-scout",
-        "subagent:memory-builder",
-        "subagent:memory-tester",
-        "subagent:memory-guardian",
-        "subagent:memory-validator",
-        "context:project-intelligence",
-        "tool:mcp-docker"
-      ],
-      "memory_system": {
-        "enabled": true,
-        "stores": ["postgres", "neo4j"],
-        "hitl_required": true,
-        "versioning": "steel-frame",
-        "mcp_docker_required": true,
-        "logging_mode": "dual"
-      },
-      "tenant_boundary": {
-        "memory_partition_key": "group_id"
-      },
-      "guardrails": [
-        "append_only_traces",
-        "tenant_isolation",
-        "no_secrets_in_code",
-        "neo4j_supersedes_versioning",
-        "use_mcp_docker_for_databases",
-        "no_direct_docker_exec"
-      ]
-    },
-    "memory-curator": {
-      "id": "memory-curator",
-      "name": "MemoryCurator",
-      "category": "subagents/core",
-      "type": "subagent",
-      "version": "1.0.0",
-      "author": "roninmemory",
-      "tags": ["memory-system", "task-breakdown", "planning", "coordination"],
-      "dependencies": [
-        "context:task-delegation-basics"
-      ]
-    },
-    "memory-scout": {
-      "id": "memory-scout",
-      "name": "MemoryScout",
-      "category": "subagents/core",
-      "type": "subagent",
-      "version": "1.0.0",
-      "author": "roninmemory",
-      "tags": ["memory-system", "context", "discovery", "search"],
-      "dependencies": []
-    },
-    "memory-archivist": {
-      "id": "memory-archivist",
-      "name": "MemoryArchivist",
-      "category": "subagents/core",
-      "type": "subagent",
-      "version": "1.0.0",
-      "author": "roninmemory",
-      "tags": ["memory-system", "external", "documentation", "archive"],
-      "dependencies": []
-    },
-    "memory-chronicler": {
-      "id": "memory-chronicler",
-      "name": "MemoryChronicler",
-      "category": "subagents/core",
-      "type": "subagent",
-      "version": "1.0.0",
-      "author": "roninmemory",
-      "tags": ["memory-system", "documentation", "chronicling", "adr"],
-      "dependencies": [
         "context:standards-docs"
       ]
     },
     "memory-builder": {
       "id": "memory-builder",
       "name": "MemoryBuilder",
-      "category": "subagents/code",
-      "type": "subagent",
+      "category": "agent",
+      "type": "agent",
       "version": "1.0.0",
       "author": "roninmemory",
-      "tags": ["memory-system", "coding", "implementation", "building"],
-      "dependencies": [
-        "context:standards-code"
-      ]
-    },
-    "memory-tester": {
-      "id": "memory-tester",
-      "name": "MemoryTester",
-      "category": "subagents/code",
-      "type": "subagent",
-      "version": "1.0.0",
-      "author": "roninmemory",
-      "tags": ["memory-system", "testing", "tdd", "quality"],
-      "dependencies": [
-        "context:standards-tests"
-      ]
-    },
-    "memory-guardian": {
-      "id": "memory-guardian",
-      "name": "MemoryGuardian",
-      "category": "subagents/code",
-      "type": "subagent",
-      "version": "1.0.0",
-      "author": "roninmemory",
-      "tags": ["memory-system", "review", "security", "guardian", "quality"],
+      "path": ".opencode/agent/MemoryBuilder.md",
+      "tags": ["memory-system", "infrastructure", "docker", "payload"],
+      "scope": "OpenCode CLI Agent - Winston's hands for infrastructure",
       "dependencies": [
         "context:standards-code",
-        "context:review-ref"
+        "tool:mcp-docker"
       ]
     },
-    "memory-validator": {
-      "id": "memory-validator",
-      "name": "MemoryValidator",
-      "category": "subagents/code",
-      "type": "subagent",
+    "memory-analyst": {
+      "id": "memory-analyst",
+      "name": "MemoryAnalyst",
+      "category": "agent",
+      "type": "agent",
       "version": "1.0.0",
       "author": "roninmemory",
-      "tags": ["memory-system", "build", "validation", "type-checking"],
-      "dependencies": []
-    },
-    "memory-organizer": {
-      "id": "memory-organizer",
-      "name": "MemoryOrganizer",
-      "category": "subagents/system-builder",
-      "type": "subagent",
-      "version": "1.0.0",
-      "author": "roninmemory",
-      "tags": ["memory-system", "context", "organization", "structure"],
-      "dependencies": []
-    },
-    "memory-interface": {
-      "id": "memory-interface",
-      "name": "MemoryInterface",
-      "category": "subagents/development",
-      "type": "subagent",
-      "version": "1.0.0",
-      "author": "roninmemory",
-      "tags": ["memory-system", "frontend", "ui", "interface", "design"],
+      "path": ".opencode/agent/MemoryAnalyst.md",
+      "tags": ["memory-system", "analytics", "metrics", "performance"],
+      "scope": "OpenCode CLI Agent - Winston's hands for memory system analysis",
       "dependencies": [
-        "context:standards-code"
+        "context:standards-code",
+        "tool:mcp-docker"
       ]
     },
-    "memory-infrastructure": {
-      "id": "memory-infrastructure",
-      "name": "MemoryInfrastructure",
-      "category": "subagents/development",
-      "type": "subagent",
+    "memory-copywriter": {
+      "id": "memory-copywriter",
+      "name": "MemoryCopywriter",
+      "category": "agent",
+      "type": "agent",
       "version": "1.0.0",
       "author": "roninmemory",
-      "tags": ["memory-system", "devops", "infrastructure", "database"],
-      "dependencies": []
+      "path": ".opencode/agent/MemoryCopywriter.md",
+      "tags": ["memory-system", "documentation", "prompts", "communication"],
+      "scope": "OpenCode CLI Agent - Winston's hands for agent prompt writing",
+      "dependencies": [
+        "context:standards-docs"
+      ]
+    },
+    "memory-repo-manager": {
+      "id": "memory-repo-manager",
+      "name": "MemoryRepoManager",
+      "category": "agent",
+      "type": "agent",
+      "version": "1.0.0",
+      "author": "roninmemory",
+      "path": ".opencode/agent/MemoryRepoManager.md",
+      "tags": ["memory-system", "git", "repository", "coordination"],
+      "scope": "OpenCode CLI Agent - Winston's hands for repository management",
+      "dependencies": [
+        "context:standards-code",
+        "tool:git"
+      ]
+    },
+    "memory-scribe": {
+      "id": "memory-scribe",
+      "name": "MemoryScribe",
+      "category": "agent",
+      "type": "agent",
+      "version": "1.0.0",
+      "author": "roninmemory",
+      "path": ".opencode/agent/MemoryScribe.md",
+      "tags": ["memory-system", "documentation", "specs", "prd"],
+      "scope": "OpenCode CLI Agent - Winston's hands for documentation and specs",
+      "dependencies": [
+        "skill:bmad-create-prd",
+        "context:standards-docs"
+      ]
+    }
+  },
+  "two_world_model": {
+    "description": "Two separate agent worlds - OpenCode CLI agents (Winston's hands) and Org/Business agents (digital employees)",
+    "opencode_agents": {
+      "location": ".opencode/agent/",
+      "runtime": "Terminal / OpenCode",
+      "naming": "Memory{Role}",
+      "count": 7,
+      "purpose": "How Winston works"
+    },
+    "org_agents": {
+      "location": "Paperclip / OpenClaw",
+      "runtime": "Paperclip dashboard",
+      "naming": "{org}-agent",
+      "purpose": "What works FOR clients/orgs",
+      "examples": ["faithmeats-agent", "audits-agent", "crm-agent", "nonprofit-agent"],
+      "blocked_on": "groupIdEnforcer.ts fix"
     }
   },
   "defaults": {
@@ -241,13 +156,13 @@
       "version": "1.0.0",
       "author": "roninmemory",
       "type": "agent",
-      "tags": ["memory-system"]
-    },
-    "subagent": {
-      "version": "1.0.0",
-      "author": "roninmemory",
-      "type": "subagent",
-      "tags": ["memory-system"]
+      "tags": ["memory-system"],
+      "scope": "OpenCode CLI Agent",
+      "tier": "agent",
+      "group_id": "roninmemory-system",
+      "behavior_lock": "UNPROMOTED",
+      "memory_bootstrap": true,
+      "steps": [1,2,3,4,5,6,7,8,9]
     }
   }
 }
