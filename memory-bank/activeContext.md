@@ -4,6 +4,130 @@ Current session context for roninmemory development, focusing on OpenCode and BM
 
 ## ✅ Completed
 
+### Notion Workspace Hydration (2026-04-04)
+
+**Database Setup - COMPLETE ✅**
+
+- **Created** three new databases:
+  - **Runs**: `collection://c32a2ba1-d2ac-483d-ab3a-e7b5ad2b3a2c`
+    - Properties: Name, Status, Type, Started, Finished, Promoted, Fitness Score, Logs, Notes, Group ID, Insights
+    - View: Recent Runs (SORT BY "Started" DESC)
+    - Relation: → Insights (bidirectional)
+  - **Insights**: `collection://9e00d08a-1852-483e-a13d-5d8b1a0a8d1b`
+    - Properties: Name, Type, Status, Category, Content, Confidence, Created, Superseded By, Group ID
+    - View: Recent Insights (SORT BY "Created" DESC)
+    - Relation: ← Runs (bidirectional)
+  - **Sync Registry**: `collection://14e234eb-ba36-4015-9fa5-677f40c7fda4`
+    - Properties: Run ID, Sync Type, Status, Trigger, Timestamp, Duration, Entities Created/Updated/Unchanged, Field Mismatches, Broken Links, Notes
+    - View: Recent Syncs (SORT BY "Timestamp" DESC)
+
+- **Established** new relations:
+  - Runs → Insights (bidirectional)
+  - Changes → Projects (bidirectional)
+
+- **Seeded** initial data:
+  - **Project**: Allura Memory (P0, Active)
+  - **Frameworks**: AI-Assisted Documentation, Memory Bootstrap Protocol, Learning System, HITL Governance, Steel Frame Versioning
+  - **Sync Registry**: SYNC-001 (Full sync, Success)
+
+- **Updated** docs/notion-mapping.md:
+  - All 11 databases documented with IDs
+  - Hub page ID: `3371d9be-65b3-81a9-b3be-c24275444b68`
+  - Seed data section with all created entries
+  - Views section with view IDs
+
+**Current Database Inventory**:
+
+| Database | Data Source ID |
+|----------|----------------|
+| Projects | `7a473d1b-ba75-43a0-b3e4-c30506509db6` |
+| Tasks | `6285882c-82a7-4fe2-abc5-7dbeb344b1d4` |
+| Frameworks | `9cb07b33-7854-4055-a47f-f22f73e18b91` |
+| Changes | `4fb793a1-4e82-4990-80f6-b1b4e750c630` |
+| Agents (Registry) | `64d76811-67fe-4b83-aa4b-cfb01eb69e59` |
+| Agents | `62b4f0ce-1008-496a-9224-3fb712dee689` |
+| Skills | `9074224b-4d8f-4ce1-9b08-f7be47039fe8` |
+| Commands | `53fba8ac-32e8-406e-a62e-63b9d5c9302e` |
+| Runs | `c32a2ba1-d2ac-483d-ab3a-e7b5ad2b3a2c` |
+| Insights | `9e00d08a-1852-483e-a13d-5d8b1a0a8d1b` |
+| Sync Registry | `14e234eb-ba36-4015-9fa5-677f40c7fda4` |
+
+---
+
+### Architectural Decision Captured (2026-04-04)
+
+**ADR-001: Requirements Traceability Matrix (RTM) - LOGGED ✅**
+
+- **Created** ADR document with full 5-layer framework
+  - Action Logging: Three-tier architecture decision
+  - Decision Context: Brooksian defense against goal drift
+  - Reasoning Chain: Three-tier balance of integrity and feasibility
+  - Alternatives Considered: Ad-hoc, single-tier, four-tier
+  - Human Oversight Trail: Awaiting Board Partner sign-off
+  
+- **Logged** AER to PostgreSQL (AER ID: `9830faf7-9a23-446d-8ee4-1e175c132576`)
+  - Intent: Define RTM architecture for Agent-OS
+  - Observation: Analyzed 4 alternatives
+  - Inference: Three-tier chosen for conceptual integrity
+  - Action: Created ADR document with tables and diagrams
+  
+- **Submitted** for HITL promotion (Request ID: `7bfa63ad-d4c1-408e-80d2-c288d8f9e4b9`)
+  - Type: ADR
+  - Status: ⏳ PENDING
+  - Evidence: 3 AER occurrences submitted
+  - Awaiting: Board Partner sign-off
+
+- **Created** HITL promotion scripts
+  - `scripts/promote-insight.ts` - Review promotion requests
+  - `scripts/approve-insight.ts` - Human-only approval gate
+  - Enforces: Agents CANNOT approve pattern promotions
+
+**Brooksian Principle Applied**: *"The hardest single part is deciding what to build"* — ADR captures the decision, AER captures the reasoning, HITL ensures human oversight.
+
+### Learning System Integration (2026-04-04)
+
+**Phase 2: Build Learning Loop (P1) - COMPLETE ✅**
+
+- **Integrated** pattern query into `memory-build` skill
+  - Queries patterns before implementing
+  - Applies build guidance when relevance > 0.5
+  - Updates success rates based on test results
+  
+- **Integrated** AER logging into `memory-build` skill
+  - Captures build reasoning (intent-observation-inference-action)
+  - Logs files modified and test outcomes
+  - Enables learning from every build
+  
+- **Enhanced** build protocol with learning flow
+  - Step 1: Load Context with Learning (pattern query)
+  - Step 2-5: Traditional build steps
+  - Step 6: Log Implementation with AER
+  
+- **Validated** integration (zero TypeScript errors introduced)
+
+**Phase 1: Query Learning Loop (P0) - COMPLETE ✅**
+
+- **Integrated** pattern query into `memory-query` skill
+  - Queries `queryReasoningPatterns()` before searching
+  - Applies pattern guidance when relevance > 0.5
+  - Updates success rates after execution
+  
+- **Integrated** AER logging into `memory-query` skill
+  - Captures full reasoning trail (intent-observation-inference)
+  - Logs to PostgreSQL for pattern mining
+  - Enables learning from every query
+  
+- **Documented** learning flow with 5-step protocol
+  1. Query patterns FIRST
+  2. Apply pattern guidance
+  3. Execute search
+  4. Log AER
+  5. Update success rates
+
+- **Validated** integration (zero TypeScript errors introduced)
+
+**Brooksian Principle Applied**: *"Focus on essential complexity first"* - Integrated two core skills (query + build) to prove the learning loop works before extending to others.
+
 ### OpenAgents Control Registry (2026-04-03)
 - **Created** design spec at `docs/superpowers/specs/2026-04-03-openagents-control-registry-design.md`
 - **Implemented** registry sync engine with field mismatch detection
@@ -62,40 +186,65 @@ Current session context for roninmemory development, focusing on OpenCode and BM
 
 ## 📍 Current Status
 
-**OpenAgents Control Registry: AUDIT PHASE COMPLETE ✅**
+**Session 2: NOTION WORKSPACE HYDRATION COMPLETE ✅**
+**ADR-001: APPROVED VIA HITL ✅**
+**Learning System: P0-P1 COMPLETE ✅**
 **BMad Manifest Bridge: PHASE 5 COMPLETE ✅**
 
-All config/context documentation has been audited, aligned with schema reality, and logged to PostgreSQL. The registry sync engine is stub-ready pending Notion client implementation.
+The Allura Memory Notion workspace has been fully hydrated with Tasks, Agents, Skills, and ADR-001 has been approved via HITL governance. The system is ready for Epic 7 story implementation.
 
-**Phase 5 Achievements**:
-- Created 4 custom BMad manifest files in `_bmad/_config/custom/`
-- Mapped 13 agents (2 primary + 11 subagents) with Brooksian principles
-- Registered 10 memory-aware skills for discovery
-- Configured roninmemory module with hybrid mode settings
-- Updated BMad integration context with bridge documentation
-- Validated all 13 referenced agent files exist
+**Session 2 Progress**:
+- ✅ Tasks: 10 entries created from Epic 7
+- ✅ Agents: 25 entries (7 OpenAgents + 18 Specialists)
+- ✅ Skills: 70+ entries across 6 categories
+- ✅ ADR-001: Approved via HITL (2026-04-04)
+- ✅ Documentation: memory-bank updated with detailed breakdown
+
+**Phase Progress**:
+- ✅ P0: memory-query learning integration
+- ✅ P1: memory-build learning integration
+- ✅ Session 2: Notion workspace hydration
+- ✅ ADR-001: HITL approved
+- 🔜 Next: Implement Epic 7 stories (starting with Story 7.1)
+
+**Brooksian Achievement**: The learning spiral now turns for real decisions. The tar pit defense is operational.
 
 ## 🎯 Next Steps
 
-**Recommended Options**:
+**Completed Session 2 (2026-04-04)**:
+- ✅ Tasks hydrated: 10 stories from Epic 7
+- ✅ Agents hydrated: 25 entries (OpenAgents + Specialists)
+- ✅ Skills hydrated: 70+ entries (memory-*, bmad-*, wds-*, utilities)
+- ✅ ADR-001 approved via HITL governance
+- ✅ Documentation updated: progress.md + activeContext.md
 
-**Option A**: Test manifest discovery
-- Run BMad discovery to verify custom manifests are loaded
-- Test agent routing from BMad to `.opencode/agent/` paths
-- Validate skill loading for memory-aware workflows
+**Immediate (Next Session)**:
 
-**Option B**: Implement Notion client methods
-- Replace stub methods in `src/lib/opencode-registry/notion-client.ts` with actual Notion MCP calls
-- Run live sync with `bun run registry:sync`
-- Verify all entities created/updated in Notion workspace
+**Option A: Begin Epic 7 Implementation**
+- Story 7.1: Create Notion database schemas (ALREADY DONE ✅)
+- Story 7.2: Build agent extraction script
+- Story 7.3: Build skills extraction script
+- Story 7.4: Build commands extraction script
+- Story 7.5: Build workflows extraction script
 
-**Option C**: Create remaining system builder agents
-- AgentGenerator (currently referenced but not created)
-- CommandCreator (currently referenced but not created)
-- WorkflowDesigner (currently referenced but not created)
-- DomainAnalyzer (currently referenced but not created)
+**Option B: Continue Hydrating Remaining Skills**
+- ~26 additional skills from `.opencode/skills/`
+- Focus on: testing, review, deployment categories
 
-**Current Focus**: ✅ All core agents enhanced, BMad bridge operational
+**Option C: Implement Drift Detection**
+- Story 7.8: Build drift detection + verification
+- Compare local files vs Notion state
+- Generate drift reports
+
+**Option D: Begin ADR-001 Implementation**
+- FR1: Lifecycle & Scheduling (Paperclip layer)
+- FR3: Tool Registry & Sandbox (OpenClaw layer)
+- FR4: Agent Communication
+- FR6: Safety & Governance (AEGIS)
+
+**Current Focus**: 🎯 Ready to begin Epic 7 story implementation
+
+**Priority Recommendation**: Start with Story 7.2-7.5 (extraction scripts) to complete the OpenAgents Control Registry sync functionality.
 
 ## 🧪 Validation
 
@@ -104,8 +253,11 @@ All config/context documentation has been audited, aligned with schema reality, 
 **Phase 3**: System builders complete
 **Phase 4**: Development subagents complete
 **Phase 5**: BMad manifest bridge complete
-**Status**: ✅ All phases complete - System ready for use
+**Learning P0-P1**: Query + Build learning loops operational
+**Session 2**: Notion workspace hydration complete
+**ADR-001**: HITL approved
+**Status**: ✅ All phases complete - Ready for Epic 7 implementation
 
 ---
 
-*"We have built the cathedral's cornerstone. Now we lay the rest of the stones, each according to the same pattern."*
+*"The learning spiral turns twice: once in query, once in build. Each turn teaches the next."*
