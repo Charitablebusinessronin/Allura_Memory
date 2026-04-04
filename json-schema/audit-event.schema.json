@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://allura.memory/schemas/audit-event.schema.json",
+  "title": "AuditEvent",
+  "description": "An immutable record in the System of Record for the Present. Captures every mechanical event, tool call, and outcome for compliance auditing.",
+  "type": "object",
+  "required": [
+    "event_id",
+    "group_id",
+    "event_type",
+    "agent_id",
+    "timestamp"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique event identifier"
+    },
+    "group_id": {
+      "type": "string",
+      "description": "Tenant namespace for data isolation"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "tool_call",
+        "tool_result",
+        "agent_spawn",
+        "agent_heartbeat",
+        "insight_write",
+        "insight_promote",
+        "design_propose",
+        "design_approve",
+        "human_approval",
+        "rule_violation",
+        "exception_flagged",
+        "state_transition"
+      ],
+      "description": "Type of audit event"
+    },
+    "agent_id": {
+      "type": "string",
+      "description": "Identifier of the agent that triggered the event"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Event timestamp (ISO 8601)"
+    },
+    "intent": {
+      "type": "string",
+      "description": "What the agent intended to do"
+    },
+    "observation": {
+      "type": "string",
+      "description": "What the agent observed from the environment"
+    },
+    "inference": {
+      "type": "string",
+      "description": "The reasoning or conclusion the agent drew"
+    },
+    "action_taken": {
+      "type": "string",
+      "description": "The action actually performed"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": ["success", "failure", "partial", "pending_review"],
+      "description": "Result of the action"
+    },
+    "rule_id": {
+      "type": "string",
+      "description": "Reference to business rule in Neo4j (if applicable)"
+    },
+    "rule_violated": {
+      "type": "boolean",
+      "description": "Whether this event violated a business rule"
+    },
+    "human_review_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this event requires human review (HITL)"
+    },
+    "notion_page_id": {
+      "type": "string",
+      "description": "Notion page ID if mirrored to human dashboard"
+    },
+    "parent_event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Reference to parent event for causality chain"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Event-specific metadata (tokens, latency, etc.)"
+    }
+  },
+  "additionalProperties": false
+}

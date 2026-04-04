@@ -4,7 +4,7 @@
  */
 
 const MISSION_CONTROL_API = "http://localhost:8000";
-const AUTH_TOKEN = "5KsX6-7qREpWKrxUFpKP9NEFW2RP2ByjVP-xxG0EcsQDzIiqFgFAcfMfMoSfnNUal4E";
+const AUTH_TOKEN = process.env.MISSION_CONTROL_TOKEN || "5KsX6-7qREpWKrxUFpKP9NEFW2RP2ByjVP-xxG0EcsQDzIiqFgFAcfMfMoSfnNUal4E";
 
 const headers = {
   "Authorization": `Bearer ${AUTH_TOKEN}`,

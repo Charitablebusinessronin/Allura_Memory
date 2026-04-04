@@ -105,7 +105,7 @@ export class AgentApproval {
       agent_name: row.agent_name,
       requested_by: row.requested_by,
       status: row.status,
-      confidence_score: parseFloat(row.confence_score),
+      confidence_score: parseFloat(row.confidence_score),
       created_at: row.created_at
     };
   }

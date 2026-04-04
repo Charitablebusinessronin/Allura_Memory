@@ -1,0 +1,10 @@
+module,phase,name,code,sequence,workflow-file,command,required,agent-name,agent-command,agent-display-name,agent-title,options,description,output-location,outputs
+"roninmemory","memory-bootstrap",Memory Bootstrap,MB,"Initialize memory system connection at session start. Query Neo4j for prior implementations before coding.",bootstrap,,anytime,memory-orchestrator,,,,,false,,memory-context
+"roninmemory","memory-query",Query Memory,QM,"Search Neo4j for previous implementations, patterns, and architectural decisions.",query,,anytime,memory-scout,,,,,false,,query-results
+"roninmemory","memory-log",Log Memory,LM,"Log implementation reflections to Neo4j after completing work.",log,,anytime,memory-chronicler,,,,,false,,knowledge-graph
+"roninmemory","memory-orchestrate",Orchestrate Task,OT,"Coordinate the surgical team for a task. Delegate to appropriate subagents.",orchestrate,,anytime,memory-orchestrator,,,,,false,,execution-plan
+"roninmemory","memory-plan",Plan Implementation,PI,"Create implementation plan following Brooksian principles.",plan,,anytime,memory-curator,,,,,false,planning_artifacts,task-breakdown
+"roninmemory","memory-build",Build Feature,BF,"Execute delegated coding tasks with memory-aware patterns.",build,,anytime,memory-builder,,,,,false,implementation_artifacts,code
+"roninmemory","memory-test",Test Memory,TM,"Test memory system integrity and persistence.",test,,anytime,memory-tester,,,,,false,test_artifacts,test-results
+"roninmemory","memory-review",Review Code,RC,"Review code for security, Steel Frame compliance, and memory best practices.",review,,anytime,memory-guardian,,,,,false,review_reports,review-report
+"roninmemory","memory-validate",Validate Build,VB,"Validate builds, types, and memory integrity.",validate,,anytime,memory-validator,,,,,false,,validation-report

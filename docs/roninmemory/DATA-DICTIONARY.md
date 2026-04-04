@@ -120,7 +120,19 @@ Audit trail for Notion mirror operations.
 | `SUPERSEDES` | Knowledge lineage |
 
 ### Key Node Properties
-**`Insight`:** `id`, `insight_id`, `group_id`, `status`, `confidence`, `version`, `content`, `summary`, `notion_page_id`, `promotion_status`
+**`Insight`:** `id`, `insight_id`, `group_id`, `status`, `confidence`, `version`, `content`, `summary`, `source_type`, `source_ref`, `notion_page_id`, `promotion_status`, `promoted_at`, `created_at`, `updated_at`
+
+**`InsightHead`:** `insight_id`, `group_id`, `current_version`, `current_id`, `created_at`, `updated_at`
+
+### State Machines (Clarified)
+
+| Entity | Lifecycle | States |
+|--------|-----------|--------|
+| **Insight** (knowledge) | Validity states | `active` → `degraded` → `expired` |
+| **AgentDesign** (ADAS) | Promotion pipeline | `draft` → `evaluating` → `ranked` → `proposed` → `approved` → `promoted` \| `rejected` |
+| **ADAS Run** (execution) | Run states | `pending` → `running` → `succeeded` \| `failed` |
+
+**Note:** These are different entities with different purposes. Insights represent validated knowledge; AgentDesigns represent discovered agent configurations.
 
 ---
 
@@ -148,6 +160,35 @@ WHERE r.fitness_score >= 0.7
 | PostgreSQL | `chk_attempt_limit` | `attempt_count < 5` on `curator_queue` |
 | PostgreSQL | `uniq_group_id` | `group_id` must be unique on `tenants` |
 | PostgreSQL | Unique `run_id` | Each EvaluationHarness gets unique runId |
+| Neo4j | `group_id` required | Tenant isolation enforced |
+| Neo4j | `insight_id` + `group_id` unique | One head per insight per tenant |
+
+---
+
+## Naming Conventions
+
+| System | Field Naming | Example |
+|--------|--------------|---------|
+| PostgreSQL | `snake_case` | `group_id`, `run_id`, `agent_design_json` |
+| Neo4j | `snake_case` | `group_id`, `insight_id`, `created_at` |
+| JSON Schemas | `snake_case` | `insight.schema.json`, `agent-design.schema.json` |
+
+**Important:** Always use `group_id` (snake_case) consistently. Avoid `groupId` (camelCase) in any context.
+
+---
+
+## JSON Schemas
+
+Canonical JSON schemas are available in `json-schema/`:
+
+| Schema | Purpose |
+|--------|---------|
+| `insight.schema.json` | Insight node structure |
+| `agent-design.schema.json` | ADAS candidate design |
+| `tenant.schema.json` | Multi-tenant namespace |
+| `audit-event.schema.json` | Compliance audit trail |
+
+When in doubt, defer to the JSON schema definitions as the source of truth.
 | Neo4j | `insight_id` required | All insights need identifier |
 | Neo4j | `group_id` required | Tenant isolation enforced |
 | Neo4j | `insight_id` + `group_id` unique | One head per insight per tenant |

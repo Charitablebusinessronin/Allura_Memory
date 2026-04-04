@@ -5,6 +5,11 @@ import { AgentLifecycle } from '../lib/agents/lifecycle';
 import { AgentConfidence } from '../lib/agents/confidence';
 import * as fs from 'fs';
 import { randomUUID } from 'crypto';
+import { config } from 'dotenv';
+
+// Load .env.local for test credentials
+config({ path: '.env.local' });
+config(); // fallback to .env
 
 const PG_CONFIG = {
   host: process.env.POSTGRES_HOST || 'localhost',
@@ -32,7 +37,7 @@ describe('Agent Lifecycle and Confidence (Stories 6.5 & 6.6)', () => {
     try {
       await pgPool.query('SELECT 1 FROM agents LIMIT 1');
     } catch (e) {
-      const schemaSql = fs.readFileSync('/home/ronin704/dev/projects/memory/src/lib/agents/schema.sql', 'utf-8');
+      const schemaSql = fs.readFileSync('./src/lib/agents/schema.sql', 'utf-8');
       await pgPool.query(schemaSql);
     }
 

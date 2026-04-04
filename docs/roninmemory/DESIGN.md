@@ -9,12 +9,53 @@ roninmemory interacts heavily via internal plugin hooks and an MCP tool interfac
 
 ---
 
-## 2. API Reference & Interactions
+## 2. Orchestration Model
+
+### Brooks-Bound Orchestrator
+
+All memory operations are governed by `memory-orchestrator` — the primary Brooks-bound agent that enforces:
+- **Conceptual integrity** in memory operations
+- **Plan-and-document** discipline before implementation
+- **Two-tier tenant isolation** (`organization_id` + `group_id`)
+- **Dual logging policy** enforcement
+
+### Canonical Subagent Architecture
+
+The orchestrator delegates execution to specialized subagents using `memory-*` naming:
+
+| Subagent | Integration Point |
+|----------|-------------------|
+| `memory-scout` | Context discovery before OpenClaw session |
+| `memory-archivist` | External package documentation fetch |
+| `memory-curator` | Knowledge promotion pipeline |
+| `memory-chronicler` | Documentation generation |
+| `memory-builder` | Code implementation |
+| `memory-tester` | Test execution |
+| `memory-guardian` | Code review and compliance |
+| `memory-validator` | Build and type validation |
+| `memory-organizer` | Context organization |
+| `memory-interface` | UI component design |
+| `memory-infrastructure` | Infrastructure management |
+
+### Notion Control Plane
+
+Human governance surfaces through Notion:
+- **Agents** database — Track OpenCode agents, statuses, roles
+- **Skills** database — Track reusable skills and usage notes
+- **Commands** database — Track commands and intent
+- **Changes** database — Bundled updates requiring human review
+- **Backend Governance** page — Policy sections and operational guidance
+
+**Backend Hub Page:** `https://www.notion.so/6581d9be65b38262a2218102c1e6dd1d`
+
+---
+
+## 3. API Reference & Interactions
 
 ### OpenClaw Plugin Hooks
 **before_prompt_build**
 - Fired on session start
-- Queries Neo4j for `active` insights scoped to session `groupId` AND `global-coding-skills`
+- Queries Neo4j for `active` insights scoped to session `group_id` AND `global-coding-skills`
 - Injects returned contexts directly into the agent's system prompt prior to inference
 
 **after_tool_call**

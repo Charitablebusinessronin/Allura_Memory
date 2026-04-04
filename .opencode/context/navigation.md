@@ -31,9 +31,23 @@
 | **Write docs** | `core/standards/documentation.md` |
 | **Review code** | `core/workflows/code-review.md` |
 | **Delegate task** | `core/workflows/task-delegation-basics.md` |
-| **Add agent** | `openagents-repo/guides/adding-agent.md` |
+| **Use BMad workflows** | `project/bmad-integration.md` |
+| **Choose agent** | `project/roninmemory-intelligence.md` |
+| **OpenAgents Registry** | `../config/registry-databases.json` |
+| **Sync Notion** | `bun run registry:sync` |
 | **UI development** | `development/ui-navigation.md` |
 | **API development** | `development/backend-navigation.md` |
+
+### ⭐ Agent Selection
+See `project/roninmemory-intelligence.md` for agent routing and BMad persona mapping.
+
+### Notion Surfaces
+
+| Surface | ID | Role |
+|---------|-----|------|
+| Backend Hub | `6581d9be65b38262a2218102c1e6dd1d` | Structural governance — templates, registries, migrations |
+| OpenAgents Control | `3371d9be65b38041bc59fd5cf966ff98` | CLI team registry — agent roster, skills, commands |
+| Allura Memory Control Center | `3371d9be65b381a9b3bec24275444b68` | HITL oversight — approvals, sync model |
 
 ---
 

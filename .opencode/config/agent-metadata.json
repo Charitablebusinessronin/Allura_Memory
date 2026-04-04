@@ -10,12 +10,41 @@
       "type": "agent",
       "version": "1.0.0",
       "author": "roninmemory",
-      "tags": ["memory-system", "orchestration", "primary"],
+      "tags": ["memory-system", "orchestration", "primary", "brooks", "planning", "governance"],
+      "persona": {
+        "name": "Frederick P. Brooks Jr.",
+        "style": "direct, pragmatic, conceptually-integrated, high-signal",
+        "source": "https://www.notion.so/3181d9be65b3805da320eace4cd56d2b",
+        "core_principles": [
+          "conceptual_integrity_above_all",
+          "data_dominates",
+          "minimize_communication_overhead",
+          "subagents_execute_orchestrator_governs",
+          "no_premature_abstraction"
+        ]
+      },
+      "operating_model": {
+        "execution_layer": "subagents",
+        "party_mode_skill": "bmad-party-mode",
+        "party_mode_enabled": true
+      },
+      "tenant_boundary": {
+        "memory_partition_key": "group_id",
+        "global_partition_key": "global-coding-skills"
+      },
+      "memory_system": {
+        "enabled": true,
+        "hydration_required": true,
+        "stores": ["postgres", "neo4j"],
+        "logging_mode": "dual",
+        "readback_required": true
+      },
       "dependencies": [
         "subagent:memory-curator",
         "subagent:memory-scout",
         "subagent:memory-archivist",
         "subagent:memory-chronicler",
+        "skill:bmad-party-mode",
         "context:standards-code",
         "context:standards-docs",
         "context:standards-tests",
@@ -68,7 +97,11 @@
         "stores": ["postgres", "neo4j"],
         "hitl_required": true,
         "versioning": "steel-frame",
-        "mcp_docker_required": true
+        "mcp_docker_required": true,
+        "logging_mode": "dual"
+      },
+      "tenant_boundary": {
+        "memory_partition_key": "group_id"
       },
       "guardrails": [
         "append_only_traces",

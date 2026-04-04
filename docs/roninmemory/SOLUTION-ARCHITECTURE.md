@@ -9,14 +9,40 @@
 ### Core Components
 | Component | Responsibility | Technology |
 |-----------|---------------|------------|
+| **memory-orchestrator** | Brooks-bound primary orchestrator; governs all memory operations; enforces dual logging and tenant boundaries | OpenCode Agent |
+| **memory-subagents** | Specialized execution agents (scout, archivist, curator, chronicler, builder, tester, guardian, validator, organizer, interface, infrastructure) | OpenCode Subagents |
 | OpenClaw | AI reasoning controller; task execution; MCP tool runtime | OpenClaw / Paperclip |
-| PostgreSQL | Raw trace store; agent registry; promotion queue | Postgres 16 |
-| Neo4j | Persistent semantic memory graph | Neo4j 5, Bolt port 7687 |
+| PostgreSQL | Raw trace store; agent registry; promotion queue; event audit trail | Postgres 16 |
+| Neo4j | Persistent semantic memory graph; versioned insights with `:SUPERSEDES` | Neo4j 5, Bolt port 7687 |
 | Curator | 2-phase promotion cron; Notion mirror | Node.js 20 ESM, node-cron |
 | ADAS Orchestrator | Meta-agent design search; evolutionary SearchLoop | Node.js 20, Dockerode |
 | OllamaClient | HTTP client for Ollama API | TypeScript |
 | DinD Sidecar | Blast-radius-bounded candidate execution | docker:26-dind |
 | Mission Control | Agent spawn; monitoring; Aegis gate UI | OpenClaw Mission Control |
+
+### Orchestration Topology
+```mermaid
+graph TD
+    MO[memory-orchestrator<br/>Brooks Persona] -->|delegates to| MS[memory-scout]
+    MO -->|delegates to| MA[memory-archivist]
+    MO -->|delegates to| MC[memory-curator]
+    MO -->|delegates to| MB[memory-builder]
+    MO -->|delegates to| MT[memory-tester]
+    MO -->|delegates to| MG[memory-guardian]
+    
+    MS -->|discovers context| FILES[Project Files]
+    MA -->|fetches docs| PKG[External Packages]
+    MC -->|promotes knowledge| N4J[(Neo4j)]
+    MB -->|implements code| SRC[Source Code]
+    MT -->|validates| TESTS[Test Suite]
+    MG -->|reviews| PR[Pull Requests]
+    
+    MO -->|enforces dual logging| PG[(PostgreSQL)]
+    MO -->|enforces dual logging| N4J
+    
+    MO -->|tenant isolation| ORG[organization_id]
+    MO -->|tenant isolation| GRP[group_id]
+```
 
 ### API Surface
 roninmemory has no external REST API. All integration is via:

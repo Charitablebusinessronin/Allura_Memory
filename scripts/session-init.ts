@@ -22,7 +22,7 @@ try {
 }
 
 try {
-  const neoStatus = execSync("docker exec knowledge-neo4j cypher-shell -u neo4j -p 'Kamina2025*' 'RETURN 1'", { encoding: "utf-8" });
+  const neoStatus = execSync("docker exec knowledge-neo4j cypher-shell -u neo4j -p '" + (process.env.NEO4J_PASSWORD || 'Kamina2025*') + "' 'RETURN 1'", { encoding: "utf-8" });
   console.log("   ✅ Neo4j: Ready");
 } catch {
   console.error("   ❌ Neo4j: Not running. Start with: docker compose up -d knowledge-neo4j");
@@ -54,7 +54,7 @@ try {
 console.log("\n   🧠 Recent Neo4j Insights:");
 try {
   const insightsOutput = execSync(
-    `docker exec knowledge-neo4j cypher-shell -u neo4j -p 'Kamina2025*' "MATCH (i:Insight) WHERE i.status = 'active' RETURN i.name, i.confidence, i.created_at ORDER BY i.created_at DESC LIMIT 3"`,
+    `docker exec knowledge-neo4j cypher-shell -u neo4j -p '` + (process.env.NEO4J_PASSWORD || 'Kamina2025*') + `' "MATCH (i:Insight) WHERE i.status = 'active' RETURN i.name, i.confidence, i.created_at ORDER BY i.created_at DESC LIMIT 3"`,
     { encoding: "utf-8" }
   );
   console.log(insightsOutput);

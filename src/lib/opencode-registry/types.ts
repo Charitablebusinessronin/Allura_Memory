@@ -79,9 +79,17 @@ export interface SyncRun {
   missingNotion: number;
 }
 
+export interface FieldMismatch {
+  entityId: string;
+  entityType: string;
+  field: string;
+  localValue: string;
+  notionValue: string;
+}
+
 export interface DriftReport {
   missingInNotion: string[];
   missingInLocal: string[];
-  fieldMismatches: Array<{id: string, field: string, local: any, notion: any}>;
+  fieldMismatches: FieldMismatch[];
   brokenLinks: Array<{from: string, to: string, relation: string}>;
 }

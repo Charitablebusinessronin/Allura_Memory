@@ -4,12 +4,92 @@
 > Source: https://github.com/VoltAgent/awesome-agent-skills
 
 ---
+name: awesome-agent-skills-reference
+description: Find the right agent skill for any task. Quick lookup catalog of 1000+ skills from official dev teams and community. Use when you need domain-specific skills (security, database, cloud, testing, etc.) or want to discover new capabilities.
+---
 
-## Quick Reference
+# Awesome Agent Skills Catalog - For OpenCode/Claude Code
 
-This catalog maps the VoltAgent awesome-skills repo to **roninmemory** workflows.
+> Curated collection of 1000+ agent skills from official dev teams and community
+> Source: https://github.com/VoltAgent/awesome-agent-skills
+
+---
+
+## Quick Skill Finder
+
+**Ask yourself:**
+- What domain am I working in? (security, database, cloud, testing, etc.)
+- What tool/platform am I using? (Next.js, AWS, Stripe, etc.)
+- What phase am I in? (planning, building, deploying, reviewing)
+
+**Then:** Look up the skill in the appropriate section below.
 
 **When to use:** Load these skills via OpenCode when working on specific domains.
+
+---
+
+## How to Use This Skill
+
+### Option 1: Browse by Category
+Look through the sections below to find skills relevant to your current task.
+
+### Option 2: Quick Decision Tree
+```
+What are you doing?
+├── Starting a project → ask-questions-if-underspecified, design-md
+├── Writing code → next-best-practices, react-best-practices
+├── Working with data → neon-postgres, supabase-postgres-best-practices
+├── Setting up infra → aws-core, terraform-code-generation, cloudflare-wrangler
+├── Testing → playwright-testing, vitest-testing
+├── Reviewing → audit-context-building, differential-review
+├── Documenting → notion, design-md, docx/xlsx/pdf
+└── Integrating payments → stripe-best-practices
+```
+
+### Option 3: Search by Keyword
+Use the tables below — they're organized by:
+- **Domain** (Databases, Security, Cloud, etc.)
+- **Source** (Official teams vs community)
+- **When to Use** (specific scenarios)
+
+### How to Load a Skill
+
+**Step 1:** Find the skill below (e.g., `neon-postgres`)
+
+**Step 2:** Check if it's available as MCP or needs to be cloned
+
+**For MCP-enabled skills:**
+```bash
+MCP_DOCKER_mcp-find --query "neon postgres"
+MCP_DOCKER_mcp-config-set --server neon --config '{"api_key":"your-key"}'
+MCP_DOCKER_mcp-add --name neon --activate
+```
+
+**For skill files:**
+```bash
+# Clone the awesome-agent-skills repo
+git clone https://github.com/VoltAgent/awesome-agent-skills.git
+
+# Link to your .opencode/skills
+ln -s /path/to/awesome-agent-skills/skills/database/neon \
+  ~/.config/opencode/skills/neon-postgres
+```
+
+---
+
+## 🎯 Most-Used Skills (Start Here)
+
+| Task | Recommended Skill | Load Command |
+|------|------------------|--------------|
+| Starting any project | ask-questions-if-underspecified | Trail of Bits |
+| Next.js development | next-best-practices | Vercel |
+| PostgreSQL work | neon-postgres or supabase-postgres | Neon/Supabase |
+| Security audit | audit-context-building | Trail of Bits |
+| Code review | differential-review | Trail of Bits |
+| E2E testing | playwright-testing | Anthropic |
+| Documentation | notion | Notion |
+| Web research | tavily-search | Community |
+| API testing | hoverfly | Community |
 
 ---
 

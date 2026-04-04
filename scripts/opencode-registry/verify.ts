@@ -2,7 +2,71 @@
 
 import type { NormalizedRegistry } from "./normalize";
 import type { NotionRegistryClient } from "../../src/lib/opencode-registry/notion-client";
-import type { DriftReport } from "../../src/lib/opencode-registry/types";
+import type { DriftReport, FieldMismatch } from "../../src/lib/opencode-registry/types";
+
+function notionPageToLocal(notionPage: any, type: "agent" | "skill" | "command" | "workflow"): Record<string, any> {
+  const props = notionPage.properties || {};
+  const result: Record<string, any> = {};
+
+  if (type === "agent") {
+    result.id = props.Name?.title?.[0]?.plain_text || props.Name?.title?.[0]?.text?.content || "";
+    result.displayName = props["Display Name"]?.rich_text?.[0]?.plain_text || "";
+    result.category = props.Category?.select?.name || "";
+    result.type = props.Type?.select?.name || "";
+    result.status = props.Status?.select?.name || "";
+    result.sourcePath = props["Source Path"]?.rich_text?.[0]?.plain_text || "";
+  } else if (type === "skill") {
+    result.id = props.Name?.title?.[0]?.plain_text || props.Name?.title?.[0]?.text?.content || "";
+    result.category = props.Category?.select?.name || "";
+    result.status = props.Status?.select?.name || "";
+    result.sourcePath = props["Source Path"]?.rich_text?.[0]?.plain_text || "";
+  } else if (type === "command") {
+    result.id = props.Name?.title?.[0]?.plain_text || props.Name?.title?.[0]?.text?.content || "";
+    result.category = props.Category?.select?.name || "";
+    result.status = props.Status?.select?.name || "";
+    result.sourcePath = props["Source Path"]?.rich_text?.[0]?.plain_text || "";
+  } else if (type === "workflow") {
+    result.code = props.Code?.title?.[0]?.plain_text || props.Code?.title?.[0]?.text?.content || "";
+    result.name = props.Name?.rich_text?.[0]?.plain_text || "";
+    result.module = props.Module?.select?.name || "";
+    result.phase = props.Phase?.select?.name || "";
+    result.status = props.Status?.select?.name || "";
+    result.sourcePath = props["Source Path"]?.rich_text?.[0]?.plain_text || "";
+  }
+
+  return result;
+}
+
+function compareFields(
+  local: Record<string, any>,
+  notion: Record<string, any>,
+  id: string,
+  type: string
+): FieldMismatch[] {
+  const mismatches: FieldMismatch[] = [];
+  const keysToCompare = Object.keys(local).filter((k) => k !== "sourcePath");
+
+  for (const key of keysToCompare) {
+    const localVal = local[key];
+    const notionVal = notion[key];
+
+    // Normalize undefined/null/empty
+    const normLocal = localVal ?? "";
+    const normNotion = notionVal ?? "";
+
+    if (String(normLocal).trim() !== String(normNotion).trim()) {
+      mismatches.push({
+        entityId: id,
+        entityType: type,
+        field: key,
+        localValue: String(normLocal),
+        notionValue: String(normNotion),
+      });
+    }
+  }
+
+  return mismatches;
+}
 
 export async function verifySync(
   local: NormalizedRegistry,
@@ -14,6 +78,24 @@ export async function verifySync(
 
   const missingInNotion = [...localAgentIds].filter((id) => !notionAgentIds.has(id));
   const missingInLocal = [...notionAgentIds].filter((id) => !localAgentIds.has(id));
+
+  // Check field mismatches
+  const fieldMismatches: FieldMismatch[] = [];
+
+  for (const localAgent of local.agents) {
+    const notionPage = notionAgents.find((p: any) => p.id === localAgent.id);
+    if (notionPage) {
+      const notionLocal = notionPageToLocal(notionPage, "agent");
+      const localObj = {
+        id: localAgent.id,
+        displayName: localAgent.displayName || "",
+        category: localAgent.category,
+        type: localAgent.type,
+        status: localAgent.status,
+      };
+      fieldMismatches.push(...compareFields(localObj, notionLocal, localAgent.id, "agent"));
+    }
+  }
 
   // Check broken links
   const brokenLinks: Array<{ from: string; to: string; relation: string }> = [];
@@ -64,7 +146,7 @@ export async function verifySync(
   return {
     missingInNotion,
     missingInLocal,
-    fieldMismatches: [],
+    fieldMismatches,
     brokenLinks,
   };
 }

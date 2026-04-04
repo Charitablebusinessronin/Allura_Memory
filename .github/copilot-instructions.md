@@ -89,6 +89,7 @@ When working on this project, read in this order:
 4. **Use group_id** in all database operations for tenant isolation
 5. **Use append-only** for PostgreSQL traces - never mutate
 6. **Use SUPERSEDES** for Neo4j versioning - never edit Insights
+7. **Prefer premade MCP servers from `MCP_DOCKER`**; avoid custom wrappers when a catalog server already exists
 
 ## Important Files
 

@@ -36,7 +36,10 @@ function getDriver(): Driver {
   if (!driver) {
     const uri = process.env.NEO4J_URI || 'bolt://localhost:7687';
     const user = process.env.NEO4J_USER || 'neo4j';
-    const password = process.env.NEO4J_PASSWORD || 'Kamina2025*';
+    const password = process.env.NEO4J_PASSWORD;
+    if (!password) {
+      throw new Error("NEO4J_PASSWORD environment variable is required");
+    }
     
     driver = neo4j.driver(uri, neo4j.auth.basic(user, password));
   }

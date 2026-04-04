@@ -6,7 +6,9 @@
 > Content has not yet been fully reviewed — this is a working design reference, not a final specification.
 > When in doubt, defer to the source code, JSON schemas, and team consensus.
 
-roninmemory is the persistent memory and knowledge curation infrastructure for the Charitable Business Ronin agent fleet. It transforms OpenClaw agents from stateless session-bots into goal-directed teammates by maintaining a semantic memory graph (Neo4j), a raw trace store (PostgreSQL), and an automated curation pipeline — including the ADAS evolutionary agent design system — that promotes high-confidence discoveries into durable, versioned knowledge. Human oversight is enforced through Notion mirroring and a Mission Control Aegis sign-off gate.
+roninmemory (Allura Memory) is the persistent memory and knowledge curation infrastructure for the Charitable Business Ronin agent fleet. It transforms OpenClaw agents from stateless session-bots into goal-directed teammates by maintaining a semantic memory graph (Neo4j), a raw trace store (PostgreSQL), and an automated curation pipeline — including the ADAS evolutionary agent design system — that promotes high-confidence discoveries into durable, versioned knowledge. Human oversight is enforced through Notion mirroring and a Mission Control Aegis sign-off gate.
+
+The system is governed by a **Brooks-bound orchestrator** (`memory-orchestrator`) that enforces conceptual integrity, plan-and-document discipline, and delegates execution to canonical `memory-*` subagents. All operations respect two-tier tenant isolation: `organization_id` (business boundary) and `group_id` (memory partition).
 
 **Primary operator:** Sabir Asheed, Charitable Business Ronin nonprofit, Charlotte NC.
 
@@ -22,7 +24,8 @@ roninmemory is the persistent memory and knowledge curation infrastructure for t
 - [6. Tasks](#6-tasks)
 - [7. Testing Protocol](#7-testing-protocol)
 - [8. Operational Workflows](#8-operational-workflows)
-- [9. References](#9-references)
+- [9. Notion UX Plan](#9-notion-ux-plan)
+- [10. References](#10-references)
 
 ---
 
@@ -33,7 +36,7 @@ roninmemory is the persistent memory and knowledge curation infrastructure for t
 A versioned knowledge node in Neo4j representing a validated behavior-shaping rule or pattern. Never mutated — every update creates a new node linked by a `:SUPERSEDES` edge to the prior version.
 
 **States:** `active` | `degraded` | `expired`
-**Key fields:** `runId`, `groupId`, `category`, `content`, `confidence`, `status`, `version`, `createdAt`, `notionPageId`
+**Key fields:** `runId`, `organization_id`, `group_id`, `category`, `content`, `confidence`, `status`, `version`, `createdAt`, `notionPageId`
 
 ### AgentDesign
 
@@ -41,20 +44,100 @@ A promoted, versioned agent configuration node in Neo4j. Originates from ADAS ev
 
 **States (ADAS lifecycle):** `draft` → `evaluating` → `ranked` → `proposed` → `approved` → `promoted` | `rejected`
 **States (Neo4j):** `active` | `deprecated`
-**Key fields:** `runId`, `groupId`, `version`, `status`, `createdAt`, `design_id`, `domain`, `config.model`, `config.reasoningStrategy`, `config.systemPrompt`, `config.tools`
+**Key fields:** `runId`, `organization_id`, `group_id`, `version`, `status`, `createdAt`, `design_id`, `domain`, `config.model`, `config.reasoningStrategy`, `config.systemPrompt`, `config.tools`
 
 ### ADAS Run
 
 A raw execution trace row in PostgreSQL — one candidate agent design evaluation. Immutable after insert except `status` and `promoted`.
 
 **States:** `pending` | `running` | `succeeded` | `failed`
-**Key fields:** `run_id`, `group_id`, `agent_design_json`, `fitness_score`, `promoted`, `started_at`, `finished_at`
+**Key fields:** `run_id`, `organization_id`, `group_id`, `agent_design_json`, `fitness_score`, `promoted`, `started_at`, `finished_at`
 
 ### Tenant
 
-A scoped namespace isolating memory and agent configs per project. Every node in Neo4j and every row in Postgres carries a `group_id` / `groupId`.
+A scoped namespace isolating memory and agent configs per organization and project. Every node in Neo4j and every row in Postgres carries both `organization_id` (business boundary) and `group_id` (memory partition) in consistent snake_case.
 
-**Key fields:** `group_id` (e.g. `faith-meats`, `global-coding-skills`), `is_global`, `display_name`
+**Key fields:** `organization_id` (e.g., `charitable-business-ronin`), `group_id` (e.g., `faith-meats`, `global-coding-skills`), `is_global`, `display_name`
+
+**Tenant Hierarchy:**
+- `organization_id` — Top-level business/tenant boundary (multi-tenant SaaS isolation)
+- `group_id` — Project-specific memory partition within an organization
+- All queries MUST scope by both `organization_id` AND `group_id`
+- Cross-tenant access is prohibited at the schema level
+
+### Brooks-Bound Orchestrator
+
+The primary orchestrator (`memory-orchestrator`) is bound to the **Frederick P. Brooks Jr. persona** — author of "The Mythical Man-Month" and advocate for:
+- **Conceptual integrity** — one mind overseeing system design
+- **Plan-and-document** discipline — think before coding
+- **Second-system effect** awareness — avoid over-engineering
+- **Surgical team** model — specialist subagents, not generalists
+
+The orchestrator:
+1. Governs all memory operations and ensures dual logging policy compliance
+2. Delegates execution to canonical `memory-*` subagents
+3. Enforces two-tier tenant isolation at every request
+4. Reviews outcomes for quality, security, and compliance
+
+**Subagent Naming Convention:**
+| Subagent | Role |
+|----------|------|
+| `memory-scout` | Discovers context files before coding |
+| `memory-archivist` | Fetches current docs for external packages |
+| `memory-curator` | Breaks down complex features into subtasks |
+| `memory-chronicler` | Generates and maintains documentation |
+| `memory-builder` | Executes delegated coding subtasks |
+| `memory-tester` | Testing after implementation |
+| `memory-guardian` | Reviews code quality and compliance |
+| `memory-validator` | Validates builds and types |
+| `memory-organizer` | Organizes context and knowledge |
+| `memory-interface` | Designs UI components and interactions |
+| `memory-infrastructure` | Manages infrastructure and deployment |
+
+### Dual Logging Policy
+
+The system enforces dual-path logging for complete auditability:
+
+| Store | Purpose | Content |
+|-------|---------|---------|
+| **PostgreSQL** | System of Record for the Present | Raw traces, events, audit logs, heartbeats, agent executions |
+| **Neo4j** | System of Reason | Curated insights, patterns, versioned knowledge with `:SUPERSEDES` chains |
+
+**Writing:**
+- Confidence `< 0.5` → PostgreSQL only (raw trace)
+- Confidence `>= 0.5` → PostgreSQL + Neo4j (promoted insight)
+
+**Reading:**
+- Session hydration queries both stores
+- Project-specific insights (`group_id=scoped`) before global (`group_id=global-coding-skills`)
+
+### Notion Control Plane
+
+The Notion backend serves as the human governance surface:
+
+**Backend Hub Page:** `https://www.notion.so/6581d9be65b38262a2218102c1e6dd1d`
+
+The Backend Hub (`6581d9be65b38262a2218102c1e6dd1d`) is the structural governance surface for templates, registries, and migrations. The OpenAgents Control Registry (`3371d9be65b38041bc59fd5cf966ff98`) is the CLI team registry for agent roster, skills, and commands. The Allura Memory Control Center (`3371d9be81a9`) is the HITL oversight surface for approvals and sync. These are three distinct surfaces.
+
+| Database | Purpose |
+|----------|---------|
+| **Agents** | Track OpenCode agents, statuses, roles, and related metadata |
+| **Skills** | Track reusable skills and their usage notes |
+| **Commands** | Track commands and their intent |
+| **GitHub Repos (Template/Template1/Template2)** | Starter structures for new projects |
+| **Changes** | Bundled updates requiring human review |
+
+**Auxiliary Pages:**
+- **Backend Governance & Ops** — Policy sections and operational guidance
+- **Frameworks** — Agent catalog with persona bindings
+
+**Sync Model:**
+- Primary direction: `roninmemory → Notion`
+- Sync summaries, relationships, and reviewable change bundles
+- Do not mirror raw runtime traces or low-level noise
+- Prefer premade MCP servers from `MCP_DOCKER` for Notion integration
+
+### Aegis Gate
 
 ### Curator
 
@@ -123,7 +206,7 @@ A Bun CLI-generated JSON cache (`memory-bank/index.json`) that summarizes canoni
 
 | ID | Requirement | Traces To |
 |----|-------------|-----------|
-| F1 | On every OpenClaw session start, `before_prompt_build` hook queries Neo4j for `active` insights scoped to session `groupId` PLUS `global-coding-skills` | B2 |
+| F1 | On every OpenClaw session start, `before_prompt_build` hook queries Neo4j for `active` insights scoped to session `group_id` PLUS `global-coding-skills` | B2 |
 | F2 | Results injected into system prompt; tenant-specific insights appear before global ones | B2, B5 |
 | F3 | Agents may call `memory_write` tool; confidence < 0.5 → Postgres only; confidence ≥ 0.5 → Neo4j node + `:SUPERSEDES` edge | B3 |
 
@@ -141,8 +224,8 @@ A Bun CLI-generated JSON cache (`memory-bank/index.json`) that summarizes canoni
 
 | ID | Requirement | Traces To |
 |----|-------------|-----------|
-| F9 | Every Postgres row carries `group_id`; every Neo4j node carries `groupId` | B5, B8 |
-| F10 | All queries are scoped by `groupId`; cross-tenant access is prohibited | B5, B8 |
+| F9 | Every Postgres row carries `group_id`; every Neo4j node carries `group_id` (consistent snake_case naming) | B5, B8 |
+| F10 | All queries are scoped by `group_id`; cross-tenant access is prohibited | B5, B8 |
 
 #### ADAS Discovery (F11–F13)
 
@@ -192,6 +275,13 @@ A Bun CLI-generated JSON cache (`memory-bank/index.json`) that summarizes canoni
 | F27 | `after_tool_call` hook upserts agent heartbeat, cumulative `token_cost_usd`, and task counters to `agents` table | B1, B2 |
 | F28 | Anonymous sessions write raw traces to `adas_runs` for Curator candidate discovery | B3 |
 
+#### MemFS & Reflection (F29–F30)
+
+| ID | Requirement | Traces To |
+|----|-------------|-----------|
+| F29 | System provides git-backed Markdown files for private session reflection, context, and system configuration logic | B2 |
+| F30 | Non-blocking sleep-time daemon consolidates private agent insights and escalates them to the persistent graph | B5 |
+
 ---
 
 ## 3. Solution Architecture
@@ -200,14 +290,26 @@ A Bun CLI-generated JSON cache (`memory-bank/index.json`) that summarizes canoni
 
 | Component | Responsibility | Technology |
 |-----------|---------------|------------|
+| **memory-orchestrator** | Brooks-bound primary orchestrator; governs all memory operations; enforces dual logging and tenant boundaries | OpenCode Agent |
+| **memory-scout** | Discovers context files before coding; finds standards and relevant patterns | OpenCode Subagent |
+| **memory-archivist** | Fetches current docs for external packages; manages documentation hydration | OpenCode Subagent |
+| **memory-curator** | Breaks down complex features into atomic subtasks; manages knowledge promotion | OpenCode Subagent |
+| **memory-chronicler** | Generates and maintains documentation; creates ADRs and knowledge artifacts | OpenCode Subagent |
+| **memory-builder** | Executes delegated coding subtasks; implements features | OpenCode Subagent |
+| **memory-tester** | Testing after implementation; validates outcomes | OpenCode Subagent |
+| **memory-guardian** | Reviews code quality, security, and compliance; enforces Steel Frame standards | OpenCode Subagent |
+| **memory-validator** | Validates builds and types; ensures Steel Frame versioning compliance | OpenCode Subagent |
+| **memory-organizer** | Organizes context and knowledge; structures domain information | OpenCode Subagent |
+| **memory-interface** | Designs UI components and interactions; creates visualizations | OpenCode Subagent |
+| **memory-infrastructure** | Manages infrastructure, Docker, and deployment | OpenCode Subagent |
 | OpenClaw | AI reasoning controller; task execution; MCP tool runtime | OpenClaw / Paperclip |
-| PostgreSQL | Raw trace store; agent registry; ADAS runs/events; promotion queue; governance triggers | Postgres 16 |
-| Neo4j | Persistent semantic memory graph; versioned `:Insight` / `:AgentDesign` nodes | Neo4j 5, Bolt port 7687 |
+| PostgreSQL | Raw trace store; agent registry; ADAS runs/events; promotion queue; event audit trail | Postgres 16 |
+| Neo4j | Persistent semantic memory graph; versioned `:Insight` / `:AgentDesign` nodes with `:SUPERSEDES` | Neo4j 5, Bolt port 7687 |
 | Curator | 2-phase promotion cron; Notion mirror | Node.js 20 ESM, node-cron |
 | ADAS Orchestrator | Meta-agent design search; evolutionary SearchLoop; DinD execution; fitness scoring | Node.js 20, Dockerode |
 | OllamaClient | HTTP client for Ollama API — local + cloud routing, Bearer auth | TypeScript, `src/lib/ollama/client.ts` |
 | DinD Sidecar | Blast-radius-bounded candidate execution | docker:26-dind |
-| Notion | Human knowledge workspace; Aegis review surface | Notion API v1 |
+| Notion | Human knowledge workspace; Aegis review surface; backend control plane | Notion API v1 |
 | Mission Control | Agent spawn; monitoring; Aegis gate UI | OpenClaw Mission Control |
 | Snapshot CLI | Bun CLI that generates `memory-bank/index.json` from doc trees | Bun, TypeScript |
 
@@ -577,7 +679,7 @@ RETURN i.insight_id, i.group_id, i.promoted_at
 | RK-01 | Phase 2 failure creates orphaned Neo4j node | Low | Low | Compensating `DETACH DELETE` in Curator error handler |
 | RK-02 | Curator crash leaves queue entry unresolved | Low | Low | `attempt_count` limit; manual intervention for stuck entries |
 | RK-03 | Notion API rate limits throttle mirror | Medium | Medium | Async queue; exponential backoff; non-fatal failures |
-| RK-04 | Cross-tenant data leakage via missing `groupId` filter | High | Medium | Schema constraints; runtime validation; audit queries |
+| RK-04 | Cross-tenant data leakage via missing `group_id` filter | High | Medium | Schema constraints; runtime validation; audit queries |
 | RK-05 | DinD sandbox escape via kernel exploit | High | Low | `--cap-drop=ALL`, read-only fs, no network, resource limits |
 | RK-06 | Ollama API errors causing evaluation failures | Medium | Medium | Catch errors, log `evaluation_failed`, return `accuracy=0`; retry logic pending |
 | RK-07 | Promotion threshold gaming (hard-coded outputs) | Medium | Low | Human reviewer evaluates quality; diverse ground-truth test cases |
@@ -631,16 +733,16 @@ RETURN i.insight_id, i.group_id, i.promoted_at
 
 | Task | Priority | Notes |
 |------|----------|-------|
-| T30: Sandbox Docker Execution (test & configure) | P2 | Docker mode defined but not fully tested |
-| T31: Web Dashboard — Search Progress & Proposals | P2 | Real-time leaderboard, approve/reject UI |
-| T32: Search Persistence — Resume Interrupted Searches | P2 | Checkpoint to PostgreSQL after each iteration |
-| T33: Multi-Model Comparison Benchmark | P3 | Run same domain across all models |
-| T34: Prompt Templates Library | P3 | Pre-built prompt templates per domain |
-| T35: Evolutionary Diversity Metrics | P3 | Hamming distance, entropy measures |
-| T36: A/B Agent Deployment | P4 | Requires MCP integration first |
-| T37: Agent Self-Improvement Loop | P4 | Self-modification proposals |
-| T38: Smoke test automation for CI/CD | P2 | |
-| T39: Operational runbooks | P2 | |
+| T31: Sandbox Docker Execution (test & configure) | P2 | Docker mode defined but not fully tested |
+| T32: Web Dashboard — Search Progress & Proposals | P2 | Real-time leaderboard, approve/reject UI |
+| T33: Search Persistence — Resume Interrupted Searches | P2 | Checkpoint to PostgreSQL after each iteration |
+| T34: Multi-Model Comparison Benchmark | P3 | Run same domain across all models |
+| T35: Prompt Templates Library | P3 | Pre-built prompt templates per domain |
+| T36: Evolutionary Diversity Metrics | P3 | Hamming distance, entropy measures |
+| T37: A/B Agent Deployment | P4 | Requires MCP integration first |
+| T38: Agent Self-Improvement Loop | P4 | Self-modification proposals |
+| T39: Smoke test automation for CI/CD | P2 | |
+| T40: Operational runbooks | P2 | |
 
 ### Dependencies
 
@@ -650,10 +752,10 @@ MCP ADAS Integration (T26)
 └── Blocks: A/B Deployment (T36), Self-Improvement (T37)
 
 Tool Implementations (T27)
-├── Requires: Sandbox Docker Execution (T30)
+├── Requires: Sandbox Docker Execution (T31)
 └── Blocks: Real tool-calling agents
 
-Sandbox Docker (T30)
+Sandbox Docker (T31)
 └── Requires: Docker socket access configured
 
 Search Persistence (T32)
@@ -766,7 +868,7 @@ bun tsx src/lib/adas/cli.ts --domain math --iterations 5 --population 5
 - **Docker-only:** All services MUST run inside Docker
 - **Immutable nodes:** Neo4j nodes MUST NOT be mutated; all updates create `:SUPERSEDES` edges
 - **2-phase ordering:** `promoted = true` MUST NOT be set before `neo4j_written = true`
-- **Tenant isolation:** All queries MUST scope by `groupId`; cross-tenant access prohibited
+- **Tenant isolation:** All queries MUST scope by `group_id`; cross-tenant access prohibited
 - **Aegis gate:** ADAS-promoted designs MUST NOT spawn live agents without human sign-off
 - **No autonomous promotion:** Agent designs MUST NOT self-promote
 - **Weight normalization:** `accuracyWeight + costWeight + latencyWeight` MUST sum to 1.0
@@ -805,13 +907,85 @@ roninmemory has no external REST API. All integration is via:
 
 ---
 
-## 9. References
+## 9. Notion UX Plan
+
+### Purpose
+
+Notion is the human-facing dashboard and knowledge hub for roninmemory. It is the place to review and approve agent changes, browse prompts, skills, lessons, and track project-level AI configuration without exposing raw runtime noise.
+
+### UX Goals
+
+- Keep roninmemory as the source of truth for operational state and memory.
+- Use Notion as a clean mirror for humans: dashboard, approvals, knowledge base, and project control center.
+- Reduce noise by showing summaries and bundled changes instead of raw diffs first.
+- Make approvals fast and legible with risk levels and clear action buttons.
+
+### Per-Project Structure
+
+Each project gets its own Notion control center with separate databases:
+
+| Database | Purpose | Source |
+|----------|---------|--------|
+| Agents | Track OpenCode agents, statuses, roles, and related metadata | `.opencode/agent/**` |
+| Skills | Track reusable skills and their usage notes | `.opencode/skills/**` |
+| Commands | Track commands and their intent | `.opencode/command/**` |
+| Changes | Track bundled updates requiring human review | roninmemory change summaries |
+
+### Approval Workflow
+
+Changes that affect behavior must be reviewed as a bundle, not as isolated file edits.
+
+**Approval-required changes:**
+- agent additions, edits, deprecations
+- linked skill additions, edits, deprecations
+- linked command additions, edits, deprecations
+- relationship changes between agents, skills, and commands
+
+**No approval required:**
+- formatting-only edits
+- archive/reference docs
+- metadata-only tweaks
+
+**Review states:** `Draft` → `Pending Approval` → `Approved` | `Rejected` → `Promoted/Applied`
+
+### Dashboard Layout
+
+Recommended top-level views for each project:
+
+- **Pending Approvals** — bundled changes with summary, risk, and affected components
+- **High Risk Changes** — routing/tool-access/prompt behavior changes
+- **Recently Approved** — audit trail of accepted bundles
+- **Changes by Agent** — impact view per OpenCode agent
+- **Knowledge Hub** — prompts, skills, lessons, and reusable guidance
+
+### Sync Model
+
+- Primary direction: `roninmemory → Notion`
+- Sync summaries, relationships, and reviewable change bundles
+- Do not mirror raw runtime traces or low-level internal noise by default
+- Prefer premade MCP servers from `MCP_DOCKER`; avoid custom wrappers when a catalog server already exists
+
+### UX Rules
+
+- Show human summaries before technical detail.
+- Group related file changes into one approval item.
+- Tag changes with risk level: `Low`, `Medium`, `High`.
+- Keep the main dashboard focused on pending decisions, not historical clutter.
+
+---
+
+## 10. References
 
 ### Project Documents
 
 - [`AI-GUIDELINES.md`](../../AI-GUIDELINES.md) — Documentation standards and AI policy
 - [`AGENTS.md`](../../AGENTS.md) — Coding standards, build commands, TypeScript rules
 - [`README.md`](../../README.md) — Quick start, usage, tech stack
+- [`epics/epics.md`](./epics/epics.md) — Epic index and FR-to-epic coverage
+- [`epics/epic-1-dual-store-memory.md`](./epics/epic-1-dual-store-memory.md) — Dual-store persistent memory
+- [`epics/epic-2-knowledge-curation.md`](./epics/epic-2-knowledge-curation.md) — Automated knowledge curation
+- [`epics/epic-3-session-hydration.md`](./epics/epic-3-session-hydration.md) — Snapshot and session hydration
+- [`epics/epic-4-operational-memory-observability-reflection.md`](./epics/epic-4-operational-memory-observability-reflection.md) — Operational observability and reflection memory
 - [`templates/PROJECT.template.md`](../../templates/PROJECT.template.md) — Document template
 - [`archive/bmad-output/`](../../archive/bmad-output/) — Historical planning artifacts (6 epics, 1854+ tests)
 
@@ -833,6 +1007,238 @@ roninmemory has no external REST API. All integration is via:
 - [Neo4j Cypher Manual](https://neo4j.com/docs/cypher-manual/)
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/)
 - [Notion API Reference](https://developers.notion.com/)
+
+---
+
+## 11. Audit Engine Architecture
+
+### Purpose
+
+Allura Memory functions as a **System of Record for Decisions** that compares real-time agent actions against codified business rules stored in the knowledge graph. This enables SOC 2 compliance by providing an immutable "causality chain" from intent to outcome.
+
+### Three-Layer Audit Kit
+
+| Tier | Storage | Purpose |
+|------|---------|---------|
+| **Tier 1** | PostgreSQL | System of Record for the Present — raw evidence, immutable traces |
+| **Tier 2/3** | Neo4j | System of Reason — AER records + canonical business rules |
+| **Auditor** | Curator Agent | Monitors raw traces, evaluates against rules, flags exceptions |
+
+### Agent Execution Records (AER)
+
+Every autonomous decision is captured as an AER with three components:
+
+| Component | Purpose |
+|-----------|---------|
+| **Intent** | What the agent intended to do |
+| **Observation** | What the agent observed from the environment |
+| **Inference** | The reasoning or conclusion the agent drew |
+
+### Compliance Query Pattern
+
+```cypher
+// Find all decisions that violated a specific rule
+MATCH (aer:AgentExecutionRecord)-[:VIOLATED]->(rule:BusinessRule)
+WHERE aer.group_id = $tenant_id
+  AND aer.timestamp > datetime() - duration('P30D')
+RETURN aer.intent, aer.observation, rule.rule_id, rule.description
+```
+
+### Exception Flagging Workflow
+
+1. **Audit Agent (Curator)** polls Postgres for new trace events
+2. Evaluates each event against business rules in Neo4j
+3. If violation detected, creates `ExceptionFlagged` event
+4. Pushes **Change Bundle** or **Risk Alert** to Notion Approval Queue
+5. Human "Board Partner" reviews AER and approves/rejects
+6. Approved exceptions may trigger rollback or remediation
+
+### Immutable Audit Trails
+
+Because roninmemory uses `:SUPERSEDES` relationships, the system can reconstruct the exact state of business rules at any point in the past 12 months—satisfying retrospective justification requirements from auditors.
+
+---
+
+## 12. Industry Workflow Pipeline
+
+### Overview
+
+To create industry-specific organizations, implement a structured pipeline from **industry data ingestion** to **automated agent design** to **governed orchestration**.
+
+### Phase 1: Data Foundation (The "What")
+
+| Step | Action |
+|------|--------|
+| **Bidirectional Integration** | Ingest both System of Record (raw data) and System of Engagement (context/activities) into roninmemory |
+| **Dual-Persistence** | Store high-volume traces in PostgreSQL; distilled knowledge (rules, SOPs) in Neo4j |
+| **Domain Maps** | Map entities, relationships, and Decision Provenance (e.g., credit scores, HACCP limits) |
+
+### Phase 2: Design Factory (The "How")
+
+| Step | Action |
+|------|--------|
+| **Meta Agent Search** | ADAS iteratively programs and tests novel agent designs in isolated Docker sandbox |
+| **Benchmark Optimization** | Optimize for industry-specific benchmarks (legal accuracy, coding efficiency, safety compliance) |
+| **Discovery Archiving** | Successful designs archived in run archive — single source of truth for evaluated configs |
+| **Offline Factory** | ADAS operates offline; cannot activate in production without human oversight |
+
+### Phase 3: Orchestration (The "Who and Why")
+
+| Step | Action |
+|------|--------|
+| **Org Charts** | Define hierarchy for specific industry in Paperclip (e.g., "Faith Meats CEO", "CRM Assistant") |
+| **Goal Ancestry** | Every task carries "Goal Ancestry" so agent understands strategic mission |
+| **Agent Contracts** | Machine-readable contracts: latency class, tool allowlists, token budgets |
+
+### Phase 4: Governance (Approval Loop)
+
+| Step | Action |
+|------|--------|
+| **Pending Approval Queue** | ADAS pushes candidates to Change Bundle queue in Notion |
+| **Aegis Quality Gates** | Human Board Partners review AER before "hiring" new variant |
+| **Steel Frame Versioning** | Every approved change creates new version with `:SUPERSEDES` relationship |
+
+---
+
+## 13. Compliance Primitives
+
+### Core Compliance Capabilities
+
+| Compliance Need | RoninClaw Primitive | Implementation |
+|-----------------|---------------------|----------------|
+| **Explainability** | AER (Intent/Observation/Inference) | Records "Why" behind every autonomous decision as queryable data |
+| **Auditability** | Bitemporal Versioning | Prevents state drift by keeping immutable records of what used to be true |
+| **Data Sovereignty** | Multi-tenant `group_id` | Audit logs for one org never contaminated by another |
+| **Integrity** | Airtight Sandboxing | Audit agents operate in secure environment, prevent "reward hacking" |
+| **HITL Oversight** | Aegis Quality Gates | No ADAS-discovered design deploys without human sign-off |
+
+### SOC 2 Control Mapping
+
+| SOC 2 Principle | RoninClaw Control |
+|-----------------|-------------------|
+| **Security** | `group_id` tenant isolation, Docker sandboxing |
+| **Availability** | Health checkpoints, heartbeat monitoring |
+| **Processing Integrity** | AER records, rule validation |
+| **Confidentiality** | Agent contracts, data access limits |
+| **Privacy** | Redacted fields, PII protection |
+
+### State Machines Clarified
+
+The system uses **two separate state machines** for different entity types:
+
+| Entity | Lifecycle | Purpose |
+|--------|-----------|---------|
+| **Insight** (knowledge) | `active` → `degraded` → `expired` | Knowledge node validity states |
+| **AgentDesign** (ADAS) | `draft` → `evaluating` → `ranked` → `proposed` → `approved` → `promoted` \| `rejected` | Promotion pipeline states |
+
+**Note:** These are different entities with different purposes. Insights represent validated knowledge; AgentDesigns represent discovered agent configurations.
+
+---
+
+## 14. Industry Examples
+
+### Financial Services (Loan Approvals)
+
+| Component | Implementation |
+|-----------|----------------|
+| **Memory** | Credit policies, SOX controls, trade history |
+| **ADAS Objective** | Minimize risk in loan approval reasoning patterns |
+| **Governance Gate** | Board review of high-stakes credit overrides |
+| **Key Rule** | "12% interest rate requires 800+ credit score" |
+
+### Manufacturing (HACCP Safety)
+
+| Component | Implementation |
+|-----------|----------------|
+| **Memory** | HACCP safety limits, sensor telemetry, critical control points |
+| **ADAS Objective** | Optimize anomaly detection in production lines |
+| **Governance Gate** | Mandatory HITL sign-off for safety protocol changes |
+| **Key Rule** | "Conveyor speed variance must stay within ±10ml band" |
+
+### Healthcare (Patient Data)
+
+| Component | Implementation |
+|-----------|----------------|
+| **Memory** | Clinical workflows, HIPAA boundaries, patient records |
+| **ADAS Objective** | Ensure zero-leakage RAG retrieval across patient records |
+| **Governance Gate** | Approval of Agent Contracts that restrict data to on-prem VPCs |
+| **Key Rule** | "Cross-patient data access prohibited without explicit consent" |
+
+---
+
+## 15. Non-Profit Use Case (Faith Meats Example)
+
+### Organizational Architecture
+
+A RoninClaw-driven non-profit requires hierarchical integration with Microsoft personal assistants and data-driven back end for grant applications and CRM management.
+
+### Paperclip Setup (Governance OS)
+
+| Component | Purpose |
+|-----------|---------|
+| **Departments** | Grant Management, Donor Relations (CRM), Operations — each with strict `group_id` isolation |
+| **Budgeting** | Monthly token and USD budgets to prevent runaway autonomous loops |
+| **Aegis Gates** | Mandatory HITL for grant submission, sensitive donor record modifications |
+
+### Execution Layer (Grant & CRM Workflows)
+
+| Workflow | Agent | Memory Query |
+|----------|-------|--------------|
+| **Grant Application** | ContextScout → ExternalScout → DocWriter | Neo4j: successful past grants, winning phrases |
+| **CRM Assistance** | Knowledge Curator | Postgres → Neo4j: donor interaction traces → Insight nodes |
+
+### Microsoft Personal Assistant Integration
+
+| Component | Implementation |
+|-----------|----------------|
+| **Copilot Runtime** | Microsoft personal assistants connected via MCP to OpenClaw Gateway |
+| **Agent-as-a-Service** | Specialized grant agents packaged as callable tools |
+| **Zero-Trust Identity** | Every request bound to Agent Contract specifying data access limits |
+
+### Notion Human Interface
+
+| View | Purpose |
+|------|---------|
+| **Approval Queue** | Proposed insights, Change Bundles, agent designs |
+| **Monitoring** | Recently approved grants, high-risk donor modifications, token costs |
+| **Org Visibility** | Paperclip org chart reflected in team space |
+
+### Data Flow
+
+```
+Microsoft Assistant → MCP → OpenClaw Gateway → roninmemory (Postgres + Neo4j)
+                                         ↓
+                                   Neo4j `before_prompt_build` query
+                                         ↓
+                                   Context injection into assistant
+```
+
+### Summary Table
+
+| Component | Function in Non-Profit |
+|-----------|------------------------|
+| **Paperclip** | Departments, grant missions, token budgets |
+| **OpenClaw** | Gateway connecting Microsoft assistants to specialized agents |
+| **roninmemory** | Canonical store for grant history (Postgres) + donor relationships (Neo4j) |
+| **ADAS** | Offline factory for reasoning kernel optimization |
+| **Notion** | HITL dashboard for approvals, monitoring |
+
+---
+
+## 16. Naming Conventions
+
+### Tenant Isolation
+
+- **PostgreSQL**: Uses `group_id` (snake_case) throughout
+- **Neo4j**: Should use `group_id` (snake_case) consistently
+- **Documentation**: Always use `group_id` in all references
+
+### State Machine Terminology
+
+| Term | Entity | States |
+|------|--------|--------|
+| `Insight.status` | Knowledge node | `active`, `degraded`, `expired` |
+| `AgentDesign.status` | ADAS candidate | `draft`, `evaluating`, `ranked`, `proposed`, `approved`, `promoted`, `rejected` |
 
 ---
 

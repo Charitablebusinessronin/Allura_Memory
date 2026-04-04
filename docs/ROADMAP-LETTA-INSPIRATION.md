@@ -12,6 +12,15 @@ roninmemory provides:
 
 ## Target: Developer-Ready Package
 
+### Phase 0.5: OpenAgents Control Registry (Complete)
+
+The OpenAgents Control Registry is the operational registry layer for agents, skills, commands, workflows, and sync state. It provides the 5 canonical Notion databases, extraction scripts, and sync engine that make the rest of the developer-ready memory stack governable.
+
+- 5 Notion databases: Agents, Skills, Commands, Workflows, Sync Registry
+- Extraction + normalization pipeline for `.opencode/` and `_bmad/` sources
+- Sync engine, CLI commands, and audit logging for drift detection
+- Foundational enabler for Developer Experience (Phase 4) and Integration Hooks (Phase 3)
+
 ### 1. Self-Editing Memory Layer (MemFS-Style)
 
 **What**: Git-backed markdown memory files agents can edit via bash tools

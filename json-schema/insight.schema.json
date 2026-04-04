@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://allura.memory/schemas/insight.schema.json",
+  "title": "Insight",
+  "description": "A versioned knowledge node in Neo4j representing a validated behavior-shaping rule or pattern. Never mutated — every update creates a new node linked by a :SUPERSEDES edge.",
+  "type": "object",
+  "required": [
+    "insight_id",
+    "group_id",
+    "content",
+    "confidence",
+    "status",
+    "version",
+    "source_type"
+  ],
+  "properties": {
+    "insight_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for this insight (stable across versions)"
+    },
+    "group_id": {
+      "type": "string",
+      "description": "Tenant namespace (e.g., 'faith-meats', 'global-coding-skills')"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Version number (increments on each update)"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "degraded", "expired"],
+      "default": "active",
+      "description": "Lifecycle state of the insight"
+    },
+    "content": {
+      "type": "string",
+      "description": "The actual knowledge content (markdown or structured text)"
+    },
+    "category": {
+      "type": "string",
+      "description": "Classification category (e.g., 'reasoning-pattern', 'api-best-practice')"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Confidence score (0.0-1.0). Values >= 0.5 become Neo4j nodes; >= 0.7 mirror to Notion"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": ["adas_discovery", "session_reflection", "human_input", "curated"],
+      "description": "Origin of this insight"
+    },
+    "source_ref": {
+      "type": "string",
+      "description": "Reference to source (e.g., run_id for ADAS discoveries)"
+    },
+    "notion_page_id": {
+      "type": "string",
+      "description": "Notion page ID if mirrored to Notion Master Knowledge Base"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Creation timestamp (ISO 8601)"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last update timestamp (ISO 8601)"
+    },
+    "promoted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Promotion timestamp if promoted from ADAS"
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Additional notes or observations about this insight"
+    }
+  },
+  "additionalProperties": false
+}

@@ -2,14 +2,20 @@ import { describe, expect, it } from "vitest";
 
 import { NotionRegistryClient } from "../../src/lib/opencode-registry/notion-client";
 
+// Mock MCP executor for tests
+const mockMcpExecutor = async () => ({ results: [] });
+
 describe("NotionRegistryClient", () => {
   it("should instantiate with valid config", () => {
     const config = {
-      agentsDbId: "test-agents-db",
-      skillsDbId: "test-skills-db",
-      commandsDbId: "test-commands-db",
-      workflowsDbId: "test-workflows-db",
-      syncRegistryDbId: "test-sync-db",
+      databases: {
+        agentsDbId: "test-agents-db",
+        skillsDbId: "test-skills-db",
+        commandsDbId: "test-commands-db",
+        workflowsDbId: "test-workflows-db",
+        syncRegistryDbId: "test-sync-db",
+      },
+      mcpExecutor: mockMcpExecutor,
     };
 
     const client = new NotionRegistryClient(config);
@@ -19,11 +25,14 @@ describe("NotionRegistryClient", () => {
 
   it("should return empty arrays from query methods", async () => {
     const client = new NotionRegistryClient({
-      agentsDbId: "agents",
-      skillsDbId: "skills",
-      commandsDbId: "commands",
-      workflowsDbId: "workflows",
-      syncRegistryDbId: "sync",
+      databases: {
+        agentsDbId: "agents",
+        skillsDbId: "skills",
+        commandsDbId: "commands",
+        workflowsDbId: "workflows",
+        syncRegistryDbId: "sync",
+      },
+      mcpExecutor: mockMcpExecutor,
     });
 
     expect(await client.queryAgents()).toEqual([]);
@@ -34,11 +43,14 @@ describe("NotionRegistryClient", () => {
 
   it("should return empty strings from create methods", async () => {
     const client = new NotionRegistryClient({
-      agentsDbId: "agents",
-      skillsDbId: "skills",
-      commandsDbId: "commands",
-      workflowsDbId: "workflows",
-      syncRegistryDbId: "sync",
+      databases: {
+        agentsDbId: "agents",
+        skillsDbId: "skills",
+        commandsDbId: "commands",
+        workflowsDbId: "workflows",
+        syncRegistryDbId: "sync",
+      },
+      mcpExecutor: mockMcpExecutor,
     });
 
     expect(
@@ -99,11 +111,14 @@ describe("NotionRegistryClient", () => {
 
   it("should not throw from update methods", async () => {
     const client = new NotionRegistryClient({
-      agentsDbId: "agents",
-      skillsDbId: "skills",
-      commandsDbId: "commands",
-      workflowsDbId: "workflows",
-      syncRegistryDbId: "sync",
+      databases: {
+        agentsDbId: "agents",
+        skillsDbId: "skills",
+        commandsDbId: "commands",
+        workflowsDbId: "workflows",
+        syncRegistryDbId: "sync",
+      },
+      mcpExecutor: mockMcpExecutor,
     });
 
     await expect(client.updateAgent("page-1", { status: "active" })).resolves.toBeUndefined();
