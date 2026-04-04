@@ -1,5 +1,5 @@
 # OpenCode Agent Registry
-# Hybrid approach: Custom agents in .opencode/ with BMad-compatible menu structure
+# OpenCode-native memory agents in .opencode/
 
 version: "1.0.0"
 last_updated: "2026-04-03"
@@ -19,7 +19,6 @@ primary:
       - context management
       - subagent routing
     invoke_by: "@memory-orchestrator"
-    bmad_equivalent: null  # Custom agent, not a BMad persona
     best_for:
       - Starting new tasks
       - Coordinating multi-step workflows
@@ -37,7 +36,6 @@ primary:
       - pattern application
       - technical planning
     invoke_by: "@memory-architect"
-    bmad_equivalent: "bmad-agent-architect (Winston)"
     best_for:
       - Complex coding tasks
       - Architecture decisions
@@ -59,7 +57,6 @@ core_subagents:
       - standard lookup
       - file location
     invoke_by: "@memory-scout"
-    bmad_equivalent: "context-scout"
     exemption: "Approval gate exempt - can be called without approval"
     best_for:
       - Finding coding standards
@@ -78,7 +75,6 @@ core_subagents:
       - Integration patterns
       - Current best practices
     invoke_by: "@memory-archivist"
-    bmad_equivalent: "external-scout"
     best_for:
       - New library integration
       - API usage patterns
@@ -96,7 +92,6 @@ core_subagents:
       - JSON task creation
       - parallel task identification
     invoke_by: "@memory-curator"
-    bmad_equivalent: "task-manager"
     best_for:
       - Complex feature breakdown
       - Task planning
@@ -114,7 +109,6 @@ core_subagents:
       - knowledge capture
       - ADR creation
     invoke_by: "@memory-chronicler"
-    bmad_equivalent: "bmad-agent-tech-writer (Paige)"
     best_for:
       - Writing docs
       - Creating ADRs
@@ -132,7 +126,6 @@ core_subagents:
       - pattern matching
       - file search
     invoke_by: "@memory-retriever"
-    bmad_equivalent: "context-retriever"
     best_for:
       - Finding specific files
       - Standards lookup
@@ -153,7 +146,6 @@ code_subagents:
       - pattern application
       - self-review
     invoke_by: "@memory-builder"
-    bmad_equivalent: "bmad-agent-dev (Amelia)"
     best_for:
       - Writing code
       - Implementing features
@@ -171,7 +163,6 @@ code_subagents:
       - coverage analysis
       - positive/negative testing
     invoke_by: "@memory-tester"
-    bmad_equivalent: "bmad-agent-qa (Quinn)"
     best_for:
       - Writing tests
       - Test coverage
@@ -189,7 +180,6 @@ code_subagents:
       - pattern validation
       - quality checks
     invoke_by: "@memory-guardian"
-    bmad_equivalent: "bmad-agent-qa (Quinn)"
     best_for:
       - Code reviews
       - Security audits
@@ -207,7 +197,6 @@ code_subagents:
       - lint compliance
       - integrity checks
     invoke_by: "@memory-validator"
-    bmad_equivalent: "build-agent"
     best_for:
       - Build validation
       - Type checking
@@ -229,7 +218,6 @@ system_subagents:
       - domain modeling
       - standard creation
     invoke_by: "@memory-organizer"
-    bmad_equivalent: "context-organizer"
     best_for:
       - Organizing context
       - Structuring knowledge
@@ -247,7 +235,6 @@ system_subagents:
       - pattern application
       - file creation
     invoke_by: "@memory-generator"
-    bmad_equivalent: "agent-generator"
     best_for:
       - Creating agents
       - Agent optimization
@@ -264,7 +251,6 @@ system_subagents:
       - routing logic
       - syntax definition
     invoke_by: "@memory-commander"
-    bmad_equivalent: "command-creator"
     best_for:
       - Creating slash commands
       - Command routing
@@ -281,7 +267,6 @@ system_subagents:
       - dependency mapping
       - success criteria
     invoke_by: "@memory-workflow"
-    bmad_equivalent: "workflow-designer"
     best_for:
       - Designing workflows
       - Process definition
@@ -298,7 +283,6 @@ system_subagents:
       - agent recommendation
       - context structure
     invoke_by: "@memory-domain"
-    bmad_equivalent: "domain-analyzer"
     best_for:
       - Domain analysis
       - Concept modeling
@@ -319,7 +303,6 @@ development_subagents:
       - visualization
       - interaction patterns
     invoke_by: "@memory-interface"
-    bmad_equivalent: "frontend-specialist"
     best_for:
       - Frontend development
       - UI components
@@ -337,7 +320,6 @@ development_subagents:
       - docker configuration
       - deployment automation
     invoke_by: "@memory-infrastructure"
-    bmad_equivalent: "devops-specialist"
     best_for:
       - Infrastructure setup
       - Database config
@@ -359,7 +341,6 @@ utility_subagents:
       - visual processing
       - AI-powered visuals
     invoke_by: "@memory-visualizer"
-    bmad_equivalent: "image-specialist"
     best_for:
       - Image editing
       - Visual analysis
@@ -380,7 +361,6 @@ content_agents:
       - knowledge curation
       - content creation
     invoke_by: "@memory-scribe"
-    bmad_equivalent: "bmad-agent-tech-writer (Paige)"
     best_for:
       - Technical writing
       - Documentation
@@ -397,7 +377,6 @@ content_agents:
       - marketing copy
       - user-facing text
     invoke_by: "@memory-copyist"
-    bmad_equivalent: "copywriter"
     best_for:
       - Marketing copy
       - User-facing content
@@ -418,7 +397,6 @@ data_agents:
       - analytics
       - reporting
     invoke_by: "@memory-analyst"
-    bmad_equivalent: "data-analyst"
     best_for:
       - Data analysis
       - Insights
@@ -440,7 +418,6 @@ meta_agents:
       - structure maintenance
       - cleanup tasks
     invoke_by: "@memory-librarian"
-    bmad_equivalent: "repo-manager"
     best_for:
       - Repository organization
       - File management
@@ -457,7 +434,6 @@ meta_agents:
       - cross-cutting concerns
       - system design
     invoke_by: "@memory-system-builder"
-    bmad_equivalent: "system-builder"
     best_for:
       - System design
       - Cross-cutting concerns
@@ -477,28 +453,9 @@ eval_agents:
       - test harness
       - framework testing
     invoke_by: "@memory-evaluator"
-    bmad_equivalent: "eval-runner"
     best_for:
       - Evaluation tasks
       - Framework testing
-
-# =============================================================================
-# BMAD PERSONA MAPPING
-# Quick reference for BMad equivalent agents
-# =============================================================================
-bmad_personas:
-  mary: bmad-agent-analyst        # Strategic Business Analyst
-  winston: bmad-agent-architect    # System Architect
-  john: bmad-agent-pm              # Product Manager
-  bob: bmad-agent-sm               # Scrum Master
-  amelia: bmad-agent-dev           # Developer
-  quinn: bmad-agent-qa             # QA Engineer
-  paige: bmad-agent-tech-writer    # Technical Writer
-  sally: bmad-agent-ux-designer   # UX Designer
-  barry: bmad-agent-quick-flow-solo-dev  # Quick Flow Dev
-  murat: bmad-tea                  # Test Architect
-  saga: wds-agent-saga-analyst     # WDS Analyst
-  freya: wds-agent-freya-ux         # WDS UX Designer
 
 # =============================================================================
 # QUICK SELECTION GUIDE
@@ -591,12 +548,12 @@ workflows:
       action: "Test all components"
 
 # =============================================================================
-# AGENT CATEGORIES FOR BMAD INTEGRATION
-# These categories align with BMad module structure
+# AGENT CATEGORIES
+# These categories align with module structure
 # =============================================================================
 categories:
   bmm:
-    description: "BMad Method - Business Analysis & Planning"
+    description: "Business Analysis & Planning"
     agents:
       - memory-orchestrator
       - memory-architect
@@ -604,7 +561,7 @@ categories:
       - memory-chronicler
       
   bmb:
-    description: "BMad Builder - Workflow & Agent Building"
+    description: "Workflow & Agent Building"
     agents:
       - memory-generator
       - memory-commander
@@ -632,7 +589,7 @@ notes:
   - "All agents follow the approval gate rule (except memory-scout)"
   - "Primary agents can invoke subagents via task tool"
   - "Subagents are specialized - use the right tool for the job"
-  - "BMad personas are available via skills, not direct agent files"
+  - "Memory agents are the source of truth for direct agent files"
   - "Always load context before execution (critical requirement)"
   - "Use memory-scout for discovery before any implementation"
   - "Use memory-archivist for ANY external library work"

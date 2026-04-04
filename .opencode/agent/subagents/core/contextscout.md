@@ -214,9 +214,8 @@ Should load for comprehensive context
 
 ## Medium Priority
 Optional but helpful
-**File**: `.opencode/context/project/bmad-integration.md`
-**Contains**: BMad workflow routing, agent mapping
-**Why**: Context for BMad workflows
+**Contains**: OpenCode workflow routing, agent mapping
+**Why**: Context for routing and agent selection
 ```
 
 ---
