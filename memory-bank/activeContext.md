@@ -2,6 +2,23 @@
 
 Current session context for roninmemory development, focusing on OpenCode and BMad alignment.
 
+## Current Implementation Snapshot (2026-04-04)
+
+### Working / Present
+
+- Next.js app shell and dashboards are present in `src/app/`.
+- MCP memory server exists in `src/mcp/memory-server.ts`.
+- OpenClaw gateway exists in `src/mcp/openclaw-gateway.ts`.
+- Curator pipeline exists in `src/curator/` with tests.
+- Agent registry and health monitoring exist in `src/agents/`.
+
+### Known Issues
+
+- `npm run typecheck` currently fails.
+- `src/lib/runtime/groupIdEnforcer.ts` still contains placeholder/unfinished code.
+- Some tests use stale mock shapes and need alignment with current types.
+- ADAS CLI metrics typing needs cleanup.
+
 ## ✅ Completed
 
 ### Notion Workspace Hydration (2026-04-04)
@@ -180,8 +197,8 @@ Current session context for roninmemory development, focusing on OpenCode and BM
 
 ### Supporting Artifacts
 - **Created** architectural plan: `docs/architecture/memory-system-integration-plan.md`
-- **Created** validation report: `docs/validation/memorybuilder-enhancement-report.md`
-- **Created** phase completion report: `docs/validation/phase2-core-subagents-complete.md`
+- **Created** validation report: `docs/archive/validation/memorybuilder-enhancement-report.md`
+- **Created** phase completion report: `docs/archive/validation/phase2-core-subagents-complete.md`
 - **Created** test validation task: `.tmp/tasks/memory-test/subtask_01.json`
 
 ## 📍 Current Status
