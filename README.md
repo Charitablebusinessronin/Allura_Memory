@@ -202,13 +202,71 @@ bun run test:e2e
 
 ## OPS DOCS
 
+### Project Documentation
+
 | File | Content |
-|----------|---------|
-| `AGENTS.md` | Standard Operating Procedures (SOPs). |
-| `docs/roninmemory/PROJECT.md` | Master plan and architecture. |
-| `.opencode/skills/` | Tool loadouts for your agents. |
-| `memory-bank/` | Active mission context. |
-| `README.md` | This document. You are here. |
+|------|---------|
+| **Master Document** | |
+| `docs/roninmemory/PROJECT.md` | Single cohesive project document. Blueprint, requirements, architecture, data dictionary, decisions, and epic tracking. |
+| **Planning Artifacts** | |
+| `docs/planning-artifacts/` | Epic definitions and planning documents |
+| `docs/implementation-artifacts/` | Technical specifications and story implementation specs |
+| `docs/validation/` | Phase completion reports and validation artifacts |
+| **Reference Docs** | |
+| `docs/api/` | API reference documentation |
+| `docs/architecture/` | Architecture and design documentation |
+| `docs/ROADMAP-LETTA-INSPIRATION.md` | Project roadmap and inspiration |
+| `docs/SECURITY.md` | Security policies and procedures |
+| **Agent Context** | |
+| `AGENTS.md` | Standard Operating Procedures (SOPs) |
+| `.opencode/skills/` | Tool loadouts for your agents |
+| `memory-bank/` | Active mission context |
+| `AI-GUIDELINES.md` | Documentation standards and AI assistance policies |
+
+### BMad Workflow Outputs
+
+BMad artifacts follow this structure:
+- **Planning**: `docs/planning-artifacts/` — Epic definitions, sprint planning
+- **Implementation**: `docs/implementation-artifacts/` — Tech specs, story files
+- **Validation**: `docs/validation/` — Phase completion reports
+
+**Key Files:**
+- **Current Epic**: `docs/planning-artifacts/epic-7-openagents-control-registry.md`
+- **Tech Spec**: `docs/implementation-artifacts/tech-spec-epic-7-openagents-control-registry.md`
+- **Active Story**: `docs/implementation-artifacts/spec-notion-client-implementation.md`
+
+---
+
+## DOCUMENTATION STANDARDS
+
+This repository follows the **AI-GUIDELINES.md** documentation standards:
+
+- **Single Master Document**: `docs/roninmemory/PROJECT.md` is the canonical source of truth
+- **BMad Structured Output**: Epics, stories, and validation follow BMad conventions
+- **Disclosure**: AI-assisted content includes disclosure notices
+- **Cross-References**: All artifacts are linked from PROJECT.md
+
+### Documentation Structure
+
+```
+docs/
+├── roninmemory/
+│   ├── PROJECT.md          # Master document (blueprint, requirements, architecture)
+│   ├── BLUEPRINT.md        # Core concepts reference
+│   ├── REQUIREMENTS-MATRIX.md
+│   ├── SOLUTION-ARCHITECTURE.md
+│   ├── DATA-DICTIONARY.md
+│   └── RISKS-AND-DECISIONS.md
+├── planning-artifacts/
+│   └── epic-7-*.md         # Epic definitions (BMad output)
+├── implementation-artifacts/
+│   ├── tech-spec-*.md      # Technical specifications
+│   └── spec-*.md          # Story implementation specs
+├── validation/
+│   └── phase-*.md         # Validation reports
+├── api/                   # API reference
+└── architecture/          # Architecture docs
+```
 
 ---
 
