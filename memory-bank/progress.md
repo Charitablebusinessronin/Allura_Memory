@@ -2,6 +2,23 @@
 
 Tracking progress for active epics and tasks.
 
+## Current Implementation Status
+
+### Working / Present
+
+- Next.js UI shell, dashboard routes, and auth pages are present.
+- MCP memory server and OpenClaw gateway exist.
+- Curator pipeline, approval flow, dedupe, and lifecycle validation modules exist.
+- Agent registry and health monitor modules exist.
+- Notion hydration artifacts and docs are present.
+
+### Not Fully Working
+
+- `npm run typecheck` fails on a handful of existing type issues.
+- `groupIdEnforcer.ts` is unfinished and should be treated as broken.
+- Some tests need updated mocks to match current service types.
+- ADAS CLI metrics types are inconsistent.
+
 ## ✅ Completed
 
 ### Notion Workspace Setup (2026-04-04)
@@ -196,7 +213,7 @@ Completed full hydration of Allura Memory Notion workspace with Tasks, Agents, S
 2. `_bmad/_config/custom/skill-manifest.csv` - 10 memory-aware skills mapped
 3. `_bmad/_config/custom/bmad-help.csv` - 9 help entries for capabilities
 4. `_bmad/_config/custom/config.yaml` - roninmemory module configuration
-5. `docs/validation/phase5-bmad-manifest-bridge-complete.md` - Validation report
+5. `docs/archive/validation/phase5-bmad-manifest-bridge-complete.md` - Validation report
 
 **Key Achievements**:
 - ✅ Hybrid approach: Agents stay in `.opencode/agent/`, BMad discovers via manifests

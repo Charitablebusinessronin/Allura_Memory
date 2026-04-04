@@ -1,23 +1,131 @@
 // groupIdEnforcer.ts
+// Semantic Firewall - Zero-Trust group_id enforcement
+// Rejects any request without valid group_id or Agent Identity Card (AIC)
 
-import { Middleware } from 'your-middleware-library'; // ensure to import your middleware library
+import { validateGroupId, GroupIdValidationError } from '../validation/group-id';
 
-const groupIdEnforcer: Middleware = (req, res, next) => {
-    const { group_id, tenant_scope } = req.body;
+export interface RequestLike {
+  method: string;
+  body: {
+    group_id?: string;
+    [key: string]: unknown;
+  };
+  headers?: {
+    'x-agent-identity'?: string;
+    [key: string]: string | string[] | undefined;
+  };
+}
 
-    // Check if tenant_scope is present
-    if (!tenant_scope) {
-        return res.status(400).json({ error: 'Missing tenant scope' }); // hard fail
+export interface ResponseLike {
+  status(code: number): ResponseLike;
+  json(data: Record<string, unknown>): void;
+}
+
+export type NextFunction = () => void;
+
+export interface EnforcerResult {
+  allowed: boolean;
+  error?: string;
+  group_id?: string;
+  agent_identity?: string;
+}
+
+/**
+ * Validate request has required identity credentials
+ * - group_id: mandatory on all requests
+ * - Agent Identity Card (AIC): optional but validated if present
+ */
+export function validateRequestIdentity(req: RequestLike): EnforcerResult {
+  const { group_id } = req.body;
+  const agentIdentity = req.headers?.['x-agent-identity'];
+
+  // Hard fail: group_id is mandatory for all operations
+  if (!group_id) {
+    return {
+      allowed: false,
+      error: 'Missing group_id. Every request must include a valid group_id for tenant isolation.',
+    };
+  }
+
+  // Validate group_id format
+  try {
+    validateGroupId(group_id);
+  } catch (error) {
+    if (error instanceof GroupIdValidationError) {
+      return {
+        allowed: false,
+        error: `Invalid group_id: ${error.message}`,
+      };
+    }
+    throw error;
+  }
+
+  // Validate Agent Identity Card if present
+  if (agentIdentity && typeof agentIdentity === 'string') {
+    // AIC format: agent-name:version:timestamp:signature
+    const aicParts = agentIdentity.split(':');
+    if (aicParts.length < 2) {
+      return {
+        allowed: false,
+        error: 'Invalid Agent Identity Card format. Expected: agent-name:version:...',
+      };
+    }
+  }
+
+  return {
+    allowed: true,
+    group_id: validateGroupId(group_id),
+    agent_identity: agentIdentity as string | undefined,
+  };
+}
+
+/**
+ * Express-style middleware for group_id enforcement
+ * Usage: app.use(groupIdEnforcer);
+ */
+export function groupIdEnforcer(
+  req: RequestLike,
+  res: ResponseLike,
+  next: NextFunction
+): void {
+  const result = validateRequestIdentity(req);
+
+  if (!result.allowed) {
+    res.status(400).json({ error: result.error });
+    return;
+  }
+
+  // Attach validated identity to request for downstream use
+  (req as unknown as Record<string, unknown>).validatedIdentity = result;
+
+  next();
+}
+
+/**
+ * MCP Tool wrapper - enforces group_id before tool execution
+ * Usage: wrapToolHandler(memorySearchHandler)
+ */
+export function wrapToolHandler<TArgs extends Record<string, unknown>, TReturn>(
+  handler: (args: TArgs) => Promise<TReturn>
+): (args: TArgs) => Promise<TReturn> {
+  return async (args: TArgs) => {
+    const group_id = (args as Record<string, unknown>).group_id as string | undefined;
+
+    if (!group_id) {
+      throw new Error('Tool invocation rejected: missing group_id parameter');
     }
 
-    // Enforce group_id for write operations
-    if (req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE') {
-        if (!group_id) {
-            return res.status(400).json({ error: 'Missing group_id for write operation' }); // hard fail
-        }
+    try {
+      validateGroupId(group_id);
+    } catch (error) {
+      if (error instanceof GroupIdValidationError) {
+        throw new Error(`Tool invocation rejected: ${error.message}`);
+      }
+      throw error;
     }
 
-    next();
-};
+    return handler(args);
+  };
+}
 
 export default groupIdEnforcer;
