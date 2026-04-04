@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://allura.memory/schemas/tenant.schema.json",
+  "title": "Tenant",
+  "description": "A scoped namespace isolating memory and agent configs per project. Every node in Neo4j and every row in Postgres carries a group_id.",
+  "type": "object",
+  "required": [
+    "group_id",
+    "display_name",
+    "is_global"
+  ],
+  "properties": {
+    "group_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Tenant namespace identifier (e.g., 'faith-meats', 'global-coding-skills', 'grant-management')"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Human-readable name (e.g., 'Faith Meats Non-Profit')"
+    },
+    "is_global": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this is the global fallback tenant"
+    },
+    "description": {
+      "type": "string",
+      "description": "Purpose and scope of this tenant"
+    },
+    "industry": {
+      "type": "string",
+      "enum": ["non-profit", "financial", "manufacturing", "healthcare", "technology", "other"],
+      "description": "Industry vertical for this tenant"
+    },
+    "compliance_framework": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["SOC2", "HIPAA", "SOX", "GDPR", "HACCP", "ISO27001", "PCI-DSS"]
+      },
+      "description": "Applicable compliance frameworks"
+    },
+    "paperclip_org_id": {
+      "type": "string",
+      "description": "Reference to Paperclip organization (if using Paperclip governance)"
+    },
+    "notion_workspace_id": {
+      "type": "string",
+      "description": "Notion workspace for human dashboard"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

@@ -22,6 +22,26 @@ Promoted Knowledge (Neo4j)
 Human Workspace (Notion)
 ```
 
+### OpenAgents Control Registry
+
+The OpenAgents Control Registry provides 5 canonical Notion databases:
+- **Agents** — Track OpenCode agents, statuses, roles
+- **Skills** — Reusable skills and usage notes
+- **Commands** — Commands and their intent
+- **Workflows** — BMad/WDS workflow definitions
+- **Sync Registry** — Drift detection and sync runs
+
+**Sync**: `bun run registry:sync`
+**Dry-run**: `bun run registry:dry-run`
+
+### Notion Surfaces
+
+| Surface | ID | Role |
+|---------|-----|------|
+| Backend Hub | `6581d9be65b38262a2218102c1e6dd1d` | Structural governance — templates, registries, migrations |
+| OpenAgents Control | `3371d9be65b38041bc59fd5cf966ff98` | CLI team registry — agent roster, skills, commands |
+| Allura Memory Control Center | `3371d9be65b381a9b3bec24275444b68` | HITL oversight — approvals, sync model |
+
 ## Memory Bank System
 
 This project uses a structured Memory Bank for persistent context. Always read in this order:
@@ -54,6 +74,12 @@ Every architectural decision captured with:
 3. Reasoning Chain
 4. Alternatives Considered
 5. Human Oversight Trail
+
+### Task Status Clarification
+
+- **T30**: MemFS Reflection Layer (P1, In Progress)
+- **T31**: Sandbox Docker Execution (P2, Backlog)
+- Tasks T31-T40 re-sequenced (see PROJECT.md Backlog)
 
 ## Current Sprint
 
@@ -107,7 +133,9 @@ npm test
 |------|---------|
 | `docker-compose.yml` | PostgreSQL and Neo4j containers |
 | `AGENTS.md` | Complete agent operating handbook |
-| `.opencode/agents/roninmemory-project.md` | Agent identity definition |
+| `opencode.json` | Project-level OpenCode agent configuration |
+| `.opencode/context/project/bmad-integration.md` | BMad workflow routing and agent naming map |
+| `_bmad/` | Source-of-truth BMad workflows, configs, and module docs |
 | `_bmad-output/planning-artifacts/epics.md` | Story definitions |
 | `_bmad-output/implementation-artifacts/tech-spec-*.md` | Technical specifications |
 

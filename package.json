@@ -24,7 +24,8 @@
     "session:bootstrap": "bun run scripts/session-bootstrap.ts",
     "session:init": "bun run scripts/session-init.ts",
     "registry:sync": "bun run scripts/opencode-registry/sync.ts",
-    "registry:dry-run": "bun run scripts/opencode-registry/sync.ts --dry-run"
+    "registry:dry-run": "bun run scripts/opencode-registry/sync.ts --dry-run",
+    "registry:log-audit": "bun run scripts/opencode-registry/log-audit.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0-beta.4",

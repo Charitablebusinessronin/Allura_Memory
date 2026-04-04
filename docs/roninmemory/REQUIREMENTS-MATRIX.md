@@ -21,10 +21,13 @@ This matrix traces every Business Requirement and Functional Requirement across 
 | B7 | The system must never mutate existing Neo4j nodes — all updates create new versioned nodes | ✅ Implemented |
 | B8 | All services run in Docker — no local execution permitted | ✅ Implemented |
 | B9 | Design AI agents automatically via evolutionary search — generate, evaluate, evolve via mutation/crossover | ✅ Implemented |
-| B10 | Use real LLM inference (Ollama) for all agent execution — no mocked responses in production | ✅ Implemented |
+| B10 | Use real LLM inference (Ollama) for agent execution — no mocked responses in production | ✅ Implemented |
 | B11 | Provide a CLI entry point for standalone ADAS runs | ✅ Implemented |
 | B12 | Persist all ADAS evaluation events and proposals to PostgreSQL — full audit trail | ✅ Implemented |
 | B13 | Support two-tier model selection — stable for baselines, experimental opt-in | ✅ Implemented |
+| B14 | All memory operations governed by Brooks-bound orchestrator (`memory-orchestrator`) | ✅ Implemented |
+| B15 | Tenant isolation enforced at two levels: `organization_id` (business) and `group_id` (memory partition) | ✅ Implemented |
+| B16 | Dual logging policy: PostgreSQL for events/audit, Neo4j for insights/patterns | ✅ Implemented |
 
 ---
 
@@ -33,7 +36,7 @@ This matrix traces every Business Requirement and Functional Requirement across 
 ### Memory Loading (F1–F3)
 | ID | Requirement | Traces To |
 |----|-------------|-----------|
-| F1 | On every OpenClaw session start, `before_prompt_build` hook queries Neo4j for `active` insights scoped to session `groupId` PLUS `global-coding-skills` | B2 |
+| F1 | On every OpenClaw session start, `before_prompt_build` hook queries Neo4j for `active` insights scoped to session `group_id` PLUS `global-coding-skills` | B2 |
 | F2 | Results injected into system prompt; tenant-specific insights appear before global ones | B2, B5 |
 | F3 | Agents may call `memory_write` tool; confidence < 0.5 → Postgres only; confidence ≥ 0.5 → Neo4j node + `:SUPERSEDES` edge | B3 |
 
@@ -49,8 +52,15 @@ This matrix traces every Business Requirement and Functional Requirement across 
 ### Multi-Tenancy (F9–F10)
 | ID | Requirement | Traces To |
 |----|-------------|-----------|
-| F9 | Every Postgres row carries `group_id`; every Neo4j node carries `groupId` | B5, B8 |
-| F10 | All queries are scoped by `groupId`; cross-tenant access is prohibited | B5, B8 |
+| F9 | Every Postgres row carries `organization_id` and `group_id`; every Neo4j node carries both properties (consistent snake_case naming) | B5, B8, B15 |
+| F10 | All queries are scoped by both `organization_id` and `group_id`; cross-tenant access is prohibited | B5, B8, B15 |
+
+### Orchestrator Governance (F31–F33)
+| ID | Requirement | Traces To |
+|----|-------------|-----------|
+| F31 | All memory operations must be initiated by `memory-orchestrator` (Brooks-bound) | B14 |
+| F32 | Subagent delegation uses canonical `memory-*` naming convention | B14 |
+| F33 | Dual logging policy enforced: events/audit to PostgreSQL, insights/patterns to Neo4j | B16 |
 
 ### ADAS Discovery (F11–F13)
 | ID | Requirement | Traces To |
@@ -95,7 +105,33 @@ This matrix traces every Business Requirement and Functional Requirement across 
 | F28 | Anonymous sessions write raw traces to `adas_runs` for Curator candidate discovery | B3 |
 
 ### MemFS & Reflection (Letta-Inspired) (F29–F30)
+
+**Status:** Not Started (pending MemFS implementation).
+
 | ID | Requirement | Traces To |
 |----|-------------|-----------|
 | F29 | System provides git-backed Markdown files for private session reflection, context, and system configuration logic | B2 |
 | F30 | Non-blocking sleep-time daemon consolidates private agent insights and escalates them to the persistent graph | B5 |
+
+---
+
+## 3. Epic Coverage Map
+
+| Epic | Scope | Functional Requirements |
+|------|-------|-------------------------|
+| Epic 1 | Dual-store persistent memory foundations (tenant isolation + immutable versioning) | Core memory foundation requirements |
+| Epic 2 | Automated promotion + curation pipeline | F4–F8 |
+| Epic 3 | Snapshot caching + hydration performance | Session hydration performance requirements |
+| Epic 4 | Operational observability + reflection memory | F27–F30 |
+
+> **Traceability note:** `epics/epics.md` uses Epic-local aliases `FR10–FR13` for Epic 4 planning readability. These map 1:1 to canonical `F27–F30`.
+
+### Epic Documents
+
+- `docs/roninmemory/epics/epics.md`
+- `docs/roninmemory/epics/epic-1-dual-store-memory.md`
+- `docs/roninmemory/epics/epic-2-knowledge-curation.md`
+- `docs/roninmemory/epics/epic-3-session-hydration.md`
+- `docs/roninmemory/epics/epic-4-operational-memory-observability-reflection.md`
+
+> **Note:** `docs/roninmemory/epics/` contains the four canonical memory epics. `_bmad-output/implementation-artifacts/epics-openagents-control-registry.md` is a separate implementation artifact for the OpenAgents Control Registry and should not be conflated with the core epic set.

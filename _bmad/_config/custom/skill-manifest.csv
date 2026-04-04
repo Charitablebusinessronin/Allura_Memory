@@ -1,0 +1,11 @@
+canonicalId,name,description,module,path,install_to_bmad
+"memory-bootstrap","memory-bootstrap","Initialize memory system connection at session start. Query past implementations from Neo4j before coding. Must be used for any new development work.","roninmemory",".opencode/skills/memory-bootstrap/SKILL.md","true"
+"memory-query","memory-query","Search for previous implementations, architectural decisions, and code patterns in the Neo4j knowledge graph. Use before implementing new features.","roninmemory",".opencode/skills/memory-query/SKILL.md","true"
+"memory-log","memory-log","Log implementation reflections to Neo4j after completing work. Create entities, observations, and relations for knowledge persistence.","roninmemory",".opencode/skills/memory-log/SKILL.md","true"
+"memory-orchestrate","memory-orchestrate","Coordinate the full agent surgical team. Delegate to appropriate subagents based on task type. Ensures conceptual integrity through clear interfaces.","roninmemory",".opencode/skills/memory-orchestrate/SKILL.md","true"
+"memory-plan","memory-plan","Create implementation plans following Brooksian principles. Break work into atomic subtasks with clear dependencies and contracts.","roninmemory",".opencode/skills/memory-plan/SKILL.md","true"
+"memory-build","memory-build","Execute delegated coding tasks with memory-aware patterns. Implements modular, functional code with strong contracts.","roninmemory",".opencode/skills/memory-build/SKILL.md","true"
+"memory-test","memory-test","Test memory system integrity and persistence. Validates PostgreSQL traces, Neo4j knowledge, and HITL gates.","roninmemory",".opencode/skills/memory-test/SKILL.md","true"
+"memory-review","memory-review","Review code for security, Steel Frame compliance, and memory best practices. Adversarial review with evidence-based feedback.","roninmemory",".opencode/skills/memory-review/SKILL.md","true"
+"memory-validate","memory-validate","Validate builds, types, and memory integrity. Final checkpoint before claiming completion.","roninmemory",".opencode/skills/memory-validate/SKILL.md","true"
+"superpowers-memory","superpowers-memory","Add memory logging and hydration to Superpowers skills. Use at session start to retrieve context, at session end to log outcomes.","roninmemory",".opencode/skills/superpowers-memory/SKILL.md","true"

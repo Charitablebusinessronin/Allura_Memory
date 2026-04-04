@@ -9,6 +9,9 @@ permission:
     contextscout: "allow"
     externalscout: "allow"
   write:
+    "design_iterations/**/*.html": "allow"
+    "design_iterations/**/*.css": "allow"
+    "design_iterations/**/*.md": "allow"
     "**/*.env*": "deny"
     "**/*.key": "deny"
     "**/*.secret": "deny"
@@ -23,7 +26,7 @@ permission:
     "**/*.secret": "deny"
 ---
 
-# Frontend Design Subagent
+# MemoryInterface
 
 > **Mission**: Create complete UI designs with cohesive design systems, themes, animations — always grounded in current library docs and project standards.
 

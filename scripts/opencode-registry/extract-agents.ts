@@ -60,7 +60,7 @@ export async function extractAgents(projectRoot: string): Promise<CanonicalAgent
       category: agent.category as CanonicalAgent["category"],
       status: "active",
       sourcePath: metadataPath,
-      skills: agent.dependencies?.filter((d) => d.startsWith("skill:")) || [],
+      skills: agent.dependencies?.filter((d) => d.startsWith("skill:")).map((d) => d.replace("skill:", "")) || [],
       commands: [],
       workflows: [],
       configFile: metadataPath,

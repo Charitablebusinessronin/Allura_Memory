@@ -3,7 +3,7 @@
 # Uses curl to interact with Mission Control API on ports 5420/5002
 
 API_URL="http://localhost:5002"
-TOKEN="5KsX6-7qREpWKrxUFpKP9NEFW2RP2ByjVP-xxG0EcsQDzIiqFgFAcfMfMoSfnNUal4E"
+TOKEN="${MISSION_CONTROL_TOKEN:-5KsX6-7qREpWKrxUFpKP9NEFW2RP2ByjVP-xxG0EcsQDzIiqFgFAcfMfMoSfnNUal4E}"
 
 echo "🚀 Setting up Mission Control for Ronin Memory..."
 echo ""

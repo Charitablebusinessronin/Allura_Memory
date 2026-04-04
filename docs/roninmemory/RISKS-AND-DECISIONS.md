@@ -25,6 +25,9 @@ This document captures key architectural and design decisions made in the roninm
 | AD-11 | Single-harness-per-evaluation (unique runId) | ✅ Decided | Avoids PostgreSQL unique constraint violations in parallel evaluation |
 | AD-12 | Exclusive use of Bun over npm | ✅ Decided | Eliminates CanisterWorm/npm supply chain attack vectors (no postinstall hooks by default, separate auth) |
 | AD-13 | MemFS self-editing layers | ✅ Decided | Enables Letta-inspired reflection, background consolidation, and Git-backed private memory journaling |
+| AD-14 | Brooks-bound orchestrator with canonical subagents | ✅ Decided | Ensures conceptual integrity (per Fred Brooks), plan-and-document discipline, surgical team specialization |
+| AD-15 | Two-tier tenant isolation (organization_id + group_id) | ✅ Decided | Business boundary separation plus project-level memory partitions enable multi-org SaaS deployment |
+| AD-16 | Dual logging policy (PostgreSQL + Neo4j) | ✅ Decided | Complete auditability: raw traces in Postgres, curated insights in Neo4j with `:SUPERSEDES` versioning |
 
 ---
 
@@ -35,8 +38,10 @@ This document captures key architectural and design decisions made in the roninm
 | RK-01 | Phase 2 failure creates orphaned Neo4j node | Low | Low | Compensating `DETACH DELETE` in Curator error handler |
 | RK-02 | Curator crash leaves queue entry unresolved | Low | Low | `attempt_count` limit; manual intervention for stuck entries |
 | RK-03 | Notion API rate limits throttle mirror | Medium | Medium | Async queue; exponential backoff; non-fatal failures |
-| RK-04 | Cross-tenant data leakage via missing `groupId` filter | High | Medium | Schema constraints; runtime validation; audit queries |
+| RK-04 | Cross-tenant data leakage via missing `group_id` filter | High | Medium | Schema constraints; runtime validation; audit queries |
 | RK-05 | DinD sandbox escape via kernel exploit | High | Low | `--cap-drop=ALL`, read-only fs, no network, resource limits |
 | RK-06 | Ollama API errors causing evaluation failures | Medium | Medium | Catch errors, log `evaluation_failed`, return `accuracy=0`; retry logic pending |
 | RK-07 | Promotion threshold gaming (hard-coded outputs) | Medium | Low | Human reviewer evaluates quality; diverse ground-truth test cases |
 | RK-08 | Experimental model degrades search quality | Low | Low | Experimental opt-in only; stable models serve as anchors |
+| RK-09 | Subagent coordination failure under orchestrator | Medium | Low | Brooks persona enforces plan-and-document; clear delegation contracts via `memory-*` canonical names |
+| RK-10 | `organization_id`/`group_id` confusion in queries | Medium | Medium | Schema constraints; enforced dual-scope in all queries; audit logging |

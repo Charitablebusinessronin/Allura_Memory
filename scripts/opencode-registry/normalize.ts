@@ -59,10 +59,13 @@ export function normalizeRegistry(
     if (workflow.agent) {
       relationGraph.workflowToAgent.set(workflow.code, workflow.agent);
 
-      const agentWorkflows = relationGraph.agentToWorkflows.get(workflow.agent) || [];
-      if (!agentWorkflows.includes(workflow.code)) {
-        agentWorkflows.push(workflow.code);
-        relationGraph.agentToWorkflows.set(workflow.agent, agentWorkflows);
+      // Only add reverse link if agent is defined
+      if (workflow.agent) {
+        const agentWorkflows = relationGraph.agentToWorkflows.get(workflow.agent) || [];
+        if (!agentWorkflows.includes(workflow.code)) {
+          agentWorkflows.push(workflow.code);
+          relationGraph.agentToWorkflows.set(workflow.agent, agentWorkflows);
+        }
       }
     }
   }

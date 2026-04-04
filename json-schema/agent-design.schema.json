@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://allura.memory/schemas/agent-design.schema.json",
+  "title": "AgentDesign",
+  "description": "A promoted, versioned agent configuration node. Originates from ADAS evolutionary search. Spawning a live agent requires Aegis human sign-off.",
+  "type": "object",
+  "required": [
+    "design_id",
+    "group_id",
+    "version",
+    "status",
+    "config"
+  ],
+  "properties": {
+    "design_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for this agent design"
+    },
+    "group_id": {
+      "type": "string",
+      "description": "Tenant namespace"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Design version number"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "evaluating", "ranked", "proposed", "approved", "promoted", "rejected", "deprecated"],
+      "description": "ADAS lifecycle status"
+    },
+    "domain": {
+      "type": "string",
+      "description": "Problem domain (e.g., 'grant-writing', 'crm-management', 'loan-approval')"
+    },
+    "fitness_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Composite fitness score from ADAS evaluation"
+    },
+    "run_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Reference to ADAS run that produced this design"
+    },
+    "config": {
+      "type": "object",
+      "required": ["model", "reasoning_strategy", "system_prompt"],
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "Ollama model identifier (e.g., 'llama3.2', 'phi3')"
+        },
+        "reasoning_strategy": {
+          "type": "string",
+          "enum": ["chain_of_thought", "react", "plan_and_execute", "reflection"],
+          "description": "Reasoning approach for agent"
+        },
+        "system_prompt": {
+          "type": "string",
+          "description": "System prompt template"
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of tool/MCP capabilities allowed"
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 2.0,
+          "default": 0.7
+        },
+        "max_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum response tokens"
+        }
+      },
+      "additionalProperties": true
+    },
+    "paperclip_contract": {
+      "type": "object",
+      "description": "Agent contract for Paperclip governance",
+      "properties": {
+        "latency_class": {
+          "type": "string",
+          "enum": ["hard_realtime", "soft_realtime", "best_effort"],
+          "description": "Latency requirements"
+        },
+        "token_budget": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Monthly token budget"
+        },
+        "usd_budget": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Monthly USD budget"
+        },
+        "tool_allowlist": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Allowed MCP tools"
+        },
+        "data_access_limits": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Data scope restrictions (e.g., 'no-board-salaries')"
+        }
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Human approval timestamp (Aegis gate)"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Source system ('adas', 'human')"
+    }
+  },
+  "additionalProperties": false
+}

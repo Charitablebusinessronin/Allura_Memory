@@ -7,7 +7,7 @@ import { extractWorkflows } from "./extract-workflows";
 import { normalizeRegistry } from "./normalize";
 import { verifySync } from "./verify";
 import { logSyncRun } from "./sync-registry-logger";
-import { NotionRegistryClient } from "../../src/lib/opencode-registry/notion-client";
+import { NotionRegistryClient, createDefaultMcpExecutor } from "../../src/lib/opencode-registry/notion-client";
 import { readFile } from "fs/promises";
 import { join } from "path";
 import type { SyncRun } from "../../src/lib/opencode-registry/types";
@@ -38,11 +38,14 @@ export async function syncRegistry(options: SyncOptions = {}): Promise<void> {
 
   console.log("Comparing with Notion...");
   const client = new NotionRegistryClient({
-    agentsDbId: config.agents_db_id,
-    skillsDbId: config.skills_db_id,
-    commandsDbId: config.commands_db_id,
-    workflowsDbId: config.workflows_db_id,
-    syncRegistryDbId: config.sync_registry_db_id,
+    databases: {
+      agentsDbId: config.agents_db_id,
+      skillsDbId: config.skills_db_id,
+      commandsDbId: config.commands_db_id,
+      workflowsDbId: config.workflows_db_id,
+      syncRegistryDbId: config.sync_registry_db_id,
+    },
+    mcpExecutor: createDefaultMcpExecutor(),
   });
 
   const drift = await verifySync(normalized, client);
@@ -62,6 +65,7 @@ export async function syncRegistry(options: SyncOptions = {}): Promise<void> {
   let syncedSkills = 0;
   let syncedCommands = 0;
   let syncedWorkflows = 0;
+  let updatedAgents = 0;
 
   // Create missing agents
   for (const agentId of drift.missingInNotion) {
@@ -69,6 +73,20 @@ export async function syncRegistry(options: SyncOptions = {}): Promise<void> {
     if (agent) {
       await client.createAgent(agent);
       syncedAgents++;
+    }
+  }
+
+  // Update existing agents with field mismatches
+  const notionAgents = await client.queryAgents();
+  for (const mismatch of drift.fieldMismatches) {
+    if (mismatch.entityType === "agent") {
+      const notionPage = notionAgents.find((p: any) => p.id === mismatch.entityId);
+      if (notionPage) {
+        const updates: Record<string, any> = {};
+        updates[mismatch.field] = mismatch.localValue;
+        await client.updateAgent(notionPage.id, updates);
+        updatedAgents++;
+      }
     }
   }
 
@@ -81,7 +99,10 @@ export async function syncRegistry(options: SyncOptions = {}): Promise<void> {
     skillsSynced: syncedSkills,
     commandsSynced: syncedCommands,
     workflowsSynced: syncedWorkflows,
-    driftReport: JSON.stringify(drift, null, 2),
+    driftReport: JSON.stringify({
+      ...drift,
+      updatedAgents,
+    }, null, 2),
     brokenLinks: drift.brokenLinks.length,
     missingLocal: drift.missingInLocal.length,
     missingNotion: drift.missingInNotion.length,

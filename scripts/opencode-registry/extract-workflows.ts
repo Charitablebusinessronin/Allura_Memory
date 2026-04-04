@@ -104,6 +104,55 @@ function derivePhase(phaseStr?: string): WorkflowPhase | undefined {
   return undefined;
 }
 
+/**
+ * Map BMad skill codes to canonical agent IDs.
+ * BMad skills use `bmad-*` or `wds-*` prefixes, but agent IDs use `bmad-agent-*` or `wds-agent-*` prefixes.
+ */
+function normalizeAgentId(skillCode: string): string {
+  // BMad agents
+  const BMAD_SKILL_TO_AGENT: Record<string, string> = {
+    "bmad-agent-analyst": "bmad-agent-analyst",
+    "bmad-agent-architect": "bmad-agent-architect",
+    "bmad-agent-builder": "bmad-agent-builder",
+    "bmad-agent-dev": "bmad-agent-dev",
+    "bmad-agent-pm": "bmad-agent-pm",
+    "bmad-agent-qa": "bmad-agent-qa",
+    "bmad-agent-sm": "bmad-agent-sm",
+    "bmad-agent-tech-writer": "bmad-agent-tech-writer",
+    "bmad-agent-ux-designer": "bmad-agent-ux-designer",
+    "bmad-agent-quick-flow-solo-dev": "bmad-agent-quick-flow-solo-dev",
+  };
+
+  // WDS agents
+  const WDS_SKILL_TO_AGENT: Record<string, string> = {
+    "bmad-wds-idun": "wds-agent-freya-ux",
+    "bmad-wds-saga": "wds-agent-saga-analyst",
+    "bmad-wds-freya": "wds-agent-freya-ux",
+    "bmad-wds-alignment": "wds-agent-saga-analyst",
+    "bmad-wds-project-brief": "wds-agent-saga-analyst",
+    "bmad-wds-trigger-mapping": "wds-agent-saga-analyst",
+    "bmad-wds-platform-requirements": "wds-agent-saga-analyst",
+    "bmad-wds-outline-scenarios": "wds-agent-freya-ux",
+    "bmad-wds-conceptual-sketching": "wds-agent-freya-ux",
+    "bmad-wds-storyboarding": "wds-agent-freya-ux",
+    "bmad-wds-ux-design": "wds-agent-freya-ux",
+    "bmad-wds-agentic-development": "wds-agent-freya-ux",
+    "bmad-wds-asset-generation": "wds-agent-freya-ux",
+  };
+
+  // TEA workflows → bmad-tea
+  if (skillCode.startsWith("bmad-testarch-") || skillCode === "bmad-tea") {
+    return "bmad-tea";
+  }
+
+  // Check explicit mappings
+  if (BMAD_SKILL_TO_AGENT[skillCode]) return BMAD_SKILL_TO_AGENT[skillCode];
+  if (WDS_SKILL_TO_AGENT[skillCode]) return WDS_SKILL_TO_AGENT[skillCode];
+
+  // Default: return the skill code as-is (will show as broken link)
+  return skillCode;
+}
+
 export async function extractWorkflows(projectRoot: string): Promise<CanonicalWorkflow[]> {
   const workflows: CanonicalWorkflow[] = [];
 
@@ -125,7 +174,7 @@ export async function extractWorkflows(projectRoot: string): Promise<CanonicalWo
         module: entry.module ? (moduleName) : moduleName,
         phase: derivePhase(entry.phase),
         description: entry.description || undefined,
-        agent: entry.skill || undefined,
+        agent: undefined, // Workflows don't have direct agent association - skills own the agent mapping
         required: entry.required === "true",
         sourcePath: helpPath,
         status: "active",

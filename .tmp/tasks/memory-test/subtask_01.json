@@ -1,0 +1,36 @@
+{
+  "id": "memory-test-01",
+  "feature": "memory-test",
+  "seq": "01",
+  "title": "Test MemoryBuilder Bootstrap Protocol",
+  "description": "Create a simple TypeScript utility function to validate the MemoryBuilder memory integration workflow. This will test the complete 9-step bootstrap protocol.",
+  "acceptance_criteria": [
+    "Implement bootstrapProtocol() function that validates memory connections",
+    "Function logs session start to memory system",
+    "Function retrieves prior patterns from Neo4j",
+    "Function returns validation status with memory artifacts",
+    "Self-review passes all checks",
+    "Completion logged to Postgres and Neo4j"
+  ],
+  "deliverables": [
+    "src/utils/memory-bootstrap.ts",
+    "src/utils/memory-bootstrap.test.ts"
+  ],
+  "context_files": [
+    ".opencode/context/core/standards/code-quality.md",
+    ".opencode/context/core/standards/test-coverage.md"
+  ],
+  "reference_files": [
+    "src/lib/postgres/connection.ts",
+    "src/lib/neo4j/client.ts"
+  ],
+  "status": "pending",
+  "priority": "high",
+  "estimated_duration": "30min",
+  "memory_requirements": {
+    "requires_bootstrap": true,
+    "postgres_logging": "required",
+    "neo4j_entities": "conditional",
+    "patterns_to_search": ["memory-bootstrap", "validation-pattern"]
+  }
+}
