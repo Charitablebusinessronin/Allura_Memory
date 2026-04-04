@@ -764,6 +764,45 @@ Search Persistence (T32)
 
 ---
 
+## 6. Tasks & Implementation Tracking
+
+### Active Epics
+
+#### Epic 7: OpenAgents Control Registry
+
+**Status:** In Progress
+
+**Goal:** Establish a canonical operational registry for OpenCode agents, skills, commands, and workflows that syncs from local `.opencode/` and `_bmad/` sources to Notion, enabling single-pane-of-glass governance and drift detection.
+
+**Artifacts:**
+- Epic Definition: [epic-7-openagents-control-registry.md](../planning-artifacts/epic-7-openagents-control-registry.md)
+- Tech Spec: [tech-spec-epic-7-openagents-control-registry.md](../implementation-artifacts/tech-spec-epic-7-openagents-control-registry.md)
+
+**Stories:**
+
+| Story | Status | Implementation Spec |
+|-------|--------|---------------------|
+| Registry Sync Engine | In Progress | [spec-notion-client-implementation.md](../implementation-artifacts/spec-notion-client-implementation.md) |
+| Drift Detection | Backlog | - |
+| Relation Tracking | Backlog | - |
+| Audit Trail | Backlog | - |
+
+**Progress:**
+- ✅ Notion MCP connection established (April 2026)
+- ✅ Stub client replaced with real implementation (April 2026)
+- 🔄 Testing with live Notion workspace (pending)
+
+### Completed Epics
+
+| Epic | Status | Completion Date |
+|------|--------|----------------|
+| Epic 1: Persistent Knowledge Capture | ✅ Complete | March 2026 |
+| Epic 2: Knowledge Curation Pipeline | ✅ Complete | March 2026 |
+| Epic 3: Session Hydration | ✅ Complete | March 2026 |
+| Epic 4-6: ADAS & Evolutionary Design | ✅ Complete | March 2026 |
+
+---
+
 ## 7. Testing Protocol
 
 ### Phase Summary
