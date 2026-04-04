@@ -22,7 +22,9 @@
     "snapshot:build": "bun run scripts/build-memory-snapshot.ts",
     "session:hydrate": "bun run scripts/hydrate-session-from-snapshot.ts",
     "session:bootstrap": "bun run scripts/session-bootstrap.ts",
-    "session:init": "bun run scripts/session-init.ts"
+    "session:init": "bun run scripts/session-init.ts",
+    "registry:sync": "bun run scripts/opencode-registry/sync.ts",
+    "registry:dry-run": "bun run scripts/opencode-registry/sync.ts --dry-run"
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0-beta.4",
@@ -62,11 +64,13 @@
   },
   "devDependencies": {
     "@types/dockerode": "^4.0.1",
+    "@types/glob": "^9.0.0",
     "@types/node": "^24.3.0",
     "@types/pg": "^8.18.0",
     "@types/react": "^19.1.11",
     "@types/react-dom": "^19.1.7",
     "dotenv": "^17.3.1",
+    "glob": "^13.0.6",
     "typescript": "^5.9.2",
     "vitest": "^2.1.9"
   }
