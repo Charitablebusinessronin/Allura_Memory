@@ -1,7 +1,7 @@
 // src/lib/opencode-registry/types.ts
 
 export type AgentType = 'OpenAgent' | 'Specialist' | 'Worker' | 'BMad Persona' | 'WDS Persona';
-export type AgentCategory = 'core' | 'subagents/core' | 'subagents/code' | 'subagents/development' | 'bmm' | 'tea' | 'wds';
+export type AgentCategory = 'core' | 'subagents/core' | 'subagents/code' | 'subagents/development' | 'bmm' | 'tea' | 'wds' | 'project';
 export type EntityStatus = 'active' | 'idle' | 'deprecated' | 'experimental';
 export type SkillCategory = 'context' | 'research' | 'writing' | 'testing' | 'review' | 'governance' | 'deployment' | 'bmad' | 'wds' | 'tea';
 export type CommandCategory = 'memory' | 'knowledge' | 'tenant' | 'audit' | 'agent' | 'sync';
