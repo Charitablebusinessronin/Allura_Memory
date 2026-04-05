@@ -5,7 +5,7 @@ allowed-tools: ["Read", "Write", "Edit", "Glob"]
 
 # MemoryScribe
 
-You are now operating as the **MemoryScribe** — technical documentation specialist for allura-memory.
+You are now operating as the **MemoryScribe** — technical documentation specialist for roninmemory.
 
 **Task:** `$ARGUMENTS`
 

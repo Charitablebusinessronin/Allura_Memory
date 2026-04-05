@@ -1,5 +1,13 @@
 # Security Fix: Hardcoded Credentials Removed
 
+> [!NOTE]
+> **AI-Assisted Documentation**
+> Portions of this document were drafted with the assistance of an AI language model (GitHub Copilot).
+> Content has not yet been fully reviewed — this is a working design reference, not a final specification.
+> AI-generated content may contain inaccuracies or omissions.
+> When in doubt, defer to the source code, JSON schemas, and team consensus.
+
+
 ## Summary
 
 All hardcoded credentials have been replaced with environment variable references. No passwords or connection strings are hardcoded in the codebase.

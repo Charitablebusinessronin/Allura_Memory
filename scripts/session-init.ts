@@ -54,10 +54,10 @@ console.log("   - neo4j-cypher: bolt://host.docker.internal:7687");
 console.log("\n📋 Phase 3: Hydrating context from memory...");
 
 // Query recent events
-console.log("\n   📝 Recent PostgreSQL Events (allura-memory):");
+console.log("\n   📝 Recent PostgreSQL Events (roninmemory):");
 try {
   const eventsOutput = execSync(
-    `docker exec knowledge-postgres psql -U ${POSTGRES_USER} -d memory -c "SELECT event_type, created_at FROM events WHERE group_id = 'allura-roninmemory' ORDER BY created_at DESC LIMIT 3"`,
+    `docker exec knowledge-postgres psql -U ${POSTGRES_USER} -d memory -c "SELECT event_type, created_at FROM events WHERE group_id = 'roninmemory' ORDER BY created_at DESC LIMIT 3"`,
     { encoding: "utf-8" }
   );
   console.log(eventsOutput.split("\n").slice(2, -3).join("\n"));
@@ -85,7 +85,7 @@ const sessionId = `session_${Date.now()}`;
 
 try {
   execSync(
-    `docker exec knowledge-postgres psql -U ${POSTGRES_USER} -d memory -c "INSERT INTO events (event_type, group_id, agent_id, status, metadata, created_at) VALUES ('session_start', 'allura-roninmemory', 'allura-memory-agent', 'pending', '{\\"session_id\\": \\"${sessionId}\\", \\"timestamp\\": \\"${timestamp}\\"}', NOW())"`,
+    `docker exec knowledge-postgres psql -U ${POSTGRES_USER} -d memory -c "INSERT INTO events (event_type, group_id, agent_id, status, metadata, created_at) VALUES ('session_start', 'roninmemory', 'roninmemory-agent', 'pending', '{\\"session_id\\": \\"${sessionId}\\", \\"timestamp\\": \\"${timestamp}\\"}', NOW())"`,
     { encoding: "utf-8" }
   );
   console.log("   ✅ Session logged to PostgreSQL");

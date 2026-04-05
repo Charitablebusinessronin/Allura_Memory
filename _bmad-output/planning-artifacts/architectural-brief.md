@@ -4,8 +4,6 @@
 
 **Rule: Allura governs. Runtimes execute. Curators promote.**
 
-**Course Correction (2026-04-05):** Agent primitives updated from Claude Code leak analysis. Added session persistence, workflow state machine, and token budget enforcement as P1 priorities. See [course-correction-agent-primitives.md](./course-correction-agent-primitives.md).
-
 ---
 
 ## I. Five-Layer Architecture

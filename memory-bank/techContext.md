@@ -227,7 +227,7 @@ npm run test:e2e
 **File:** `_bmad/bmm/config.yaml`
 
 ```yaml
-project_name: allura-memory
+project_name: roninmemory
 user_skill_level: intermediate
 planning_artifacts: "{project-root}/_bmad-output/planning-artifacts"
 implementation_artifacts: "{project-root}/_bmad-output/implementation-artifacts"

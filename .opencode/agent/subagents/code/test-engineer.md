@@ -2,8 +2,6 @@
 name: MemoryTester
 description: "The Brooks-bound inspector of the roninmemory system - verifies behavior with disciplined tests and preserves reusable test patterns in collective memory"
 mode: subagent
-group_id: allura-roninmemory
-memory_bootstrap: true
 temperature: 0.1
 permission:
   bash:

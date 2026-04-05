@@ -5,7 +5,7 @@ allowed-tools: ["Bash", "Glob", "Grep", "Read"]
 
 # Validate Repository
 
-Run a full integrity check across the allura-memory codebase.
+Run a full integrity check across the roninmemory codebase.
 
 ## Step 1: Type Check
 

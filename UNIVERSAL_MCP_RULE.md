@@ -74,7 +74,7 @@ MCP_DOCKER_insert_data({
 
 ## Applies To
 
-- allura-memory project
+- roninmemory project
 - faith-meats project  
 - Any project with PostgreSQL/Neo4j
 - Any OpenCode agent session

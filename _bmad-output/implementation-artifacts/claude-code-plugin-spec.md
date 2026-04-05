@@ -1,5 +1,13 @@
 # 🧩 Claude Code Plugin Spec
 
+> [!NOTE]
+> **AI-Assisted Documentation**
+> Portions of this document were drafted with the assistance of an AI language model (GitHub Copilot).
+> Content has not yet been fully reviewed — this is a working design reference, not a final specification.
+> AI-generated content may contain inaccuracies or omissions.
+> When in doubt, defer to the source code, JSON schemas, and team consensus.
+
+
 > **Canonical specification for Claude Code plugin implementation.**
 > **Status:** 🟡 Partial (1 agent, 1 skill)
 > **Location:** `claude-plugin-allura/`

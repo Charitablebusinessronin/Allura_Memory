@@ -20,7 +20,7 @@ It should be concise, actionable, and kept in sync with repo conventions.
 
 ## 2) Read First When Starting a Session
 
-**USE SKILL: `allura-memory-context`** — Invoke this skill at session start to load all context.
+**USE SKILL: `roninmemory-context`** — Invoke this skill at session start to load all context.
 
 Then read in order:
 1. `memory-bank/activeContext.md` — Current focus and blockers
@@ -190,7 +190,7 @@ The skill enforces a 5-phase process:
 ## 14) Required Skills
 
 **Run at session start:**
-- **`allura-memory-context`** — Loads all context (documentation hierarchy, architecture, naming conventions)
+- **`roninmemory-context`** — Loads all context (documentation hierarchy, architecture, naming conventions)
 
 **Run when encountering issues:**
 - **`systematic-debugging-memory`** — Use before ANY bug fix or code change for unexpected behavior
@@ -205,7 +205,7 @@ The skill enforces a 5-phase process:
 ### Starting a Session
 
 ```
-1. Invoke allura-memory-context skill
+1. Invoke roninmemory-context skill
 2. Read memory-bank/activeContext.md
 3. Read memory-bank/progress.md
 4. Check for critical blockers

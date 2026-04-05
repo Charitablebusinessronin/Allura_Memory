@@ -19,7 +19,7 @@ mcp__MCP_DOCKER__create_entities({
     name: "Session Reflection " + new Date().toISOString(),
     type: "Reflection",
     observations: [
-      "group_id: allura-roninmemory",
+      "group_id: roninmemory",
       "agent_id: claude-code",
       "event_type: session_complete",
       "status: completed",
@@ -57,7 +57,7 @@ Update `memory-bank/activeContext.md` with the current state and next steps.
 
 ## Success Criteria
 
-- Reflection entity created with `group_id: allura-roninmemory`
+- Reflection entity created with `group_id: roninmemory`
 - Search returns the newly written record
 - Memory bank files updated
 

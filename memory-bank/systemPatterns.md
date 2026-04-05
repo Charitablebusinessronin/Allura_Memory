@@ -79,87 +79,13 @@ Insights are immutable. Create new versions with explicit lineage.
 │  PostgreSQL  │────▶│   Curator    │────▶│   Auditor    │
 │  (Traces)    │     │  (Proposes)  │     │  (Approves)  │
 └──────────────┘     └──────────────┘     └──────────────┘
-                                               │
-                                               ▼
-                                      ┌──────────────┐
-                                      │    Neo4j     │
-                                      │  (Knowledge) │
-                                      └──────────────┘
+                                                   │
+                                                   ▼
+                                          ┌──────────────┐
+                                          │    Neo4j     │
+                                          │  (Knowledge) │
+                                          └──────────────┘
 ```
-
----
-
-## Session Persistence Pattern (NEW — 2026-04-05)
-
-**Course Correction:** From Claude Code leak analysis — sessions must survive crashes.
-
-```
-Session Start → Load state from .opencode/state/session-{id}.json
-     ↓
-Each Event → Persist state update (async, non-blocking)
-     ↓
-Crash → Resume from last checkpoint
-     ↓
-Session End → Archive state, clear temp files
-```
-
-**State Schema:**
-```typescript
-interface SessionState {
-  session_id: string;
-  agent_id: string;
-  group_id: string;
-  workflow_stage: 'planned' | 'discovering' | 'approved' | 'executing' | 'validating' | 'complete';
-  token_usage: { input: number; output: number; turns: number };
-  permissions_granted: string[];
-  subagent_results: Record<string, any>;
-  checkpoint_data: any;
-  created_at: string;
-  updated_at: string;
-}
-```
-
----
-
-## Workflow State Machine (NEW — 2026-04-05)
-
-**Course Correction:** Conversation state ≠ workflow state. Persist transitions explicitly.
-
-```
-planned → discovering → approved → executing → validating → complete
-   ↓          ↓           ↓           ↓           ↓
- failed      failed      failed      failed      failed
-```
-
-**PostgreSQL Schema:**
-```sql
-CREATE TABLE workflow_states (
-  id UUID PRIMARY KEY,
-  group_id TEXT NOT NULL,
-  workflow_id TEXT NOT NULL,
-  state TEXT NOT NULL CHECK (state IN ('planned', 'discovering', 'approved', 'executing', 'validating', 'complete', 'failed')),
-  checkpoint_data JSONB,
-  retry_safe BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
-
----
-
-## Token Budget Pattern (NEW — 2026-04-05)
-
-**Course Correction:** Pre-turn checks prevent runaway consumption.
-
-```
-Before Each Turn:
-  1. Check remaining budget
-  2. If remaining < MIN_TURN_TOKENS → stop execution, notify user
-  3. If OK → proceed with API call
-  4. After call → update used/remaining counters
-```
-
-**Key Principle:** "Anthropic puts in checks that are not beneficial to Anthropic, they're beneficial to the long-term health of the customer."
 
 ---
 
