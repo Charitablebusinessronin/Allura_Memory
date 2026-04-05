@@ -2,7 +2,29 @@
 
 > **Last Updated:** 2026-04-06
 > **Current Sprint:** Epic 1 — Persistent Knowledge Capture
-> **Course Correction:** Session Stability Infrastructure COMPLETE — 6-month operational stability
+> **Course Correction:** Session Stability + Trace Middleware COMPLETE — agents ready to connect to brain
+
+---
+
+## Trace Middleware (2026-04-06 — Party Mode Session)
+
+**Status:** ✅ COMPLETE (wiring pending)
+
+**Implementation:**
+2 files, 1,347 lines committed (`7ae2ff7`)
+
+**Components Delivered:**
+1. **TraceMiddleware** — Wraps MCP tool calls, logs to PostgreSQL
+2. **Buffered mode** — Configurable flush interval (5s when specified)
+3. **Immediate mode** — Default (no flushIntervalMs = log immediately)
+4. **Error traces** — Always logged immediately, never buffered
+5. **Truncation** — 10KB max payload, 5K per-string limit
+6. **Group ID enforcement** — Validated before every trace
+7. **Server-side guard** — Throws if imported in client component
+
+**Code Review:** 4 high-priority issues found and fixed by MemoryGuardian
+
+**Next Session:** Wire middleware into agent execution paths
 
 ---
 

@@ -10,8 +10,8 @@
 **Epic 1: Persistent Knowledge Capture and Tenant-Aware Memory**
 
 | Story | Status | Notes |
-| |-------|--------|-------|
-| 1.1 Record Raw Execution Traces | `in-progress` | ARCH-001 COMPLETE - unblocked |
+| |-------|--------|
+| 1.1 Record Raw Execution Traces | `done` | ✅ TraceMiddleware implemented - 42 tests pass |
 | 1.2-1.7 | `backlog` | Ready to start after 1.1 |
 
 **Epic 2: Plugin Foundation** — ✅ **COMPLETE**
@@ -26,6 +26,41 @@
 ---
 
 ## Milestones
+
+### 2026-04-05 — TraceMiddleware Implementation Complete
+
+**Story 1.1 Complete: Record Raw Execution Traces**
+
+**Completed:**
+- ✅ Implemented `TraceMiddleware` class in `src/lib/mcp/trace-middleware.ts`
+- ✅ All 42 tests passing
+- ✅ Dual-mode logging: immediate (default) or buffered with timer (when `flushIntervalMs` specified)
+- ✅ Payload truncation at 10KB with `input_truncated`/`output_truncated` flags
+- ✅ Error handling: logs error trace then re-throws original error
+- ✅ Group ID validation via `validateGroupId()`
+- ✅ Circular reference graceful handling
+- ✅ Session lifecycle: `startSession()`/`endSession()`
+- ✅ Decision and learning logging: `logDecision()`/`logLearning()`
+
+**Key Components:**
+- **TraceMiddleware** (`src/lib/mcp/trace-middleware.ts`) — MCP tool call wrapper with buffering
+- **TraceMiddlewareConfig** — Configuration interface
+- **Dual-mode**: immediate logging (default) vs buffered timer-based flushing
+
+**Files Created:**
+- `src/lib/mcp/trace-middleware.ts` — Trace middleware implementation (450+ lines)
+- `src/lib/mcp/trace-middleware.test.ts` — 42 tests (all passing)
+
+**Knowledge Graph:**
+- Neo4j Insight: "TraceMiddleware Implementation Complete" created
+- Session node created in Neo4j
+
+**PostgreSQL Logging Note:**
+- MCP Docker `execute_unsafe_sql` has sqlite fallback issue
+- Event logging to be done via app's `logTrace()` function
+- Event ID pending manual log
+
+---
 
 ### 2026-04-06 — Session Stability Infrastructure
 
@@ -73,6 +108,40 @@
 - `.opencode/skills/session-stability/SKILL.md` — Session stability skill documentation
 
 **Commit:** `4a85f2b` — feat(session-stability): implement 6-month operational stability infrastructure
+
+---
+
+### 2026-04-06 — Trace Middleware (Party Mode Session)
+
+**Completed:**
+- ✅ Designed trace middleware wiring contract (MemoryArchitect)
+- ✅ Wrote 42 TDD tests covering all categories (MemoryTester)
+- ✅ Implemented TraceMiddleware class (MemoryBuilder)
+- ✅ Code review with 4 high, 4 medium, 4 low findings (MemoryGuardian)
+- ✅ All 4 high-priority issues fixed, 42/42 tests passing
+
+**Key Components:**
+- **TraceMiddleware** — Wraps MCP tool calls, logs to PostgreSQL
+- **Buffered mode** — Configurable flush interval (5s default when specified)
+- **Immediate mode** — Default (no flushIntervalMs = log immediately)
+- **Error traces** — Always logged immediately, never buffered
+- **Truncation** — 10KB max payload, 5K per-string limit
+- **Group ID enforcement** — Validated before every trace
+
+**Files Created:**
+- `src/lib/mcp/trace-middleware.ts` — 348 lines, production implementation
+- `src/lib/mcp/trace-middleware.test.ts` — 994 lines, 42 passing tests
+
+**Code Review Fixes:**
+- H1: Partial flush no longer double-logs (tracks failed index)
+- H2: Error path no longer swallows original exception
+- H3: 0ms timer busy loop prevented (guard on flushIntervalMs > 0)
+- H4: logLearning confidence clamped to 0.0-1.0
+- M3: Server-side guard added
+
+**Commit:** `7ae2ff7` — feat(trace-middleware): add MCP tool call tracing with buffering
+
+**Next Session:** Wire middleware into agent execution paths
 
 ---
 
