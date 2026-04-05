@@ -1,5 +1,8 @@
 # PRD Brief: Allura Agent-OS v2 — Persistent Memory & Multi-Tenant Governance
 
+> **Last Updated:** 2026-04-05
+> **Status:** ARCH-001 COMPLETE, 3 Critical Primitives Missing
+
 > [!NOTE]
 > **AI-Assisted Documentation**
 > Portions of this document were drafted with the assistance of an AI language model.
@@ -37,25 +40,28 @@ Agents lack persistent memory, multi-tenant isolation, and human governance — 
 
 ### Current State
 
-- PostgreSQL and Neo4j containers running but MCP connectivity broken
-- `groupIdEnforcer.ts` is broken (ARCH-001) — blocks all multi-tenant features
-- 7 OpenCode agents defined but not fully integrated with memory pipeline
-- Curator pipeline partially implemented — 2-phase commit not production-ready
-- No Paperclip dashboard deployed
-- OpenClaw gateway not configured
+- ✅ PostgreSQL and Neo4j containers running with MCP connectivity
+- ✅ `groupIdEnforcer.ts` FIXED (ARCH-001 COMPLETE) — multi-layer enforcement implemented
+- ✅ 7 OpenCode agents defined and integrated with memory pipeline
+- ✅ 1,032+ traces logged to PostgreSQL (append-only)
+- ✅ 7 Agent nodes created in Neo4j knowledge graph
+- ⏳ Curator pipeline partially implemented — 2-phase commit not production-ready
+- ⏳ No Paperclip dashboard deployed
+- ⏳ OpenClaw gateway not configured
+- ⏳ 3 critical primitives missing: Session Persistence, Workflow State, Token Budget
 
 ---
 
 ## 2. Goals
 
-| # | Goal | Rationale |
-|---|------|-----------|
-| G1 | Fix `groupIdEnforcer.ts` (ARCH-001) | Blocks everything — no multi-tenant work without it |
-| G2 | Complete Curator 2-phase commit pipeline | Enables reliable PostgreSQL → Neo4j promotion |
-| G3 | Deploy Paperclip dashboard | Human governance interface for HITL approvals |
-| G4 | Implement all 12 Anthropic Agent Primitives | Production readiness for any workspace |
-| G5 | Faith Meats Payload CMS live | First production workspace (P1) |
-| G6 | All 6 workspaces operational | Full multi-tenant coverage |
+| # | Goal | Status | Rationale |
+|---|------|--------|-----------|
+| G1 | Fix `groupIdEnforcer.ts` (ARCH-001) | ✅ COMPLETE | Multi-layer enforcement implemented |
+| G2 | Complete Curator 2-phase commit pipeline | ⏳ In Progress | Enables reliable PostgreSQL → Neo4j promotion |
+| G3 | Deploy Paperclip dashboard | ⏳ Planned | Human governance interface for HITL approvals |
+| G4 | Implement all 12 Anthropic Agent Primitives | ⏳ In Progress | 4/12 complete, 5/12 partial, 3/12 missing |
+| G5 | Faith Meats Payload CMS live | ⏳ Planned | First production workspace (P1) |
+| G6 | All 6 workspaces operational | ⏳ Planned | Full multi-tenant coverage |
 
 ---
 
@@ -166,30 +172,38 @@ Allura Agent-OS uses a 5-layer architecture parallel to a classical operating sy
 
 | ID | Title | Severity | Status |
 |----|-------|----------|--------|
-| RK-04 | Cross-tenant data leakage via missing `group_id` | High | 🔴 Open — ARCH-001 |
-| RK-10 | `group_id` confusion in queries | Medium | 🔴 Open — ARCH-001 |
-| RK-05 | DinD sandbox escape via kernel exploit | High | ✅ Mitigated |
+| RK-04 | Cross-tenant data leakage via missing `group_id` | High | ✅ RESOLVED — ARCH-001 complete |
+| RK-10 | `group_id` confusion in queries | Medium | ✅ RESOLVED — ARCH-001 complete |
+| RK-01 | Session crash = total state loss | High | 🔴 Open — Session Persistence missing |
+| RK-02 | Runaway token costs | High | 🔴 Open — Token Budget missing |
 | RK-03 | Notion API rate limits throttle mirror | Medium | ✅ Mitigated |
+| RK-05 | DinD sandbox escape via kernel exploit | High | ✅ Mitigated |
 
 ### Open Questions
 
-- [ ] What is the exact MCP_DOCKER networking fix for PostgreSQL/Neo4j connectivity? — **Owner:** Infrastructure
+- [x] ~~What is the exact MCP_DOCKER networking fix for PostgreSQL/Neo4j connectivity?~~ — **RESOLVED:** MCP connectivity working
 - [ ] When will Paperclip dashboard be deployed? — **Owner:** Product
 - [ ] Which workspace goes live first after ARCH-001? — **Owner:** Winston
+- [ ] How do we implement Session Persistence for crash recovery? — **Owner:** Engineering (P1)
+- [ ] How do we implement Workflow State Machine? — **Owner:** Engineering (P1)
+- [ ] How do we implement Token Budget Pre-Turn Checks? — **Owner:** Engineering (P1)
 
 ---
 
 ## 9. Success Metrics
 
-| Metric | Target | Measurement Method |
-|--------|--------|--------------------|
-| `group_id` enforcement coverage | 100% — zero cross-tenant leaks | grep audit + schema constraint |
-| Agent session persistence | 100% — every run has AER | Trace audit |
-| HITL approval rate | 100% — no unreviewed promotions | Notion queue audit |
-| Token budget compliance | 100% — no runaway costs | Budget enforcement logs |
-| Faith Meats Payload CMS live | Q2 2026 | Deployment verification |
-| All 6 workspaces operational | Q3 2026 | Workspace health check |
-| 12 Primitives implemented | Q2 2026 | Primitive checklist |
+| Metric | Target | Current | Status |
+|--------|--------|---------|--------|
+| `group_id` enforcement coverage | 100% — zero cross-tenant leaks | 100% | ✅ Complete |
+| Agent session persistence | 100% — every run has AER | 0% | 🔴 Missing |
+| PostgreSQL traces | Append-only, queryable | 1,032+ traces | ✅ Working |
+| Neo4j knowledge graph | 7 Agent nodes, relationships | 7 nodes | ✅ Working |
+| HITL approval rate | 100% — no unreviewed promotions | 0% | ⏳ Not implemented |
+| Token budget compliance | 100% — no runaway costs | 0% | 🔴 Missing |
+| Workflow state machine | Explicit state transitions | 0% | 🔴 Missing |
+| Faith Meats Payload CMS live | Q2 2026 | Not started | ⏳ Planned |
+| All 6 workspaces operational | Q3 2026 | Not started | ⏳ Planned |
+| 12 Primitives implemented | Q2 2026 | 4/12 complete | ⏳ In Progress |
 
 ---
 
@@ -198,6 +212,8 @@ Allura Agent-OS uses a 5-layer architecture parallel to a classical operating sy
 - [`_bmad-output/planning-artifacts/source-of-truth.md`](../_bmad-output/planning-artifacts/source-of-truth.md) — Document hierarchy
 - [`_bmad-output/planning-artifacts/prd-v2.md`](../_bmad-output/planning-artifacts/prd-v2.md) — Master PRD
 - [`_bmad-output/planning-artifacts/architectural-brief.md`](../_bmad-output/planning-artifacts/architectural-brief.md) — Architecture canon
+- [`_bmad-output/planning-artifacts/agent-primitives-audit.md`](../_bmad-output/planning-artifacts/agent-primitives-audit.md) — 12 primitives scorecard vs. Claude Code
+- [`_bmad-output/planning-artifacts/course-correction-agent-primitives.md`](../_bmad-output/planning-artifacts/course-correction-agent-primitives.md) — Gap analysis from Claude Code leak
 - [`_bmad-output/planning-artifacts/epics.md`](../_bmad-output/planning-artifacts/epics.md) — Epic registry
 - [`templates/BLUEPRINT.template.md`](./templates/BLUEPRINT.template.md) — Technical blueprint
 - [`_bmad-output/implementation-artifacts/ARCH-001-rk01-fix.md`](../_bmad-output/implementation-artifacts/ARCH-001-rk01-fix.md) — RK-04 / RK-10 fix spec

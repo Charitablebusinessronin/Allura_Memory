@@ -111,6 +111,64 @@
 
 ---
 
+### 2026-04-06 — RuVix Kernel Initiative (Party Mode Session)
+
+**Status:** 🚀 IN PROGRESS — Phase 1A: Kernel Core
+
+**Completed:**
+- ✅ Party mode team discussion convened (MemoryOrchestrator, MemoryArchitect, MemoryBuilder, MemoryGuardian, MemoryInfrastructure)
+- ✅ 4-phase implementation plan approved
+- ✅ Sprint status updated (arch-002-build-ruvix-kernel: in-progress)
+- ✅ Key design decisions documented:
+  - `mutate` primitive identified as linchpin
+  - Microkernel pattern: trusted core separate from orchestration
+  - SDK wrapper for backward compatibility
+  - HMAC + claims for proof structure
+
+**Architecture Decision:**
+- **Problem:** RuVix Kernel is documented but NOT implemented. Enforcement scattered across L2/L3.
+- **Solution:** 4-phase kernel build consolidating all policy enforcement into L1
+- **Phases:**
+  - Phase 1A: Kernel Core (primitives + proof engine) — STARTING
+  - Phase 1B: Enforcement Gate (SDK wrapper + block direct access)
+  - Phase 2: Migration (move existing enforcers INTO kernel)
+  - Phase 3: Validation (prove nothing bypasses kernel)
+
+**Completed (Phase 1A - Kernel Core):**
+- ✅ Created `src/kernel/proof.ts` — Proof-of-intent engine (HMAC-SHA256, 280 lines)
+- ✅ Created `src/kernel/policy.ts` — Policy validation engine (5 policies, 280 lines)
+- ✅ Created `src/kernel/syscalls.ts` — 12 syscalls with `mutate` as linchpin (450 lines)
+- ✅ Created `src/kernel/ruvix.ts` — Kernel orchestrator exporting 6 primitives (300 lines)
+- ✅ Created `src/kernel/proof.test.ts` — 25 tests for proof engine (ALL PASSING)
+- ✅ Kernel version: 1.0.0-alpha (ruvix-l1-core)
+
+**Key Features Implemented:**
+- Proof-of-intent with HMAC-SHA256 signatures
+- 5-minute proof validity window with 30-second clock skew tolerance
+- group_id validation (allura-* convention enforced)
+- 5 builtin policies: tenant isolation, budget, permission tier, actor validation, audit trail
+- 12 syscalls: mutate, query, spawn, kill, trace, budget, policy, attest, verify, isolate, sandbox, audit
+- 6 primitives exported: mutate, attest, verify, isolate, sandbox, audit
+
+**Files Created:**
+- `src/kernel/proof.ts` — 280 lines, trusted core
+- `src/kernel/policy.ts` — 280 lines, trusted core
+- `src/kernel/syscalls.ts` — 450 lines, syscall implementations
+- `src/kernel/ruvix.ts` — 300 lines, kernel orchestrator
+- `src/kernel/proof.test.ts` — 350 lines, 25 passing tests
+
+**Test Results:**
+```
+✓ src/kernel/proof.test.ts (25 tests) 11ms
+Test Files  1 passed (1)
+     Tests  25 passed (25)
+```
+
+**In Progress:**
+- ⏳ Phase 1B: Enforcement Gate (SDK wrapper + block direct access)
+
+---
+
 ### 2026-04-06 — Trace Middleware (Party Mode Session)
 
 **Completed:**

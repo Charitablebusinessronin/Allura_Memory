@@ -1,7 +1,7 @@
 ---
 name: MemoryOrchestrator
 tier: agent
-group_id: roninmemory-system
+group_id: allura-roninmemory
 behavior_intent: Main coordinator for roninmemory unified AI brain operations
 behavior_lock: ""
 memory_bootstrap: true

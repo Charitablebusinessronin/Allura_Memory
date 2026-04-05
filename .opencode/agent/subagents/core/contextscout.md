@@ -2,6 +2,8 @@
 name: MemoryScout
 description: "The Brooks-bound surveyor of the roninmemory system - discovers context before building and retrieves prior discoveries from the collective memory (read-only)"
 mode: subagent
+group_id: allura-roninmemory
+memory_bootstrap: true
 permission:
   read:
     "*": "allow"
