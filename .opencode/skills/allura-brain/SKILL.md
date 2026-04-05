@@ -7,7 +7,7 @@ description: "The definitive guide to operating within the Allura Agent-OS ecosy
 
 > **Purpose:** The definitive guide to operating within the Allura Agent-OS ecosystem. Every agent reads this skill to understand the system architecture, tools, governance, and workflow.
 > **When to use:** At session start, when onboarding new agents, when system behavior is unclear, or when MCP_DOCKER tools need to be used.
-> **Applies to:** All projects under Allura governance (roninmemory, faith-meats, audits, creative, nonprofit, haccp).
+> **Applies to:** All projects under Allura governance (allura-memory, faith-meats, audits, creative, nonprofit, haccp).
 
 ---
 
@@ -212,7 +212,7 @@ MCP_DOCKER_write_neo4j_cypher({
 | Nonprofit | `allura-nonprofit` |
 | Bank Audits | `allura-audits` |
 | HACCP | `allura-haccp` |
-| Roninmemory (this project) | `allura-roninmemory` |
+| Allura Memory (this project) | `allura-roninmemory` |
 
 **Legacy `roninclaw-*` is deprecated.**
 

@@ -33,8 +33,8 @@
 
 ```bash
 # Clone and build
-git clone https://github.com/Charitablebusinessronin/roninmemory.git
-cd roninmemory
+git clone https://github.com/Charitablebusinessronin/allura-memory.git
+cd allura-memory
 
 # We only use Bun. Period.
 bun install
@@ -143,13 +143,13 @@ Before a long mission, build a snapshot to brief your agents.
 ```bash
 # Build the brief
 bun run snapshot:build \
-  --source docs/roninmemory \
+  --source docs/allura-memory \
   --output memory-bank \
-  --group-id roninmemory \
+  --group-id allura-roninmemory \
   --max-summary-chars 600
 
 # Hydrate the databases with the brief
-GROUP_ID=roninmemory bun run session:hydrate \
+GROUP_ID=allura-roninmemory bun run session:hydrate \
   --snapshot memory-bank/index.json \
   --concurrency 4
 ```
@@ -207,7 +207,7 @@ bun run test:e2e
 | File | Content |
 |------|---------|
 | **Master Document** | |
-| `docs/roninmemory/PROJECT.md` | Single cohesive project document. Blueprint, requirements, architecture, data dictionary, decisions, and epic tracking. |
+| `docs/allura-memory/PROJECT.md` | Single cohesive project document. Blueprint, requirements, architecture, data dictionary, decisions, and epic tracking. |
 | **Planning Artifacts** | |
 | `_bmad-output/planning-artifacts/` | Epic definitions and planning documents |
 | `_bmad-output/implementation-artifacts/` | Technical specifications and story implementation specs |
@@ -244,7 +244,7 @@ BMad artifacts follow this structure:
 
 This repository follows the **AI-GUIDELINES.md** documentation standards:
 
-- **Single Master Document**: `docs/roninmemory/PROJECT.md` is the canonical source of truth
+- **Single Master Document**: `docs/allura-memory/PROJECT.md` is the canonical source of truth
 - **BMad Structured Output**: Epics, stories, and validation follow BMad conventions
 - **Disclosure**: AI-assisted content includes disclosure notices
 - **Cross-References**: All artifacts are linked from PROJECT.md
