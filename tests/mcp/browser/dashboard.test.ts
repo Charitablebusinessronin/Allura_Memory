@@ -7,6 +7,7 @@ import {
   browser_console_messages,
   browser_evaluate
 } from "@mcp-docker/playwright";
+import { getPort } from "../../../src/lib/config/ports";
 
 /**
  * Dashboard Visual Tests
@@ -16,12 +17,13 @@ import {
  * 
  * Prerequisites:
  * - MCP Docker Playwright server running
- * - Next.js dev server running on localhost:3000
+ * - Next.js dev server running (uses PAPERCLIP_PORT or defaults to 3100)
  * - Dashboard accessible at /dashboard/paperclip
  */
 
 describe("Dashboard Visual Tests", () => {
-  const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const PAPERCLIP_PORT = getPort("paperclip", "PAPERCLIP_PORT");
+  const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || `http://localhost:${PAPERCLIP_PORT}`;
   const DASHBOARD_URL = `${BASE_URL}/dashboard/paperclip`;
 
   beforeAll(async () => {

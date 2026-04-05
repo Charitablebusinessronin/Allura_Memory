@@ -4,6 +4,7 @@ import {
   browser_take_screenshot,
   browser_evaluate
 } from "@mcp-docker/playwright";
+import { getPort } from "../../../src/lib/config/ports";
 
 /**
  * Responsive Design Tests
@@ -13,7 +14,8 @@ import {
  */
 
 describe("Responsive Design Tests", () => {
-  const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const PAPERCLIP_PORT = getPort("paperclip", "PAPERCLIP_PORT");
+  const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || `http://localhost:${PAPERCLIP_PORT}`;
   const DASHBOARD_URL = `${BASE_URL}/dashboard/paperclip`;
 
   interface Viewport {
