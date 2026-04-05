@@ -1,349 +1,374 @@
+---
+name: epic-build-loop
+description: Autonomous epic execution loop. Dev story → Code review → Validate → Retrospective → Loop. Use for continuous story implementation with human validation gates.
+---
+
 # Epic Build Loop
 
-Execute autonomous epic development with quality gates and retrospectives.
-
-## Purpose
-
-This skill orchestrates the complete epic development workflow:
-1. **Dev story** → Implement with BMad dev-story
-2. **Code review** → Run BMad code-review
-3. **Validation** → Test runtime, types, lint, behavior
-4. **Human gate** → Verify UI loads, prompts work
-5. **Retrospective** → Run BMad retrospective
-6. **Loop** → Next story
-
-## When to Use
-
-Use this skill when:
-- Executing an epic with multiple stories
-- You want automated quality gates between stories
-- You need systematic epic development
-- Human validation is required before proceeding
-
-## Workflow
-
-### Phase 1: Story Discovery
-
-1. **Load epic context**:
-   ```yaml
-   files:
-     - _bmad-output/planning-artifacts/epics.md
-     - _bmad-output/implementation-artifacts/sprint-status.yaml
-     - memory-bank/activeContext.md
-   ```
-
-2. **Identify next story**:
-   - Check sprint-status.yaml for status
-   - Find first story not in 'done' status
-   - Verify dependencies are complete
-
-3. **Load story specification**:
-   ```yaml
-   files:
-     - _bmad-output/implementation-artifacts/story-{id}.md
-   ```
-
-### Phase 2: Dev Story Execution
-
-1. **Run BMad dev-story**:
-   ```bash
-   # Use BMad skill to execute the story
-   bmad-dev-story --story story-{id}.md
-   ```
-
-2. **Monitor execution**:
-   - Watch for errors
-   - If stuck, invoke `systematic-debugging` skill
-   - If quality gates fail, stop and report
-
-### Phase 3: Automated Quality Gates
-
-After implementation completes:
-
-1. **Type checking**:
-   ```bash
-   npm run typecheck
-   ```
-   - Must pass with 0 errors
-   - If fails, report error and stop
-
-2. **Linting**:
-   ```bash
-   npm run lint
-   ```
-   - Must pass with 0 errors
-   - If fails, report error and stop
-
-3. **Tests**:
-   ```bash
-   npm test
-   ```
-   - Must pass with 0 failures
-   - If fails, report error and stop
-
-4. **Build**:
-   ```bash
-   npm run build
-   ```
-   - Must complete successfully
-   - If fails, report error and stop
-
-### Phase 4: Code Review
-
-1. **Run BMad code-review**:
-   ```bash
-   # Review the changes made during dev-story
-   bmad-code-review
-   ```
-
-2. **Process review findings**:
-   - If critical issues → fix immediately
-   - If suggestions → log for next iteration
-   - If approved → proceed
-
-### Phase 5: Human Validation Gate
-
-**STOP**: Present summary and await human approval
-
-**Validation Checklist**:
-- [ ] No runtime errors
-- [ ] No type errors (`npm run typecheck`)
-- [ ] UI loads correctly
-- [ ] Tests pass (`npm test`)
-- [ ] Lint passes (`npm run lint`)
-- [ ] Configuration correct
-- [ ] Behavioral prompts work
-- [ ] Implementation is functional
-
-**Prompt user**:
-```
-Story {id} implementation complete.
-
-Summary:
-- Files modified: {count}
-- Tests added: {count}
-- Type errors: 0
-- Lint errors: 0
-
-Please verify:
-1. UI loads correctly
-2. Feature functions as expected
-3. No unexpected behavior
-
-Approve to proceed to retrospective?
-[Y/n]
-```
-
-### Phase 6: Retrospective
-
-If approved by human:
-
-1. **Run BMad retrospective**:
-   ```bash
-   bmad-retrospective --epic epic-{id}
-   ```
-
-2. **Capture learnings**:
-   - What worked well
-   - What could improve
-   - Patterns discovered
-   - Technical debt identified
-
-### Phase 7: Loop
-
-1. **Update sprint-status.yaml**:
-   - Mark story as 'done'
-   - Update epic status if complete
-
-2. **Decide next action**:
-   - If more stories → Loop to Phase 1
-   - If epic complete → Final retrospective
-   - If blocked → Report and wait
-
-## Error Handling
-
-### Systematic Debugging
-
-If any phase fails:
-
-1. **Invoke systematic-debugging skill**:
-   ```
-   Use systematic-debugging skill
-   ```
-
-2. **Follow debugging protocol**:
-   - Phase 0: Memory hydration
-   - Phase 1: Root cause investigation
-   - Phase 2: Pattern analysis
-   - Phase 3: Hypothesis and testing
-   - Phase 4: Implementation
-   - Phase 5: Persistence
-
-3. **Never retry without investigation**:
-   - If 3+ fixes fail → Question architecture
-   - Report findings before attempting fix
-
-### Quality Gate Failure
-
-If quality gates fail:
-
-1. **Report specific failure**:
-   ```
-   Quality Gate Failed: {gate_name}
-   Error: {error_message}
-   ```
-
-2. **Propose fix**:
-   ```
-   Proposed Fix:
-   - {description}
-   - Estimated time: {duration}
-   ```
-
-3. **Await approval before fixing**:
-   - Never auto-fix
-   - Always get human confirmation
-
-## Configuration
-
-### Required Environment Variables
-
-```bash
-# For MCP operations
-GROUP_ID=allura-default  # or specific workspace
-
-# For testing
-RUN_TESTS=true
-TEST_TIMEOUT=30000
-
-# For quality gates
-STRICT_LINT=true
-STRICT_TYPES=true
-```
-
-### Optional Configuration
-
-```yaml
-# .opencode/epic-build-loop.yaml
-epic:
-  auto_retry: false  # Never auto-retry failures
-  require_human_approval: true  # Always stop at human gate
-  
-quality_gates:
-  typecheck: required
-  lint: required
-  test: required
-  build: required
-  
-retrospective:
-  auto_generate: true
-  include_metrics: true
-```
-
-## Output Format
-
-After each story:
-
-```markdown
-## Story {id}: {title} — ✅ COMPLETE
-
-### Implementation
-- Files created: {n}
-- Files modified: {n}
-- Lines added: {n}
-
-### Quality Gates
-- ✅ Type checking: 0 errors
-- ✅ Lint: 0 errors
-- ✅ Tests: {n}/{n} passing
-- ✅ Build: Success
-
-### Code Review
-- Status: Approved
-- Issues found: {n} (all resolved)
-
-### Human Validation
-- Status: Approved by {user}
-- Notes: {notes}
-
-### Retrospective
-- Key learnings: {bullet points}
-- Technical debt: {items}
-- Next story improvements: {suggestions}
-```
-
-## Dependencies
-
-This skill requires:
-- `bmad-dev-story` skill
-- `bmad-code-review` skill
-- `bmad-retrospective` skill
-- `systematic-debugging` skill
-- Access to sprint-status.yaml
-- Access to story specification files
-
-## Example Usage
-
-### Starting an Epic Loop
-
-```
-Start epic build loop for Epic 1
-```
-
-This will:
-1. Load epic context from epics.md
-2. Check sprint-status.yaml for current state
-3. Identify next story to implement
-4. Begin dev-story execution
-5. Run quality gates
-6. Request human approval
-7. Run retrospective
-8. Loop to next story
-
-### Running Specific Story
-
-```
-Execute story 1.1 with epic-build-loop
-```
-
-This will:
-1. Load story 1.1 specification
-2. Execute dev-story
-3. Run all quality gates
-4. Request human validation
-5. Run retrospective if approved
-
-### Handling Blockers
-
-If a story is blocked:
-
-```
-Story 1.3 is blocked by ARCH-002 dependency
-```
-
-This will:
-1. Log blocker to sprint-status.yaml
-2. Move to next available story
-3. Report blocker for prioritization
-
-## Safety Rules
-
-1. **Never skip quality gates**
-2. **Never auto-fix without approval**
-3. **Always stop at human validation gate**
-4. **Log all actions to memory**
-5. **If 3+ failures, question architecture**
-6. **Preserve conceptual integrity**
-
-## Success Criteria
-
-Epic build loop succeeds when:
-- All stories in epic marked 'done'
-- All quality gates passed
-- All retrospectives completed
-- No critical technical debt
-- Human satisfied with outcome
+**Purpose:** Autonomous execution of epic stories with validation gates, code review, and continuous improvement.
+
+**When to Use:**
+- Starting a new epic
+- Implementing stories in sequence
+- Need autonomous agent execution with human checkpoints
+- Want butter-smooth handoffs between sessions
+
+**Prerequisites:**
+- ARCH-001 fixed (groupIdEnforcer wired)
+- Stories defined in sprint-status.yaml
+- Memory system connected (PostgreSQL + Neo4j)
 
 ---
 
-*This skill implements the Brooksian principle: "Plan to throw one away" — each story is a learning opportunity for the next.*
+## Execution Loop Architecture
+
+```mermaid
+flowchart TD
+    Start([Start Epic]) --> LoadContext[Load Hive Mind Context]
+    LoadContext --> PickStory[Pick Next Story]
+    PickStory --> DevStory[bmad-dev-story]
+    DevStory --> TypeCheck[npm run typecheck]
+    TypeCheck --> Lint[npm run lint]
+    Lint --> Test[npm run test]
+    Test --> CodeReview[bmad-code-review]
+    CodeReview --> HumanGate{Human Validation}
+    HumanGate -->|Pass| Retrospective[bmad-retrospective]
+    HumanGate -->|Fail| Debug[systematic-debugging]
+    Debug --> DevStory
+    Retrospective --> LogMemory[Log to PostgreSQL + Neo4j]
+    LogMemory --> UpdateSkills[Auto-Update Skills]
+    UpdateSkills --> PickStory
+    
+    HumanGate -->|Exit| End([End Loop])
+```
+
+---
+
+## Phase 1: Context Hydration
+
+### Step 1.1: Hive Mind Connect
+
+**Auto-execute at loop start:**
+
+```bash
+# Load full context
+/opencode invoke roninmemory-hive-mind
+
+# Verify connection
+✅ PostgreSQL: Events loaded
+✅ Neo4j: Insights loaded  
+✅ Memory-Bank: Context loaded
+✅ Unified: BUTTER SMOOTH
+```
+
+### Step 1.2: Load Epic Context
+
+**Read from sprint-status.yaml:**
+
+```typescript
+const epic = await loadEpic('Epic 1');
+const stories = epic.stories.filter(s => s.status !== 'done');
+const currentStory = stories[0];
+
+console.log(`🎯 Current Story: ${currentStory.id} - ${currentStory.title}`);
+console.log(`📋 Status: ${currentStory.status}`);
+console.log(`🚧 Blocker: ${currentStory.blocker || 'None'}`);
+```
+
+---
+
+## Phase 2: Story Implementation
+
+### Step 2.1: Dev Story
+
+**Execute:**
+
+```bash
+/opencode invoke bmad-dev-story \
+  --story=${currentStory.id} \
+  --epic=${epic.id} \
+  --context=full
+```
+
+**Requirements:**
+- Implement story per acceptance criteria
+- Follow existing patterns from memory-bank
+- Add tests for new functionality
+- Update documentation
+
+### Step 2.2: Validation Gates
+
+**Gate 1: Type Check**
+
+```bash
+npm run typecheck
+```
+- ✅ PASS: Continue
+- ❌ FAIL: systematic-debugging → fix → retry
+
+**Gate 2: Lint**
+
+```bash
+npm run lint
+```
+- ✅ PASS: Continue
+- ❌ FAIL: Fix lint errors → retry
+
+**Gate 3: Tests**
+
+```bash
+bun test
+```
+- ✅ PASS: Continue
+- ❌ FAIL: systematic-debugging → fix → retry
+
+**Gate 4: Code Review**
+
+```bash
+/opencode invoke bmad-code-review \
+  --files="changed-files" \
+  --depth=adversarial
+```
+
+**Review Criteria:**
+- Security vulnerabilities
+- Edge cases
+- Pattern consistency
+- Documentation completeness
+
+---
+
+## Phase 3: Human Validation Gate
+
+### Critical Checkpoint
+
+**🛑 STOP. HUMAN VALIDATION REQUIRED.**
+
+**Validate:**
+- [ ] No runtime errors
+- [ ] No type errors (npm run typecheck)
+- [ ] UI loads correctly (if applicable)
+- [ ] Tests pass (bun test)
+- [ ] Lint passes (npm run lint)
+- [ ] Configuration correct
+- [ ] Behavioral prompts work
+- [ ] Implementation functional
+
+**User Decision:**
+- **Y** (Yes): Continue to retrospective
+- **N** (No): systematic-debugging → retry
+- **E** (Exit): Pause loop, save state
+
+---
+
+## Phase 4: Retrospective
+
+### Step 4.1: Extract Learnings
+
+**Execute:**
+
+```bash
+/opencode invoke bmad-retrospective \
+  --story=${currentStory.id} \
+  --outcome=success
+```
+
+**Extract:**
+- What worked?
+- What failed?
+- New patterns discovered
+- Anti-patterns to avoid
+
+### Step 4.2: Log to Memory
+
+**PostgreSQL:**
+
+```sql
+INSERT INTO events (event_type, context, agent_id, group_id)
+VALUES (
+  'story_completed',
+  'Story ${currentStory.id} implemented successfully',
+  'epic-build-loop',
+  'allura-agent-os'
+);
+```
+
+**Neo4j:**
+
+```cypher
+CREATE (i:Insight {
+  name: 'Pattern: ${pattern_name}',
+  type: 'Pattern',
+  observations: ['What worked', 'How to replicate'],
+  groupId: 'allura-agent-os'
+})
+
+MATCH (s:Session), (i:Insight)
+WHERE s.id = '${sessionId}'
+CREATE (s)-[:CONTRIBUTED]->(i)
+```
+
+---
+
+## Phase 5: Skill Evolution
+
+### Step 5.1: Pattern Detection
+
+**Check for repeatable patterns:**
+
+```typescript
+if (isRepeatedPattern(session, 3)) {
+  await createSkillFromPattern({
+    name: `auto-${pattern.name}`,
+    description: pattern.description,
+    trigger: pattern.trigger,
+    action: pattern.action
+  });
+}
+```
+
+### Step 5.2: Skill Update
+
+**Update existing skills:**
+
+```typescript
+await updateSkill('bmad-dev-story', {
+  patterns: extractPatterns(session),
+  antiPatterns: extractFailures(session)
+});
+```
+
+---
+
+## Phase 6: Loop Continuation
+
+### Auto-Continue
+
+**If stories remain:**
+
+```typescript
+const remainingStories = epic.stories.filter(s => s.status !== 'done');
+
+if (remainingStories.length > 0) {
+  console.log(`🔄 ${remainingStories.length} stories remaining`);
+  console.log(`🎯 Next: ${remainingStories[0].id}`);
+  
+  // Continue loop
+  await epicBuildLoop();
+} else {
+  console.log('✅ Epic Complete!');
+  await epicRetrospective(epic);
+}
+```
+
+---
+
+## Error Handling
+
+### On Failure
+
+**If any gate fails:**
+
+1. **Log failure** to PostgreSQL
+2. **Invoke** systematic-debugging
+3. **Analyze** root cause
+4. **Fix** issue
+5. **Retry** from failed gate
+6. **Update** skills with anti-pattern
+
+**Max Retries:** 3 attempts per story
+**On 3rd failure:** Escalate to human
+
+---
+
+## Integration with BMad
+
+### BMad Skills Enhanced
+
+**Updated:**
+- `bmad-dev-story` - Auto-loads hive mind context
+- `bmad-code-review` - Logs review findings to memory
+- `bmad-retrospective` - Auto-extracts patterns
+- `systematic-debugging` - Consults prior failures
+
+**New:**
+- `epic-build-loop` - This skill
+- `roninmemory-hive-mind` - Context hydration
+
+---
+
+## Session Handoff
+
+### Butter Smooth Continuation
+
+**When session ends:**
+
+```typescript
+await logSessionEnd({
+  sessionId,
+  epicId,
+  currentStory,
+  status: 'paused',
+  nextAction: 'Continue epic-build-loop'
+});
+```
+
+**Next session:**
+
+```bash
+# Auto-loads context
+/opencode invoke epic-build-loop --continue
+
+🧠 Hive Mind Connected
+🔄 Resuming Epic 1
+🎯 Current Story: 1.1 Record Raw Execution Traces
+📊 Progress: 2/7 stories complete
+
+Butter smooth. Continuing...
+```
+
+---
+
+## Commands
+
+### Start Epic
+
+```bash
+/opencode invoke epic-build-loop \
+  --epic="Epic 1" \
+  --auto=true
+```
+
+### Continue Epic
+
+```bash
+/opencode invoke epic-build-loop --continue
+```
+
+### Run Single Story
+
+```bash
+/opencode invoke epic-build-loop \
+  --story="1.1" \
+  --single=true
+```
+
+### Pause Loop
+
+```bash
+/opencode invoke epic-build-loop --pause
+```
+
+---
+
+## Success Metrics
+
+- [ ] Stories implement without human intervention (except validation gate)
+- [ ] Failures auto-debugged and resolved
+- [ ] Patterns auto-extracted and skills updated
+- [ ] Next session starts butter smooth
+- [ ] Epic completes with full traceability
+
+---
+
+**Next Action:** Start Epic 1 with `epic-build-loop --epic="Epic 1"`

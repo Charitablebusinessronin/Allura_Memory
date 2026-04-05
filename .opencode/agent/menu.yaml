@@ -10,7 +10,7 @@ last_updated: "2026-04-03"
 primary:
   - id: memory-orchestrator
     name: MemoryOrchestrator
-    file: MemoryOrchestrator.md
+    file: core/openagent.md
     type: primary
     description: "Primary orchestration agent for roninmemory - coordinates memory-aware workflows across all domains"
     capabilities:
@@ -27,7 +27,7 @@ primary:
 
   - id: memory-architect
     name: MemoryArchitect
-    file: MemoryArchitect.md
+    file: core/opencoder.md
     type: primary
     description: "Architectural agent for roninmemory - designs memory-aware solutions and coordinates complex implementations"
     capabilities:

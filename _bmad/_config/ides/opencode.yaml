@@ -19,8 +19,6 @@ configuration:
     memory_partition_key: group_id
     global_partition_key: global-coding-skills
   source_of_truth:
-    ai_guidelines: AI-GUIDELINES.md
-    documentation_hierarchy: _bmad-output/planning-artifacts/source-of-truth.md
     runtime_registry: .opencode/config/agent-metadata.json
     memory_contract: .opencode/config/memory-contract.md
     bmad_help: _bmad/_config/bmad-help.csv

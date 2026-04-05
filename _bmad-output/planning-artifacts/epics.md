@@ -171,7 +171,7 @@
 
 ## Epic 2: Multi-Organization Plugin Architecture
 
-**Status:** `completed`
+**Status:** `planned`
 **Priority:** P1
 **Goal:** Enable Allura to run on multiple agent platforms.
 

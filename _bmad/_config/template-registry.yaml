@@ -1,0 +1,256 @@
+# BMad Template Registry
+# Aligned with AI-GUIDELINES.md and templates/ directory
+# Version: 6.3.0 (Hive Mind Compatible)
+
+metadata:
+  version: "6.3.0"
+  created: "2026-04-05"
+  alignment: "AI-GUIDELINES.md v2026-04-04"
+  hive_mind_enabled: true
+
+# Template Paths - Canonical Sources
+templates:
+  project:
+    path: "{project-root}/templates/PROJECT.template.md"
+    description: "Single cohesive document template (6 sections)"
+    sections:
+      - "1. Blueprint (Core Concepts & Scope)"
+      - "2. Requirements Matrix"
+      - "3. Solution Architecture"
+      - "4. Data Dictionary"
+      - "5. Risks and Decisions"
+      - "6. Implementation Tasks"
+    used_by:
+      - "bmad-create-prd"
+      - "bmad-init"
+    
+  blueprint:
+    path: "{project-root}/templates/BLUEPRINT.template.md"
+    description: "Core concepts, entities, states, execution rules"
+    section: "1"
+    parent: "project"
+    
+  requirements_matrix:
+    path: "{project-root}/templates/REQUIREMENTS-MATRIX.template.md"
+    description: "Business (B#) and Functional (F#) requirements"
+    section: "2"
+    parent: "project"
+    
+  solution_architecture:
+    path: "{project-root}/templates/SOLUTION-ARCHITECTURE.template.md"
+    description: "Mermaid diagrams, component topology, execution flow"
+    section: "3"
+    parent: "project"
+    
+  data_dictionary:
+    path: "{project-root}/templates/DATA-DICTIONARY.template.md"
+    description: "Table schemas, field definitions, relationships"
+    section: "4"
+    parent: "project"
+    
+  risks_and_decisions:
+    path: "{project-root}/templates/RISKS-AND-DECISIONS.template.md"
+    description: "Architectural Decisions (AD-##) and Risks (RK-##)"
+    section: "5"
+    parent: "project"
+
+# AI Disclosure Template
+ai_disclosure:
+  required: true
+  template: |
+    > [!NOTE]
+    > **AI-Assisted Documentation**
+    > Portions of this document were drafted with the assistance of an AI language model (GitHub Copilot).
+    > Content has not yet been fully reviewed — this is a working design reference, not a final specification.
+    > AI-generated content may contain inaccuracies or omissions.
+    > When in doubt, defer to the source code, JSON schemas, and team consensus.
+  
+  removal_conditions:
+    - "Full human review completed"
+    - "Signed off in PR description"
+    - "All cross-references validated"
+
+# Document Hierarchy (Canon)
+document_hierarchy:
+  precedence:
+    - level: 1
+      source: "Notion — Allura Memory Control Center"
+      scope: "Product vision, priorities"
+      control: "Product Owner"
+      
+    - level: 2
+      source: "_bmad-output/planning-artifacts/"
+      scope: "Implementation canon"
+      control: "BMad + Human curation"
+      
+    - level: 3
+      source: "_bmad-output/implementation-artifacts/"
+      scope: "Sprint stories, tech specs"
+      control: "BMad workflows"
+      
+    - level: 4
+      source: "docs/_archive/"
+      scope: "Historical reference"
+      control: "Read-only"
+      
+    - level: 5
+      source: "memory-bank/"
+      scope: "Session context, working memory"
+      control: "Session-only, not canon"
+
+# Naming Conventions
+naming_conventions:
+  tenant_namespace:
+    standard: "allura-*"
+    examples:
+      - "allura-faith-meats"
+      - "allura-creative"
+      - "allura-personal"
+      - "allura-nonprofit"
+      - "allura-audits"
+      - "allura-haccp"
+    deprecated: "roninclaw-*"
+    drift_detection: true
+    
+  document_naming:
+    pattern: "PROJECT.md"
+    location: "docs/<project-name>/PROJECT.md"
+    alternatives: null  # Single document enforced
+
+# Output Paths
+output_paths:
+  planning_artifacts: "{project-root}/_bmad-output/planning-artifacts"
+  implementation_artifacts: "{project-root}/_bmad-output/implementation-artifacts"
+  project_docs: "{project-root}/docs/<project-name>/PROJECT.md"
+  archive: "{project-root}/docs/_archive/{date}/"
+
+# BMad Skill Configuration
+bmad_skills:
+  bmad-create-prd:
+    output_mode: "append"  # Append to PROJECT.md, not create separate file
+    target_section: "2"     # Requirements Matrix
+    template: "requirements_matrix"
+    ai_disclosure: true
+    
+  bmad-create-architecture:
+    output_mode: "append"
+    target_sections: ["1", "3"]  # Blueprint + Architecture
+    templates: ["blueprint", "solution_architecture"]
+    ai_disclosure: true
+    
+  bmad-create-epics-and-stories:
+    output_mode: "append"
+    target_section: "6"     # Implementation Tasks
+    template: "project"      # Uses task section from PROJECT.md
+    ai_disclosure: true
+    
+  bmad-init:
+    output_mode: "create"
+    target: "project"       # Create full PROJECT.md from template
+    templates: ["project"]
+    ai_disclosure: true
+    
+  bmad-validate-prd:
+    validation_rules:
+      - "All 6 sections present"
+      - "AI disclosure present"
+      - "B# requirements trace to F#"
+      - "AD-## decisions have status"
+      - "Mermaid diagrams valid"
+      - "Cross-references resolve"
+
+# Integration with Hive Mind
+hive_mind:
+  auto_hydrate: true
+  check_prior_attempts: true
+  log_outcomes: true
+  update_skills: true
+  
+  queries:
+    postgres: |
+      SELECT event_type, context, timestamp 
+      FROM events 
+      WHERE context ILIKE '%template%' 
+      OR context ILIKE '%standardization%'
+      ORDER BY timestamp DESC LIMIT 50;
+      
+    neo4j: |
+      MATCH (n)
+      WHERE n.name CONTAINS 'template' 
+      OR n.name CONTAINS 'standardization'
+      OR n.name CONTAINS 'documentation'
+      RETURN n LIMIT 30;
+
+# Migration Settings
+migration:
+  from_legacy:
+    enabled: true
+    source_pattern: "_bmad-output/planning-artifacts/*.md"
+    target: "docs/<project-name>/PROJECT.md"
+    archive_superseded: true
+    
+  consolidation:
+    fragments:
+      - source: "prd-v2.md"
+        target_section: "2 Requirements Matrix"
+      - source: "architectural-brief.md"
+        target_section: "1 Blueprint and 3 Architecture"
+      - source: "architectural-decisions.md"
+        target_section: "5 Risks and Decisions"
+      - source: "requirements-matrix.md"
+        target_section: "2 Requirements Matrix"
+      - source: "data-dictionary.md"
+        target_section: "4 Data Dictionary"
+      - source: "solution-architecture.md"
+        target_section: "3 Solution Architecture"
+      - source: "epics.md"
+        target_section: "6 Implementation Tasks"
+
+# Validation Rules
+validation:
+  project_md:
+    required_sections: 6
+    max_length: 10000  # lines
+    required_headers:
+      - "## 1. Blueprint"
+      - "## 2. Requirements Matrix"
+      - "## 3. Solution Architecture"
+      - "## 4. Data Dictionary"
+      - "## 5. Risks and Decisions"
+      - "## 6. Implementation Tasks"
+    
+  naming:
+    enforce_allura_prefix: true
+    reject_deprecated: true
+    
+  ai_disclosure:
+    required: true
+    position: "after title, before content"
+    content_match: "AI-Assisted Documentation"
+
+# Drift Detection
+drift_detection:
+  enabled: true
+  patterns:
+    - pattern: "roninclaw-"
+      severity: "error"
+      message: "Legacy tenant naming detected. Use 'allura-*' namespace."
+      
+    - pattern: "3-layer architecture"
+      severity: "warning"
+      message: "Deprecated architecture reference. Use 5-layer RuVix model."
+      
+    - pattern: "bmad-output/"
+      severity: "error"
+      message: "Legacy output path. Use '_bmad-output/' prefix."
+
+# Auto-Improvement Settings
+auto_improvement:
+  enabled: true
+  log_patterns: true
+  create_skills_from_patterns: true
+  update_registry_from_usage: true
+  
+  thresholds:
+    pattern_repetition: 3  # Create skill after 3 repetitions
+    skill_update_frequency: "weekly"

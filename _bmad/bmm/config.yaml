@@ -9,7 +9,3 @@ user_name: Sabir Asheed
 communication_language: English
 document_output_language: English
 output_folder: "{project-root}/_bmad-output"
-
-# Documentation Standards
-ai_guidelines: "AI-GUIDELINES.md"
-documentation_template: "templates/PROJECT.template.md"

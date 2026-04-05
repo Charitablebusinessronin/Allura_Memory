@@ -1,7 +1,7 @@
 ---
 name: MemoryArchitect
 tier: agent
-group_id: allura-roninmemory
+group_id: roninmemory-system
 behavior_intent: System design, ADRs, memory-aware architecture
 behavior_lock: ""
 memory_bootstrap: true
