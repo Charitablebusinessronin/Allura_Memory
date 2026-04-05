@@ -1,0 +1,117 @@
+{
+  "iteration": 1,
+  "max_iterations": 0,
+  "completion_promise": "",
+  "prompt": "Build the full Allura documentation-to-readiness pipeline in plan-first mode.
+
+Rules:
+- Read-only until implementation is explicitly approved
+- Use superpowers skills before each applicable phase
+- Do not scaffold code or edit files in planning iterations
+- Prioritize groupIdEnforcer and kernel governance before workspace rollout
+
+Iteration goals:
+
+Phase 1: Foundation
+- Use bmad-help to confirm workflow order
+- Use brainstorming to refine the documentation system shape
+- Use multi-search and context7 to validate architecture assumptions
+- Produce the shared foundation plan:
+  - canonical stack
+  - three-layer persistence model
+  - group_id governance
+  - OpenCode vs OpenClaw plugin architecture
+  - agent contract model
+  - trust tiers and HITL model
+
+Phase 2: Kernel readiness
+- Use brainstorming if design questions remain
+- Use writing-plans to create the execution plan for:
+  - groupIdEnforcer.ts
+  - WorkflowState model
+  - permission contract layer
+  - budget guard
+  - verification suite
+- Define dev-story readiness criteria for kernel work
+
+Phase 3: Brownfield planning flow
+- Use wds-8-product-evolution for:
+  - analyze-product
+  - scope-improvement
+  - design-solution
+- Apply this as the brownfield wrapper around the Allura platform and each workspace where relevant
+
+Phase 4: Shared documentation standard
+- Plan the master templates and validation checklists for:
+  - BRD/PRD
+  - epics
+  - dev stories
+  - plugin specs
+  - readiness reports
+  - cross-doc consistency review
+
+Phase 5: Workspace tracks
+- For each workspace, in order:
+  1. Faith Meats
+  2. Personal Assistant
+  3. Creative Studio
+  4. Nonprofit
+  5. HACCP
+  6. Bank Auditing
+- Use:
+  - bmad-create-prd
+  - bmad-validate-prd
+  - bmad-create-epics-and-stories
+  - bmad-create-story
+  - bmad-check-implementation-readiness
+  - bmad-create-architecture when non-trivial
+- For each workspace, define:
+  - required docs
+  - plugin dependencies
+  - compliance requirements
+  - acceptance/test scenarios
+  - readiness status
+
+Phase 6: Plugin track
+- Plan these plugins in order:
+  1. group-id-enforcer
+  2. personal-email-calendar
+  3. faith-meats-shopify-sync
+  4. creative-branding-agent
+  5. nonprofit-grant-writer
+  6. audit-bank-haccp
+- For each plugin define:
+  - runtime
+  - manifest/schema
+  - group_id
+  - trust tier
+  - permissions
+  - HITL requirements
+  - validation/tests
+
+Phase 7: Final readiness
+- Produce a final readiness matrix showing:
+  - done
+  - blocked
+  - missing docs
+  - dev-story-ready items
+  - non-ready items with reasons
+
+Required superpowers skill usage:
+- bmad-help
+- brainstorming
+- multi-search
+- context7
+- writing-plans
+- wds-8-product-evolution
+- bmad-create-prd
+- bmad-validate-prd
+- bmad-create-epics-and-stories
+- bmad-create-story
+- bmad-check-implementation-readiness
+- bmad-create-architecture
+
+Completion condition:
+- A complete plan exists for the shared foundation, kernel readiness, six workspace tracks, plugin track, and final readiness matrix, with exact workflow order and expected outputs, but no code or files have been modified unless implementation is explicitly approved later.",
+  "created_at": "2026-04-04T07:40:54-04:00"
+}

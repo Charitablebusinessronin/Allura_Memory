@@ -87,7 +87,7 @@ mcp__MCP_DOCKER__create_entities({
     name: "Debug Session " + new Date().toISOString(),
     type: "Episode",
     observations: [
-      "group_id: roninmemory",
+      "group_id: allura-roninmemory",
       "issue: $ARGUMENTS",
       "root_cause: [what caused it]",
       "fix: [what fixed it]",

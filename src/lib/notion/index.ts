@@ -64,22 +64,3 @@ export {
   type DesignPageTemplate,
   type PageTemplateConfig,
 } from "./templates";
-
-export {
-  syncTraceToNotion,
-  getSyncStatus,
-  markAsReviewed,
-  promoteFromNotion,
-  getSyncStatusCounts,
-  rejectSync,
-  NotionSyncValidationError,
-  DEFAULT_NOTION_DATABASE_ID,
-  type SyncStatus,
-  type SyncStatusRecord,
-  type SyncToNotionParams,
-  type SyncToNotionResult,
-  type GetSyncStatusParams,
-  type MarkAsReviewedParams,
-  type PromoteFromNotionParams,
-  type PromoteFromNotionResult,
-} from "./sync-workflow";

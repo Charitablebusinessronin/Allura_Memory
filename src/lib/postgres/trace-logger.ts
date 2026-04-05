@@ -1,9 +1,8 @@
 /**
  * Trace Logger - Unified PostgreSQL Trace Logging with Agent Attribution
- * Story 1.1: Record Raw Execution Traces with ARCH-001 Integration
  * 
  * Provides structured logging for agent execution traces with:
- * - Group ID enforcement via validateTenantGroupId (RK-01 tenant isolation)
+ * - Group ID enforcement for multi-tenant isolation
  * - Agent attribution for accountability
  * - Confidence scoring for knowledge promotion decisions
  * - Event type classification for filtering
@@ -12,8 +11,11 @@
 import type { Pool } from "pg";
 import { getPool } from "./connection";
 import { insertEvent, type EventInsert, type EventRecord } from "./queries/insert-trace";
-import { validateTenantGroupId, TENANT_ERROR_CODE } from "../validation/tenant-group-id";
-import { GroupIdValidationError } from "../validation/group-id";
+import { RuVixKernel } from "@/kernel/ruvix";
+import type { QueryTracesOptions, QueryTracesResult } from "./types";
+
+// Re-export types for backward compatibility
+export type { QueryTracesOptions, QueryTracesResult } from "./types";
 
 /**
  * Trace types for classification
@@ -66,11 +68,8 @@ export interface TraceRecord {
 
 /**
  * Validation error for invalid trace payloads
- * RK-01: Tenant Isolation Violation
  */
 export class TraceValidationError extends Error {
-  public readonly code: string = TENANT_ERROR_CODE;
-  
   constructor(message: string) {
     super(message);
     this.name = "TraceValidationError";
@@ -80,23 +79,18 @@ export class TraceValidationError extends Error {
 /**
  * Validate trace log payload
  * Ensures all required fields are present and values are valid
- * RK-01: Enforces allura-{org} naming convention for tenant isolation
  */
 function validateTraceLog(trace: TraceLog): void {
   const errors: string[] = [];
 
-  // Group ID validation - RK-01: Enforce allura-{org} naming convention
-  // Using validateTenantGroupId from ARCH-001
-  try {
-    validateTenantGroupId(trace.group_id);
-  } catch (error) {
-    if (error instanceof GroupIdValidationError) {
-      // Re-throw with RK-01 code included
-      throw new TraceValidationError(
-        `RK-01: ${error.message}`
-      );
-    }
-    throw error;
+  // Group ID validation (Allura tenant naming convention)
+  if (!trace.group_id || trace.group_id.trim().length === 0) {
+    errors.push("group_id is required and cannot be empty");
+  } else if (!trace.group_id.startsWith("allura-")) {
+    // Warn but allow - some legacy groups may not follow convention
+    console.warn(
+      `[TraceLogger] group_id '${trace.group_id}' does not follow 'allura-*' naming convention`
+    );
   }
 
   // Agent ID validation
@@ -125,29 +119,60 @@ function validateTraceLog(trace: TraceLog): void {
   }
 
   if (errors.length > 0) {
-    throw new TraceValidationError(`RK-01: Trace validation failed: ${errors.join("; ")}`);
+    throw new TraceValidationError(`Trace validation failed: ${errors.join("; ")}`);
   }
 }
 
 /**
- * Log a trace to PostgreSQL
+ * Log a trace via RuVix kernel (proof-gated, append-only)
  * 
- * Creates an append-only trace record with:
- * - Agent attribution (who generated this trace?)
- * - Group isolation (which tenant does this belong to?)
- * - Confidence scoring (how confident is this insight?)
- * - Event classification (what type of trace is this?)
+ * Story 1.1: This is the NEW implementation using the kernel for:
+ * - Proof-of-intent validation (with nonce)
+ * - Tenant isolation enforcement (POL-001)
+ * - Audit trail requirements (POL-005)
+ * - Append-only semantics
  * 
  * @param trace - Trace payload to log
  * @returns The created trace record with assigned ID
  * @throws TraceValidationError if required fields are missing or invalid
+ * @throws Error if kernel syscall fails
  */
 export async function logTrace(trace: TraceLog): Promise<TraceRecord> {
-  // Validate required fields
+  // Validate required fields first
   validateTraceLog(trace);
 
+  // Prepare trace data for kernel
+  const traceData = {
+    table: "events",
+    data: {
+      agent_id: trace.agent_id,
+      trace_type: trace.trace_type,
+      content: trace.content,
+      confidence: trace.confidence,
+      workflow_id: trace.workflow_id,
+      step_id: trace.step_id,
+      parent_event_id: trace.parent_event_id,
+      metadata: trace.metadata,
+      outcome: trace.outcome,
+    },
+  };
+
+  // Call kernel trace syscall with proof-of-intent
+  const result = await RuVixKernel.syscall("trace", traceData, {
+    actor: trace.agent_id,
+    group_id: trace.group_id,
+    permission_tier: "plugin",
+    audit_context: {
+      trace_type: trace.trace_type,
+      content_preview: trace.content.slice(0, 100), // First 100 chars for audit
+    },
+  });
+
+  if (!result.success) {
+    throw new TraceValidationError(`Trace logging failed: ${result.error}`);
+  }
+
   // Map trace_type to event_type for PostgreSQL schema
-  // The events table uses 'event_type' but we expose 'trace_type' for clarity
   const event_type = `trace.${trace.trace_type}`;
 
   // Build structured metadata with confidence embedded
@@ -155,7 +180,8 @@ export async function logTrace(trace: TraceLog): Promise<TraceRecord> {
     ...trace.metadata,
     confidence: trace.confidence,
     logged_at: new Date().toISOString(),
-    agent_version: "1.0.0", // Could be extended to track agent versions
+    agent_version: "1.0.0",
+    kernel_audit_id: result.auditId, // Track kernel audit ID
   };
 
   // Build outcome with content
@@ -174,7 +200,7 @@ export async function logTrace(trace: TraceLog): Promise<TraceRecord> {
     parent_event_id: trace.parent_event_id,
     metadata,
     outcome,
-    status: "completed", // Traces are logged as completed events
+    status: "completed",
   };
 
   // Insert into PostgreSQL
@@ -205,31 +231,19 @@ export async function logTrace(trace: TraceLog): Promise<TraceRecord> {
  * - Debugging agent behavior
  * - Understanding agent contribution patterns
  * 
- * RK-01: Enforces tenant isolation via validateTenantGroupId
- * 
  * @param agentId - Agent identifier to query
- * @param group_id - Tenant isolation - REQUIRED (must match allura-{org} pattern)
+ * @param group_id - Tenant isolation - REQUIRED
  * @param limit - Maximum number of traces to return (default: 10)
  * @returns Array of trace records, ordered by created_at DESC
- * @throws TraceValidationError (RK-01) if group_id is invalid
  */
 export async function getTracesByAgent(
   agentId: string,
   group_id: string,
   limit: number = 10
 ): Promise<TraceRecord[]> {
-  // RK-01: Validate group_id with tenant naming enforcement
-  try {
-    validateTenantGroupId(group_id);
-  } catch (error) {
-    if (error instanceof GroupIdValidationError) {
-      throw new TraceValidationError(`RK-01: ${error.message}`);
-    }
-    throw error;
-  }
-
-  if (!agentId || agentId.trim().length === 0) {
-    throw new TraceValidationError("RK-01: agent_id is required for trace queries");
+  // Enforce group_id
+  if (!group_id || group_id.trim().length === 0) {
+    throw new TraceValidationError("group_id is required for all trace queries");
   }
 
   const pool = getPool();
@@ -269,27 +283,19 @@ export async function getTracesByAgent(
  * - Analyzing decision patterns
  * - Extracting learning moments
  * 
- * RK-01: Enforces tenant isolation via validateTenantGroupId
- * 
  * @param trace_type - Trace type to filter by
- * @param group_id - Tenant isolation - REQUIRED (must match allura-{org} pattern)
+ * @param group_id - Tenant isolation - REQUIRED
  * @param limit - Maximum number of traces to return (default: 10)
  * @returns Array of trace records matching the type
- * @throws TraceValidationError (RK-01) if group_id is invalid
  */
 export async function getTracesByType(
   trace_type: TraceType,
   group_id: string,
   limit: number = 10
 ): Promise<TraceRecord[]> {
-  // RK-01: Validate group_id with tenant naming enforcement
-  try {
-    validateTenantGroupId(group_id);
-  } catch (error) {
-    if (error instanceof GroupIdValidationError) {
-      throw new TraceValidationError(`RK-01: ${error.message}`);
-    }
-    throw error;
+  // Enforce group_id
+  if (!group_id || group_id.trim().length === 0) {
+    throw new TraceValidationError("group_id is required for all trace queries");
   }
 
   const pool = getPool();
@@ -329,25 +335,17 @@ export async function getTracesByType(
  * 
  * Retrieves a specific trace by its ID, enforcing tenant isolation.
  * 
- * RK-01: Enforces tenant isolation via validateTenantGroupId
- * 
  * @param id - Trace ID
- * @param group_id - Tenant isolation - REQUIRED (must match allura-{org} pattern)
+ * @param group_id - Tenant isolation - REQUIRED
  * @returns Trace record if found, null otherwise
- * @throws TraceValidationError (RK-01) if group_id is invalid
  */
 export async function getTraceById(
   id: number,
   group_id: string
 ): Promise<TraceRecord | null> {
-  // RK-01: Validate group_id with tenant naming enforcement
-  try {
-    validateTenantGroupId(group_id);
-  } catch (error) {
-    if (error instanceof GroupIdValidationError) {
-      throw new TraceValidationError(`RK-01: ${error.message}`);
-    }
-    throw error;
+  // Enforce group_id
+  if (!group_id || group_id.trim().length === 0) {
+    throw new TraceValidationError("group_id is required for all trace queries");
   }
 
   const pool = getPool();
@@ -382,21 +380,13 @@ export async function getTraceById(
  * 
  * Useful for analytics and monitoring.
  * 
- * RK-01: Enforces tenant isolation via validateTenantGroupId
- * 
- * @param group_id - Tenant isolation - REQUIRED (must match allura-{org} pattern)
+ * @param group_id - Tenant isolation - REQUIRED
  * @returns Number of traces in the group
- * @throws TraceValidationError (RK-01) if group_id is invalid
  */
 export async function countTraces(group_id: string): Promise<number> {
-  // RK-01: Validate group_id with tenant naming enforcement
-  try {
-    validateTenantGroupId(group_id);
-  } catch (error) {
-    if (error instanceof GroupIdValidationError) {
-      throw new TraceValidationError(`RK-01: ${error.message}`);
-    }
-    throw error;
+  // Enforce group_id
+  if (!group_id || group_id.trim().length === 0) {
+    throw new TraceValidationError("group_id is required for all trace queries");
   }
 
   const pool = getPool();
@@ -412,3 +402,4 @@ export async function countTraces(group_id: string): Promise<number> {
 
   return parseInt(result.rows[0].count, 10);
 }
+

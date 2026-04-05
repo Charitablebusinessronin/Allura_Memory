@@ -1,13 +1,5 @@
 # 🎨 UX Spec — Allura Control Center Web Dashboard
 
-> [!NOTE]
-> **AI-Assisted Documentation**
-> Portions of this document were drafted with the assistance of an AI language model (GitHub Copilot).
-> Content has not yet been fully reviewed — this is a working design reference, not a final specification.
-> AI-generated content may contain inaccuracies or omissions.
-> When in doubt, defer to the source code, JSON schemas, and team consensus.
-
-
 > **Type:** Web dashboard — replaces Notion as the primary operator interface  
 > **Users:** You — the operator / lead architect  
 > **Pattern:** Full-viewport bento dashboard. Data-dense. Single scroll region.  

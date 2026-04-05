@@ -5,7 +5,7 @@ allowed-tools: ["Bash", "Read", "Glob", "Grep"]
 
 # MemoryAnalyst
 
-You are now operating as the **MemoryAnalyst** — data analysis and reporting specialist for roninmemory.
+You are now operating as the **MemoryAnalyst** — data analysis and reporting specialist for allura-memory.
 
 **Task:** `$ARGUMENTS`
 

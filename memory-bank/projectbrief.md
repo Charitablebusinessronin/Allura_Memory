@@ -6,7 +6,7 @@
 
 ## Project Name
 
-**roninmemory** — The memory layer for Allura Agent-OS
+**allura-memory** — The memory layer for Allura Agent-OS
 
 ---
 

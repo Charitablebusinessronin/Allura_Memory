@@ -1,5 +1,5 @@
 {
-  "name": "memory",
+  "name": "allura-memory",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,6 +10,10 @@
     "test": "bun vitest run",
     "test:watch": "bun vitest",
     "test:e2e": "RUN_E2E_TESTS=true bun vitest run src/__tests__/e2e-integration.test.ts",
+    "test:mcp:browser": "bun scripts/test-mcp-browser.ts",
+    "test:mcp:browser:update": "bun scripts/test-mcp-browser.ts --update",
+    "test:mcp:browser:verbose": "bun scripts/test-mcp-browser.ts --verbose",
+    "test:all": "bun run typecheck && bun run lint && bun test && bun run test:e2e && bun run test:mcp:browser",
     "benchmark": "bun scripts/benchmark.js --events=1000 --batch=100",
     "docs": "bun scripts/generate-docs.js",
     "lint": "bun next lint",
@@ -25,7 +29,8 @@
     "session:init": "bun run scripts/session-init.ts",
     "registry:sync": "bun run scripts/opencode-registry/sync.ts",
     "registry:dry-run": "bun run scripts/opencode-registry/sync.ts --dry-run",
-    "registry:log-audit": "bun run scripts/opencode-registry/log-audit.ts"
+    "registry:log-audit": "bun run scripts/opencode-registry/log-audit.ts",
+    "registry:drift": "bun run scripts/drift-detection.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0-beta.4",
@@ -64,7 +69,6 @@
     "zustand": "^5.0.6"
   },
   "devDependencies": {
-    "@playwright/test": "^1.59.1",
     "@types/dockerode": "^4.0.1",
     "@types/glob": "^9.0.0",
     "@types/node": "^24.3.0",

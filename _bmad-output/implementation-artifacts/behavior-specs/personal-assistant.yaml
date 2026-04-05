@@ -1,0 +1,51 @@
+# BehaviorSpec: Personal Assistant Workspace
+# Workspace: allura-personal
+# Priority: P2
+# Type: For-profit
+
+behavior:
+  intent:
+    id: personal-assistant-v1
+    name: Personal Assistant Agent
+    description: Daily operations, scheduling, and personal productivity
+    privilege_class: for-profit
+    
+  capability_surface:
+    authorized_tools:
+      - calendar_manage
+      - task_create
+      - reminder_set
+      - memory_query
+      - memory_log
+      - email_draft
+    
+    out_of_scope:
+      - financial_transfers
+      - legal_decisions
+      - cross_tenant_access
+    
+  memory_contract:
+    required_fields:
+      - group_id: allura-personal
+      - session_id
+      - agent_id
+    storage_policy:
+      raw_traces: postgresql
+      curated_knowledge: neo4j
+      versioning: steel_frame
+    
+  governance:
+    hitl_required: false
+    approval_workflow: null
+    promotion_threshold: 0.7
+    
+  runtime_constraints:
+    max_parallel_agents: 2
+    approval_gate: optional
+
+behavior.lock:
+  version: "1.0.0"
+  checksum: sha256:personal-assistant-checksum
+  approved_by: system
+  approved_at: "2026-04-05T00:00:00Z"
+  immutable: true

@@ -74,22 +74,7 @@ This rule is the architectural invariant that applies across all documentation:
 | `requirements-matrix.md` | ✅ Canonical | B1–B16 + F1–F33 traceability (promoted from archive) |
 | `epics.md` | ✅ Canonical | Epic and story definitions |
 | `tenant-memory-boundary-spec.md` | ✅ Canonical | Tenant isolation, audit, promotion rules |
-| `agent-primitives.md` | ✅ Canonical | 12 Agent Primitives specification |
 | `README.md` | ✅ Canonical | Index |
-
-### Cohesive Project Documents (`docs/<project-name>/`)
-
-**RULE (AI-GUIDELINES.md Section 2): ONE cohesive PROJECT.md per project. No exceptions.**
-
-| File | Status | Purpose |
-|------|--------|---------|
-| `docs/allura-agent-os/PROJECT.md` | ✅ Canonical | **ONLY** document in project folder per AI-GUIDELINES.md |
-| `docs/<project-name>/PROJECT.md` | 🔄 Strict Standard | ONE document with 6 sections. Supporting content → database |
-
-**Superseded Documents (Content → Database):**
-- BMAD-TEMPLATE-ALIGNMENT.md → PROJECT.md Appendix A + PostgreSQL
-- BMAD-TRANSFORMATION-SUMMARY.md → PROJECT.md Appendix A + PostgreSQL
-- SESSION-COMPLETION-REPORT.md → memory-bank + PostgreSQL events
 
 ### Implementation Artifacts (`_bmad-output/implementation-artifacts/`)
 
@@ -97,10 +82,8 @@ This rule is the architectural invariant that applies across all documentation:
 |------|--------|---------|
 | `ARCH-001-rk01-fix.md` | ✅ Canonical | RK-01 groupIdEnforcer fix spec |
 | `sprint-status.yaml` | ✅ Canonical | Sprint tracker — all epics and stories |
-| `solution-architecture.md` | ⚠️ Superseded | Merged into `docs/allura-agent-os/PROJECT.md` §3 |
-| `data-dictionary.md` | ⚠️ Superseded | Merged into `docs/allura-agent-os/PROJECT.md` §4 |
-| `workflow-state-spec.md` | ✅ Canonical | Crash-safe agent state machine spec |
-| `behavior-specs/*.yaml` | ✅ Canonical | Workspace BehaviorSpec definitions (6 workspaces) |
+| `solution-architecture.md` | ✅ Canonical | Mermaid diagrams, component topology, API surface (promoted from archive) |
+| `data-dictionary.md` | ✅ Canonical | Full PG + Neo4j schema definitions (promoted from archive) |
 | `postgres-notion-trace-sync.md` | ✅ Canonical | Postgres → Notion trace sync spec |
 | `payload-schema.md` | ✅ Canonical | Payload CMS schema definitions |
 | `opencode-plugin-spec.md` | ✅ Canonical | OpenCode plugin specification |

@@ -32,15 +32,6 @@ export {
   validateInsightForPromotion,
 } from "./knowledge-promotion";
 
-// MCP Wrapper (Story 1.7)
-export {
-  memory,
-  type Entity,
-  type Relationship,
-  type QueryResult,
-  type SearchResult,
-} from "./mcp-wrapper";
-
 // Convenience re-exports
 export {
   buildTopicKey,
