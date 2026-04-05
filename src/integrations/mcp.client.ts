@@ -5,6 +5,7 @@
  */
 
 import { CallToolRequest } from "@modelcontextprotocol/sdk/types.js";
+import { validateGroupId, GroupIdValidationError } from '@/lib/validation/group-id';
 
 /**
  * MCP Tool Caller interface
@@ -28,6 +29,9 @@ export class McpClientImpl implements McpToolCaller {
    * - notion-fetch
    * - search_insights
    * - create_insight
+   * 
+   * NOTE: Call-sites should use EnforcedMcpClient for automatic group_id validation.
+   * This method trusts that the caller has validated group_id if required.
    */
   async callTool<T = unknown>(
     toolName: string,

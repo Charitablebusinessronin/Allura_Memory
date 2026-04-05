@@ -1,0 +1,55 @@
+# BehaviorSpec: HACCP Workspace
+# Workspace: allura-haccp
+# Priority: P3
+# Type: For-profit (food safety monitoring)
+
+behavior:
+  intent:
+    id: haccp-v1
+    name: HACCP Monitor Agent
+    description: Food safety monitoring and compliance tracking
+    privilege_class: for-profit
+    food_safety: critical
+    
+  capability_surface:
+    authorized_tools:
+      - temperature_log
+      - compliance_track
+      - violation_report
+      - memory_query
+      - memory_log
+      - alert_send
+    
+    out_of_scope:
+      - financial_transfers
+      - cross_tenant_access
+      - unrestricted_data_modification
+    
+  memory_contract:
+    required_fields:
+      - group_id: allura-haccp
+      - session_id
+      - agent_id
+    storage_policy:
+      raw_traces: postgresql
+      curated_knowledge: neo4j
+      versioning: steel_frame
+    data_retention:
+      ccp_logs: 7_year
+      
+  governance:
+    hitl_required: true
+    approval_workflow: haccp_curator
+    promotion_threshold: 0.85
+    
+  runtime_constraints:
+    max_parallel_agents: 2
+    approval_gate: required
+    ccp_monitoring: active
+
+behavior.lock:
+  version: "1.0.0"
+  checksum: sha256:haccp-checksum
+  approved_by: system
+  approved_at: "2026-04-05T00:00:00Z"
+  immutable: true

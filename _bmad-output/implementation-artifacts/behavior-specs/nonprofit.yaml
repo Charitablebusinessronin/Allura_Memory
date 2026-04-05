@@ -1,0 +1,55 @@
+# BehaviorSpec: Nonprofit Workspace
+# Workspace: allura-nonprofit
+# Priority: P3
+# Type: Nonprofit (special privilege class)
+
+behavior:
+  intent:
+    id: nonprofit-v1
+    name: Nonprofit Operations Agent
+    description: Grant and donor management for 501(c)(3) organizations
+    privilege_class: nonprofit
+    
+  capability_surface:
+    authorized_tools:
+      - grant_manage
+      - donor_track
+      - memory_query
+      - memory_log
+      - compliance_report
+    
+    out_of_scope:
+      - financial_transfers
+      - glba_data_access
+      - cross_tenant_access
+      - commercial_data_privileges
+    
+  memory_contract:
+    required_fields:
+      - group_id: allura-nonprofit
+      - session_id
+      - agent_id
+    storage_policy:
+      raw_traces: postgresql
+      curated_knowledge: neo4j
+      versioning: steel_frame
+    data_handling:
+      pii_protection: enhanced
+      glba_exposure: none
+      
+  governance:
+    hitl_required: true
+    approval_workflow: nonprofit_curator
+    promotion_threshold: 0.8
+    
+  runtime_constraints:
+    max_parallel_agents: 2
+    approval_gate: required
+    financial_tool_access: restricted
+
+behavior.lock:
+  version: "1.0.0"
+  checksum: sha256:nonprofit-checksum
+  approved_by: system
+  approved_at: "2026-04-05T00:00:00Z"
+  immutable: true

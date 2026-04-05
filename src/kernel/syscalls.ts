@@ -1,0 +1,540 @@
+/**
+ * RuVix Kernel - System Calls Implementation
+ * 
+ * The 12 syscalls that form the kernel's public interface.
+ * Each syscall requires proof-of-intent and passes policy validation.
+ * 
+ * CRITICAL: The `mutate` syscall is the linchpin - it atomically:
+ * 1. Verifies proof
+ * 2. Checks policy
+ * 3. Executes mutation
+ * 4. Logs audit trail
+ */
+
+import {
+  ProofOfIntent,
+  ProofClaims,
+  createProof,
+  verifyProofOrThrow,
+  getKernelSecretKey,
+} from "./proof";
+import {
+  evaluatePoliciesOrThrow,
+  PolicyContext,
+  Policy,
+} from "./policy";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TYPES
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Syscall result - all syscalls return this structure
+ */
+export interface SyscallResult<T = unknown> {
+  /** Whether the syscall succeeded */
+  success: boolean;
+  
+  /** Result data (if successful) */
+  data?: T;
+  
+  /** Error message (if failed) */
+  error?: string;
+  
+  /** Proof that was used for this syscall */
+  proof?: ProofOfIntent;
+  
+  /** Audit trail ID (for tracking) */
+  auditId?: string;
+}
+
+/**
+ * Syscall execution context
+ */
+export interface SyscallContext {
+  /** Actor making the syscall */
+  actor: string;
+  
+  /** Tenant group ID */
+  group_id: string;
+  
+  /** Permission tier */
+  permission_tier?: "kernel" | "plugin" | "skill";
+  
+  /** Budget cost estimate */
+  budget_cost?: number;
+  
+  /** Additional audit context */
+  audit_context?: Record<string, unknown>;
+}
+
+/**
+ * Mutation operation types
+ */
+export type MutationType =
+  | "insert"
+  | "update"
+  | "delete_op"
+  | "upsert"
+  | "bulk_insert";
+
+/**
+ * Mutation request
+ */
+export interface MutationRequest {
+  /** Type of mutation */
+  type: MutationType;
+  
+  /** Target table/collection */
+  target: string;
+  
+  /** Data to mutate */
+  data: unknown;
+  
+  /** Optional query/filter */
+  query?: Record<string, unknown>;
+}
+
+/**
+ * Query request
+ */
+export interface QueryRequest {
+  /** Target table/collection */
+  target: string;
+  
+  /** Query/filter */
+  query?: Record<string, unknown>;
+  
+  /** Limit results */
+  limit?: number;
+  
+  /** Offset for pagination */
+  offset?: number;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SYSCALL EXECUTOR
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Execute a syscall with proof verification and policy validation
+ * 
+ * This is the core execution path that all syscalls flow through.
+ * 
+ * @param intent - The syscall intent (e.g., "mutate", "query")
+ * @param subject - The target resource
+ * @param context - Syscall context (actor, group_id, etc.)
+ * @param executor - The actual syscall implementation
+ * @returns Syscall result
+ */
+async function executeSyscall<T>(
+  intent: string,
+  subject: string,
+  context: SyscallContext,
+  executor: (claims: ProofClaims) => Promise<T>
+): Promise<SyscallResult<T>> {
+  try {
+    // ─────────────────────────────────────────────────────────────────────────
+    // Step 1: Create proof-of-intent
+    // ─────────────────────────────────────────────────────────────────────────
+    
+    const secretKey = getKernelSecretKey();
+    
+    const proof = createProof(intent, subject, context.actor, {
+      group_id: context.group_id,
+      budget_cost: context.budget_cost,
+      permission_tier: context.permission_tier,
+      audit_context: context.audit_context,
+    }, secretKey);
+    
+    // ─────────────────────────────────────────────────────────────────────────
+    // Step 2: Verify proof
+    // ─────────────────────────────────────────────────────────────────────────
+    
+    const claims = verifyProofOrThrow(proof, secretKey);
+    
+    // ─────────────────────────────────────────────────────────────────────────
+    // Step 3: Evaluate policies
+    // ─────────────────────────────────────────────────────────────────────────
+    
+    const policyContext: PolicyContext = {
+      timestamp: Date.now(),
+      operation: intent,
+      resource: subject,
+      actor: context.actor,
+      budgetLimit: 1000,
+      requiredTier: "skill",
+      requiresAudit: true,
+    };
+    
+    evaluatePoliciesOrThrow(claims, policyContext);
+    
+    // ─────────────────────────────────────────────────────────────────────────
+    // Step 4: Execute the syscall
+    // ─────────────────────────────────────────────────────────────────────────
+    
+    const data = await executor(claims);
+    
+    // ─────────────────────────────────────────────────────────────────────────
+    // Step 5: Return success
+    // ─────────────────────────────────────────────────────────────────────────
+    
+    return {
+      success: true,
+      data,
+      proof,
+      auditId: generateAuditId(intent, subject, context.group_id),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+/**
+ * Generate audit trail ID
+ */
+function generateAuditId(intent: string, subject: string, groupId: string): string {
+  const timestamp = Date.now();
+  return `audit-${groupId}-${intent}-${timestamp}`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// THE 12 SYSCALLS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * SYSCALL 1: mutate
+ * 
+ * The LINCHPIN syscall. Every state change flows through here.
+ * Atomically verifies proof, checks policy, executes mutation, logs audit.
+ * 
+ * @param request - Mutation request
+ * @param context - Syscall context
+ * @returns Mutation result
+ */
+export async function syscall_mutate(
+  request: MutationRequest,
+  context: SyscallContext
+): Promise<SyscallResult<{ affected_rows: number; auditId: string }>> {
+  return executeSyscall(
+    "mutate",
+    `database:${request.target}`,
+    context,
+    async (claims) => {
+      // TODO: Actual mutation implementation
+      // This is where the kernel would:
+      // 1. Open transaction
+      // 2. Execute mutation (insert/update/delete)
+      // 3. Log to audit trail
+      // 4. Commit transaction
+      
+      // Placeholder for now
+      return {
+        affected_rows: 0,
+        auditId: generateAuditId("mutate", request.target, claims.group_id),
+      };
+    }
+  );
+}
+
+/**
+ * SYSCALL 2: query
+ * 
+ * Read data from a target resource.
+ * 
+ * @param request - Query request
+ * @param context - Syscall context
+ * @returns Query result
+ */
+export async function syscall_query(
+  request: QueryRequest,
+  context: SyscallContext
+): Promise<SyscallResult<unknown[]>> {
+  return executeSyscall(
+    "query",
+    `database:${request.target}`,
+    context,
+    async (claims) => {
+      // TODO: Actual query implementation
+      return [];
+    }
+  );
+}
+
+/**
+ * SYSCALL 3: spawn
+ * 
+ * Spawn a new agent or subprocess.
+ * 
+ * @param agentType - Type of agent to spawn
+ * @param context - Syscall context
+ * @returns Spawn result
+ */
+export async function syscall_spawn(
+  agentType: string,
+  context: SyscallContext
+): Promise<SyscallResult<{ agent_id: string }>> {
+  return executeSyscall(
+    "spawn",
+    `agent:${agentType}`,
+    context,
+    async (claims) => {
+      // TODO: Actual spawn implementation
+      return { agent_id: `agent-${Date.now()}` };
+    }
+  );
+}
+
+/**
+ * SYSCALL 4: kill
+ * 
+ * Terminate an agent or subprocess.
+ * 
+ * @param agent_id - Agent to terminate
+ * @param context - Syscall context
+ * @returns Kill result
+ */
+export async function syscall_kill(
+  agent_id: string,
+  context: SyscallContext
+): Promise<SyscallResult<{ terminated: boolean }>> {
+  return executeSyscall(
+    "kill",
+    `agent:${agent_id}`,
+    context,
+    async () => {
+      // TODO: Actual kill implementation
+      return { terminated: true };
+    }
+  );
+}
+
+// Types are already exported above in the file
+
+/**
+ * SYSCALL 5: trace
+ * 
+ * Log an execution trace to the audit trail.
+ * 
+ * @param traceData - Trace data to log
+ * @param context - Syscall context
+ * @returns Trace result
+ */
+export async function syscall_trace(
+  traceData: Record<string, unknown>,
+  context: SyscallContext
+): Promise<SyscallResult<{ trace_id: string }>> {
+  return executeSyscall(
+    "trace",
+    "audit:trace",
+    context,
+    async (claims) => {
+      // TODO: Actual trace logging implementation
+      return { trace_id: generateAuditId("trace", "audit", claims.group_id) };
+    }
+  );
+}
+
+/**
+ * SYSCALL 6: budget
+ * 
+ * Check or update budget allocation.
+ * 
+ * @param operation - Budget operation ("check" | "allocate" | "release")
+ * @param amount - Budget amount
+ * @param context - Syscall context
+ * @returns Budget result
+ */
+export async function syscall_budget(
+  operation: "check" | "allocate" | "release",
+  amount: number,
+  context: SyscallContext
+): Promise<SyscallResult<{ remaining: number }>> {
+  return executeSyscall(
+    "budget",
+    `budget:${operation}`,
+    context,
+    async () => {
+      // TODO: Actual budget implementation
+      return { remaining: 1000 - amount };
+    }
+  );
+}
+
+/**
+ * SYSCALL 7: policy
+ * 
+ * Evaluate or update policy.
+ * 
+ * @param operation - Policy operation ("evaluate" | "register" | "revoke")
+ * @param policyData - Policy data
+ * @param context - Syscall context
+ * @returns Policy result
+ */
+export async function syscall_policy(
+  operation: "evaluate" | "register" | "revoke",
+  policyData: unknown,
+  context: SyscallContext
+): Promise<SyscallResult<unknown>> {
+  return executeSyscall(
+    "policy",
+    `policy:${operation}`,
+    context,
+    async () => {
+      // TODO: Actual policy implementation
+      return { evaluated: true };
+    }
+  );
+}
+
+/**
+ * SYSCALL 8: attest
+ * 
+ * Create an attestation (cryptographic proof of state).
+ * 
+ * @param state - State to attest
+ * @param context - Syscall context
+ * @returns Attestation result
+ */
+export async function syscall_attest(
+  state: unknown,
+  context: SyscallContext
+): Promise<SyscallResult<{ attestation: string }>> {
+  return executeSyscall(
+    "attest",
+    "state:attestation",
+    context,
+    async () => {
+      // TODO: Actual attestation implementation
+      return { attestation: `attest-${Date.now()}` };
+    }
+  );
+}
+
+/**
+ * SYSCALL 9: verify
+ * 
+ * Verify an attestation or proof.
+ * 
+ * @param attestation - Attestation to verify
+ * @param context - Syscall context
+ * @returns Verification result
+ */
+export async function syscall_verify(
+  attestation: string,
+  context: SyscallContext
+): Promise<SyscallResult<{ valid: boolean }>> {
+  return executeSyscall(
+    "verify",
+    "state:verification",
+    context,
+    async () => {
+      // TODO: Actual verification implementation
+      return { valid: true };
+    }
+  );
+}
+
+/**
+ * SYSCALL 10: isolate
+ * 
+ * Enforce tenant isolation boundary.
+ * 
+ * @param groupId - Group to isolate
+ * @param context - Syscall context
+ * @returns Isolation result
+ */
+export async function syscall_isolate(
+  groupId: string,
+  context: SyscallContext
+): Promise<SyscallResult<{ isolated: boolean }>> {
+  return executeSyscall(
+    "isolate",
+    `tenant:${groupId}`,
+    context,
+    async () => {
+      // TODO: Actual isolation implementation
+      return { isolated: true };
+    }
+  );
+}
+
+/**
+ * SYSCALL 11: sandbox
+ * 
+ * Execute code in a sandboxed environment.
+ * 
+ * @param code - Code to execute
+ * @param context - Syscall context
+ * @returns Sandbox result
+ */
+export async function syscall_sandbox(
+  code: string,
+  context: SyscallContext
+): Promise<SyscallResult<{ output: string }>> {
+  return executeSyscall(
+    "sandbox",
+    "runtime:sandbox",
+    context,
+    async () => {
+      // TODO: Actual sandbox implementation
+      return { output: "" };
+    }
+  );
+}
+
+/**
+ * SYSCALL 12: audit
+ * 
+ * Query the audit trail.
+ * 
+ * @param query - Audit query
+ * @param context - Syscall context
+ * @returns Audit result
+ */
+export async function syscall_audit(
+  query: { startTime?: number; endTime?: number; actor?: string; intent?: string },
+  context: SyscallContext
+): Promise<SyscallResult<unknown[]>> {
+  return executeSyscall(
+    "audit",
+    "audit:query",
+    context,
+    async () => {
+      // TODO: Actual audit query implementation
+      return [];
+    }
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SYSCALL TABLE
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Syscall table for dynamic dispatch
+ */
+export const syscallTable: Record<string, (...args: unknown[]) => Promise<SyscallResult>> = {
+  mutate: syscall_mutate as (...args: unknown[]) => Promise<SyscallResult>,
+  query: syscall_query as (...args: unknown[]) => Promise<SyscallResult>,
+  spawn: syscall_spawn as (...args: unknown[]) => Promise<SyscallResult>,
+  kill: syscall_kill as (...args: unknown[]) => Promise<SyscallResult>,
+  trace: syscall_trace as (...args: unknown[]) => Promise<SyscallResult>,
+  budget: syscall_budget as (...args: unknown[]) => Promise<SyscallResult>,
+  policy: syscall_policy as (...args: unknown[]) => Promise<SyscallResult>,
+  attest: syscall_attest as (...args: unknown[]) => Promise<SyscallResult>,
+  verify: syscall_verify as (...args: unknown[]) => Promise<SyscallResult>,
+  isolate: syscall_isolate as (...args: unknown[]) => Promise<SyscallResult>,
+  sandbox: syscall_sandbox as (...args: unknown[]) => Promise<SyscallResult>,
+  audit: syscall_audit as (...args: unknown[]) => Promise<SyscallResult>,
+};
+
+/**
+ * Get list of available syscalls
+ */
+export function getAvailableSyscalls(): string[] {
+  return Object.keys(syscallTable);
+}

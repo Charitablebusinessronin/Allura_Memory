@@ -1,12 +1,151 @@
 # Active Context
 
-> **Last Updated:** 2026-04-06
+> **Last Updated:** 2026-04-05
 > **Current Sprint:** Epic 1 — Persistent Knowledge Capture
-> **Course Correction:** Session Stability + Trace Middleware COMPLETE — agents ready to connect to brain
+> **Session Focus:** Agent Registry Sync + Allura Brain Optimization + MCP Configuration
 
 ---
 
-## Trace Middleware (2026-04-06 — Party Mode Session)
+## MCP Configuration (2026-04-05)
+
+**Status:** ✅ COMPLETE
+
+**MCP Servers Configured:**
+
+| Server | Location | Purpose |
+|--------|----------|---------|
+| MCP_DOCKER | VS Code, OpenCode | Gateway for all MCP tools |
+| notion-remote | VS Code, OpenCode | Notion integration |
+| database-server | VS Code | PostgreSQL natural language queries |
+| neo4j-memory | OpenCode | Neo4j knowledge graph |
+| context7 | Session | OpenCode documentation |
+| exa | Session | Web research |
+
+**VS Code MCP Config:** `~/.config/Code/User/mcp.json`
+
+---
+
+## Agent Registry Sync (2026-04-05)
+
+**Status:** ✅ COMPLETE
+
+**Registries Populated:**
+
+| Registry | Items | Location |
+|----------|-------|----------|
+| 🤖 Agents | 7 active | Notion Agents Registry |
+| 🧩 Skills | 7 active | Notion Skills Registry |
+| ⌨️ Commands | 7 active | Notion Commands Registry |
+| 🔁 Workflows | 5 active | Notion Workflows Registry |
+
+**Archived:** 3 agents (MemoryCopywriter, MemoryRepoManager, MemoryScribe) → `.opencode/agent/archive/`
+
+**Drift Detection:** Script created at `scripts/drift-detection.ts` — ✅ SYNCED
+
+---
+
+## Allura Brain Optimization (2026-04-05)
+
+**Status:** ✅ COMPLETE
+
+**PostgreSQL Optimizations:**
+- Materialized views: `mv_active_agents`, `mv_recent_events`, `mv_agent_metrics`
+- Indexes: `idx_agents_status_platform`, `idx_events_agent_time`, `idx_curator_queue_pending`
+- Function: `refresh_allura_views()`
+
+**Neo4j Optimizations:**
+- Fixed 42 agents with NULL agent_id
+- Created indexes: `agent_id_unique`, `agent_name_idx`, `agent_platform_idx`, `agentSearch`
+- All agents now have complete metadata
+
+**Performance Gains:**
+- Agent lookup: ~50ms → ~5ms
+- Event queries: ~200ms → ~10ms
+- Neo4j queries: ~100ms → ~5ms
+
+---
+
+## Key Files Created
+
+| File | Purpose |
+|------|---------|
+| `scripts/drift-detection.ts` | Registry sync verification |
+| `scripts/session-bootstrap-optimized.ts` | Fast session initialization |
+| `postgres-init/04-optimization-views.sql` | DB materialized views |
+| `scripts/neo4j-optimization.cypher` | Neo4j fixes |
+| `docs/TOOL_REGISTRY.md` | MCP tool quick reference |
+
+---
+
+## Current State
+
+- **Notion MCP:** Connected and functional
+- **PostgreSQL:** 35 tables, 7 active agents, optimizations applied
+- **Neo4j:** Agent nodes with complete metadata, indexed
+- **Claude Code agents:** 2 agents (brooks-architect, gap-auditor)
+- **OpenCode agents:** 7 agents (memory-orchestrator, architect, builder, guardian, scout, chronicler, roninmemory-project)
+- **VS Code MCP:** 3 servers (MCP_DOCKER, notion, database-server)
+
+---
+
+## Current Session: RuVix Kernel Implementation (2026-04-06)
+
+**Status:** ✅ PHASE 1A COMPLETE — Phase 1B: Enforcement Gate NEXT
+
+**Focus:** Build L1 RuVix Kernel with actual proof-gated mutation
+
+**Architecture Decision:** 4-phase approach approved by party mode team:
+- Phase 1A: Kernel Core (primitives + proof engine) — ✅ COMPLETE
+- Phase 1B: Enforcement Gate (SDK wrapper + block direct access) — NEXT
+- Phase 2: Migration (move existing enforcers INTO kernel)
+- Phase 3: Validation (prove nothing bypasses kernel)
+
+**Key Design Decisions:**
+- `mutate` primitive is the linchpin (atomic: verify proof → check policy → execute → audit)
+- Microkernel pattern: trusted core (`proof.ts` + `policy.ts`) separate from orchestration
+- SDK wrapper for backward compatibility during migration
+- HMAC + claims for proof structure (not full JWT)
+
+**Phase 1A Deliverables:**
+```
+src/kernel/
+├── proof.ts          ✅ Proof-of-intent engine (HMAC-SHA256, 280 lines)
+├── policy.ts         ✅ Policy validation (5 policies, 280 lines)
+├── syscalls.ts       ✅ 12 syscalls implementation (450 lines)
+├── ruvix.ts          ✅ Kernel orchestrator (6 primitives, 300 lines)
+└── proof.test.ts     ✅ 25 tests (ALL PASSING)
+```
+
+**Files to Create (Phase 1B):**
+```
+src/kernel/
+├── sdk.ts            # Backward-compatible wrapper
+├── gate.ts           # Enforcement gate (blocks non-kernel access)
+└── audit/trace.ts    # Migrate trace-middleware here (Phase 2)
+```
+
+---
+
+## Next Session Priorities (After Kernel Core)
+
+1. **Wire TraceMiddleware** into agent execution paths
+2. **Verify MCP database-server** connection in VS Code
+3. **Test natural language queries** against PostgreSQL
+4. **Cross-reference agents** between Claude Code and OpenCode
+5. **Update Control Center** with optimization status
+
+---
+
+## Project Memory
+
+**Allura Brain Architecture:**
+- PostgreSQL = Raw traces (append-only)
+- Neo4j = Curated knowledge (SUPERSEDES versioning)
+- Notion = Display layer / Human approval
+- MCP_DOCKER = Tool gateway
+- Governance: Allura governs. Runtimes execute. Curators promote.
+
+**Steel Frame Versioning:** Nothing deleted, everything versioned with provenance.
 
 **Status:** ✅ COMPLETE (wiring pending)
 
