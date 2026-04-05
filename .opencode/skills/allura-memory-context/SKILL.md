@@ -1,18 +1,18 @@
 ---
-name: roninmemory-context
-description: Session initialization for Allura Agent-OS project. Use this skill FIRST when starting any session in roninmemory to ensure correct documentation hierarchy, tenant naming conventions, and architecture understanding.
+name: allura-memory-context
+description: Session initialization for Allura Agent-OS project. Use this skill FIRST when starting any session in allura-memory to ensure correct documentation hierarchy, tenant naming conventions, and architecture understanding.
 ---
 
-# Roninmemory Context - Session Initialization
+# Allura Memory Context - Session Initialization
 
 This skill ensures every agent session starts with the correct context for the Allura Agent-OS project. It encodes the documentation hierarchy, naming conventions, and architecture into agent DNA.
 
 ## When to Use
 
-**ALWAYS invoke this skill at session start.** This is the first thing an agent should do when working in roninmemory.
+**ALWAYS invoke this skill at session start.** This is the first thing an agent should do when working in allura-memory.
 
 Trigger conditions:
-- Starting a new session in the roninmemory project
+- Starting a new session in the allura-memory project
 - Before reading any documentation
 - Before making any architectural decisions
 - Before writing any code

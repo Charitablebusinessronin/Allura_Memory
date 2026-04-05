@@ -26,7 +26,7 @@ Analyze `$ARGUMENTS` (file paths or directories) for performance, security, and 
 - Missing rate limiting on API routes
 - `group_id` not enforced on DB operations
 
-### 3. Architecture Invariants (roninmemory-specific)
+### 3. Architecture Invariants (allura-memory-specific)
 - PostgreSQL trace mutations (append-only rule violated)
 - Neo4j node edits instead of `SUPERSEDES` versioning
 - Missing `group_id` on any Neo4j or Postgres operation

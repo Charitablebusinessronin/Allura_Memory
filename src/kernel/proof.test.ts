@@ -22,6 +22,7 @@ import {
 const TEST_SECRET = "test-secret-key-for-ruvix-kernel-proof-engine-32chars";
 const VALID_CLAIMS: ProofClaims = {
   group_id: "allura-test-tenant",
+  nonce: "0123456789abcdef0123456789abcdef", // 32-char hex nonce
   budget_cost: 100,
   permission_tier: "kernel",
   audit_context: { test: true },
@@ -62,7 +63,10 @@ describe("RuVix Kernel - Proof Engine", () => {
       expect(proof.actor).toBe("agent-test-001");
       expect(proof.timestamp).toBeGreaterThan(0);
       expect(proof.signature).toHaveLength(64); // SHA256 hex = 64 chars
-      expect(proof.claims).toEqual(VALID_CLAIMS);
+      expect(proof.claims.group_id).toBe(VALID_CLAIMS.group_id);
+      expect(proof.claims.nonce).toHaveLength(32); // Nonce is 16 bytes = 32 hex chars
+      expect(proof.claims.budget_cost).toBe(VALID_CLAIMS.budget_cost);
+      expect(proof.claims.permission_tier).toBe(VALID_CLAIMS.permission_tier);
     });
 
     it("should generate unique signatures for different proofs", () => {
@@ -127,7 +131,8 @@ describe("RuVix Kernel - Proof Engine", () => {
       const result = verifyProof(proof, TEST_SECRET);
 
       expect(result.valid).toBe(true);
-      expect(result.claims).toEqual(VALID_CLAIMS);
+      expect(result.claims?.group_id).toBe(VALID_CLAIMS.group_id);
+      expect(result.claims?.nonce).toBe(VALID_CLAIMS.nonce);
       expect(result.error).toBeUndefined();
     });
 
@@ -225,6 +230,66 @@ describe("RuVix Kernel - Proof Engine", () => {
 
       expect(result.valid).toBe(false);
       expect(result.error).toContain("claims");
+    });
+
+    it("should reject proof with missing nonce in claims", () => {
+      // Create valid proof first
+      const proof = createProof(
+        "mutate",
+        "postgres:events",
+        "agent-test-001",
+        VALID_CLAIMS,
+        TEST_SECRET
+      );
+      
+      // Then manually remove nonce to simulate tampering
+      (proof.claims as any).nonce = undefined;
+
+      const result = verifyProof(proof, TEST_SECRET);
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("nonce");
+    });
+
+    it("should reject proof with short nonce", () => {
+      // Create valid proof first
+      const proof = createProof(
+        "mutate",
+        "postgres:events",
+        "agent-test-001",
+        VALID_CLAIMS,
+        TEST_SECRET
+      );
+      
+      // Then manually set short nonce to simulate tampering
+      proof.claims.nonce = "short";
+
+      const result = verifyProof(proof, TEST_SECRET);
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("Nonce too short");
+    });
+
+    it("should auto-generate nonce if not provided", () => {
+      const claimsWithoutNonce = {
+        group_id: "allura-test-tenant",
+        budget_cost: 100,
+      };
+      
+      const proof = createProof(
+        "mutate",
+        "postgres:events",
+        "agent-test-001",
+        claimsWithoutNonce as any,
+        TEST_SECRET
+      );
+
+      expect(proof.claims.nonce).toBeDefined();
+      expect(proof.claims.nonce).toHaveLength(32);
+      
+      // Verify the proof with auto-generated nonce is valid
+      const result = verifyProof(proof, TEST_SECRET);
+      expect(result.valid).toBe(true);
     });
 
     it("should reject proof with missing group_id in claims", () => {
@@ -406,7 +471,8 @@ describe("RuVix Kernel - Proof Engine", () => {
 
       const claims = verifyProofOrThrow(proof, TEST_SECRET);
 
-      expect(claims).toEqual(VALID_CLAIMS);
+      expect(claims.group_id).toBe(VALID_CLAIMS.group_id);
+      expect(claims.nonce).toBe(VALID_CLAIMS.nonce);
     });
 
     it("should throw error for invalid proof", () => {

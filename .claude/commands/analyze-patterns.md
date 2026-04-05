@@ -20,7 +20,7 @@ Scan the codebase for recurring patterns, duplicated logic, and refactoring oppo
 
 ### 2. Search
 
-Use Grep and Glob to find pattern occurrences. For roninmemory, built-in patterns include:
+Use Grep and Glob to find pattern occurrences. For allura-memory, built-in patterns include:
 
 | Pattern | What to find |
 |---------|-------------|
