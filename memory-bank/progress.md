@@ -1,242 +1,175 @@
 # Progress
 
-Tracking progress for active epics and tasks.
-
-## Current Implementation Status
-
-### Working / Present
-
-- Next.js UI shell, dashboard routes, and auth pages are present.
-- MCP memory server and OpenClaw gateway exist.
-- Curator pipeline, approval flow, dedupe, and lifecycle validation modules exist.
-- Agent registry and health monitor modules exist.
-- Notion hydration artifacts and docs are present.
-
-### Not Fully Working
-
-- `npm run typecheck` fails on a handful of existing type issues.
-- `groupIdEnforcer.ts` is unfinished and should be treated as broken.
-- Some tests need updated mocks to match current service types.
-- ADAS CLI metrics types are inconsistent.
-
-## ✅ Completed
-
-### Notion Workspace Setup (2026-04-04)
-
-**Phase: Database Creation and Hydration - COMPLETE ✅**
-
-**Deliverables**:
-1. Created 3 new databases: Runs, Insights, Sync Registry
-2. Created 3 views: Recent Insights, Recent Syncs, Recent Runs
-3. Established 2 new relations: Runs→Insights, Changes→Projects
-4. Seeded initial data: 1 Project, 5 Frameworks, 1 Sync Registry entry
-5. Updated docs/notion-mapping.md with all database IDs
-
-**Key Achievements**:
-- ✅ All 11 databases documented with IDs
-- ✅ Hub page ID: `3371d9be-65b3-81a9-b3be-c24275444b68`
-- ✅ Project "Allura Memory" created (P0, Active)
-- ✅ 5 Framework entries: AI-Assisted Documentation, Memory Bootstrap Protocol, Learning System, HITL Governance, Steel Frame Versioning
-- ✅ Sync Registry seeded with initial sync record
-- ✅ View creation for Recent Runs fixed (used "Started" property)
-- ✅ Relation creation: Runs.Insights bidirectional, Changes.Project bidirectional
-
-**Next Phase**:
-- Create Tasks from story files in `_bmad-output/implementation-artifacts/`
-- Link Agents and Skills from `.opencode/agent/` and `.opencode/skills/`
-- Seed Changes queue with ADR-001 promotion request
+> **Last Updated:** 2026-04-05
+> **Epic:** Epic 1 — Persistent Knowledge Capture and Tenant-Aware Memory
 
 ---
 
-## ✅ Session 2: Notion Workspace Hydration (2026-04-04)
+## Sprint Status
 
-**Status**: COMPLETE ✅
+**Epic 1: Persistent Knowledge Capture and Tenant-Aware Memory**
 
-### Summary
-Completed full hydration of Allura Memory Notion workspace with Tasks, Agents, Skills, and ADR-001 approval via HITL governance.
-
-### Per-Database Detail
-
-#### Tasks Database (`6285882c-82a7-4fe2-abc5-7dbeb344b1d4`)
-- **Schema**: Name (title), Status (select), Priority (select), Type (select), Tags (multi_select), Project (relation), Framework (relation), Due Date (date)
-- **Seeded**: 10 tasks from Epic 7 (OpenAgents Control Registry)
-- **Relations**: All linked to Project "Allura Memory" (ID: `3381d9be-65b3-814d-a97e-c7edaf5722f0`)
-- **Tags Applied**: ["Memory System", "Agent"] to all entries
-- **Priority Distribution**: 7 P0, 3 P1
-- **All Status**: "Todo"
-
-#### Agents Database (`64d76811-67fe-4b83-aa4b-cfb01eb69e59`)
-- **Schema**: Name (title), Type (select), Status (select), Role (rich_text), Group ID (text), Skills (multi_select), Token Budget (number), USD Budget (number), Last Heartbeat (date)
-- **Seeded**: 25 agents total
-  - OpenAgents: 7 (MemoryOrchestrator, MemoryArchitect, OpenTechnicalWriter, OpenCopywriter, OpenDataAnalyst, OpenSystemBuilder, OpenRepoManager)
-  - Specialists: 18 (MemoryCurator, MemoryArchivist, MemoryChronicler, Context Retriever, MemoryScout, WorkflowDesigner, AgentGenerator, DomainAnalyzer, CommandCreator, MemoryOrganizer, Image Specialist, MemoryGuardian, MemoryBuilder, MemoryTester, MemoryValidator, MemoryInterface, MemoryInfrastructure, Eval Runner)
-- **Skills Mapped**: context-scout, external-scout, task-manager, doc-writer, build-agent, test-engineer
-- **Group ID**: "roninmemory" for all entries
-- **Status**: All "active"
-
-#### Skills Database (`9074224b-4d8f-4ce1-9b08-f7be47039fe8`)
-- **Schema**: Name (title), Description (rich_text), Category (select), Status (select), File Path (text), Required Tools (multi_select), Usage Count (number), Last Used (date)
-- **Seeded**: 70+ skills
-- **Category Distribution**:
-  - Context: 18 skills (memory-*, context7, multi-search, superpowers-memory, etc.)
-  - Governance: 40+ skills (bmad-*, wds-* planning and orchestration)
-  - Testing: 15 skills (bmad-testarch-*)
-  - Review: 8 skills (*review*, *audit*)
-  - Writing: 5 skills (opencode-docs, mcp-docker, readme-memory, etc.)
-  - Research: 3 skills (multi-search, bmad-market-research, context7)
-- **Status**: Most "active", deprecated BMad agent wrappers marked "deprecated"
-
-#### Changes Database (`4fb793a1-4e82-4990-80f6-b1b4e750c630`)
-- **Schema**: Name (title), Status (select), Change Type (select), Risk Level (select), Source (select), Summary (rich_text), Affected Components (multi_select), Project (relation), AER Reference (text), Approved By (person), Approved At (date)
-- **Seeded**: ADR-001 Requirements Traceability Matrix Architecture
-- **Approval State**: Approved via HITL on 2026-04-04
-- **AER Reference**: `9830faf7-9a23-446d-8ee4-1e175c132576`
-- **Affected Components**: agent, skill, policy, knowledge
-- **Risk Level**: High (appropriate for architectural foundation)
-
-### Implementation Artifacts
-- Created: `docs/implementation-artifacts/notion-hydration/implementation-plan-notion-workspace-hydration.md`
-- Created: `docs/implementation-artifacts/notion-hydration/tech-spec-notion-hydration-scripts.md`
-- Created: `scripts/hydration/` - Full TypeScript implementation with MCP_DOCKER integration
-- Created: `scripts/hydration-runner.ts` - Orchestration runner
-
-### Risks & Mitigations
-- **Risk**: MCP_DOCKER tools only available in AI environment, not Bun runtime
-- **Mitigation**: Used direct MCP tool invocation for Notion creation; scripts serve as documentation/reference
-- **Risk**: Rate limiting on Notion API
-- **Mitigation**: Implemented exponential backoff in hydration scripts
-- **Risk**: Duplicate entries on re-run
-- **Mitigation**: Scripts include duplicate detection logic
-
-### Sync Implications
-- All entries linked to Project "Allura Memory" for tenant isolation
-- Steel Frame versioning applied (immutable insights, SUPERSEDES relationships)
-- HITL governance enforced for behavior-changing promotions
-- group_id enforcement: "roninmemory" on all database entries
-
-### Next Actions
-1. Continue Epic 7 story implementation (begin with Story 7.1)
-2. Monitor Skills database for usage patterns via Usage Count tracking
-3. Begin implementation of FR1, FR3, FR4, FR6, FR7 from ADR-001
-4. Set up automated drift detection between local files and Notion
+| Story | Status | Notes |
+|-------|--------|-------|
+| 1.1 Record Raw Execution Traces | `ready-for-dev` | Critical blocker: ARCH-001 |
+| 1.2-1.7 | `backlog` | Blocked by ARCH-001 |
 
 ---
 
-### Learning System Integration (2026-04-04)
+## Milestones
 
-**Phase 1: First Learning Loop (P0 Integration) - COMPLETE ✅**
+### 2026-04-05 — Epics Documentation and Bun Security
 
-**Deliverables**:
-1. `.opencode/skills/memory-query/SKILL.md` - Pattern query + AER logging integration
-2. Learning flow documented with 5-step protocol
-3. Success rate tracking enabled
-4. Pattern application threshold defined (relevance > 0.5)
+**Completed:**
+- ✅ Created comprehensive `_bmad-output/planning-artifacts/epics.md` with all stories
+- ✅ Documented ARCH-001 critical blocker
+- ✅ Updated all MCP configs to use `bunx` instead of `npx`
+- ✅ Updated all plugin specs for Bun-only strategy
+- ✅ Added security notes to AGENTS.md, techContext.md, copilot-instructions.md
+- ✅ Updated Notion with Bun security note
 
-**Key Achievements**:
-- ✅ Pattern query integration: `queryReasoningPatterns()` before search
-- ✅ AER logging integration: Full reasoning trail captured
-- ✅ Success rate updates: Reinforces successful patterns
-- ✅ Learning flow documented: Apply → Execute → Log → Update
-- ✅ Zero TypeScript errors introduced
+**Security Improvement:**
+- Replaced `npx -y` with `bunx` for all MCP servers
+- Added security warnings about npm supply chain risks
+- Documented Bun-only package strategy
 
-**Phase 2: Build Learning Loop (P1 Integration) - COMPLETE ✅**
+**Completed:**
+- ✅ 7 Agent nodes created in Neo4j knowledge graph
+- ✅ 7 Agent records synced to PostgreSQL `agents` table
+- ✅ AgentGroup "Allura Agent Team" created with INCLUDES relationships
+- ✅ KNOWS relationships established (MemoryOrchestrator knows all)
+- ✅ Session logged to PostgreSQL (Event ID: 27146)
+- ✅ Session insight created in Neo4j
+- ✅ Relationship schemas documented in Notion (CONTRIBUTED, LEARNED, DECIDED, COLLABORATED_WITH, SUPERSEDES)
+- ✅ Plugin Architecture comparison table added to Notion (Claude Code, OpenCode, OpenClaw)
 
-**Deliverables**:
-1. `.opencode/skills/memory-build/SKILL.md` - Pattern query + AER logging
-2. Build learning flow with implementation guidance
-3. Build-specific AER capture (intent-observation-inference-action)
-4. Success rate tracking based on test pass/fail
+**Knowledge Graph Entities:**
+- MemoryOrchestrator, MemoryArchitect, MemoryBuilder, MemoryGuardian, MemoryScout, MemoryAnalyst, MemoryChronicler
+- Allura Agent Team (AgentGroup)
+- Session 2026-04-04 Memory System Wiring
+- Agent Memory Architecture Complete (Insight)
 
-**Key Achievements**:
-- ✅ Build patterns queried before implementation
-- ✅ AER logs capture build reasoning and outcomes
-- ✅ Success rate updates based on test results
-- ✅ Both skills now learning-enabled
-- ✅ Zero TypeScript errors introduced
+**In Progress:**
+- ⏳ memory() TypeScript wrapper for MCP Docker tools
+- ⏳ CONTRIBUTED/LEARNED/DECIDED relationship creation in actual sessions
+- ⏳ Complete Claude Code plugin (6 more agents)
+- ⏳ Create OpenClaw plugin
 
-**Phase 3: Capture Architectural Decisions - COMPLETE ✅**
+---
 
-**Deliverables**:
-1. `docs/architecture/adr-001-requirements-traceability-matrix.md` - Full ADR 5-layer framework
-2. B-Tier, F-Tier, NFR tables with traceability
-3. AEGIS review loop diagram
-4. Cross-reference to existing architecture
+### 2026-04-05 — Epics Documentation and Plugin Specs
 
-**Key Achievements**:
-- ✅ ADR logged to PostgreSQL (AER ID: `9830faf7-9a23-446d-8ee4-1e175c132576`)
-- ✅ Submitted for HITL promotion (Request ID: `7bfa63ad-d4c1-408e-80d2-c288d8f9e4b9`)
-- ✅ 6 test AERs generated to demonstrate learning system
-- ✅ HITL promotion scripts created (`approve-insight.ts`, `promote-insight.ts`)
+**Completed:**
+- ✅ Created `_bmad-output/planning-artifacts/epics.md` — Comprehensive epic and story definitions
+- ✅ Documented all 6 epics with stories and acceptance criteria
+- ✅ Updated `_bmad-output/planning-artifacts/source-of-truth.md` — Added epics.md to canon
+- ✅ Updated all plugin specs for Bun-only strategy
+- ✅ Replaced all `npx -y` with `bunx` in MCP configs
+- ✅ Added security notes to AGENTS.md, techContext.md, copilot-instructions.md
+- ✅ Updated Notion with Bun security note and plugin architecture
 
-**Next Phase**:
-- Human review of ADR-001 (Board Partner sign-off required)
-- Approve and promote to Neo4j as Insight
-- Begin implementation of FR1, FR3, FR4, FR6, FR7
+**Files Updated:**
+- `_bmad-output/planning-artifacts/epics.md` — New comprehensive epics document
+- `_bmad-output/planning-artifacts/opencode-plugin-spec.md` — Bun security note
+- `_bmad-output/planning-artifacts/claude-code-plugin-spec.md` — Bun installation
+- `_bmad-output/planning-artifacts/openclaw-plugin-spec.md` — Bun security note
+- `_bmad-output/planning-artifacts/source-of-truth.md` — Added epics.md to canon
+- `claude-plugin-allura/.mcp.json` — Bunx for all MCP servers
+- `memory-bank/progress.md` — This update
+- `memory-bank/techContext.md` — Bun security note
+- `AGENTS.md` — Bun security note
+- `.github/copilot-instructions.md` — Bun security rule
+- Notion Allura Memory Control Center — Updated plugin architecture
 
-### OpenAgents Control Registry
-- [x] Design spec created (2026-04-03)
-- [x] Registry sync implementation started
-- [x] Config/context documentation audit completed
-- [x] Field mismatch detection added to sync engine
-- [x] 63 broken links fixed (skill prefix + workflow→agent mapping)
-- [x] Doc fixes applied (ROADMAP, REQUIREMENTS, BLUEPRINT, PROJECT)
-- [x] Audit outcome logged to PostgreSQL (event_id: 27121)
+---
 
-### Phase 1: Foundation
-- [x] Initial documentation alignment
-- [x] Remove deprecated memory-client
-- [x] Enforce Bun-only executions
-- [x] Align OpenCode project config with BMad workflow documentation
-- [x] **Created Brooksian architectural plan** for memory system integration
-- [x] **Enhanced MemoryBuilder** with 9-step memory bootstrap protocol
-- [x] **Configured MCP servers** (Neo4j + Postgres) for memory operations
-- [x] **Created test subtask** for validation pattern
+### 2026-04-04 — OpenCode Configuration Fix
 
-### Phase 2: Core Subagents - COMPLETE ✅
-- [x] Update MemoryScout (contextscout.md) - Surveyor, read-only memory
-- [x] Update MemoryArchivist (externalscout.md) - Librarian, DOCS_FETCHED logging
-- [x] Update MemoryCurator (task-manager.md) - Planner, TASKS_CREATED logging
-- [x] Update MemoryChronicler (documentation.md) - Scribe, ADR creation
+**Completed:**
+- ✅ Created 4 missing agent prompt files: `coder.md`, `reviewer.md`, `contextscout.md`, `documentation.md`
+- ✅ Fixed invalid color `muted` → `secondary` for `memory-scout` agent
+- ✅ Created error pattern doc: `_bmad-output/planning-artifacts/error-patterns/opencode-config-errors.md`
+- ✅ Logged to PostgreSQL (Event ID: 27144)
+- ✅ Updated `activeContext.md`
 
-### Phase 3-5: Remaining Agents
-- [x] Apply pattern to code subagents (builder, tester, guardian, validator)
-- [x] Align primary agents (orchestrator, architect) with the expanded surgical team
-- [x] Apply pattern to system builders (organizer, generator, etc.)
-- [x] Apply pattern to development subagents (interface, infrastructure)
-- [x] **Create custom BMad agent manifests** - Phase 5 COMPLETE
-- [x] **Validate manifest bridge** - All files verified
+**Valid OpenCode theme colors:** `primary`, `secondary`, `accent`, `success`, `warning`, `error`, `info`, or hex `#RRGGBB`
 
-## ✅ Phase 5: BMad Manifest Bridge - COMPLETE
+---
 
-**Deliverables**:
-1. `_bmad/_config/custom/agent-manifest.csv` - 13 custom agents mapped
-2. `_bmad/_config/custom/skill-manifest.csv` - 10 memory-aware skills mapped
-3. `_bmad/_config/custom/bmad-help.csv` - 9 help entries for capabilities
-4. `_bmad/_config/custom/config.yaml` - roninmemory module configuration
-5. `docs/archive/validation/phase5-bmad-manifest-bridge-complete.md` - Validation report
+### 2026-04-04 — Documentation Canon Established
 
-**Key Achievements**:
-- ✅ Hybrid approach: Agents stay in `.opencode/agent/`, BMad discovers via manifests
-- ✅ 13 agents mapped (2 primary + 11 subagents)
-- ✅ 10 memory-aware skills registered
-- ✅ Memory system configured (PostgreSQL + Neo4j + Steel Frame + HITL)
-- ✅ BMad integration context updated with bridge documentation
-- ✅ All referenced files validated (13/13 agents exist)
+**Completed:**
+- ✅ Created `_bmad-output/planning-artifacts/source-of-truth.md` — Document hierarchy
+- ✅ Fixed tenant naming in `_bmad-output/planning-artifacts/tenant-memory-boundary-spec.md`
+- ✅ Added supersession headers to `_bmad-output/planning-artifacts/*.md`
+- ✅ Created `memory-bank/activeContext.md`
+- ✅ Created `memory-bank/systemPatterns.md`
+- ✅ Created `memory-bank/progress.md`
+- ✅ Created `memory-bank/techContext.md`
+- ✅ Created `memory-bank/productContext.md`
+- ✅ Created `memory-bank/projectbrief.md`
+- ✅ Deleted unused `bmad-output/` directory
+- ✅ Reconciled BMad workflow architecture
+- ✅ Verified `.opencode/agent/` and `_bmad/` clean (no naming drift)
 
-## 🎯 Phase 1–4 Status: COMPLETE
+**Documentation Architecture:**
+- `_bmad-output/planning-artifacts/` → Human canon (you control)
+- `_bmad-output/planning-artifacts/` → BMad generated (marked superseded)
+- `_bmad-output/implementation-artifacts/` → Sprint stories
+- `_bmad/` → Skill/workflow definitions
+- `.opencode/context/` → Agent instructions
 
-**Deliverables**:
-1. `docs/architecture/memory-system-integration-plan.md` - Complete architectural plan
-2. `.opencode/agent/subagents/code/coder-agent.md` - Enhanced MemoryBuilder
-3. `.opencode/agent/menu.yaml` - Agent registry with 25+ agents
-4. `.opencode/agent/README.md` - Quick reference guide
-5. `.tmp/tasks/memory-test/subtask_01.json` - Test validation task
+**Critical Blocker:** ARCH-001 `groupIdEnforcer.ts` fix required.
 
-**Key Achievements**:
-- ✅ 6-step Brooksian memory bootstrap protocol defined
-- ✅ MemoryBuilder enhanced with full integration
-- ✅ PostgreSQL (chronicle) + Neo4j (wisdom) dual-memory model
-- ✅ 5-layer ADR framework for architectural decisions
-- ✅ Agent-specific hydration protocols documented
+---
 
-**Next**: Create custom BMad agent manifests (Phase 5)
+## Blockers
+
+| ID | Description | Story | Status |
+|----|-------------|-------|--------|
+| ARCH-001 | `groupIdEnforcer.ts` broken | 1.1 | Ready for dev |
+| RK-01 | Group ID enforcement not working | 1.1 | Critical |
+
+---
+
+## Next Actions
+
+1. **Fix ARCH-001** — `groupIdEnforcer.ts` must enforce `group_id` on all DB operations
+2. **Resume Story 1.1** — Record Raw Execution Traces
+3. **Validate canon** — Ensure all generated docs use `allura-*` naming
+
+---
+
+## Decisions Made
+
+### 2026-04-04 — Tenant Naming Convention
+
+**Decision:** Standardize on `allura-*` namespace for all tenant IDs.
+
+**Rationale:**
+- Notion uses `allura-*` naming
+- Aligns with platform vision (Allura Agent-OS)
+- Legacy `roninclaw-*` is deprecated
+
+**Impact:**
+- All new docs use `allura-*`
+- All code must enforce `allura-*` pattern
+- Legacy references are drift to be flagged
+
+---
+
+### 2026-04-04 — Documentation Canon Lock
+
+**Decision:** `_bmad-output/planning-artifacts/` is the single source of truth for all human-curated documentation.
+
+**Hierarchy:**
+1. Notion Allura Memory Control Center — Product vision
+2. `_bmad-output/planning-artifacts/*` — Implementation canon
+3. `_bmad-output/planning-artifacts/*` — BMad outputs (superseded)
+4. `_bmad-output/implementation-artifacts/*` — Sprint stories
+5. `memory-bank/*` — Session context
+
+**Impact:**
+- BMad workflows read from `_bmad-output/planning-artifacts/*`
+- When conflict, `_bmad-output/planning-artifacts/` wins
+- Generated docs marked as superseded

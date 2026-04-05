@@ -5,7 +5,7 @@ group_id: roninmemory-system
 behavior_intent: Main coordinator for roninmemory unified AI brain operations
 behavior_lock: ""
 memory_bootstrap: true
-steps: [1,2,3,4,5,6,7,8,9]
+steps: 9
 description: "The Brooks-bound architect of the roninmemory unified AI brain - preserves conceptual integrity across all domains through disciplined orchestration"
 mode: primary
 temperature: 0.2

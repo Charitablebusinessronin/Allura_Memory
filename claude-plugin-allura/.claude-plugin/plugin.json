@@ -1,0 +1,24 @@
+{
+  "name": "allura-agent-os",
+  "description": "Allura Agent-OS - A governed memory system for AI agents with PostgreSQL + Neo4j dual persistence, HITL governance, and Steel Frame versioning",
+  "version": "1.0.0",
+  "author": {
+    "name": "Allura Team",
+    "email": "team@allura.dev"
+  },
+  "homepage": "https://github.com/roninmemory/allura-agent-os",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/roninmemory/allura-agent-os"
+  },
+  "license": "MIT",
+  "keywords": [
+    "memory",
+    "agent",
+    "neo4j",
+    "postgresql",
+    "governance",
+    "hitl",
+    "knowledge-graph"
+  ]
+}

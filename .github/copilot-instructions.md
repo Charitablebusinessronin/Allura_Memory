@@ -90,6 +90,7 @@ When working on this project, read in this order:
 5. **Use append-only** for PostgreSQL traces - never mutate
 6. **Use SUPERSEDES** for Neo4j versioning - never edit Insights
 7. **Prefer premade MCP servers from `MCP_DOCKER`**; avoid custom wrappers when a catalog server already exists
+8. **Use Bun exclusively** for all package operations — never use `npm` or `npx` (supply chain security)
 
 ## Important Files
 
@@ -104,13 +105,13 @@ When working on this project, read in this order:
 
 ```bash
 # Check PostgreSQL
-docker exec knowledge-postgres pg_isready -U ronin4life -d memory
+docker exec knowledge-postgres pg_isready -U $POSTGRES_USER -d memory
 
 # Check Neo4j
 curl -s http://localhost:7474 | jq .neo4j_version
 
-# Test Neo4j Cypher
-docker exec knowledge-neo4j cypher-shell -u neo4j -p 'Kamina2025*' "RETURN 1 AS test"
+# Test Neo4j Cypher (use environment variable for password)
+docker exec knowledge-neo4j cypher-shell -u neo4j -p "$NEO4J_PASSWORD" "RETURN 1 AS test"
 ```
 
 ## Updating Memory Bank

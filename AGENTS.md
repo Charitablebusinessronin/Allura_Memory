@@ -20,11 +20,14 @@ It should be concise, actionable, and kept in sync with repo conventions.
 
 ## 2) Read First When Starting a Session
 
-1. `memory-bank/activeContext.md`
-2. `memory-bank/progress.md`
-3. `memory-bank/systemPatterns.md`
-4. `memory-bank/techContext.md`
-5. `_bmad-output/implementation-artifacts/` as needed
+**USE SKILL: `roninmemory-context`** — Invoke this skill at session start to load all context.
+
+Then read in order:
+1. `memory-bank/activeContext.md` — Current focus and blockers
+2. `memory-bank/progress.md` — What's been done
+3. `memory-bank/systemPatterns.md` — Architecture patterns
+4. `memory-bank/techContext.md` — Tech stack details
+5. `_bmad-output/planning-artifacts/source-of-truth.md` — Document hierarchy (CRITICAL)
 
 Also review `.github/copilot-instructions.md` at least once per session.
 No Cursor rules were found (`.cursorrules` and `.cursor/rules/` are absent).
@@ -57,6 +60,8 @@ npm run curator:run
 npm run curator:approve
 npm run curator:reject
 ```
+
+> **Security Note:** Use `bun` and `bunx` for all package operations. Never use `npm` or `npx` — this avoids supply chain risks.
 
 ### Single-test commands
 
@@ -133,7 +138,32 @@ if (typeof window !== "undefined") {
 - Use MCP Neo4j memory tools instead of raw Cypher for basic memory operations.
 - Prefer premade MCP servers from `MCP_DOCKER`; avoid custom MCP wrappers when a catalog server already exists.
 
-## 10) Next.js / React Patterns
+## 10) Debugging Protocol
+
+**When encountering bugs, test failures, or unexpected behavior:**
+
+**ALWAYS invoke `systematic-debugging-memory` skill first.**
+
+The skill enforces a 5-phase process:
+
+| Phase | Name | Purpose |
+|-------|------|---------|
+| 0 | Memory Hydration | Check previous debugging sessions |
+| 1 | Root Cause Investigation | Gather evidence, understand WHY |
+| 2 | Pattern Analysis | Find working examples, compare |
+| 3 | Hypothesis and Testing | Test one hypothesis at a time |
+| 4 | Implementation | Create failing test, then fix |
+| 5 | Persistence | Log to memory for future sessions |
+
+**Red Flags that mean STOP:**
+- "Quick fix for now, investigate later"
+- "Just try changing X and see if it works"
+- "I see the problem, let me fix it" (without investigation)
+- "One more fix attempt" (after 2+ failures)
+
+**If 3+ fixes failed:** Question the architecture, don't fix again.
+
+## 11) Next.js / React Patterns
 
 - Default to Server Components in `src/app/`.
 - Add `"use client"` only where needed.
@@ -141,27 +171,99 @@ if (typeof window !== "undefined") {
 - Keep client components focused on interaction.
 - Reuse existing UI primitives and `cn` patterns.
 
-## 11) Documentation Rules
+## 12) Documentation Rules
 
 - New initiatives belong in `docs/<project-name>/PROJECT.md`.
 - Keep requirement and decision IDs consistent (`B#`, `F#`, `AD-##`, `RK-##`).
 - Use Mermaid fenced blocks for diagrams.
 - Keep docs and schema/API changes in the same PR when coupled.
 - Include AI-assistance disclosure blocks when required by `AI-GUIDELINES.md`.
+- **IMPORTANT:** Documentation canon is `_bmad-output/planning-artifacts/`. When conflict, defer to `_bmad-output/planning-artifacts/*` over `_bmad-output/planning-artifacts/*`.
+- **Tenant naming:** Always use `allura-*` convention. Legacy `roninclaw-*` is deprecated.
 
-## 12) Copilot / Memory Bank Rules
+## 13) Copilot / Memory Bank Rules
 
 - Copilot instructions are mandatory: `.github/copilot-instructions.md`.
 - Preserve Steel Frame versioning, `group_id` enforcement, and HITL promotion.
 - Read/update memory bank files as work progresses.
 
-## 13) Required OpenCode Skills
+## 14) Required Skills
 
+**Run at session start:**
+- **`roninmemory-context`** — Loads all context (documentation hierarchy, architecture, naming conventions)
+
+**Run when encountering issues:**
+- **`systematic-debugging-memory`** — Use before ANY bug fix or code change for unexpected behavior
+
+**Run for specific workflows:**
 - `mcp-docker` for discovering/configuring MCP servers.
 - `opencode-docs` for authoritative OpenCode references.
 - `skill-creator` when editing or creating skills.
 
-## 14) Quick Verification
+## 15) Skill Workflow
+
+### Starting a Session
+
+```
+1. Invoke roninmemory-context skill
+2. Read memory-bank/activeContext.md
+3. Read memory-bank/progress.md
+4. Check for critical blockers
+```
+
+### Encountering a Bug or Issue
+
+**BEFORE proposing any fix:**
+
+```
+1. Invoke systematic-debugging-memory skill
+2. Complete Phase 0: Check memory for previous debugging sessions
+3. Complete Phase 1: Root Cause Investigation
+   - Read error messages carefully
+   - Reproduce consistently
+   - Check recent changes
+   - Gather evidence
+4. Complete Phase 2: Pattern Analysis
+5. Complete Phase 3: Hypothesis and Testing
+6. Only then proceed to Phase 4: Implementation
+```
+
+**Iron Law: NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST**
+
+If 3+ fixes failed → Question architecture (Phase 4.5)
+
+### Creating Stories / PRDs
+
+```
+1. Use bmad-create-prd, bmad-create-architecture, etc.
+2. BMad reads from _bmad-output/planning-artifacts/ (canon)
+3. BMad writes to _bmad-output/planning-artifacts/
+```
+
+### Building Features
+
+```
+1. Use bmad-dev-story or bmad-quick-dev
+2. Follow Steel Frame versioning
+3. Enforce group_id on all operations
+4. Write tests first (test-driven-development skill)
+```
+
+## 16) Architecture Model
+
+**5-Layer Allura Agent-OS:**
+
+| Layer | Component |
+|-------|-----------|
+| L1 | RuVix Kernel (proof-gated mutation) |
+| L2 | PostgreSQL 16 + Neo4j 5.26 |
+| L3 | Agent Runtime (OpenCode) |
+| L4 | Workflow / DAGs / A2A Bus |
+| L5 | Paperclip + OpenClaw |
+
+**Governance Rule:** "Allura governs. Runtimes execute. Curators promote."
+
+## 17) Quick Verification
 
 ```bash
 docker exec knowledge-postgres pg_isready -U ronin4life -d memory

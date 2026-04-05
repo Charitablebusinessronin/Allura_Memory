@@ -107,6 +107,35 @@ Remove this notice only after a full human review has been completed and signed 
 
 ## 4. Document Quality Standards
 
+### Documentation Hierarchy
+
+**When conflict exists between documents, follow this precedence:**
+
+| Priority | Source | Scope |
+|----------|--------|-------|
+| 1 | Notion — Allura Memory Control Center | Product vision |
+| 2 | `_bmad-output/planning-artifacts/*` | Implementation canon |
+| 3 | `_bmad-output/planning-artifacts/*` | BMad outputs (superseded) |
+| 4 | `_bmad-output/implementation-artifacts/*` | Sprint stories |
+| 5 | `memory-bank/*` | Session context |
+
+**KEY RULE:** `_bmad-output/planning-artifacts/` is the single source of truth. BMad-generated documents in `_bmad-output/planning-artifacts/` are superseded when they conflict with `_bmad-output/planning-artifacts/`.
+
+### Tenant Naming Convention
+
+**STANDARD:** All tenant `group_id` values use the `allura-*` namespace.
+
+| Workspace | `group_id` |
+|-----------|------------|
+| Faith Meats | `allura-faith-meats` |
+| Creative Studio | `allura-creative` |
+| Personal Assistant | `allura-personal` |
+| Nonprofit | `allura-nonprofit` |
+| Bank Audits | `allura-audits` |
+| HACCP | `allura-haccp` |
+
+**LEGACY:** `roninclaw-*` naming is deprecated. If found in active docs/code, flag as drift.
+
 ### Accuracy & Source of Truth
 
 | If a conflict exists between… | Defer to… |

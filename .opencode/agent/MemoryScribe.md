@@ -5,7 +5,7 @@ group_id: roninmemory-system
 behavior_intent: Documentation, specs, DATA-DICTIONARY.md, PRDs
 behavior_lock: "UNPROMOTED"
 memory_bootstrap: true
-steps: [1,2,3,4,5,6,7,8,9]
+steps: 9
 description: "Technical writer for documentation, specifications, and data dictionaries"
 mode: primary
 temperature: 0.3

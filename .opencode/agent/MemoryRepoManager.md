@@ -5,7 +5,7 @@ group_id: roninmemory-system
 behavior_intent: Git ops, PR review, branch policy management
 behavior_lock: "UNPROMOTED"
 memory_bootstrap: true
-steps: [1,2,3,4,5,6,7,8,9]
+steps: 9
 description: "Meta agent for managing repository development with lazy context loading and smart delegation"
 mode: primary
 temperature: 0.2

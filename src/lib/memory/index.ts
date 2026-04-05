@@ -15,6 +15,23 @@ export { searchMemories, getMemoriesByType, searchAgents } from "./search";
 export { storeMemory, promoteMemory, deprecateMemory, archiveMemory } from "./store";
 export { getMemory, getCurrentMemory, getMemoryHistory, memoryExists } from "./get";
 
+// Knowledge Promotion (HITL governance)
+export {
+  type KnowledgeInsight,
+  type ApprovalQueueItem,
+  type PromotionResult,
+  queryApprovedInsights,
+  queryKnowledgeHubBySourceId,
+  promoteToNeo4j,
+  linkInsightToAgent,
+  updateNotionWithNeo4jId,
+  updateApprovalQueueItem,
+  logPromotionEvent,
+  processApprovedInsights,
+  promoteSingleInsight,
+  validateInsightForPromotion,
+} from "./knowledge-promotion";
+
 // Convenience re-exports
 export {
   buildTopicKey,
