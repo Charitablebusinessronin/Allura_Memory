@@ -164,8 +164,66 @@ Test Files  1 passed (1)
      Tests  25 passed (25)
 ```
 
-**In Progress:**
-- ⏳ Phase 1B: Enforcement Gate (SDK wrapper + block direct access)
+**Phase 1B: Enforcement Gate** — ✅ **COMPLETE**
+
+**Files Created:**
+- `src/kernel/sdk.ts` — Backward-compatible SDK wrapper (430 lines)
+- `src/kernel/gate.ts` — Enforcement gate with MCP interception (385 lines)
+
+**Key Features:**
+- SDK exports same interface as old EnforcedMcpClient
+- Enables gradual migration (old imports → new kernel-backed imports)
+- Enforcement gate blocks direct database access
+- Monkey-patches MCP_DOCKER tools to validate kernel proof
+- Violation tracking and logging
+
+**Migration Path:**
+```typescript
+// Old code:
+import { executeQuery } from '@/lib/mcp/enforced-client';
+
+// New code (kernel-backed):
+import { executeQuery } from '@/kernel/sdk';
+// OR direct kernel access:
+import { syscall } from '@/kernel/ruvix';
+```
+
+**Commit:** `25a411d` — feat(ruvix-kernel): implement L1 kernel with proof-gated mutation (Phase 1A + 1B)
+
+**Total Deliverable:** 2,125 lines (1,660 production + 465 tests) across 7 kernel files
+
+---
+
+**Phase 2: Migration** — ✅ **COMPLETE**
+
+**Files Migrated:**
+- `src/kernel/policy/tenant.ts` — Tenant isolation (migrated from enforced-client.ts, 260 lines)
+- `src/kernel/policy/budget.ts` — Budget enforcement (migrated from enforcer.ts, 280 lines)
+- `src/kernel/audit/trace.ts` — Audit tracing (migrated from trace-middleware.ts, 390 lines)
+
+**Migration Summary:**
+| Old Location | New Location | Status |
+|--------------|--------------|--------|
+| `src/lib/mcp/enforced-client.ts` | `src/kernel/policy/tenant.ts` | ✅ Migrated |
+| `src/lib/budget/enforcer.ts` | `src/kernel/policy/budget.ts` | ✅ Migrated |
+| `src/lib/mcp/trace-middleware.ts` | `src/kernel/audit/trace.ts` | ✅ Migrated |
+
+**Key Features:**
+- Kernel-native tenant isolation with `allura-*` enforcement
+- Budget policy engine with warning/breach thresholds
+- Audit trace logger with buffering support
+- Backward compatibility wrappers for gradual migration
+
+**Deprecated (but still functional):**
+- `src/lib/mcp/enforced-client.ts` — Use `KernelTenantEnforcer` instead
+- `src/lib/budget/enforcer.ts` — Use `BudgetPolicyEngine` instead
+- `src/lib/mcp/trace-middleware.ts` — Use `KernelTraceLogger` instead
+
+**Total Kernel Lines:** 3,055 lines (2,125 Phase 1 + 930 Phase 2)
+
+---
+
+**Next:** Phase 3 — Validation (prove nothing bypasses kernel)
 
 ---
 

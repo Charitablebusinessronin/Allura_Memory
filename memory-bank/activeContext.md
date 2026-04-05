@@ -90,14 +90,14 @@
 
 ## Current Session: RuVix Kernel Implementation (2026-04-06)
 
-**Status:** ✅ PHASE 1A COMPLETE — Phase 1B: Enforcement Gate NEXT
+**Status:** ✅ PHASE 1A + 1B COMPLETE — Ready for Phase 2: Migration
 
 **Focus:** Build L1 RuVix Kernel with actual proof-gated mutation
 
 **Architecture Decision:** 4-phase approach approved by party mode team:
 - Phase 1A: Kernel Core (primitives + proof engine) — ✅ COMPLETE
-- Phase 1B: Enforcement Gate (SDK wrapper + block direct access) — NEXT
-- Phase 2: Migration (move existing enforcers INTO kernel)
+- Phase 1B: Enforcement Gate (SDK wrapper + block direct access) — ✅ COMPLETE
+- Phase 2: Migration (move existing enforcers INTO kernel) — NEXT
 - Phase 3: Validation (prove nothing bypasses kernel)
 
 **Key Design Decisions:**
@@ -106,22 +106,31 @@
 - SDK wrapper for backward compatibility during migration
 - HMAC + claims for proof structure (not full JWT)
 
-**Phase 1A Deliverables:**
+**Phase 1A + 1B Deliverables:**
 ```
 src/kernel/
 ├── proof.ts          ✅ Proof-of-intent engine (HMAC-SHA256, 280 lines)
 ├── policy.ts         ✅ Policy validation (5 policies, 280 lines)
 ├── syscalls.ts       ✅ 12 syscalls implementation (450 lines)
 ├── ruvix.ts          ✅ Kernel orchestrator (6 primitives, 300 lines)
+├── sdk.ts            ✅ Backward-compatible SDK wrapper (430 lines)
+├── gate.ts           ✅ Enforcement gate (385 lines)
 └── proof.test.ts     ✅ 25 tests (ALL PASSING)
 ```
 
-**Files to Create (Phase 1B):**
-```
-src/kernel/
-├── sdk.ts            # Backward-compatible wrapper
-├── gate.ts           # Enforcement gate (blocks non-kernel access)
-└── audit/trace.ts    # Migrate trace-middleware here (Phase 2)
+**Total:** 2,125 lines (1,660 production + 465 tests)
+
+**Commit:** `25a411d` — feat(ruvix-kernel): implement L1 kernel with proof-gated mutation
+
+**Migration Path:**
+```typescript
+// Old code:
+import { executeQuery } from '@/lib/mcp/enforced-client';
+
+// New code (kernel-backed):
+import { executeQuery } from '@/kernel/sdk';
+// OR direct kernel access:
+import { syscall } from '@/kernel/ruvix';
 ```
 
 ---
