@@ -9,7 +9,9 @@
 import { spawn } from "child_process";
 import { existsSync } from "fs";
 import { join } from "path";
+import { getPort } from "../src/lib/config/ports";
 
+const PAPERCLIP_PORT = getPort("paperclip", "PAPERCLIP_PORT");
 const TEST_TIMEOUT = 300000; // 5 minutes
 const SCREENSHOT_DIR = "tests/mcp/fixtures/screenshots";
 
@@ -78,16 +80,18 @@ async function checkMcpServers(): Promise<boolean> {
 
 async function checkDevServer(): Promise<boolean> {
   console.log("🔍 Checking Next.js dev server...");
+  console.log(`   Using port: ${PAPERCLIP_PORT}`);
   
   try {
-    const response = await fetch("http://localhost:3000/api/health", {
+    const response = await fetch(`http://localhost:${PAPERCLIP_PORT}/api/health`, {
       method: "GET",
       signal: AbortSignal.timeout(5000)
     });
     return response.ok;
   } catch {
-    console.warn("⚠️  Dev server not responding at http://localhost:3000");
+    console.warn(`⚠️  Dev server not responding at http://localhost:${PAPERCLIP_PORT}`);
     console.log("   Make sure to run: bun run dev");
+    console.log(`   Or set PAPERCLIP_PORT environment variable`);
     return false;
   }
 }
