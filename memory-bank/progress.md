@@ -1,6 +1,6 @@
 # Progress
 
-> **Last Updated:** 2026-04-05
+> **Last Updated:** 2026-04-06
 > **Epic:** Epic 1 — Persistent Knowledge Capture and Tenant-Aware Memory
 
 ---
@@ -10,13 +10,230 @@
 **Epic 1: Persistent Knowledge Capture and Tenant-Aware Memory**
 
 | Story | Status | Notes |
-|-------|--------|-------|
-| 1.1 Record Raw Execution Traces | `ready-for-dev` | Critical blocker: ARCH-001 |
-| 1.2-1.7 | `backlog` | Blocked by ARCH-001 |
+| |-------|--------|-------|
+| 1.1 Record Raw Execution Traces | `in-progress` | ARCH-001 COMPLETE - unblocked |
+| 1.2-1.7 | `backlog` | Ready to start after 1.1 |
+
+**Epic 2: Plugin Foundation** — ✅ **COMPLETE**
+
+| Story | Status |
+|-------|--------|
+| 2.1 OpenCode Plugin | `done` |
+| 2.2 Claude Code Plugin | `done` |
+| 2.3 OpenClaw Plugin | `done` |
+| 2.4 Bun-Only Strategy | `done` |
 
 ---
 
 ## Milestones
+
+### 2026-04-06 — Session Stability Infrastructure
+
+**Completed:**
+- ✅ Implemented Encoding Validator with UTF-8, null byte, BOM, control char detection
+- ✅ Implemented State Hydrator with 4-layer encoding priority (Database → Neo4j → Files → Memory Bank)
+- ✅ Implemented Checkpoint Manager with 5-minute automatic checkpoints and SHA-256 integrity
+- ✅ Implemented Session Bootstrap combining all layers (Encoding → Hydration → Checkpoint → Budget → Drift)
+- ✅ Implemented Planning Drift Analyzer (Story vs AC, Story vs Epic, Subagent vs Plan)
+- ✅ Implemented Alert Manager with FATAL/WARNING/INFO severity handling
+- ✅ Implemented Health API endpoints for monitoring
+- ✅ Created Daily Audit Script (encoding, DB, state, budget, health checks)
+- ✅ Created Weekly Audit Script (dependencies, security, DB maintenance, log rotation, drift)
+- ✅ Created Session Stability Skill documentation
+
+**Key Components:**
+- **Encoding Validator** (`encoding-validator.ts`) — UTF-8 validation with corruption detection
+- **State Hydrator** (`state-hydrator.ts`) — 4-layer recovery with fallback chain
+- **Checkpoint Manager** (`checkpoint-manager.ts`) — Auto checkpoints with integrity checksums
+- **Session Bootstrap** (`session-bootstrap.ts`) — Entry point combining all layers
+- **Drift Analyzer** (`planning-drift-analyzer.ts`) — Story/AC, Epic, Subagent drift detection
+- **Alert Manager** (`alert-manager.ts`) — FATAL/WARNING/INFO operational alerts
+- **Health API** (`route.ts`) — GET/POST endpoints for health monitoring
+
+**Key Decisions:**
+- FATAL errors halt execution and wait for human diagnosis (HITL governance)
+- Automatic checkpoints every 5 minutes with SHA-256 integrity
+- State hydrates from Database → Neo4j → Files → Memory Bank (priority order)
+- Budget enforced before every state transition
+- Drift detection across 3 dimensions (Story vs AC, Story vs Epic, Subagent vs Plan)
+
+**Files Created:**
+- `src/lib/validation/encoding-validator.ts` — UTF-8 validation with corruption detection
+- `src/lib/validation/encoding-validator.test.ts` — Tests for encoding validator
+- `src/lib/validation/planning-drift-analyzer.ts` — Drift detection across planning artifacts
+- `src/lib/session/checkpoint-manager.ts` — Checkpoint management with integrity
+- `src/lib/session/checkpoint-manager.test.ts` — Tests for checkpoint manager
+- `src/lib/session/state-hydrator.ts` — 4-layer state hydration
+- `src/lib/session/state-hydrator.test.ts` — Tests for state hydrator
+- `src/lib/session/session-bootstrap.ts` — Entry point combining all layers
+- `src/lib/monitoring/alert-manager.ts` — FATAL/WARNING/INFO alert handling
+- `src/app/api/health/route.ts` — Health check API endpoints
+- `scripts/audit/daily-audit.sh` — Daily health checks script
+- `scripts/audit/weekly-audit.sh` — Weekly maintenance script
+- `.opencode/skills/session-stability/SKILL.md` — Session stability skill documentation
+
+**Commit:** `4a85f2b` — feat(session-stability): implement 6-month operational stability infrastructure
+
+---
+
+### 2026-04-05 — Agent Primitives Audit
+
+**Completed:**
+- ✅ Created comprehensive audit comparing Allura vs. Claude Code's 12 primitives
+- ✅ Identified 4 fully implemented, 5 partial, 3 missing
+- ✅ Mapped priority order: P1 (Session Persistence, Workflow State, Token Budget)
+- ✅ Created implementation plan with Brooksian approach (boring plumbing first)
+- ✅ Updated course correction document with audit link
+- ✅ Updated agent primitives spec with audit link
+
+**Key Findings:**
+- 🔍 **4/12 fully implemented:** Agent Types, System Event Logging, Memory Contract, Two-Level Verification (partial)
+- 🔍 **5/12 partial:** Tool Registry, Permission Tiers, Structured Streaming, Dynamic Tool Pool, Permission Audit Trail
+- 🔍 **3/12 missing:** Session Persistence, Workflow State, Token Budget (all P1)
+
+**Files Created:**
+- `_bmad-output/planning-artifacts/agent-primitives-audit.md` — Full scorecard vs. Claude Code
+
+**Files Updated:**
+- `_bmad-output/planning-artifacts/course-correction-agent-primitives.md` — Added audit link
+- `_bmad-output/planning-artifacts/agent-primitives.md` — Added audit link
+- `memory-bank/activeContext.md` — Updated course correction section
+
+---
+
+### 2026-04-05 — Brooks Persona Enhancement & Agent Primitives Audit
+
+**Completed:**
+- ✅ Created 4 Brooks persona memory files (quotes, anecdotes, modern opinions, usage guide)
+- ✅ Completed comprehensive agent primitives audit (4/12 complete, 5/12 partial, 3/12 missing)
+- ✅ Fixed 3 OpenCode configuration bugs (JSON syntax, file paths, memory_bootstrap)
+- ✅ Synchronized all planning documents with current status
+- ✅ Created Notion session summary
+- ✅ Created memory session file
+
+**Key Findings:**
+- 🔍 **Token Budget is not missing — it's unwired.** `BudgetEnforcer` exists in `src/lib/budget/`, just needs MCP middleware wiring (~50 lines)
+- 🔍 **Workflow State spec uses UPDATE semantics** — violates append-only invariant. Need append-only transition events instead.
+- 🔍 **Session Persistence is the keystone** — nearly everything else depends on it
+
+**Brooksian Remediation Plan:**
+- P0: Session Persistence (keystone)
+- P0: Token Budget — WIRE ONLY (not missing)
+- P1: Workflow State Machine (append-only events)
+- P1: Streaming Events (9-type discriminated union)
+- P2: Tool Registry, Permission Tiers, Permission Audit Trail
+- P3: Transcript Compaction (defer)
+
+**Files Created:**
+- `memory-bank/brooks-quotes.md` — His actual quotes with context
+- `memory-bank/brooks-anecdotes.md` — Stories from IBM days
+- `memory-bank/brooks-modern-opinions.md` — Modern practice opinions
+- `memory-bank/brooks-persona.md` — Usage guide
+- `/memories/session/2026-04-05-brooks-persona-enhancement.md` — Session summary
+- Notion: Session 2026-04-05 — Brooks Persona Enhancement & Agent Primitives Audit
+
+**Files Modified:**
+- `.opencode/config/agent-metadata.json` — Fixed JSON syntax error
+- `.opencode/agent/menu.yaml` — Fixed primary agent paths
+- `.opencode/agent/subagents/core/contextscout.md` — Added memory_bootstrap, group_id
+- `.opencode/agent/subagents/code/reviewer.md` — Added memory_bootstrap, group_id
+- `.opencode/agent/subagents/code/test-engineer.md` — Added memory_bootstrap, group_id
+- `_bmad-output/planning-artifacts/requirements-matrix.md` — Added Section 4
+- `docs/project-planning/PRD-BRIEF.md` — Updated status, risks, metrics
+- `_bmad-output/planning-artifacts/agent-primitives-audit.md` — Created
+- `_bmad-output/planning-artifacts/course-correction-agent-primitives.md` — Added audit link
+- `_bmad-output/planning-artifacts/agent-primitives.md` — Added audit link
+- `memory-bank/activeContext.md` — Updated course correction section
+- `memory-bank/progress.md` — Added this milestone
+
+---
+
+### 2026-04-05 — ARCH-001 Complete: Multi-Layer groupId Enforcement
+
+**Problem Identified:**
+- `groupIdEnforcer.ts` existed (131 lines) but was **NOT WIRED** into the system
+- MCP_DOCKER tools are external - cannot wrap them directly
+- Solution: Multi-layer enforcement approach
+
+**Implementation:**
+- ✅ Created `EnforcedMcpClient` wrapper (`src/lib/mcp/enforced-client.ts`)
+  - Validates `group_id` at construction time
+  - Enforces `allura-*` naming convention
+  - Injects validated `group_id` into all MCP tool calls
+- ✅ Added API route validation (`src/app/api/memory/*/route.ts`)
+  - Validates `group_id` in GET/POST handlers
+  - Returns 400 for missing/invalid `group_id`
+- ✅ Created OpenCode plugin (`.opencode/plugin/group-id-enforcer.ts`)
+  - Intercepts `tool.execute.before` for MCP_DOCKER tools
+  - Validates and injects `group_id` automatically
+  - Registered in `opencode.json`
+- ✅ Created verification script (`scripts/verify-group-id-enforcement.ts`)
+  - 20 tests, all passing
+  - Validates format, prefix, injection behavior
+
+**Architecture Layers:**
+1. **EnforcedMcpClient** — Call-site validation for TypeScript code
+2. **API Routes** — Request validation for external traffic
+3. **OpenCode Plugin** — Tool interception for agent operations
+
+**Files Created:**
+- `src/lib/mcp/enforced-client.ts` — Enforced MCP client wrapper
+- `src/lib/mcp/enforced-client.test.ts` — Test suite (63 tests)
+- `.opencode/plugin/group-id-enforcer.ts` — OpenCode plugin
+- `scripts/verify-group-id-enforcement.ts` — Verification script
+
+**Files Modified:**
+- `src/app/api/memory/traces/route.ts` — Added group_id validation
+- `src/app/api/memory/insights/route.ts` — Added group_id validation
+- `opencode.json` — Registered group-id-enforcer plugin
+
+**Test Results:**
+```
+Total: 20 tests
+Passed: 20
+Failed: 0
+✅ All enforcement layers verified successfully!
+```
+
+---
+
+### 2026-04-05 — Architecture Review and Spec Creation
+
+**Completed:**
+- ✅ Phase 0: Architecture Confidence Review — Identified what's implemented vs not
+- ✅ Phase 1: Sync Notion ↔ Local — Created Solution Architecture Notion page
+- ✅ Phase 2: Fix sprint-status.yaml — Epic 2 marked complete, Story 1.1 ready-for-dev
+- ✅ Phase 3: Create Missing Specs — WorkflowState, BehaviorSpecs, Agent Primitives
+- ✅ Fixed `faith-meats.yaml` — Converted from markdown+YAML to pure YAML
+
+**Key Discoveries:**
+- 🔍 `groupIdEnforcer.ts` EXISTS and appears correct (131 lines of complete code)
+- 🔍 **ARCH-001 may be wiring issue, not code issue** — Need to verify integration
+- 🔍 WorkflowState NOT IMPLEMENTED — Spec created, awaiting implementation
+- 🔍 BehaviorSpec PARTIAL — Only 1/6 existed, created 5 more workspace specs
+- 🔍 12 Agent Primitives NOT IMPLEMENTED — Spec created, awaiting implementation
+- 🔍 OpenClaw Gateway is STUB — 362 lines exist, missing groupId integration, permissions, persistence
+
+**Files Created:**
+- `_bmad-output/implementation-artifacts/workflow-state-spec.md` — Crash-safe state machine
+- `_bmad-output/implementation-artifacts/behavior-specs/creative-studio.yaml`
+- `_bmad-output/implementation-artifacts/behavior-specs/personal-assistant.yaml`
+- `_bmad-output/implementation-artifacts/behavior-specs/nonprofit.yaml`
+- `_bmad-output/implementation-artifacts/behavior-specs/bank-audits.yaml`
+- `_bmad-output/implementation-artifacts/behavior-specs/haccp.yaml`
+- `_bmad-output/implementation-artifacts/behavior-specs/faith-meats.yaml` (fixed)
+- `_bmad-output/planning-artifacts/agent-primitives.md` — 12 primitives spec
+
+**Files Updated:**
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — Epic 2 complete, Story 1.1 ready
+- `_bmad-output/planning-artifacts/epics.md` — Epic 2 status → completed
+
+**In Progress:**
+- ⏳ Phase 4: Sync to Notion (final)
+- ⏳ Phase 5: Create epic-build-loop skill
+- ⏳ Investigate ARCH-001 — Determine if groupIdEnforcer needs wiring
+
+---
 
 ### 2026-04-05 — Epics Documentation and Bun Security
 
