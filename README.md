@@ -102,8 +102,8 @@ The machine thinks in six layers. Top to bottom:
 ### Setup
 
 ```bash
-git clone https://github.com/Charitablebusinessronin/roninmemory.git
-cd roninmemory
+git clone https://github.com/Charitablebusinessronin/allura-memory.git
+cd allura-memory
 bun install
 docker compose up -d
 bun test
@@ -253,7 +253,7 @@ This repository follows the **AI-GUIDELINES.md** documentation standards:
 
 ```
 docs/
-├── roninmemory/
+├── allura-memory/
 │   ├── PROJECT.md          # Master document (blueprint, requirements, architecture)
 │   ├── BLUEPRINT.md        # Core concepts reference
 │   ├── REQUIREMENTS-MATRIX.md

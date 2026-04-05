@@ -37,16 +37,18 @@ export interface Policy {
 
 /**
  * Context available during policy evaluation
+ * 
+ * H-004 FIX: Made critical fields required to prevent silent failures
  */
 export interface PolicyContext {
-  /** Current timestamp */
-  timestamp?: number;
+  /** Current timestamp (required) */
+  timestamp: number;
   
-  /** Operation being performed */
-  operation?: string;
+  /** Operation being performed (required) */
+  operation: string;
   
-  /** Target resource */
-  resource?: string;
+  /** Target resource (required) */
+  resource: string;
   
   /** Budget limit for POL-002 */
   budgetLimit?: number;
@@ -160,13 +162,16 @@ export const POLICY_PERMISSION_TIER: Policy = {
 /**
  * POL-004: Actor Validation
  * 
+ * H-004 FIX: Now requires actor in context (will fail if not provided)
+ * 
  * Actor must be a known agent or user identifier.
  */
 export const POLICY_ACTOR_VALIDATION: Policy = {
   id: "POL-004",
   description: "Operations must have valid actor identification",
   condition: (claims, context) => {
-    const actor = context.actor as string;
+    // H-004 FIX: actor is now required
+    const actor = context.actor;
     
     if (!actor || typeof actor !== "string") {
       return false;
@@ -185,8 +190,10 @@ export const POLICY_ACTOR_VALIDATION: Policy = {
 /**
  * POL-005: Audit Trail
  * 
+ * C-002 FIX: Actually enforce audit trail requirement
+ * 
  * All kernel operations must be auditable.
- * If audit_context is required, it must be present.
+ * If audit_context is required, it must be present and non-empty.
  */
 export const POLICY_AUDIT_TRAIL: Policy = {
   id: "POL-005",
@@ -198,8 +205,13 @@ export const POLICY_AUDIT_TRAIL: Policy = {
       return true;
     }
     
-    // audit_context is optional but encouraged
-    return true;
+    // C-002 FIX: Actually validate audit_context presence and content
+    if (!claims.audit_context) {
+      return false;
+    }
+    
+    // Audit context must have at least one key
+    return Object.keys(claims.audit_context).length > 0;
   },
   violation: "Operation missing required audit context",
   severity: "medium",
@@ -223,14 +235,16 @@ export const DEFAULT_POLICIES: Policy[] = [
 /**
  * Evaluate policies against claims
  * 
+ * H-004 FIX: Context is now required with mandatory fields
+ * 
  * @param claims - Verified claims from proof
- * @param context - Runtime context for policy evaluation
+ * @param context - Runtime context for policy evaluation (required)
  * @param policies - Policies to evaluate (defaults to DEFAULT_POLICIES)
  * @returns Evaluation result with any violations
  */
 export function evaluatePolicies(
   claims: ProofClaims,
-  context: PolicyContext = {},
+  context: PolicyContext,
   policies: Policy[] = DEFAULT_POLICIES
 ): PolicyEvaluationResult {
   const violations: PolicyViolation[] = [];
@@ -265,14 +279,16 @@ export function evaluatePolicies(
 /**
  * Evaluate policies and throw on violation
  * 
+ * H-004 FIX: Context is now required with mandatory fields
+ * 
  * @param claims - Verified claims from proof
- * @param context - Runtime context
- * @param policies - Policies to evaluate
+ * @param context - Runtime context (required)
+ * @param policies - Policies to evaluate (defaults to DEFAULT_POLICIES)
  * @throws Error with violation details if any policy fails
  */
 export function evaluatePoliciesOrThrow(
   claims: ProofClaims,
-  context: PolicyContext = {},
+  context: PolicyContext,
   policies: Policy[] = DEFAULT_POLICIES
 ): void {
   const result = evaluatePolicies(claims, context, policies);

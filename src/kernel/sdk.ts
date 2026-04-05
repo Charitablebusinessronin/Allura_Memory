@@ -69,6 +69,15 @@ export class RuVixSDK {
   constructor(config: Partial<SDKConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
     
+    // H-003 FIX: Verify kernel is initialized before use
+    const status = RuVixKernel.initializeKernel();
+    if (!status.initialized) {
+      throw new Error(
+        `Kernel initialization failed: ${status.errors.join('; ')}. ` +
+        `Ensure RUVIX_KERNEL_SECRET is configured.`
+      );
+    }
+    
     // Validate group_id format
     if (!/^allura-[a-z0-9-]+$/.test(this.config.group_id)) {
       throw new Error(
@@ -79,6 +88,7 @@ export class RuVixSDK {
     
     if (this.config.debug) {
       console.log(`[RuVixSDK] Initialized with group_id: ${this.config.group_id}`);
+      console.log(`[RuVixSDK] Kernel version: ${RuVixKernel.KERNEL_VERSION}`);
     }
   }
 

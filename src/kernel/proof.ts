@@ -7,7 +7,7 @@
  * Every state change requires cryptographic proof-of-intent before mutation.
  */
 
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHmac, timingSafeEqual, randomBytes } from "crypto";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -48,6 +48,9 @@ export interface ProofClaims {
   /** Tenant isolation - all operations must have group_id */
   group_id: string;
   
+  /** Unique nonce to prevent replay attacks (required) */
+  nonce: string;
+  
   /** Budget tracking - operation cost estimate */
   budget_cost?: number;
   
@@ -87,12 +90,21 @@ const MAX_CLOCK_SKEW_MS = 30 * 1000;
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Generate a cryptographically secure nonce
+ * 
+ * @returns 16-byte random hex string (32 chars)
+ */
+export function generateNonce(): string {
+  return randomBytes(16).toString("hex");
+}
+
+/**
  * Create a proof-of-intent for a state mutation
  * 
  * @param intent - What operation is being requested
  * @param subject - What resource is being affected
  * @param actor - Who is requesting
- * @param claims - Claims for policy validation
+ * @param claims - Claims for policy validation (nonce will be auto-generated if missing)
  * @param secretKey - HMAC secret key (from environment)
  * @returns Signed proof-of-intent
  */
@@ -105,13 +117,19 @@ export function createProof(
 ): ProofOfIntent {
   const timestamp = Date.now();
   
+  // Auto-generate nonce if not provided (replay attack protection)
+  const claimsWithNonce = {
+    ...claims,
+    nonce: claims.nonce || generateNonce(),
+  };
+  
   // Build the canonical string for signing
   const canonicalString = JSON.stringify({
     intent,
     subject,
     actor,
     timestamp,
-    claims,
+    claims: claimsWithNonce,
   });
   
   // Create HMAC-SHA256 signature
@@ -125,7 +143,7 @@ export function createProof(
     actor,
     timestamp,
     signature,
-    claims,
+    claims: claimsWithNonce,
   };
 }
 
@@ -174,7 +192,7 @@ export function verifyProof(
   }
   
   // ───────────────────────────────────────────────────────────────────────────
-  // Check 2: Claims validation (group_id is mandatory)
+  // Check 2: Claims validation (group_id and nonce are mandatory)
   // ───────────────────────────────────────────────────────────────────────────
   
   const { claims } = proof;
@@ -188,6 +206,19 @@ export function verifyProof(
     return {
       valid: false,
       error: `Invalid group_id format: "${claims.group_id}" (must match allura-[a-z0-9-]+)`,
+    };
+  }
+  
+  // C-001 FIX: Validate nonce presence and format (replay attack protection)
+  if (!claims.nonce || typeof claims.nonce !== "string") {
+    return { valid: false, error: "Missing or invalid nonce in claims" };
+  }
+  
+  // Nonce must be at least 16 bytes (32 hex chars) to prevent brute force
+  if (claims.nonce.length < 32) {
+    return {
+      valid: false,
+      error: `Nonce too short (${claims.nonce.length} chars, minimum 32)`,
     };
   }
   
@@ -297,12 +328,31 @@ export function getKernelSecretKey(): string {
 /**
  * Validate that kernel secret key is properly configured
  * 
- * @returns true if configured, false otherwise
+ * H-001 FIX: Added entropy validation to prevent weak secrets
+ * 
+ * @returns true if configured with sufficient entropy, false otherwise
  */
 export function validateKernelSecret(): boolean {
   try {
     const secret = getKernelSecretKey();
-    return secret.length >= 32; // Minimum 256 bits
+    
+    // Minimum 256 bits (32 bytes)
+    if (secret.length < 32) {
+      return false;
+    }
+    
+    // H-001 FIX: Check for sufficient entropy (no long repeated patterns)
+    if (/(.)\1{7,}/.test(secret)) {
+      console.warn("[RuVix] Kernel secret has low entropy (repeated patterns detected)");
+      return false;
+    }
+    
+    // Prefer hex or base64 format (warn if not)
+    if (!/^[a-fA-F0-9+/=]+$/.test(secret)) {
+      console.warn("[RuVix] Kernel secret should be hex or base64 encoded for maximum entropy");
+    }
+    
+    return true;
   } catch {
     return false;
   }

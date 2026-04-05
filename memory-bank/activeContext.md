@@ -83,7 +83,7 @@
 - **PostgreSQL:** 35 tables, 7 active agents, optimizations applied
 - **Neo4j:** Agent nodes with complete metadata, indexed
 - **Claude Code agents:** 2 agents (brooks-architect, gap-auditor)
-- **OpenCode agents:** 7 agents (memory-orchestrator, architect, builder, guardian, scout, chronicler, roninmemory-project)
+- **OpenCode agents:** 7 agents (memory-orchestrator, architect, builder, guardian, scout, chronicler, allura-memory-project)
 - **VS Code MCP:** 3 servers (MCP_DOCKER, notion, database-server)
 
 ---
@@ -302,7 +302,7 @@ import { syscall } from '@/kernel/ruvix';
 - ✅ Deleted unused `bmad-output/` directory
 - ✅ Reconciled BMad workflow architecture
 - ✅ Created `memory-bank/` with 6 context files
-- ✅ Created `roninmemory-context` skill for session initialization
+- ✅ Created `allura-memory-context` skill for session initialization
 - ✅ Fixed OpenCode boot errors (missing prompt files + invalid color)
 - ✅ Logged to memory and Notion
 
