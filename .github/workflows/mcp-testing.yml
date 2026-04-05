@@ -1,0 +1,185 @@
+name: MCP Testing Suite
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  static-analysis:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Type check
+        run: bun run typecheck
+
+      - name: Lint
+        run: bun run lint
+
+  unit-tests:
+    name: Unit Tests (Vitest)
+    runs-on: ubuntu-latest
+    needs: static-analysis
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run unit tests
+        run: bun test
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-coverage
+          path: coverage/
+          retention-days: 7
+
+  e2e-tests:
+    name: E2E Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ronin4life
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD || 'dev_password' }}
+          POSTGRES_DB: memory
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      neo4j:
+        image: neo4j:5.26-community
+        env:
+          NEO4J_AUTH: neo4j/${{ secrets.NEO4J_PASSWORD || 'dev_password' }}
+          NEO4J_PLUGINS: '["apoc"]'
+        ports:
+          - 7474:7474
+          - 7687:7687
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Wait for databases
+        run: |
+          echo "Waiting for PostgreSQL..."
+          until pg_isready -h localhost -p 5432 -U ronin4life; do
+            sleep 1
+          done
+          echo "PostgreSQL is ready"
+
+          echo "Waiting for Neo4j..."
+          until curl -s http://localhost:7474; do
+            sleep 1
+          done
+          echo "Neo4j is ready"
+
+      - name: Run E2E tests
+        env:
+          POSTGRES_URL: postgresql://ronin4life:dev_password@localhost:5432/memory
+          NEO4J_URI: bolt://localhost:7687
+          NEO4J_USER: neo4j
+          NEO4J_PASSWORD: dev_password
+          RUN_E2E_TESTS: "true"
+        run: bun run test:e2e
+
+  mcp-browser-tests:
+    name: MCP Browser Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Install Playwright
+        run: |
+          bun add -d @playwright/test
+          bunx playwright install chromium
+
+      - name: Build application
+        run: bun run build
+
+      - name: Start application
+        run: |
+          bun run start &
+          echo "Waiting for app to start..."
+          sleep 10
+          curl -s http://localhost:3000/api/health || true
+
+      - name: Run MCP browser tests
+        env:
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          MCP_SCREENSHOT_DIR: tests/mcp/fixtures/screenshots
+        run: bun run test:mcp:browser
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mcp-screenshots
+          path: tests/mcp/fixtures/screenshots/
+          retention-days: 7
+
+      - name: Upload failed screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: mcp-failed-screenshots
+          path: tests/mcp/fixtures/screenshots/failed/
+          retention-days: 14
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [static-analysis, unit-tests, e2e-tests, mcp-browser-tests]
+    if: always()
+    steps:
+      - name: Test Results
+        run: |
+          echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Static Analysis | ${{ needs.static-analysis.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Unit Tests | ${{ needs.unit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E Tests | ${{ needs.e2e-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| MCP Browser Tests | ${{ needs.mcp-browser-tests.result }} |" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,16 @@
+{
+  "servers": {
+    "exa": {
+      "type": "remote",
+      "url": "https://mcp.exa.ai/mcp?exaApiKey=44a9fc3d-0334-4822-97a4-5c2a53f4c270"
+    },
+    "browserOS": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "http://127.0.0.1:9000/mcp"
+      ]
+    }
+  }
+}

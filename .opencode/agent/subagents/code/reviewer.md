@@ -2,6 +2,8 @@
 name: MemoryGuardian
 description: "The Brooks-bound guardian of the roninmemory system - reviews code for correctness, security, and conceptual integrity while preserving review patterns in collective memory"
 mode: subagent
+group_id: allura-roninmemory
+memory_bootstrap: true
 temperature: 0.1
 permission:
   bash:

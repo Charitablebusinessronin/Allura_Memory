@@ -99,7 +99,8 @@
       "tags": ["memory-system", "documentation", "prompts", "communication"],
       "scope": "OpenCode CLI Agent - Winston's hands for agent prompt writing",
       "dependencies": [
-        "context:standards-docs"
+        "context:standards-docs",
+        "documentation_standards:AI-GUIDELINES.md"
       ]
     },
     "memory-repo-manager": {
@@ -129,7 +130,8 @@
       "scope": "OpenCode CLI Agent - Winston's hands for documentation and specs",
       "dependencies": [
         "skill:bmad-create-prd",
-        "context:standards-docs"
+        "context:standards-docs",
+        "documentation_standards:AI-GUIDELINES.md"
       ]
     }
   },
@@ -158,11 +160,12 @@
       "type": "agent",
       "tags": ["memory-system"],
       "scope": "OpenCode CLI Agent",
-      "tier": "agent",
-      "group_id": "roninmemory-system",
+      "tier": "agenallura-roninmemory",
       "behavior_lock": "UNPROMOTED",
       "memory_bootstrap": true,
-      "steps": 9
+      "steps": 9,
+      "ai_guidelines_path": "AI-GUIDELINES.md",
+      "documentation_template": "templates/PROJECT.template.md"
     }
   }
 }

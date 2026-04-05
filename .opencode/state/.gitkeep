@@ -1,0 +1,8 @@
+# Session State Persistence Directory
+# This directory stores session state files for crash recovery.
+# Files in this directory are auto-generated and should not be committed.
+#
+# State files follow the pattern: session-{uuid}.json
+# Checkpoints follow the pattern: checkpoints/{uuid}.json
+#
+# See: src/lib/session/persistence.ts for implementation details.

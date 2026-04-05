@@ -131,6 +131,8 @@ if (typeof window !== "undefined") {
 
 New projects/initiatives belong in `docs/<project-name>/PROJECT.md` using `templates/PROJECT.template.md`. AI-drafted documents require the disclosure notice block defined in `AI-GUIDELINES.md`. Requirement IDs (`B#`, `F#`), decision IDs (`AD-##`), and risk IDs (`RK-##`) must stay consistent throughout a project's docs.
 
+**Course Correction (2026-04-05):** Agent primitives updated from Claude Code leak analysis. Session persistence, workflow state machine, and token budget enforcement are now P1 priorities. See `_bmad-output/planning-artifacts/course-correction-agent-primitives.md`.
+
 ## Slash Commands (`.claude/commands/`)
 
 These mirror the `.opencode/command/` system and are invoked with `/command-name`:

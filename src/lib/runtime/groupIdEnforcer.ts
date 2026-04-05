@@ -2,8 +2,7 @@
 // Semantic Firewall - Zero-Trust group_id enforcement
 // Rejects any request without valid group_id or Agent Identity Card (AIC)
 
-import { validateTenantGroupId } from '../validation/tenant-group-id';
-import { GroupIdValidationError } from '../validation/group-id';
+import { validateGroupId, GroupIdValidationError } from '../validation/group-id';
 
 export interface RequestLike {
   method: string;
@@ -33,7 +32,7 @@ export interface EnforcerResult {
 
 /**
  * Validate request has required identity credentials
- * - group_id: mandatory on all requests, must be allura-{org} format
+ * - group_id: mandatory on all requests
  * - Agent Identity Card (AIC): optional but validated if present
  */
 export function validateRequestIdentity(req: RequestLike): EnforcerResult {
@@ -44,40 +43,40 @@ export function validateRequestIdentity(req: RequestLike): EnforcerResult {
   if (!group_id) {
     return {
       allowed: false,
-      error: 'RK-01: Missing group_id. Every request must include a valid group_id for tenant isolation.',
+      error: 'Missing group_id. Every request must include a valid group_id for tenant isolation.',
     };
   }
 
-  // Validate group_id format with allura-{org} enforcement
+  // Validate group_id format
   try {
-    const validatedGroupId = validateTenantGroupId(group_id);
-    
-    // Validate Agent Identity Card if present
-    if (agentIdentity && typeof agentIdentity === 'string') {
-      // AIC format: agent-name:version:timestamp:signature
-      const aicParts = agentIdentity.split(':');
-      if (aicParts.length < 2) {
-        return {
-          allowed: false,
-          error: 'RK-01: Invalid Agent Identity Card format. Expected: agent-name:version:...',
-        };
-      }
-    }
-
-    return {
-      allowed: true,
-      group_id: validatedGroupId,
-      agent_identity: agentIdentity as string | undefined,
-    };
+    validateGroupId(group_id);
   } catch (error) {
     if (error instanceof GroupIdValidationError) {
       return {
         allowed: false,
-        error: `RK-01: ${error.message}`,
+        error: `Invalid group_id: ${error.message}`,
       };
     }
     throw error;
   }
+
+  // Validate Agent Identity Card if present
+  if (agentIdentity && typeof agentIdentity === 'string') {
+    // AIC format: agent-name:version:timestamp:signature
+    const aicParts = agentIdentity.split(':');
+    if (aicParts.length < 2) {
+      return {
+        allowed: false,
+        error: 'Invalid Agent Identity Card format. Expected: agent-name:version:...',
+      };
+    }
+  }
+
+  return {
+    allowed: true,
+    group_id: validateGroupId(group_id),
+    agent_identity: agentIdentity as string | undefined,
+  };
 }
 
 /**
@@ -113,20 +112,19 @@ export function wrapToolHandler<TArgs extends Record<string, unknown>, TReturn>(
     const group_id = (args as Record<string, unknown>).group_id as string | undefined;
 
     if (!group_id) {
-      throw new Error('RK-01: Tool invocation rejected: missing group_id parameter');
+      throw new Error('Tool invocation rejected: missing group_id parameter');
     }
 
     try {
-      const validatedGroupId = validateTenantGroupId(group_id);
-      // Replace with validated group_id
-      const validatedArgs = { ...args, group_id: validatedGroupId };
-      return handler(validatedArgs as TArgs);
+      validateGroupId(group_id);
     } catch (error) {
       if (error instanceof GroupIdValidationError) {
-        throw new Error(`RK-01: Tool invocation rejected: ${error.message}`);
+        throw new Error(`Tool invocation rejected: ${error.message}`);
       }
       throw error;
     }
+
+    return handler(args);
   };
 }
 

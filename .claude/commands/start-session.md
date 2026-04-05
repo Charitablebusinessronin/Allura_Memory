@@ -30,7 +30,7 @@ Search for memories relevant to the current task or recent sessions:
 mcp__MCP_DOCKER__search_memories({ query: "<user's topic or last session keywords>" })
 
 // Find specific project entities
-mcp__MCP_DOCKER__find_memories_by_name({ names: ["Memory Master", "roninmemory"] })
+mcp__MCP_DOCKER__find_memories_by_name({ names: ["Memory Master", "allura-memory"] })
 ```
 
 Report: memories found, key insights, any critical blockers from last session.
@@ -50,7 +50,7 @@ mcp__MCP_DOCKER__create_entities({
     name: "Session Start " + new Date().toISOString(),
     type: "Event",
     observations: [
-      "group_id: roninmemory",
+      "group_id: allura-roninmemory",
       "event_type: session_start",
       "timestamp: " + new Date().toISOString()
     ]

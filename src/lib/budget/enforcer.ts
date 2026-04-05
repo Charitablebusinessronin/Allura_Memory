@@ -290,6 +290,119 @@ export class BudgetEnforcer {
   }
 
   /**
+   * Get remaining budget for all categories
+   * Returns the remaining capacity before limits are hit
+   */
+  getRemainingBudget(sessionId: SessionId): {
+    tokens: number;
+    toolCalls: number;
+    timeMs: number;
+    costUsd: number;
+    steps: number;
+  } {
+    const state = this.monitor.getSessionState(sessionId);
+    if (!state) {
+      const limits = this.config.budgetConfig.defaults;
+      return {
+        tokens: limits.maxTokens,
+        toolCalls: limits.maxToolCalls,
+        timeMs: limits.maxTimeMs,
+        costUsd: limits.maxCostUsd,
+        steps: limits.maxSteps,
+      };
+    }
+
+    const { limits, consumption } = state.budgetStatus;
+    return {
+      tokens: Math.max(0, limits.maxTokens - consumption.tokens),
+      toolCalls: Math.max(0, limits.maxToolCalls - consumption.toolCalls),
+      timeMs: Math.max(0, limits.maxTimeMs - consumption.timeMs),
+      costUsd: Math.max(0, limits.maxCostUsd - consumption.costUsd),
+      steps: Math.max(0, limits.maxSteps - consumption.steps),
+    };
+  }
+
+  /**
+   * Check if there's sufficient budget for a turn
+   * Returns true if remaining budget > minimum required
+   */
+  hasSufficientBudget(
+    sessionId: SessionId,
+    requirements: {
+      minTokens?: number;
+      minToolCalls?: number;
+      minTimeMs?: number;
+      minCostUsd?: number;
+      minSteps?: number;
+    } = {}
+  ): boolean {
+    const remaining = this.getRemainingBudget(sessionId);
+
+    if (requirements.minTokens !== undefined && remaining.tokens < requirements.minTokens) {
+      return false;
+    }
+    if (requirements.minToolCalls !== undefined && remaining.toolCalls < requirements.minToolCalls) {
+      return false;
+    }
+    if (requirements.minTimeMs !== undefined && remaining.timeMs < requirements.minTimeMs) {
+      return false;
+    }
+    if (requirements.minCostUsd !== undefined && remaining.costUsd < requirements.minCostUsd) {
+      return false;
+    }
+    if (requirements.minSteps !== undefined && remaining.steps < requirements.minSteps) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Update budget consumption for a category
+   * Used by middleware to record actual usage
+   */
+  updateBudget(
+    sessionId: SessionId,
+    updates: Partial<{
+      tokens: number;
+      toolCalls: number;
+      timeMs: number;
+      costUsd: number;
+      steps: number;
+    }>
+  ): void {
+    const state = this.monitor.getSessionState(sessionId);
+    if (!state) {
+      console.warn(`[BudgetEnforcer] Cannot update budget: session ${this.sessionKey(sessionId)} not found`);
+      return;
+    }
+
+    if (updates.tokens !== undefined) {
+      state.budgetStatus.consumption.tokens += updates.tokens;
+      state.budgetStatus.utilization.tokens = (state.budgetStatus.consumption.tokens / state.budgetStatus.limits.maxTokens) * 100;
+    }
+    if (updates.toolCalls !== undefined) {
+      state.budgetStatus.consumption.toolCalls += updates.toolCalls;
+      state.budgetStatus.utilization.toolCalls = (state.budgetStatus.consumption.toolCalls / state.budgetStatus.limits.maxToolCalls) * 100;
+    }
+    if (updates.timeMs !== undefined) {
+      state.budgetStatus.consumption.timeMs += updates.timeMs;
+      state.budgetStatus.utilization.timeMs = (state.budgetStatus.consumption.timeMs / state.budgetStatus.limits.maxTimeMs) * 100;
+    }
+    if (updates.costUsd !== undefined) {
+      state.budgetStatus.consumption.costUsd += updates.costUsd;
+      state.budgetStatus.utilization.costUsd = (state.budgetStatus.consumption.costUsd / state.budgetStatus.limits.maxCostUsd) * 100;
+    }
+    if (updates.steps !== undefined) {
+      state.budgetStatus.consumption.steps += updates.steps;
+      state.budgetStatus.utilization.steps = (state.budgetStatus.consumption.steps / state.budgetStatus.limits.maxSteps) * 100;
+    }
+
+    // Note: Threshold checking happens automatically in monitor when tracking
+    // For manual updates, we rely on the next checkBeforeExecution call
+  }
+
+  /**
    * Get underlying monitor for direct operations
    */
   getMonitor(): BudgetMonitor {
