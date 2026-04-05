@@ -5,7 +5,7 @@ group_id: roninmemory-system
 behavior_intent: Write agent prompts, documentation, and memory system communications
 behavior_lock: "UNPROMOTED"
 memory_bootstrap: true
-steps: [1,2,3,4,5,6,7,8,9]
+steps: 9
 description: "Copywriter for memory system agent prompts and documentation"
 mode: primary
 temperature: 0.3

@@ -15,16 +15,28 @@ if ! docker ps | grep -q "knowledge-neo4j"; then
   return 1
 fi
 
-# Get credentials from running containers
-export POSTGRES_USER=$(docker exec knowledge-postgres printenv POSTGRES_USER 2>/dev/null || echo "ronin4life")
-export POSTGRES_PASSWORD=$(docker exec knowledge-postgres printenv POSTGRES_PASSWORD 2>/dev/null || echo "KaminaTHC*")
-export POSTGRES_DB="memory"
-export POSTGRES_HOST="host.docker.internal"
-export POSTGRES_PORT="5432"
+# Get credentials from environment or container
+# Prefer environment variables from .env.local
+: "${POSTGRES_USER:=ronin4life}"
+: "${POSTGRES_PASSWORD:=$(docker exec knowledge-postgres printenv POSTGRES_PASSWORD 2>/dev/null)}"
+: "${POSTGRES_DB:=memory}"
+: "${POSTGRES_HOST:=host.docker.internal}"
+: "${POSTGRES_PORT:=5432}"
 
-export NEO4J_USER="neo4j"
-export NEO4J_PASSWORD=$(docker exec knowledge-neo4j printenv NEO4J_AUTH 2>/dev/null | cut -d'/' -f2 || echo "Kamina2025*")
-export NEO4J_URI="bolt://host.docker.internal:7687"
+: "${NEO4J_USER:=neo4j}"
+: "${NEO4J_PASSWORD:=$(docker exec knowledge-neo4j printenv NEO4J_AUTH 2>/dev/null | cut -d'/' -f2)}"
+: "${NEO4J_URI:=bolt://host.docker.internal:7687}"
+
+# Validate credentials are available
+if [ -z "$POSTGRES_PASSWORD" ]; then
+  echo "❌ POSTGRES_PASSWORD not set. Add to .env.local or set environment variable"
+  return 1
+fi
+
+if [ -z "$NEO4J_PASSWORD" ]; then
+  echo "❌ NEO4J_PASSWORD not set. Add to .env.local or set environment variable"
+  return 1
+fi
 
 echo "✅ Memory system credentials loaded"
 echo "   Postgres: $POSTGRES_USER@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB"

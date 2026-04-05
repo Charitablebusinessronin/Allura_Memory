@@ -95,7 +95,7 @@ export function parseEpicFile(filePath: string): {
 }
 
 /**
- * Find all epic files in the docs/planning-artifacts directory
+ * Find all epic files in the _bmad-output/planning-artifacts directory
  */
 export function findEpicFiles(baseDir: string): string[] {
   const epicDir = path.join(baseDir, 'docs', 'planning-artifacts');

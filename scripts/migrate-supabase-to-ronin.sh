@@ -8,9 +8,21 @@ echo "🔄 Supabase to Ronin Memory Migration"
 echo "========================================"
 echo ""
 
-# Configuration
-SUPABASE_DB="postgresql://postgres:postgres@localhost:54322/postgres"
-RONIN_DB="postgresql://ronin4life:KaminaTHC*@localhost:5432/memory"
+# Configuration - Use environment variables
+: "${SUPABASE_HOST:=localhost}"
+: "${SUPABASE_PORT:=54322}"
+: "${SUPABASE_USER:=postgres}"
+: "${SUPABASE_PASSWORD:?SUPABASE_PASSWORD is required}"
+: "${SUPABASE_DB:=postgres}"
+
+: "${POSTGRES_HOST:=localhost}"
+: "${POSTGRES_PORT:=5432}"
+: "${POSTGRES_USER:=ronin4life}"
+: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required - set in .env.local}"
+: "${POSTGRES_DB:=memory}"
+
+SUPABASE_DB="postgresql://${SUPABASE_USER}:${SUPABASE_PASSWORD}@${SUPABASE_HOST}:${SUPABASE_PORT}/${SUPABASE_DB}"
+RONIN_DB="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}"
 MIGRATION_DIR="/tmp/supabase_migration_$(date +%Y%m%d_%H%M%S)"
 
 mkdir -p "$MIGRATION_DIR"

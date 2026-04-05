@@ -1,10 +1,205 @@
 {
   "version": 1,
   "skills": {
+    "ai-discoverability-audit": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "5714f197ba65391f1a89386f98dc7f703ae6a153d92af2357a34d5a8b1020b1f"
+    },
+    "case-study-builder": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "d37ca154a550440c8945c28e099b8b88e6cd859c6d9e7b519f2bb99785e0ebae"
+    },
+    "cold-outreach-sequence": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "987a0a7df737f63d6335913f9cbd8fc1fb7d0c54290cb27d950d4349f6354389"
+    },
+    "content-idea-generator": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "43902c30da40570e788bbe88c2b649f95783a8202d59058a8de3229d446dc0af"
+    },
+    "daily-briefing-builder": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "77ec479a9d797e536d0ddb310163db0a3301207a23b7d895bea14433fc7d2194"
+    },
+    "de-ai-ify": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "b2c96d19db9ce3709a24f30c7a7d53a512ada99810e299437e4af75499fac5a4"
+    },
+    "deploy-to-vercel": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "03e0eaaa9bf13ba1e7ffa387f5893de6f324c0868c627001f179395a8feaa7c9"
+    },
+    "go-mode": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "a2b5a808f875069e6ce1235b2cbe5386897de8a0b821dbb0e89e0212be90d0a0"
+    },
+    "homepage-audit": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "55af73d069bdfa53d1fcc9ba3429d968a18400829b3c54278dad3ece3c367db8"
+    },
+    "kreuzberg": {
+      "source": "kreuzberg-dev/kreuzberg",
+      "sourceType": "github",
+      "computedHash": "a521c6ae4a26fa5c8b4469c591ae462a4beb765ebfa51e3ffcf7747a11a7e67c"
+    },
+    "last30days": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "0ab0770e230675ee637e107ddd3b644c9a1592c8832ed4ef902510b66bef909e"
+    },
+    "linkedin-authority-builder": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "c79a4fa94298765239437f546b9008350b6436e9bf710ef400a33e7bb0d16dfb"
+    },
+    "linkedin-profile-optimizer": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "f0620da9c832a249f9abf0f178f4dbc0a2b5be7cc5d83ba8e2eb2a2f28f7d5a5"
+    },
+    "marketing-principles": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "f777a863fd2164b6cc68bccc97ca2ad1a036dcb931446ccad30d889d34450aa6"
+    },
+    "meeting-prep-cc": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "35750488880b098478dfdf2eeb0c6f14dabafc4c35d557673e2d1c911dcab61b"
+    },
+    "newsletter-creation-curation": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "ee603f47bbc2b6d3c87989b5d78ceb8746802c5249bd689cedbcd992abc292a6"
+    },
+    "plan-my-day": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "6b8f0dc0e675c63d98a1bc0963e5e7df98512fbb25bd971cf48fa25e8f8d4da0"
+    },
+    "positioning-basics": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "8bc23a759a97e940f4bb936ced9cbd043d4227535ca018982c81deba959c0016"
+    },
+    "qdrant-clients-sdk": {
+      "source": "qdrant/skills",
+      "sourceType": "github",
+      "computedHash": "141f4f633e3b60d94149f4bd573d6106ee2eb7ab070dc99249a221d173c01946"
+    },
+    "qdrant-deployment-options": {
+      "source": "qdrant/skills",
+      "sourceType": "github",
+      "computedHash": "7e10de46a33e9422f27a0c03da63eb18c86ccc73438c847928e789370251b376"
+    },
+    "qdrant-model-migration": {
+      "source": "qdrant/skills",
+      "sourceType": "github",
+      "computedHash": "9354dcdd3742ecbccdd86c59110f5f163adbd0b0e992d0bb0d267f2e429e1d77"
+    },
+    "qdrant-monitoring": {
+      "source": "qdrant/skills",
+      "sourceType": "github",
+      "computedHash": "b4f236b6875bce2c4690b0da201950a03204239f3a5351f2f1c3375584edc8c1"
+    },
+    "qdrant-performance-optimization": {
+      "source": "qdrant/skills",
+      "sourceType": "github",
+      "computedHash": "00faabaa7ea9f3eeda8ab9adf93fe735c0d96ac7a45cc3c50b3d4b70673d0c19"
+    },
+    "qdrant-scaling": {
+      "source": "qdrant/skills",
+      "sourceType": "github",
+      "computedHash": "dc9c4d0e7104a77ebd9d55c884efc25fb79d3ebec284aabac986416ece018e44"
+    },
+    "qdrant-search-quality": {
+      "source": "qdrant/skills",
+      "sourceType": "github",
+      "computedHash": "869383fcf900f621c9fd3c52bce7e5c9abd46f8d8cf9fbaf81635253aeb20739"
+    },
+    "qdrant-version-upgrade": {
+      "source": "qdrant/skills",
+      "sourceType": "github",
+      "computedHash": "fb7d84a8ddc0df9b42d75f30b4d2fb2f9108a7dd348e60578379d20705d6a424"
+    },
+    "reddit-insights": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "4883b70a412f3adb90f8d1b89735f19db5c67b24462f8157f512678a81eb6049"
+    },
     "smithery-ai-cli": {
       "source": "smithery.ai",
       "sourceType": "well-known",
       "computedHash": "dc17f090c975afe1d96a25dbe843fc9c978e96d5699eed1bb7c12b411e10b830"
+    },
+    "social-card-gen": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "73ca0c56deaedd3c35c439cd8f53841d049c7176a6b363c055232f277204262c"
+    },
+    "testimonial-collector": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "37803003b13defec73b3b8ac08011020bb4306dcfa20fb2cd58237e2a1bcef0f"
+    },
+    "tweet-draft-reviewer": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "9c8c241f75624963634156a22bfdcce84e9b810998e287c3f63262d809f2968d"
+    },
+    "vault-cleanup-auditor": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "cde07aceb67d841f38ffc9c8cb02251fdbdd9cbec24fd42591b4450d0c78a682"
+    },
+    "vercel-cli-with-tokens": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "1e1664e75dcab248050faac99db1aaef1456b7945266215ccbab68ddf85b2b79"
+    },
+    "vercel-composition-patterns": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "575757e3e25761c8c562d6e395d29f0b76c98b1273c0bd72d88e6ab1bc9c7d42"
+    },
+    "vercel-react-best-practices": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "43ca6c197f8ec13055079da7053232d477068b03ca443f9ac1bc819b95cdd432"
+    },
+    "vercel-react-native-skills": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "41d24eafa7c3d82e270439808f7cfbc4d51aeb2d14f2809a2267c16275784d06"
+    },
+    "vercel-react-view-transitions": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "c8952fc9127fa0564d0cb71dccb4215a5608ac933b5831104f09173a97a46f85"
+    },
+    "voice-extractor": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "9ad9ab968052e1de7a5cc026e7c52ac6aff6923e4cc10fc164399ae27cda5d48"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "f3bc47f890f42a44db1007ab390709ec368e4b8c089baee6b0007182236ac474"
+    },
+    "youtube-summarizer": {
+      "source": "BrianRWagner/ai-marketing-skills",
+      "sourceType": "github",
+      "computedHash": "e0e8470e8d01bf04df7cced58af79e5ea91c79ca3640fbc56ada661397c1b417"
     }
   }
 }

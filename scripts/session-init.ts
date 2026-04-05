@@ -8,13 +8,28 @@
 
 import { execSync } from "child_process";
 
+// Configuration from environment variables
+const POSTGRES_USER = process.env.POSTGRES_USER || 'ronin4life';
+const POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD;
+const NEO4J_PASSWORD = process.env.NEO4J_PASSWORD;
+
+if (!POSTGRES_PASSWORD) {
+  console.error("❌ POSTGRES_PASSWORD not set. Add to .env.local");
+  process.exit(1);
+}
+
+if (!NEO4J_PASSWORD) {
+  console.error("❌ NEO4J_PASSWORD not set. Add to .env.local");
+  process.exit(1);
+}
+
 console.log("🧠 SESSION INITIALIZATION - Memory System Protocol\n");
 
 // === PHASE 1: Container Health Check ===
 console.log("📋 Phase 1: Checking container health...");
 
 try {
-  const pgStatus = execSync("docker exec knowledge-postgres pg_isready -U ronin4life -d memory", { encoding: "utf-8" });
+  const pgStatus = execSync(`docker exec knowledge-postgres pg_isready -U ${POSTGRES_USER} -d memory`, { encoding: "utf-8" });
   console.log("   ✅ PostgreSQL: Ready");
 } catch {
   console.error("   ❌ PostgreSQL: Not running. Start with: docker compose up -d knowledge-postgres");
@@ -22,7 +37,7 @@ try {
 }
 
 try {
-  const neoStatus = execSync("docker exec knowledge-neo4j cypher-shell -u neo4j -p '" + (process.env.NEO4J_PASSWORD || 'Kamina2025*') + "' 'RETURN 1'", { encoding: "utf-8" });
+  const neoStatus = execSync(`docker exec knowledge-neo4j cypher-shell -u neo4j -p '${NEO4J_PASSWORD}' 'RETURN 1'`, { encoding: "utf-8" });
   console.log("   ✅ Neo4j: Ready");
 } catch {
   console.error("   ❌ Neo4j: Not running. Start with: docker compose up -d knowledge-neo4j");
@@ -42,7 +57,7 @@ console.log("\n📋 Phase 3: Hydrating context from memory...");
 console.log("\n   📝 Recent PostgreSQL Events (roninmemory):");
 try {
   const eventsOutput = execSync(
-    `docker exec knowledge-postgres psql -U ronin4life -d memory -c "SELECT event_type, created_at FROM events WHERE group_id = 'roninmemory' ORDER BY created_at DESC LIMIT 3"`,
+    `docker exec knowledge-postgres psql -U ${POSTGRES_USER} -d memory -c "SELECT event_type, created_at FROM events WHERE group_id = 'roninmemory' ORDER BY created_at DESC LIMIT 3"`,
     { encoding: "utf-8" }
   );
   console.log(eventsOutput.split("\n").slice(2, -3).join("\n"));
@@ -54,7 +69,7 @@ try {
 console.log("\n   🧠 Recent Neo4j Insights:");
 try {
   const insightsOutput = execSync(
-    `docker exec knowledge-neo4j cypher-shell -u neo4j -p '` + (process.env.NEO4J_PASSWORD || 'Kamina2025*') + `' "MATCH (i:Insight) WHERE i.status = 'active' RETURN i.name, i.confidence, i.created_at ORDER BY i.created_at DESC LIMIT 3"`,
+    `docker exec knowledge-neo4j cypher-shell -u neo4j -p '${NEO4J_PASSWORD}' "MATCH (i:Insight) WHERE i.status = 'active' RETURN i.name, i.confidence, i.created_at ORDER BY i.created_at DESC LIMIT 3"`,
     { encoding: "utf-8" }
   );
   console.log(insightsOutput);
@@ -70,7 +85,7 @@ const sessionId = `session_${Date.now()}`;
 
 try {
   execSync(
-    `docker exec knowledge-postgres psql -U ronin4life -d memory -c "INSERT INTO events (event_type, group_id, agent_id, status, metadata, created_at) VALUES ('session_start', 'roninmemory', 'roninmemory-agent', 'pending', '{\\"session_id\\": \\"${sessionId}\\", \\"timestamp\\": \\"${timestamp}\\"}', NOW())"`,
+    `docker exec knowledge-postgres psql -U ${POSTGRES_USER} -d memory -c "INSERT INTO events (event_type, group_id, agent_id, status, metadata, created_at) VALUES ('session_start', 'roninmemory', 'roninmemory-agent', 'pending', '{\\"session_id\\": \\"${sessionId}\\", \\"timestamp\\": \\"${timestamp}\\"}', NOW())"`,
     { encoding: "utf-8" }
   );
   console.log("   ✅ Session logged to PostgreSQL");

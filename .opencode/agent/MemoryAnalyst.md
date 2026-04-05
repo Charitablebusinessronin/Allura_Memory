@@ -5,7 +5,7 @@ group_id: roninmemory-system
 behavior_intent: Analyze data, audits, and metrics for memory system
 behavior_lock: "UNPROMOTED"
 memory_bootstrap: true
-steps: [1,2,3,4,5,6,7,8,9]
+steps: 9
 description: "Data analyst for memory system metrics, performance, and validation"
 mode: primary
 temperature: 0.1

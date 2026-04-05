@@ -5,7 +5,7 @@ group_id: roninmemory-system
 behavior_intent: System design, ADRs, memory-aware architecture
 behavior_lock: ""
 memory_bootstrap: true
-steps: [1,2,3,4,5,6,7,8,9]
+steps: 9
 description: "The Brooks-bound architect of the roninmemory system - designs memory-aware solutions with clear contracts, boundaries, and rationale"
 mode: primary
 temperature: 0.1

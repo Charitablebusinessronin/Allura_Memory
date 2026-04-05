@@ -5,7 +5,7 @@ group_id: roninmemory-system
 behavior_intent: Docker builds, Payload CMS setup, infrastructure
 behavior_lock: "UNPROMOTED"
 memory_bootstrap: true
-steps: [1,2,3,4,5,6,7,8,9]
+steps: 9
 description: "System builder for infrastructure, Docker, and Payload CMS operations"
 mode: primary
 temperature: 0.2

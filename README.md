@@ -177,7 +177,7 @@ POSTGRES_PASSWORD="..." NEO4J_PASSWORD="..." bun run session:bootstrap
 | `deprecate_memory` | Mark info as old/useless. |
 | `archive_memory` | Lock info away for audits. |
 
-*(Full spec in `.skills/memory-management/resources/tool-reference.md`)*
+*(Full skill registry in `.opencode/skills/` — the single source of truth for all agent capabilities)*
 
 ---
 
@@ -209,8 +209,8 @@ bun run test:e2e
 | **Master Document** | |
 | `docs/roninmemory/PROJECT.md` | Single cohesive project document. Blueprint, requirements, architecture, data dictionary, decisions, and epic tracking. |
 | **Planning Artifacts** | |
-| `docs/planning-artifacts/` | Epic definitions and planning documents |
-| `docs/implementation-artifacts/` | Technical specifications and story implementation specs |
+| `_bmad-output/planning-artifacts/` | Epic definitions and planning documents |
+| `_bmad-output/implementation-artifacts/` | Technical specifications and story implementation specs |
 | `docs/validation/` | Phase completion reports and validation artifacts |
 | **Reference Docs** | |
 | `docs/api/` | API reference documentation |
@@ -219,21 +219,24 @@ bun run test:e2e
 | `docs/SECURITY.md` | Security policies and procedures |
 | **Agent Context** | |
 | `AGENTS.md` | Standard Operating Procedures (SOPs) |
-| `.opencode/skills/` | Tool loadouts for your agents |
+| `.opencode/skills/` | **Single source of truth** — all agent skills live here (127 skills) |
+| `.opencode/command/` | User-facing slash commands |
+| `.opencode/agent/` | Agent definitions (7 Memory agents) |
+| `.opencode/context/` | Agent instructions and navigation |
 | `memory-bank/` | Active mission context |
 | `AI-GUIDELINES.md` | Documentation standards and AI assistance policies |
 
 ### BMad Workflow Outputs
 
 BMad artifacts follow this structure:
-- **Planning**: `docs/planning-artifacts/` — Epic definitions, sprint planning
-- **Implementation**: `docs/implementation-artifacts/` — Tech specs, story files
+- **Planning**: `_bmad-output/planning-artifacts/` — Epic definitions, sprint planning
+- **Implementation**: `_bmad-output/implementation-artifacts/` — Tech specs, story files
 - **Validation**: `docs/validation/` — Phase completion reports
 
 **Key Files:**
-- **Current Epic**: `docs/planning-artifacts/epic-7-openagents-control-registry.md`
-- **Tech Spec**: `docs/implementation-artifacts/tech-spec-epic-7-openagents-control-registry.md`
-- **Active Story**: `docs/implementation-artifacts/spec-notion-client-implementation.md`
+- **Current Epic**: `_bmad-output/planning-artifacts/epic-7-openagents-control-registry.md`
+- **Tech Spec**: `_bmad-output/implementation-artifacts/tech-spec-epic-7-openagents-control-registry.md`
+- **Active Story**: `_bmad-output/implementation-artifacts/spec-notion-client-implementation.md`
 
 ---
 
