@@ -14,7 +14,8 @@
       "mcp__MCP_DOCKER__web_search_exa",
       "mcp__MCP_DOCKER__mcp-find",
       "mcp__MCP_DOCKER__list_tables",
-      "Bash(bun run:*)"
+      "Bash(bun run:*)",
+      "mcp__MCP_DOCKER__resolve-library-id"
     ]
   }
 }
