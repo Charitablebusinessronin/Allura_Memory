@@ -122,13 +122,7 @@ async function runBootstrap(options: BootstrapOptions): Promise<BootstrapResult>
   if (!options.skipSnapshotBuild) {
     console.log("📦 Building memory snapshot...");
   try {
-    const snapshotCmd = [
-      "bun",
-      "run",
-      path.join(repoRoot, "scripts", "build-memory-snapshot.ts"),
-      "--group-id",
-      options.groupId,
-    ].join(" ");
+    const snapshotCmd = `bun run "${path.join(repoRoot, "scripts", "build-memory-snapshot.ts")}" --group-id ${options.groupId}`;
 
     const output = execSync(snapshotCmd, {
       cwd: repoRoot,
@@ -152,21 +146,9 @@ async function runBootstrap(options: BootstrapOptions): Promise<BootstrapResult>
   // Step 2: Hydrate session
   console.log("💧 Hydrating session context...");
   try {
-    const hydrationArgs = [
-      "bun",
-      "run",
-      path.join(repoRoot, "scripts", "hydrate-session-from-snapshot.ts"),
-      "--group-id",
-      options.groupId,
-      "--concurrency",
-      String(options.concurrency),
-    ];
+    const hydrationCmd = `bun run "${path.join(repoRoot, "scripts", "hydrate-session-from-snapshot.ts")}" --group-id ${options.groupId} --concurrency ${options.concurrency}${options.dryRun ? " --dry-run" : ""}`;
 
-    if (options.dryRun) {
-      hydrationArgs.push("--dry-run");
-    }
-
-    const output = execSync(hydrationArgs.join(" "), {
+    const output = execSync(hydrationCmd, {
       cwd: repoRoot,
       encoding: "utf-8",
       stdio: ["pipe", "pipe", "pipe"],
