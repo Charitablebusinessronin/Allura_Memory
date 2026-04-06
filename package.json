@@ -29,6 +29,8 @@
     "session:bootstrap": "bun run scripts/session-bootstrap.ts",
     "session:init": "bun run scripts/session-init.ts",
     "openclaw:onboard": "bun run scripts/openclaw-onboard.ts",
+    "whatsapp:setup": "bun run scripts/setup-whatsapp.ts",
+    "telegram:setup": "bun run scripts/setup-telegram.ts",
     "registry:sync": "bun run scripts/opencode-registry/sync.ts",
     "registry:dry-run": "bun run scripts/opencode-registry/sync.ts --dry-run",
     "registry:log-audit": "bun run scripts/opencode-registry/log-audit.ts",
