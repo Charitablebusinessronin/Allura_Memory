@@ -73,6 +73,29 @@
         "tool:mcp-docker"
       ]
     },
+    "memory-builder-focus": {
+      "id": "memory-builder-focus",
+      "name": "MemoryBuilderFocus",
+      "category": "agent",
+      "type": "agent",
+      "version": "1.0.0",
+      "author": "roninmemory",
+      "path": ".opencode/agent/memory-builder-focus.md",
+      "tags": ["memory-system", "focus-mode", "elevated-permissions", "flow-state"],
+      "scope": "OpenCode CLI Agent - MemoryBuilder with elevated permissions for intensive development",
+      "dependencies": [
+        "context:standards-code",
+        "tool:mcp-docker",
+        "skill:focus-mode"
+      ],
+      "parent_agent": "memory-builder",
+      "mode": "focus",
+      "safety_guards": {
+        "elevated_permissions": true,
+        "protected_files": [".env*", "*.key", "*.secret", ".git/**", "node_modules/**"],
+        "denied_commands": ["sudo *", "rm -rf /*", "> /dev/*"]
+      }
+    },
     "memory-analyst": {
       "id": "memory-analyst",
       "name": "MemoryAnalyst",

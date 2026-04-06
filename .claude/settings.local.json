@@ -12,7 +12,9 @@
       "Bash(mv /home/ronin704/Projects/allura-memory/docs/implementation-artifacts/* /home/ronin704/Projects/allura-memory/_bmad-output/implementation-artifacts/)",
       "Skill(end-session)",
       "mcp__MCP_DOCKER__web_search_exa",
-      "mcp__MCP_DOCKER__mcp-find"
+      "mcp__MCP_DOCKER__mcp-find",
+      "mcp__MCP_DOCKER__list_tables",
+      "Bash(bun run:*)"
     ]
   }
 }

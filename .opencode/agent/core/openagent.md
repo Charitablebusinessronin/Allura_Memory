@@ -5,12 +5,21 @@ mode: primary
 temperature: 0.2
 permission:
   bash:
-    "*": "ask"
+    "*": "allow"
     "rm -rf *": "ask"
     "rm -rf /*": "deny"
     "sudo *": "deny"
     "> /dev/*": "deny"
+    "chmod 777 *": "ask"
   edit:
+    "*": "allow"
+    "**/*.env*": "deny"
+    "**/*.key": "deny"
+    "**/*.secret": "deny"
+    "node_modules/**": "deny"
+    ".git/**": "deny"
+  write:
+    "*": "allow"
     "**/*.env*": "deny"
     "**/*.key": "deny"
     "**/*.secret": "deny"
