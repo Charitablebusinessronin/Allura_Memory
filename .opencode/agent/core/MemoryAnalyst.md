@@ -2,6 +2,7 @@
 name: MemoryAnalyst
 description: "Research agent — reads context from memory, gathers information, returns structured findings"
 mode: subagent
+model: ollama/gemma4:e4b-cloud
 group_id: allura-roninmemory
 memory_bootstrap: true
 temperature: 0.2

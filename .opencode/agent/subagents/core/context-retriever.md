@@ -2,8 +2,17 @@
 name: Context Retriever
 description: Generic context search and retrieval specialist for finding relevant context files, standards, and guides in any repository
 mode: subagent
+model: ollama/gemma4:e4b-cloud
+group_id: allura-roninmemory
+memory_bootstrap: true
 temperature: 0.1
 permission:
+  read:
+    "*": "allow"
+  grep:
+    "*": "allow"
+  glob:
+    "*": "allow"
   bash:
     "*": "deny"
   edit:

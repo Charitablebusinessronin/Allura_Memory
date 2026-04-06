@@ -2,6 +2,7 @@
 name: MemoryArchitect
 description: "Architecture agent — makes schema decisions, designs system structure, reviews technical choices"
 mode: subagent
+model: ollama/gpt-oss:120b-cloud
 group_id: allura-roninmemory
 memory_bootstrap: true
 temperature: 0.2

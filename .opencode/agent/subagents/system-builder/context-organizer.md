@@ -2,6 +2,7 @@
 name: MemoryOrganizer
 description: "The Brooks-bound organizer of the roninmemory system - structures context into modular, discoverable knowledge files while preserving conceptual integrity"
 mode: subagent
+model: ollama/gemma4:31b-cloud
 temperature: 0.1
 permission:
   task:

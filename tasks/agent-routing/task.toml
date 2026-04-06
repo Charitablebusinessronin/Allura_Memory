@@ -1,0 +1,18 @@
+[task]
+name = "agent-routing"
+description = "Given a task description, dispatch to the correct Surgical Team agent"
+version = "1.0.0"
+domain = "orchestration"
+timeout_sec = 20
+max_turns = 5
+
+[scoring]
+method = "deterministic"
+pass_threshold = 0.75
+
+[environment]
+requires_postgres = false
+
+[metadata]
+tags = ["orchestration", "routing", "surgical-team", "dispatch"]
+invariants = ["scout exempt from approval", "no execution without classification"]

@@ -175,6 +175,148 @@
       ]
     }
   },
+  "subagents": {
+    "context-retriever": {
+      "id": "context-retriever",
+      "name": "Context Retriever",
+      "category": "subagent",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "roninmemory",
+      "path": ".opencode/agent/subagents/core/context-retriever.md",
+      "tags": ["memory-system", "discovery", "context", "read-only"],
+      "scope": "OpenCode Subagent - generic context search across any repo",
+      "role": "context_retriever",
+      "group_id": "allura-roninmemory",
+      "memory_bootstrap": true,
+      "permissions": { "bash": "deny", "edit": "deny", "write": "deny" }
+    },
+    "externalscout": {
+      "id": "externalscout",
+      "name": "MemoryArchivist",
+      "category": "subagent",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "roninmemory",
+      "path": ".opencode/agent/subagents/core/externalscout.md",
+      "tags": ["memory-system", "external", "documentation", "read-only"],
+      "scope": "OpenCode Subagent - fetches external package docs via context7",
+      "role": "archivist",
+      "group_id": "allura-roninmemory",
+      "memory_bootstrap": true,
+      "permissions": { "bash": "deny", "edit": "deny", "write": "deny" }
+    },
+    "task-manager": {
+      "id": "task-manager",
+      "name": "MemoryCurator",
+      "category": "subagent",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "roninmemory",
+      "path": ".opencode/agent/subagents/core/task-manager.md",
+      "tags": ["memory-system", "planning", "tasks"],
+      "scope": "OpenCode Subagent - decomposes complex tasks into atomic subtasks",
+      "role": "curator",
+      "group_id": "allura-roninmemory",
+      "memory_bootstrap": true,
+      "permissions": { "bash": "deny", "edit": "deny", "write": "deny" }
+    },
+    "agent-generator": {
+      "id": "agent-generator",
+      "name": "AgentGenerator",
+      "category": "subagent",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "roninmemory",
+      "path": ".opencode/agent/subagents/system-builder/agent-generator.md",
+      "tags": ["memory-system", "system-builder", "agent-generation"],
+      "scope": "OpenCode Subagent - generates new agent files with memory-aware bootstraps",
+      "role": "agent_generator",
+      "group_id": "allura-roninmemory",
+      "memory_bootstrap": true,
+      "permissions": {
+        "bash": "deny",
+        "edit": "allow",
+        "write": "allow"
+      }
+    },
+    "command-creator": {
+      "id": "command-creator",
+      "name": "CommandCreator",
+      "category": "subagent",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "roninmemory",
+      "path": ".opencode/agent/subagents/system-builder/command-creator.md",
+      "tags": ["memory-system", "system-builder", "commands"],
+      "scope": "OpenCode Subagent - creates slash commands with explicit agent routing",
+      "role": "command_creator",
+      "group_id": "allura-roninmemory",
+      "memory_bootstrap": true,
+      "permissions": {
+        "bash": "deny",
+        "edit": "allow",
+        "write": "allow"
+      }
+    },
+    "context-organizer": {
+      "id": "context-organizer",
+      "name": "MemoryOrganizer",
+      "category": "subagent",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "roninmemory",
+      "path": ".opencode/agent/subagents/system-builder/context-organizer.md",
+      "tags": ["memory-system", "system-builder", "context"],
+      "scope": "OpenCode Subagent - structures context into modular discoverable knowledge files",
+      "role": "context_organizer",
+      "group_id": "allura-roninmemory",
+      "memory_bootstrap": true,
+      "permissions": {
+        "bash": "deny",
+        "edit": "allow",
+        "write": "allow"
+      }
+    },
+    "domain-analyzer": {
+      "id": "domain-analyzer",
+      "name": "DomainAnalyzer",
+      "category": "subagent",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "roninmemory",
+      "path": ".opencode/agent/subagents/system-builder/domain-analyzer.md",
+      "tags": ["memory-system", "system-builder", "analysis"],
+      "scope": "OpenCode Subagent - extracts domain concepts and recommended agent structure",
+      "role": "domain_analyzer",
+      "group_id": "allura-roninmemory",
+      "memory_bootstrap": true,
+      "permissions": {
+        "bash": "deny",
+        "edit": "allow",
+        "write": "allow"
+      }
+    },
+    "workflow-designer": {
+      "id": "workflow-designer",
+      "name": "WorkflowDesigner",
+      "category": "subagent",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "roninmemory",
+      "path": ".opencode/agent/subagents/system-builder/workflow-designer.md",
+      "tags": ["memory-system", "system-builder", "workflows"],
+      "scope": "OpenCode Subagent - designs executable workflows with validation gates",
+      "role": "workflow_designer",
+      "group_id": "allura-roninmemory",
+      "memory_bootstrap": true,
+      "permissions": {
+        "bash": "deny",
+        "edit": "allow",
+        "write": "allow"
+      }
+    }
+  },
   "archived_agents": {
     "memory-copywriter": {
       "id": "memory-copywriter",
