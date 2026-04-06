@@ -1,17 +1,17 @@
 {
   "$schema": "https://opencode.ai/schemas/agent-metadata.json",
-  "schema_version": "1.0.0",
-  "description": "Centralized metadata for RoninMemory agents. Memory-themed agent registry for the unified AI brain.",
+  "schema_version": "2.0.0",
+  "description": "Centralized metadata for RoninMemory agents - Surgical Team architecture. Memory-themed agent registry for the unified AI brain.",
   "agents": {
     "memory-orchestrator": {
       "id": "memory-orchestrator",
       "name": "MemoryOrchestrator",
       "category": "agent",
       "type": "agent",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "roninmemory",
-      "path": ".opencode/agent/MemoryOrchestrator.md",
-      "tags": ["memory-system", "orchestration", "primary", "brooks", "planning", "governance"],
+      "path": ".opencode/agent/core/openagent.md",
+      "tags": ["memory-system", "orchestration", "primary", "brooks", "planning", "governance", "surgical-team"],
       "persona": {
         "name": "Frederick P. Brooks Jr.",
         "style": "direct, pragmatic, conceptually-integrated, high-signal",
@@ -31,7 +31,7 @@
       },
       "tenant_boundary": {
         "memory_partition_key": "group_id",
-        "global_partition_key": "global-coding-skills"
+        "global_partition_key": "allura-system"
       },
       "memory_system": {
         "enabled": true,
@@ -40,22 +40,27 @@
         "logging_mode": "dual",
         "readback_required": true
       },
-      "scope": "OpenCode CLI Agent - Winston's hands for orchestration"
+      "scope": "OpenCode CLI Agent - Winston's hands for orchestration",
+      "role": "chief_surgeon",
+      "dispatches_to": ["memory-architect", "memory-builder", "memory-guardian", "memory-scout", "memory-analyst", "memory-chronicler"]
     },
     "memory-architect": {
       "id": "memory-architect",
       "name": "MemoryArchitect",
       "category": "agent",
       "type": "agent",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "roninmemory",
-      "path": ".opencode/agent/MemoryArchitect.md",
-      "tags": ["memory-system", "architecture", "implementation", "design"],
-      "scope": "OpenCode CLI Agent - Winston's hands for system design",
+      "path": ".opencode/agent/core/MemoryArchitect.md",
+      "tags": ["memory-system", "architecture", "design", "surgical-team"],
+      "scope": "OpenCode CLI Agent - First Assistant for system design",
+      "role": "first_assistant",
+      "memory_bootstrap": true,
       "dependencies": [
         "skill:bmad-create-architecture",
         "context:standards-code",
-        "context:standards-docs"
+        "context:standards-docs",
+        "tool:mcp-docker"
       ]
     },
     "memory-builder": {
@@ -63,100 +68,144 @@
       "name": "MemoryBuilder",
       "category": "agent",
       "type": "agent",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "roninmemory",
-      "path": ".opencode/agent/MemoryBuilder.md",
-      "tags": ["memory-system", "infrastructure", "docker", "payload"],
-      "scope": "OpenCode CLI Agent - Winston's hands for infrastructure",
+      "path": ".opencode/agent/core/MemoryBuilder.md",
+      "tags": ["memory-system", "infrastructure", "implementation", "surgical-team"],
+      "scope": "OpenCode CLI Agent - Builder for infrastructure implementation",
+      "role": "builder",
+      "memory_bootstrap": true,
+      "permissions": {
+        "bash": "allow",
+        "edit": "allow",
+        "write": "allow"
+      },
       "dependencies": [
         "context:standards-code",
         "tool:mcp-docker"
       ]
     },
-    "memory-builder-focus": {
-      "id": "memory-builder-focus",
-      "name": "MemoryBuilderFocus",
+    "memory-guardian": {
+      "id": "memory-guardian",
+      "name": "MemoryGuardian",
       "category": "agent",
       "type": "agent",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "roninmemory",
-      "path": ".opencode/agent/memory-builder-focus.md",
-      "tags": ["memory-system", "focus-mode", "elevated-permissions", "flow-state"],
-      "scope": "OpenCode CLI Agent - MemoryBuilder with elevated permissions for intensive development",
+      "path": ".opencode/agent/subagents/code/reviewer.md",
+      "tags": ["memory-system", "validation", "quality", "surgical-team"],
+      "scope": "OpenCode CLI Agent - Inspector for validation and quality gates",
+      "role": "inspector",
+      "memory_bootstrap": true,
+      "permissions": {
+        "bash": "deny",
+        "edit": "deny",
+        "write": "deny"
+      },
       "dependencies": [
         "context:standards-code",
-        "tool:mcp-docker",
-        "skill:focus-mode"
-      ],
-      "parent_agent": "memory-builder",
-      "mode": "focus",
-      "safety_guards": {
-        "elevated_permissions": true,
-        "protected_files": [".env*", "*.key", "*.secret", ".git/**", "node_modules/**"],
-        "denied_commands": ["sudo *", "rm -rf /*", "> /dev/*"]
-      }
+        "tool:mcp-docker"
+      ]
+    },
+    "memory-scout": {
+      "id": "memory-scout",
+      "name": "MemoryScout",
+      "category": "agent",
+      "type": "agent",
+      "version": "2.0.0",
+      "author": "roninmemory",
+      "path": ".opencode/agent/subagents/core/contextscout.md",
+      "tags": ["memory-system", "discovery", "research", "surgical-team"],
+      "scope": "OpenCode CLI Agent - Scout for context discovery",
+      "role": "scout",
+      "memory_bootstrap": true,
+      "approval_exempt": true,
+      "permissions": {
+        "bash": "deny",
+        "edit": "deny",
+        "write": "deny"
+      },
+      "dependencies": [
+        "skill:mcp-docker",
+        "tool:mcp-docker"
+      ]
     },
     "memory-analyst": {
       "id": "memory-analyst",
       "name": "MemoryAnalyst",
       "category": "agent",
       "type": "agent",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "roninmemory",
-      "path": ".opencode/agent/MemoryAnalyst.md",
-      "tags": ["memory-system", "analytics", "metrics", "performance"],
-      "scope": "OpenCode CLI Agent - Winston's hands for memory system analysis",
+      "path": ".opencode/agent/core/MemoryAnalyst.md",
+      "tags": ["memory-system", "analytics", "metrics", "surgical-team"],
+      "scope": "OpenCode CLI Agent - Analyst for memory system metrics",
+      "role": "analyst",
+      "memory_bootstrap": true,
+      "permissions": {
+        "bash": "deny",
+        "edit": "deny",
+        "write": "deny"
+      },
       "dependencies": [
         "context:standards-code",
         "tool:mcp-docker"
       ]
     },
-    "memory-copywriter": {
-      "id": "memory-copywriter",
-      "name": "MemoryCopywriter",
+    "memory-chronicler": {
+      "id": "memory-chronicler",
+      "name": "MemoryChronicler",
       "category": "agent",
       "type": "agent",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "roninmemory",
-      "path": ".opencode/agent/MemoryCopywriter.md",
-      "tags": ["memory-system", "documentation", "prompts", "communication"],
-      "scope": "OpenCode CLI Agent - Winston's hands for agent prompt writing",
+      "path": ".opencode/agent/subagents/core/documentation.md",
+      "tags": ["memory-system", "documentation", "specs", "surgical-team"],
+      "scope": "OpenCode CLI Agent - Chronicler for documentation",
+      "role": "chronicler",
+      "memory_bootstrap": true,
+      "permissions": {
+        "bash": "deny",
+        "edit": "allow",
+        "write": "allow"
+      },
       "dependencies": [
-        "context:standards-docs",
-        "documentation_standards:AI-GUIDELINES.md"
+        "skill:bmad-create-prd",
+        "context:standards-docs"
       ]
+    }
+  },
+  "archived_agents": {
+    "memory-copywriter": {
+      "id": "memory-copywriter",
+      "path": ".opencode/agent/archive/MemoryCopywriter.md",
+      "reason": "Consolidated into MemoryChronicler",
+      "status": "inactive"
     },
     "memory-repo-manager": {
       "id": "memory-repo-manager",
-      "name": "MemoryRepoManager",
-      "category": "agent",
-      "type": "agent",
-      "version": "1.0.0",
-      "author": "roninmemory",
-      "path": ".opencode/agent/MemoryRepoManager.md",
-      "tags": ["memory-system", "git", "repository", "coordination"],
-      "scope": "OpenCode CLI Agent - Winston's hands for repository management",
-      "dependencies": [
-        "context:standards-code",
-        "tool:git"
-      ]
+      "path": ".opencode/agent/archive/MemoryRepoManager.md",
+      "reason": "Git operations handled by MemoryBuilder",
+      "status": "inactive"
     },
     "memory-scribe": {
       "id": "memory-scribe",
-      "name": "MemoryScribe",
-      "category": "agent",
-      "type": "agent",
-      "version": "1.0.0",
-      "author": "roninmemory",
-      "path": ".opencode/agent/MemoryScribe.md",
-      "tags": ["memory-system", "documentation", "specs", "prd"],
-      "scope": "OpenCode CLI Agent - Winston's hands for documentation and specs",
-      "dependencies": [
-        "skill:bmad-create-prd",
-        "context:standards-docs",
-        "documentation_standards:AI-GUIDELINES.md"
-      ]
+      "path": ".opencode/agent/archive/MemoryScribe.md",
+      "reason": "Consolidated into MemoryChronicler",
+      "status": "inactive"
     }
+  },
+  "surgical_team": {
+    "description": "The Surgical Team model - chief surgeon coordinates, subagents execute",
+    "sequence": [
+      {"step": 1, "agent": "memory-scout", "action": "discover", "approval_required": false},
+      {"step": 2, "agent": "memory-architect", "action": "design", "approval_required": true},
+      {"step": 3, "agent": "memory-orchestrator", "action": "approve", "approval_required": false},
+      {"step": 4, "agent": "memory-builder", "action": "implement", "approval_required": true},
+      {"step": 5, "agent": "memory-guardian", "action": "validate", "approval_required": false},
+      {"step": 6, "agent": "memory-chronicler", "action": "document", "approval_required": false}
+    ],
+    "brooks_law": "Adding subagents to a late workflow makes it later. Communication overhead grows as n(n-1)/2."
   },
   "two_world_model": {
     "description": "Two separate agent worlds - OpenCode CLI agents (Winston's hands) and Org/Business agents (digital employees)",
@@ -178,7 +227,7 @@
   },
   "defaults": {
     "agent": {
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": "roninmemory",
       "type": "agent",
       "tags": ["memory-system"],
@@ -186,7 +235,6 @@
       "tier": "agenallura-roninmemory",
       "behavior_lock": "UNPROMOTED",
       "memory_bootstrap": true,
-      "steps": 9,
       "ai_guidelines_path": "AI-GUIDELINES.md",
       "documentation_template": "templates/PROJECT.template.md"
     }

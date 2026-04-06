@@ -10,7 +10,10 @@ describeIfDocker("Health Monitor", () => {
   let containerManager: any;
 
   beforeAll(async () => {
-    containerManager = { healthCheck: () => ({ healthy: true, status: "running" }) };
+    // Mock container manager - using 'as any' for partial interface in tests
+    containerManager = {
+      healthCheck: () => ({ healthy: true, status: "running" }),
+    } as any;
     monitor = new HealthMonitor(containerManager);
   });
 
@@ -38,7 +41,7 @@ describeIfDocker("Health Monitor", () => {
     it("should increment failure count for unhealthy container", async () => {
       const unhealthyManager = {
         healthCheck: () => ({ healthy: false, status: "exited" }),
-      };
+      } as any;
       monitor["containerManager"] = unhealthyManager;
 
       await monitor.checkContainerHealth("test-container-2");
@@ -50,7 +53,7 @@ describeIfDocker("Health Monitor", () => {
     it("should mark container as unhealthy after max failures", async () => {
       const unhealthyManager = {
         healthCheck: () => ({ healthy: false, status: "exited" }),
-      };
+      } as any;
       monitor["containerManager"] = unhealthyManager;
 
       // Trigger 3 consecutive failures (assuming threshold is 3)
@@ -70,7 +73,7 @@ describeIfDocker("Health Monitor", () => {
         restartContainer: async (id: string) => {
           restarted = true;
         },
-      };
+      } as any;
       monitor["containerManager"] = manager;
 
       await monitor.handleUnhealthyContainer("test-container-4", 100);
@@ -92,7 +95,7 @@ describeIfDocker("Health Monitor", () => {
         restartContainer: async (id: string) => {
           restartCount++;
         },
-      };
+      } as any;
       monitor["containerManager"] = manager;
 
       // Container fails 3 times
@@ -116,7 +119,7 @@ describeIfDocker("Health Monitor", () => {
           checkCount++;
           return { healthy: true, status: "running" };
         },
-      };
+      } as any;
       monitor["containerManager"] = manager;
 
       const containers = [
@@ -141,7 +144,7 @@ describeIfDocker("Health Monitor", () => {
         healthCheck: async (id: string) => {
           return id === "agent-healthy" ? { healthy: true, status: "running" } : { healthy: false, status: "exited" };
         },
-      };
+      } as any;
       monitor["containerManager"] = manager;
 
       await monitor.checkContainerHealth("agent-healthy");

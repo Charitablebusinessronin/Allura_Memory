@@ -26,6 +26,12 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@mcp-docker/playwright": [
+        "./tests/mcp/browser/__mocks__/@mcp-docker/playwright.ts"
+      ],
+      "@mcp-docker/next-devtools": [
+        "./tests/mcp/integration/__mocks__/@mcp-docker/next-devtools.ts"
       ]
     },
     "types": [

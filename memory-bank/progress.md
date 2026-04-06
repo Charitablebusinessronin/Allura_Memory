@@ -1,19 +1,68 @@
 # Progress
 
 > **Last Updated:** 2026-04-06
-> **Epic:** Epic 1 — Persistent Knowledge Capture and Tenant-Aware Memory
+> **Current Sprint:** Epic 6 — Production Workflows
+> **Epic 3 Status:** in-progress — Tests fixed, ready for development
+
+---
+
+## Session: 2026-04-06 — Type System Compliance
+
+**Task:** Fix 17 TypeScript errors blocking typecheck
+
+**Status:** ✅ COMPLETE
+
+**What Was Done:**
+- Exported `queryTraces` and `TraceLog` type
+- Added null check for `path` in openclaw-gateway-http.ts
+- Fixed error handling in promote-insights-simple.ts
+- Fixed AgentContainerManager mock casts
+- Fixed schema test expectations
+- Fixed EvaluationMetrics property names
+- Added confidence/evidence_ref to EventRecord test data
+- Fixed TraceRecord property access in tests
+- Created mocks for @mcp-docker/playwright and @mcp-docker/next-devtools
+- Added path mappings in tsconfig.json and vitest.config.ts
+
+**Files Modified (13):**
+1. `src/lib/postgres/trace-logger.ts`
+2. `src/lib/postgres/types.ts`
+3. `src/mcp/openclaw-gateway-http.ts`
+4. `scripts/promote-insights-simple.ts`
+5. `src/agents/orchestrator/health.test.ts`
+6. `src/agents/config/schema.test.ts`
+7. `src/lib/adas/cli.ts`
+8. `tests/scripts/hydrate-session-from-snapshot.test.ts`
+9. `src/kernel/__tests__/mutate-events.test.ts`
+10. `tests/mcp/browser/__mocks__/@mcp-docker/playwright.ts`
+11. `tests/mcp/integration/__mocks__/@mcp-docker/next-devtools.ts`
+12. `tsconfig.json`
+13. `vitest.config.ts`
+
+**Lesson Learned:**
+> "Every broken test is a broken promise. The type system is the canary—do not silence it."
+> 
+> 17 TypeScript errors revealed architectural drift: missing exports, incomplete mocks, speculative dependencies, tests not updated when interfaces changed. Multiple developers touched files without checking dependents.
+>
+> **Process Fix:** Pre-commit hook enforcing `bun run typecheck`. CI gate. Atomic interface changes.
+
+**Commit:** Pending (session work)
 
 ---
 
 ## Sprint Status
 
-**Epic 1: Persistent Knowledge Capture and Tenant-Aware Memory**
+**Epic 1: Persistent Knowledge Capture and Tenant-Aware Memory** — ✅ **COMPLETE (2026-04-06)**
 
 | Story | Status | Notes |
-| |-------|--------|
+|-------|--------|-------|
 | 1.1 Record Raw Execution Traces | `done` | ✅ TraceMiddleware implemented - 42 tests pass |
-| 1.2 TraceMiddleware Integration | `in-progress` | ✅ Architecture design complete, implementation pending |
-| 1.3-1.7 | `backlog` | Ready to start after 1.2 |
+| 1.2 Implement Notion Sync Workflow | `done` | ✅ Sync workflow with 12 passing tests |
+| 1.3 Create Agent Knowledge Nodes | `done` | ✅ 7 core agents in PostgreSQL + Neo4j |
+| 1.4 Implement Relationship Schemas | `done` | ✅ INCLUDES, KNOWS, CONTRIBUTED, LEARNED relationships |
+| 1.5 Implement CONTRIBUTED Relationship | `done` | ✅ recordContribution(), getAgentContributions() |
+| 1.6 Implement LEARNED Relationship | `done` | ✅ recordLearning(), getAgentLearnings() |
+| 1.7 Create Memory TypeScript Wrapper | `done` | ✅ Interface renamed, auto group_id injection |
 
 **Epic 2: Plugin Foundation** — ✅ **COMPLETE**
 

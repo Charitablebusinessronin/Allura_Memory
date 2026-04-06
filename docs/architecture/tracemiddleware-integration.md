@@ -1,9 +1,17 @@
 # TraceMiddleware Integration Contract
 
+> [!NOTE]
+> **AI-Assisted Documentation**
+> Portions of this document were drafted with the assistance of an AI language model.
+> Content has not yet been fully reviewed — this is a working design reference, not a final specification.
+> When in doubt, defer to the source code, JSON schemas, and team consensus.
+
 > **Document Type:** Architecture Design  
 > **Status:** Proposed — Awaiting Approval  
 > **Created:** 2026-04-06  
+> **Last Updated:** 2026-04-06  
 > **Architect:** MemoryArchitect  
+> **Owner:** Allura Platform Team  
 
 ---
 

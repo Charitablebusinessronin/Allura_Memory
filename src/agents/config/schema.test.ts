@@ -110,7 +110,7 @@ describe("Agent Configuration Schema", () => {
       type: AgentType.KNOWLEDGE_CURATOR,
       enabled: true,
       schedule: { cron: "0 * * * *" },
-      resources: { memory_mb: 512 },
+      resources: { memory_mb: 512, cpu_percent: 50, timeout_seconds: 300 },
       restart_policy: RestartPolicy.UNLESS_STOPPED,
       notion: { sync: true },
       config: { min_confidence: 0.7 },

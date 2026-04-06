@@ -1,7 +1,62 @@
 # System Patterns
 
-> **Last Updated:** 2026-04-05
+> **Last Updated:** 2026-04-06
 > **Pattern Source:** `_bmad-output/planning-artifacts/architectural-brief.md`
+
+---
+
+## Type System as Contract Enforcer
+
+### Rule: Interface Changes Are Atomic
+
+When modifying interfaces/types:
+1. Update the interface
+2. Update all consumers in same commit
+3. Update all test mocks in same commit
+4. Run `bun run typecheck` before commit
+
+**Why:** The TypeScript compiler is a canary in the coal mine. When it sings, contracts have diverged. A developer changed an interface without updating consumers. Tests mock a fantasy. Types make assumptions the system now rejects.
+
+### Rule: Tests Must Not Speculate
+
+Tests for modules that don't exist are fantasies.
+
+Options:
+- The module exists → write the test
+- The module doesn't exist → write the module first, then the test
+- Need to test now → create mock with `@mcp-docker/*` path mapping in `tsconfig.json` and `vitest.config.ts`
+
+### Rule: CI Must Enforce Typecheck
+
+`bun run typecheck` is not optional. If it fails, the PR is blocked. The type system is the canary—do not silence it.
+
+### Rule: Pre-commit Hook Required
+
+Pre-commit hook at `.githooks/pre-commit` enforces typecheck before every commit.
+
+**Setup (one-time):**
+```bash
+git config core.hooksPath .githooks
+```
+
+**The hook runs:**
+```bash
+bun run typecheck
+```
+
+**If typecheck fails:**
+```
+❌ TypeScript errors found. Fix before committing.
+Memory rule: Contracts must be honored.
+```
+
+**Hook also prevents:**
+- Committing `.env` files with secrets
+- Committing files with potential secrets (password, api_key, token patterns)
+
+### The Tar Pit Warning
+
+If you fix type errors without addressing the process, you will be here again in a month. The type system is not the enemy. It is the messenger. Shooting the messenger does not fix the kingdom.
 
 ---
 

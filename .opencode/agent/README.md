@@ -1,384 +1,285 @@
-# OpenCode Agent Menu
+# OpenCode Agent Directory
 
-**Quick Reference Guide** → All custom roninmemory agents available through OpenCode
-
----
-
-## 🎯 Quick Start
-
-| When you need... | Call... | Invocation |
-|------------------|---------|------------|
-| **Start a task / orchestrate** | `memory-orchestrator` | `@memory-orchestrator` |
-| **Write code / implement** | `memory-architect` | `@memory-architect` |
-| **Find standards / patterns** | `memory-scout` ⭐ | `@memory-scout` |
-| **External library docs** | `memory-archivist` | `@memory-archivist` |
-| **Plan complex feature** | `memory-curator` | `@memory-curator` |
-| **Write tests** | `memory-tester` | `@memory-tester` |
-| **Code review** | `memory-guardian` | `@memory-guardian` |
-| **Write documentation** | `memory-chronicler` | `@memory-chronicler` |
-
-⭐ = Approval gate exempt (can call anytime)
+**Frederick P. Brooks Jr. Surgical Team Architecture** — RoninMemory Unified AI Brain
 
 ---
 
-## 🏛️ Primary Agents
+## Directory Structure
 
-### memory-orchestrator
-**Role**: Universal AI agent for code, docs, tests, and workflow coordination
-
-**Best For**:
-- Starting new tasks
-- Coordinating multi-step workflows
-- Delegating to subagents
-- Managing context across agents
-
-**Workflow**: Plan → Approve → Execute → Validate → Summarize
-
-**Use When**: You need a primary orchestrator to coordinate complex work across multiple agents.
+```
+.opencode/agent/
+├── core/                          # Primary Surgical Team agents (7)
+│   ├── openagent.md               # MemoryOrchestrator (chief surgeon)
+│   ├── MemoryArchitect.md         # First Assistant (design)
+│   ├── MemoryBuilder.md           # Builder (implementation)
+│   ├── MemoryAnalyst.md           # Analyst (metrics)
+│   └── memory-builder-focus.md    # Focus mode variant
+├── subagents/
+│   ├── core/                      # Core subagents (discovery, docs)
+│   │   ├── contextscout.md        # MemoryScout (approval exempt)
+│   │   ├── documentation.md       # MemoryChronicler
+│   │   ├── context-retriever.md   # Context retrieval
+│   │   ├── externalscout.md       # External discovery
+│   │   └── task-manager.md        # Task coordination
+│   ├── code/                      # Code subagents (validation, build)
+│   │   ├── reviewer.md            # MemoryGuardian (inspector)
+│   │   ├── coder-agent.md         # Code implementation
+│   │   ├── build-agent.md         # Build automation
+│   │   └── test-engineer.md       # Test engineering
+│   └── utility/                   # Utility agents
+│       └── eval-runner.md         # Evaluation harness
+├── archive/                       # Archived agents (inactive)
+├── content/                       # Content agents
+├── data/                          # Data agents
+├── meta/                          # Meta-system agents
+└── schema/                        # Schema definitions
+```
 
 ---
 
-### memory-architect
-**Role**: Senior software engineer for story execution and code implementation
+## The Surgical Team (7 Primary Agents)
 
-**Best For**:
-- Complex coding tasks
+Brooks's surgical team model: **one chief surgeon coordinates, specialists execute.**
+
+### 1. MemoryOrchestrator (Chief Surgeon)
+**Path**: `.opencode/agent/core/openagent.md`
+**Role**: Brooks-bound architect — preserves conceptual integrity
+**Persona**: Frederick P. Brooks Jr. (author of *The Mythical Man-Month*)
+**Invoke**: `@memory-orchestrator`
+
+**Responsibilities**:
+- Stage 1: Analyze request (conversational vs task)
+- Stage 2: Discover context (dispatch MemoryScout)
+- Stage 3: Approve approach (present proposal, wait for user approval)
+- Stage 4: Execute (delegate to appropriate subagent)
+- Stage 5: Validate and record (write to Postgres/Neo4j)
+
+**Dispatches to**: Architect, Builder, Guardian, Scout, Analyst, Chronicler
+
+---
+
+### 2. MemoryArchitect (First Assistant)
+**Path**: `.opencode/agent/core/MemoryArchitect.md`
+**Role**: System design and ADRs
+**Persona**: Winston (design)
+**Invoke**: `@memory-architect`
+
+**Best for**:
 - Architecture decisions
-- Implementation planning
-- Technical design
-
-**Workflow**: Discover → Propose → Approve → Init Session → Plan → Execute → Validate → Handoff
-
-**OpenCode agent**: `memory-architect`
-
----
-
-## 🎭 Core Subagents
-
-### memory-scout ⭐
-**Role**: Discovers internal context files BEFORE executing
-
-**Capabilities**:
-- Context discovery
-- Pattern finding
-- Standard lookup
-- File location
-
-**Best For**: Finding coding standards, discovering patterns, locating relevant context
-
-**Exemption**: **Approval gate exempt** - can be called without approval
-
-**Note**: Always call this first before any implementation work
-
----
-
-### memory-archivist
-**Role**: Fetches current documentation for external packages
-
-**Capabilities**:
-- External library docs
-- API documentation
-- Integration patterns
-- Current best practices
-
-**Best For**: New library integration, API usage patterns, external package setup
-
-**Important**: **MANDATORY** for any external library work - training data is outdated!
-
----
-
-### memory-curator
-**Role**: Curates and organizes tasks with dependency tracking
-
-**Capabilities**:
-- Task breakdown
-- Dependency tracking
-- JSON task creation
-- Parallel task identification
-
-**Best For**: Complex feature breakdown, task planning, dependency mapping
-
-**Output**: Creates `.tmp/tasks/{feature}/task.json` + `subtask_NN.json` files
-
----
-
-### memory-chronicler
-**Role**: Generates comprehensive documentation
-
-**Capabilities**:
-- Documentation generation
-- Technical writing
-- Knowledge capture
+- Interface contracts
+- Technical design documents
 - ADR creation
 
-**Best For**: Writing docs, creating ADRs, technical documentation
-
-**OpenCode agent**: `memory-chronicler`
+**Dependencies**: `bmad-create-architecture`, `mcp-docker`
 
 ---
 
-### memory-retriever
-**Role**: Generic context search and retrieval specialist
+### 3. MemoryBuilder (Builder)
+**Path**: `.opencode/agent/core/MemoryBuilder.md`
+**Role**: Implementation and infrastructure
+**Persona**: Amelia (implementation)
+**Invoke**: `@memory-builder`
 
-**Capabilities**:
-- Context retrieval
-- Standards lookup
-- Pattern matching
-- File search
-
-**Best For**: Finding specific files, standards lookup, pattern discovery
-
----
-
-## 💻 Code Subagents
-
-### memory-builder
-**Role**: Builds and implements code with memory-aware patterns
-
-**Capabilities**:
+**Best for**:
 - Code implementation
-- Subtask execution
-- Pattern application
-- Self-review
-
-**Best For**: Writing code, implementing features, following task JSONs
-
-**OpenCode agent**: `memory-builder`
-
----
-
-### memory-tester
-**Role**: Tests the roninmemory system
-
-**Capabilities**:
-- Test authoring
-- TDD implementation
-- Coverage analysis
-- Positive/negative testing
-
-**Best For**: Writing tests, test coverage, TDD workflows
-
-**Pattern**: Arrange-Act-Assert + Positive/Negative cases
-
-**OpenCode agent**: `memory-tester`
-
----
-
-### memory-guardian
-**Role**: Guards roninmemory code quality
-
-**Capabilities**:
-- Code review
-- Security audit
-- Pattern validation
-- Quality checks
-
-**Best For**: Code reviews, security audits, pattern validation
-
----
-
-### memory-validator
-**Role**: Validates builds and types
-
-**Capabilities**:
-- Build validation
-- Type checking
-- Lint compliance
-- Integrity checks
-
-**Best For**: Build validation, type checking, pre-commit checks
-
----
-
-## 🏗️ System Builder Subagents
-
-### memory-organizer
-**Role**: Organizes roninmemory context and knowledge
-
-**Capabilities**:
-- Context organization
-- Knowledge structuring
-- Domain modeling
-- Standard creation
-
-**Best For**: Organizing context, structuring knowledge
-
----
-
-### memory-generator
-**Role**: Generates XML-optimized agent files
-
-**Capabilities**:
-- Agent generation
-- XML optimization
-- Pattern application
-
-**Best For**: Creating agents, agent optimization
-
----
-
-### memory-commander
-**Role**: Creates custom slash commands
-
-**Capabilities**:
-- Command creation
-- Slash command design
-- Routing logic
-
-**Best For**: Creating slash commands, command routing
-
----
-
-### memory-workflow
-**Role**: Designs complete workflow definitions
-
-**Capabilities**:
-- Workflow design
-- Process definition
-- Dependency mapping
-
-**Best For**: Designing workflows, process definition
-
----
-
-### memory-domain
-**Role**: Analyzes user domains
-
-**Capabilities**:
-- Domain analysis
-- Concept identification
-- Agent recommendation
-
-**Best For**: Domain analysis, concept modeling
-
----
-
-## 🎨 Development Subagents
-
-### memory-interface
-**Role**: Designs the interface layer
-
-**Capabilities**:
-- UI design
-- Component creation
-- Visualization
-- Interaction patterns
-
-**Best For**: Frontend development, UI components, visualizations
-
-**Stack**: React, Next.js, Tailwind
-
----
-
-### memory-infrastructure
-**Role**: Builds infrastructure
-
-**Capabilities**:
+- Schema work
+- Database writes
 - Infrastructure setup
-- Database management
-- Docker configuration
-- Deployment automation
 
-**Best For**: Infrastructure setup, database config, Docker/deployment
+**Permissions**: Bash=allow, Edit=allow, Write=allow
 
 ---
 
-## 📚 Content & Data Agents
+### 4. MemoryGuardian (Inspector)
+**Path**: `.opencode/agent/subagents/code/reviewer.md`
+**Role**: Validation and quality gates
+**Persona**: Quinn (validation)
+**Invoke**: `@memory-guardian`
 
-### memory-scribe
-**Role**: Technical documentation specialist
+**Best for**:
+- Code review
+- Invariant enforcement
+- HITL gate validation
+- Security audit
 
-**Best For**: Technical writing, documentation, content curation
-
----
-
-### memory-copyist
-**Role**: Copywriting specialist
-
-**Best For**: Marketing copy, user-facing content, creative writing
-
----
-
-### memory-analyst
-**Role**: Data analysis specialist
-
-**Best For**: Data analysis, insights, reporting, analytics
+**Permissions**: Read-only (bash=deny, edit=deny, write=deny)
 
 ---
 
-## 🔧 Utility Agents
+### 5. MemoryScout (Scout) ⭐
+**Path**: `.opencode/agent/subagents/core/contextscout.md`
+**Role**: Context discovery and research
+**Persona**: Discovery agent
+**Invoke**: `@memory-scout`
 
-### memory-visualizer
-**Role**: Image editing and analysis specialist
+**Exemption**: **Approval gate exempt** — can be called anytime for discovery
 
-**Best For**: Image editing, visual analysis, image processing
+**Best for**:
+- Finding standards
+- Discovering patterns
+- Context retrieval
+- Research
+
+**Dependencies**: `skill:mcp-docker`, `tool:mcp-docker`
 
 ---
 
-## 📋 Common Workflows
+### 6. MemoryAnalyst (Analyst)
+**Path**: `.opencode/agent/core/MemoryAnalyst.md`
+**Role**: Memory system metrics and graph health
+**Persona**: Metrics agent (read-only)
+**Invoke**: `@memory-analyst`
 
-### Standard Task Workflow
+**Best for**:
+- Trace analysis
+- Graph health checks
+- Memory metrics
+- Usage reports
+
+**Permissions**: Read-only
+
+---
+
+### 7. MemoryChronicler (Chronicler)
+**Path**: `.opencode/agent/subagents/core/documentation.md`
+**Role**: Documentation and specification
+**Persona**: Paige (documentation)
+**Invoke**: `@memory-chronicler`
+
+**Best for**:
+- Documentation generation
+- Spec updates
+- Changelogs
+- Knowledge capture
+
+**Permissions**: Edit=allow, Write=allow
+
+---
+
+## Dispatch Protocol
+
+**Quick Reference**: `.opencode/context/dispatch-protocol.md`
+**Full Mapping**: `.opencode/config/agent-mapping.yaml`
+**Menu Commands**: `.opencode/config/menu.yaml`
+
+### Sequence (Brooks's Law)
+
 ```
-1. Discover → memory-scout (find context)
-2. Approve → memory-orchestrator (present plan)
-3. Execute → [appropriate agent] (implement)
-4. Validate → memory-tester (run tests)
-5. Summarize → memory-orchestrator (report)
+1. Scout    → Discover context (approval exempt)
+2. Architect → Design approach
+3. Orchestrator → Approve plan
+4. Builder  → Implement
+5. Guardian → Validate
+6. Chronicler → Document
 ```
 
-### Complex Feature Workflow
+**Communication overhead grows as n(n-1)/2.** Do not spawn subagents indiscriminately.
+
+---
+
+## Two Worlds Model
+
+> **Crystal Clear Distinction**
+
+### OpenCode CLI Agents (`.opencode/agent/`)
+- **Runtime**: Terminal / OpenCode CLI
+- **Naming**: `Memory{Role}`
+- **Count**: 7 primary + subagents
+- **Purpose**: How Winston works
+
+### Org/Business Agents (Paperclip)
+- **Runtime**: Paperclip dashboard
+- **Naming**: `{org}-agent`
+- **Examples**: `faithmeats-agent`, `audits-agent`, `crm-agent`
+- **Purpose**: What works FOR clients/orgs
+
+**Never confuse these worlds.** OpenCode agents are Winston's hands. Org agents are digital employees.
+
+---
+
+## Memory System (All Agents)
+
+All 7 Surgical Team agents share:
+
+| Property | Value |
+|----------|-------|
+| PostgreSQL | Raw traces (`DATABASE_URL`) |
+| Neo4j | Curated knowledge (`NEO4J_URI`) |
+| Steel Frame | Enabled (`SUPERSEDES` pattern) |
+| HITL | Required for knowledge promotion |
+| behavior_lock | `"UNPROMOTED"` sentinel |
+| group_id | Mandatory on every node |
+
+**Bootstrap**: Each agent runs bootstrap protocol connecting to Postgres + Neo4j before work.
+
+---
+
+## Archived Agents
+
+| Agent | Reason |
+|-------|--------|
+| MemoryCopywriter | Consolidated into MemoryChronicler |
+| MemoryRepoManager | Git handled by MemoryBuilder |
+| MemoryScribe | Consolidated into MemoryChronicler |
+
+**Location**: `.opencode/agent/archive/`
+
+---
+
+## Config Files
+
+| File | Location | Purpose |
+|------|----------|---------|
+| agent-metadata.json | `.opencode/config/` | Agent registry (paths, roles, deps) |
+| agent-mapping.yaml | `.opencode/config/` | Full dispatch mapping |
+| menu.yaml | `.opencode/config/` | Menu commands |
+| dispatch-protocol.md | `.opencode/context/` | Quick reference |
+| bmad-integration.md | `.opencode/context/project/` | BMad routing guide |
+
+---
+
+## Common Workflows
+
+### Standard Task
 ```
-1. Break Down → memory-curator (create tasks)
-2. Execute → memory-builder (parallel batches)
-3. Validate → memory-tester (test all)
-4. Review → memory-guardian (code review)
+1. Scout → Discover context (approval exempt)
+2. Orchestrator → Approve plan
+3. Architect → Design (if architecture)
+4. Builder → Implement
+5. Guardian → Validate
+6. Chronicler → Document
 ```
 
 ### External Library Integration
 ```
-1. Discover → memory-scout (find project standards)
-2. Research → memory-archivist (fetch current docs)
-3. Implement → memory-builder (with current docs)
-4. Validate → memory-tester (test integration)
+1. Scout → Find project standards
+2. Archivist → Fetch current docs (skill: context7)
+3. Builder → Implement with current docs
+4. Guardian → Validate
 ```
 
 ---
 
-## 🚨 Critical Rules
+## Critical Rules (Brooksian)
 
-1. **Always call memory-scout first** for context discovery
-2. **Always call memory-archivist** for external library work
-3. **All agents need approval gate** (except memory-scout)
-4. **Load context before execution** - every time
-5. **Never skip self-review** for memory-builder
-6. **Always positive + negative tests** for memory-tester
-
----
-
-## 📁 File Locations
-
-- **Primary Agents**: `.opencode/agent/core/`
-- **Core Subagents**: `.opencode/agent/subagents/core/`
-- **Code Subagents**: `.opencode/agent/subagents/code/`
-- **System Builders**: `.opencode/agent/subagents/system-builder/`
-- **Development**: `.opencode/agent/subagents/development/`
+1. **Conceptual integrity above all** — one mind, one vision
+2. **Scout is approval exempt** — discover anytime
+3. **No execution without approval** — Stage 3 gate is mandatory
+4. **Log every decision** — Postgres traces, Neo4j wisdom
+5. **Group ID on every node** — tenant isolation is non-negotiable
+6. **HITL for promotion** — no autonomous Neo4j/Notion writes
 
 ---
 
-## 🔄 Module Overview
+## Source of Truth
 
-**Installed modules**:
-- `core` - Core utilities
-- `bmm` - Business Analysis & Planning
-- `bmb` - Builder (workflows & agents)
-- `tea` - Test Architecture
-- `wds` - Workflow Design System
-
-**Workflows**: Available via skills in `.opencode/skills/`
-
-**Source of truth**: `.opencode/agent/` directory
+- **Agent paths**: `.opencode/config/agent-metadata.json`
+- **BMad routing**: `.opencode/context/project/bmad-integration.md`
+- **Skills**: `.opencode/skills/*/SKILL.md`
+- **BMad workflows**: `_bmad/*/`
 
 ---
 
-*Last Updated: 2026-04-03*
-*Version: 1.0.0*
+*Last Updated: 2026-04-06*
+*Version: 2.0.0*
+*Architecture: Brooks Surgical Team*

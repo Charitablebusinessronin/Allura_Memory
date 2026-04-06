@@ -1,0 +1,242 @@
+# ═══════════════════════════════════════════════════════════════════
+# Allura Agent-OS — Agent Mapping Table
+# Maps Surgical Team names to implementation files and dispatch contexts
+# Version: 1.0.0 — 2026-04-06
+# ═══════════════════════════════════════════════════════════════════
+
+# ── SURGICAL TEAM (Primary) ────────────────────────────────────────
+
+surgical_team:
+  MemoryOrchestrator:
+    role: "Chief Surgeon — coordinates, designs, preserves conceptual integrity"
+    file: ".opencode/agent/core/openagent.md"
+    menu_command: "memory:orchestrate"
+    dispatch_via: "direct_prompt"
+    max_steps: 15
+    authority: "approves all work, dispatches subagents"
+    permissions:
+      bash: "allow"
+      edit: "allow"
+      write: "allow"
+    logs_to: "PostgreSQL events, Neo4j Decisions"
+
+  MemoryArchitect:
+    role: "First Assistant — system design, ADRs, interface contracts"
+    file: ".opencode/agent/core/MemoryArchitect.md"
+    menu_command: "memory:architect"
+    dispatch_via: "Task tool"
+    max_steps: 15
+    authority: "designs architecture, proposes contracts"
+    permissions:
+      bash: "deny"
+      edit: "ask"
+      write: "ask"
+    logs_to: "PostgreSQL events, Neo4j Decisions"
+    dispatch_after: "MemoryScout"
+
+  MemoryBuilder:
+    role: "Builder — infrastructure implementation, schema work"
+    file: ".opencode/agent/core/MemoryBuilder.md"
+    menu_command: "memory:build"
+    dispatch_via: "Task tool"
+    max_steps: 15
+    authority: "implements approved designs"
+    permissions:
+      bash: "allow"
+      edit: "allow"
+      write: "allow"
+    logs_to: "PostgreSQL events"
+    dispatch_after: "MemoryArchitect approval"
+
+  MemoryGuardian:
+    role: "Inspector — validation, invariant checks, HITL gate"
+    file: ".opencode/agent/subagents/code/reviewer.md"
+    menu_command: "memory:guardian"
+    dispatch_via: "Task tool"
+    max_steps: 10
+    authority: "validates work, blocks bad code"
+    permissions:
+      bash: "deny"
+      edit: "deny"
+      write: "deny"
+    logs_to: "PostgreSQL events"
+    dispatch_after: "implementation complete"
+
+  MemoryScout:
+    role: "Scout — context discovery, research (exempt from approval)"
+    file: ".opencode/agent/subagents/core/contextscout.md"
+    menu_command: "memory:scout"
+    dispatch_via: "Task tool"
+    max_steps: 10
+    authority: "discovers context, research-first"
+    permissions:
+      bash: "deny"
+      edit: "deny"
+      write: "deny"
+    logs_to: "PostgreSQL events"
+    exemption: "APPROVAL_GATE_EXEMPT — can be called anytime"
+
+  MemoryAnalyst:
+    role: "Analyst — memory metrics, graph health, trace analysis"
+    file: ".opencode/agent/core/MemoryAnalyst.md"
+    menu_command: "memory:analyst"
+    dispatch_via: "Task tool"
+    max_steps: 10
+    authority: "analyzes system health"
+    permissions:
+      bash: "deny"
+      edit: "deny"
+      write: "deny"
+    logs_to: "PostgreSQL events"
+    dispatch_after: "system operations, weekly"
+
+  MemoryChronicler:
+    role: "Chronicler — documentation, spec updates, changelogs"
+    file: ".opencode/agent/subagents/core/documentation.md"
+    menu_command: "memory:chronicler"
+    dispatch_via: "Task tool"
+    max_steps: 10
+    authority: "documents completed work"
+    permissions:
+      bash: "deny"
+      edit: "allow"
+      write: "allow"
+    logs_to: "PostgreSQL events"
+    dispatch_after: "validation passes"
+
+# ── ARCHIVED AGENTS (Not Active) ───────────────────────────────────
+
+archived:
+  MemoryCopywriter:
+    file: ".opencode/agent/archive/MemoryCopywriter.md"
+    reason: "Consolidated into MemoryChronicler"
+    status: "inactive"
+
+  MemoryRepoManager:
+    file: ".opencode/agent/archive/MemoryRepoManager.md"
+    reason: "Git operations handled by MemoryBuilder"
+    status: "inactive"
+
+  MemoryScribe:
+    file: ".opencode/agent/archive/MemoryScribe.md"
+    reason: "Consolidated into MemoryChronicler"
+    status: "inactive"
+
+# ── ADDITIONAL SUBAGENTS (Optional Dispatch) ───────────────────────
+
+subagents:
+  context_retriever:
+    file: ".opencode/agent/subagents/core/context-retriever.md"
+    dispatch_via: "Task tool"
+    use_when: "Generic context search needed"
+
+  external_scout:
+    file: ".opencode/agent/subagents/core/externalscout.md"
+    dispatch_via: "Task tool"
+    use_when: "External library documentation needed"
+
+  task_manager:
+    file: ".opencode/agent/subagents/core/task-manager.md"
+    dispatch_via: "Task tool"
+    use_when: "Complex task breakdown required"
+
+  coder_agent:
+    file: ".opencode/agent/subagents/code/coder-agent.md"
+    dispatch_via: "Task tool"
+    use_when: "Autonomous coding beyond MemoryBuilder scope"
+
+  test_engineer:
+    file: ".opencode/agent/subagents/code/test-engineer.md"
+    dispatch_via: "Task tool"
+    use_when: "Complex test suites needed"
+
+  build_agent:
+    file: ".opencode/agent/subagents/code/build-agent.md"
+    dispatch_via: "Task tool"
+    use_when: "CI/CD pipeline work"
+
+  agent_generator:
+    file: ".opencode/agent/subagents/system-builder/agent-generator.md"
+    dispatch_via: "Task tool"
+    use_when: "Creating new agents"
+
+  workflow_designer:
+    file: ".opencode/agent/subagents/system-builder/workflow-designer.md"
+    dispatch_via: "Task tool"
+    use_when: "Designing workflows"
+
+  domain_analyzer:
+    file: ".opencode/agent/subagents/system-builder/domain-analyzer.md"
+    dispatch_via: "Task tool"
+    use_when: "Domain analysis needed"
+
+  frontend_specialist:
+    file: ".opencode/agent/subagents/development/frontend-specialist.md"
+    dispatch_via: "Task tool"
+    use_when: "React/UI work"
+
+  devops_specialist:
+    file: ".opencode/agent/subagents/development/devops-specialist.md"
+    dispatch_via: "Task tool"
+    use_when: "Infrastructure/DevOps work"
+
+# ── DISPATCH PROTOCOL ───────────────────────────────────────────────
+
+dispatch_protocol:
+  
+  # When to Dispatch (Criteria)
+  criteria:
+    - "4+ files affected → delegate to MemoryBuilder"
+    - "Architecture decision needed → delegate to MemoryArchitect"
+    - "External research needed → delegate to MemoryScout"
+    - "Validation required → delegate to MemoryGuardian"
+    - "Documentation needed → delegate to MemoryChronicler"
+    - "Specialized knowledge (UI, DevOps) → delegate to specialist subagent"
+
+  # How to Dispatch
+  mechanics:
+    via_task_tool: |
+      Task tool with subagent_type parameter:
+      task({
+        subagent_type: "MemoryGuardian",
+        prompt: "Review this code for X..."
+      })
+    
+    via_menu_command: |
+      User can invoke directly:
+      /memory:guardian
+      /memory:scout
+      etc.
+
+  # Dispatch Sequence (Brooks's Law — minimize communication overhead)
+  sequence:
+    1_discovery: "MemoryScout — always first, exempt from approval"
+    2_design: "MemoryArchitect — proposes architecture"
+    3_approval: "MemoryOrchestrator — gate before build"
+    4_build: "MemoryBuilder — implements approved design"
+    5_validate: "MemoryGuardian — checks implementation"
+    6_document: "MemoryChronicler — records what was done"
+
+  # Anti-Patterns
+  forbidden:
+    - "Dispatch without explicit need (Brooks's Law)"
+    - "Parallel dispatch when sequential needed (coordination cost)"
+    - "Skip approval gate (except MemoryScout)"
+    - "Dispatch to inactive/archived agents"
+
+# ── LOGGING REQUIREMENTS ───────────────────────────────────────────
+
+logging:
+  every_dispatch:
+    - "Log to PostgreSQL: event_type='AGENT_DISPATCHED'"
+    - "Include: agent_name, task_description, timestamp"
+  
+  every_completion:
+    - "Log to PostgreSQL: event_type='AGENT_COMPLETE'"
+    - "Include: agent_name, outcome, files_modified"
+    
+  every_failure:
+    - "Log to PostgreSQL: event_type='AGENT_BLOCKED'"
+    - "Include: agent_name, error, resolution_needed"
+
+# ═══════════════════════════════════════════════════════════════════

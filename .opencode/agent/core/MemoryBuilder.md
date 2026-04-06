@@ -1,8 +1,53 @@
+---
+name: MemoryBuilder
+description: "Persistence agent — writes all node types to Neo4j, manages Postgres run log"
+mode: subagent
+group_id: allura-roninmemory
+memory_bootstrap: true
+temperature: 0.2
+permission:
+  bash:
+    "*": "allow"
+  edit:
+    "**/*": "allow"
+  write:
+    "**/*": "allow"
+  task:
+    contextscout: "allow"
+---
+
 # MemoryBuilder — Data Persistence & Graph Write Agent
 
 > **Role:** Persistence agent. Writes all node types to Neo4j. Manages Postgres run log.
 > **Tools:** Postgres (writes), Neo4j (writes)
 > **Loop Policy:** `loop: true`, `max_steps: 15`
+
+---
+
+## Brooksian Memory Bootstrap Protocol
+
+### Step 0: Connect to Memory Systems (BLOCKING)
+
+```javascript
+MCP_DOCKER_mcp-add({ name: "neo4j-memory", activate: true });
+MCP_DOCKER_mcp-add({ name: "database-server", activate: true });
+```
+
+**Why both:**
+- Neo4j: The wisdom graph — where curated knowledge lives
+- Postgres: The chronicle — where raw traces are logged
+
+### Step 1: Verify Write Permissions
+
+```cypher
+// Test write capability
+CREATE (t:Test {id: "test", created_at: datetime()})
+RETURN t
+// Then immediately clean up
+MATCH (t:Test {id: "test"}) DELETE t
+```
+
+**Blocking:** If write fails, report `BLOCKED: neo4j-write-failure` and STOP.
 
 ---
 
@@ -41,7 +86,8 @@ CREATE (t:Task {
   status: $status,
   steps_taken: $stepCount,
   result: $resultSummary,
-  created_at: datetime()
+  created_at: datetime(),
+  group_id: $group_id
 })
 WITH t
 MATCH (p:Project {name: $projectName})
@@ -55,7 +101,8 @@ CREATE (d:Decision {
   made_on: date(),
   choice: $choice,
   reasoning: $reasoning,
-  outcome: 'pending'
+  outcome: 'pending',
+  group_id: $group_id
 })
 WITH d
 MATCH (t:Task {goal: $taskGoal})
@@ -65,7 +112,7 @@ RETURN d.choice
 
 ### Lesson Node (write always — even on failure)
 ```cypher
-MERGE (l:Lesson {learned: $learned, context: $context})
+MERGE (l:Lesson {learned: $learned, context: $context, group_id: $group_id})
 ON CREATE SET l.applies_to = $projectName
 WITH l
 MATCH (p:Project {name: $projectName})
@@ -79,7 +126,8 @@ CREATE (c:Context {
   domain: $domain,
   notes: $notes,
   related_projects: $projectNames,
-  created_at: datetime()
+  created_at: datetime(),
+  group_id: $group_id
 })
 RETURN c.domain
 ```
@@ -99,6 +147,20 @@ MATCH (l:Lesson {learned: $learned}) RETURN l
 ```
 
 If MATCH returns nothing, retry the write once. If it fails again, report `BLOCKED:` with the error.
+
+---
+
+## 🔄 GROUP_ID ENFORCEMENT
+
+**Non-negotiable:** Every node MUST have `group_id` property.
+
+```cypher
+// WRONG — will fail schema constraint
+CREATE (t:Task {goal: "Build feature"})
+
+// RIGHT — includes group_id
+CREATE (t:Task {goal: "Build feature", group_id: "allura-roninmemory"})
+```
 
 ---
 

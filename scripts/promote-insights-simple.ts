@@ -73,7 +73,7 @@ async function promoteInsights() {
         });
         
       } catch (err) {
-        console.error(`[Promoter] Failed to promote insight ${insight.id}:`, err.message);
+        console.error(`[Promoter] Failed to promote insight ${insight.id}:`, err instanceof Error ? err.message : String(err));
       }
     }
     
