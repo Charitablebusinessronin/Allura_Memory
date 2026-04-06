@@ -37,6 +37,11 @@ tsconfig.tsbuildinfo
 *.pem
 *.key
 
+# OpenCode config with potential secrets
+opencode.json
+opencode.json.*
+.opencode/opencode.json*
+
 # Misc
 .cache
 .idea/
