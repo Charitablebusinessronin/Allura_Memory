@@ -48,4 +48,7 @@ tsconfig.tsbuildinfo
 # Memory snapshot artifacts
 memory-bank/index.json
 memory-bank/index.meta.json
+
+# Temporary files
+.tmp/
 memory-bank/ingestion.meta.json
