@@ -1,261 +1,596 @@
-# =============================================================
-# ALLURA MEMORY — OpenCode Agent Menu
-# Version: 2.1.0 | Updated: 2026-04-06
-# Brain Loop enforcement: loop: true, max_steps: 15 on all agents
-# 7 active agents + gate agents (loop: false) + 3 new domain agents
-# =============================================================
+# OpenCode Agent Registry
+# OpenCode-native memory agents in .opencode/
 
-agents:
-  # -----------------------------------------------------------
-  # ORCHESTRATOR — Master supervisor, owns PRE/RUN/POST loop
-  # -----------------------------------------------------------
-  - name: MemoryOrchestrator
-    description: |
-      Master supervisor for the Allura Brain Loop.
-      Runs PRE (read Neo4j context) → RUN (dispatch sub-agents, max 15 steps) → POST (write Task/Decision/Lesson nodes back to Neo4j + Notion).
-      Every run ends with DONE: / BLOCKED: / ACTION: protocol.
-      No run concludes without a confirmed memory write.
-    file: .opencode/agent/MemoryOrchestrator.md
-    loop: true
-    max_steps: 15
-    tools:
-      - mcp-postgres
-      - mcp-neo4j
-    commands:
-      - allura:brief
-      - allura:run
-      - allura:status
-      - allura:drift
+version: "1.0.0"
+last_updated: "2026-04-03"
 
-  # -----------------------------------------------------------
-  # ANALYST — Research and information gathering
-  # -----------------------------------------------------------
-  - name: MemoryAnalyst
-    description: |
-      Research agent. Gathers information, watches videos, searches documentation.
-      Reads memory context before researching. Writes findings as Lesson and Context nodes.
-      Ends every run with DONE: / BLOCKED: / ACTION:.
-    file: .opencode/agent/MemoryAnalyst.md
-    loop: true
-    max_steps: 15
-    tools:
-      - exa
-      - youtube-transcript
-      - context7
-      - playwright
-      - hyperbrowser
+# =============================================================================
+# PRIMARY AGENTS - Main orchestrators and planners
+# =============================================================================
+primary:
+  - id: memory-orchestrator
+    name: MemoryOrchestrator
+    file: MemoryOrchestrator.md
+    type: primary
+    description: "Primary orchestration agent for roninmemory - coordinates memory-aware workflows across all domains"
+    capabilities:
+      - workflow coordination
+      - task delegation
+      - context management
+      - subagent routing
+    invoke_by: "@memory-orchestrator"
+    best_for:
+      - Starting new tasks
+      - Coordinating multi-step workflows
+      - Delegating to subagents
+      - Managing context across agents
 
-  # -----------------------------------------------------------
-  # BUILDER — Data persistence and graph writes
-  # -----------------------------------------------------------
-  - name: MemoryBuilder
-    description: |
-      Persistence agent. Writes Task, Decision, Lesson, and Context nodes to Neo4j.
-      Manages Postgres run log. Never reads from Neo4j without logging the read.
-      Ends every run with DONE: confirming the node type and ID written.
-    file: .opencode/agent/MemoryBuilder.md
-    loop: true
-    max_steps: 15
-    tools:
-      - mcp-postgres
-      - mcp-neo4j
+  - id: memory-architect
+    name: MemoryArchitect
+    file: MemoryArchitect.md
+    type: primary
+    description: "Architectural agent for roninmemory - designs memory-aware solutions and coordinates complex implementations"
+    capabilities:
+      - architectural design
+      - code implementation
+      - pattern application
+      - technical planning
+    invoke_by: "@memory-architect"
+    best_for:
+      - Complex coding tasks
+      - Architecture decisions
+      - Implementation planning
+      - Technical design
 
-  # -----------------------------------------------------------
-  # ARCHITECT — Schema design and architecture decisions
-  # -----------------------------------------------------------
-  - name: MemoryArchitect
-    description: |
-      Architecture agent. Makes schema decisions, designs system structure, reviews
-      technical choices. Writes Decision nodes for every architectural choice made.
-      Ends every run with DONE: and a Decision node confirmation.
-    file: .opencode/agent/MemoryArchitect.md
-    loop: true
-    max_steps: 15
-    tools:
-      - nextjs-devtools
-      - context7
-      - mcp-postgres
-      - playwright
-      - hyperbrowser
+# =============================================================================
+# CORE SUBAGENTS - Essential supporting agents
+# =============================================================================
+core_subagents:
+  - id: memory-scout
+    name: MemoryScout
+    file: subagents/core/contextscout.md
+    type: subagent
+    description: "Discovers internal context files BEFORE executing - saves time, avoids rework"
+    capabilities:
+      - context discovery
+      - pattern finding
+      - standard lookup
+      - file location
+    invoke_by: "@memory-scout"
+    exemption: "Approval gate exempt - can be called without approval"
+    best_for:
+      - Finding coding standards
+      - Discovering patterns
+      - Locating relevant context
+      - Pre-execution discovery
 
-  # -----------------------------------------------------------
-  # INFRASTRUCTURE — Docker, DevOps, containers
-  # -----------------------------------------------------------
-  - name: MemoryInfrastructure
-    description: |
-      Infrastructure agent. Handles Docker builds, container configuration, shell scripts,
-      database admin tasks, and deployment preparation.
-      All builds and tests run in Docker — never on local machine directly.
-      Ends every run with DONE: / BLOCKED: / ACTION:.
-    file: .opencode/agent/subagents/system-builder/MemoryInfrastructure.md
-    loop: true
-    max_steps: 15
-    tools:
-      - shell
-      - mcp-postgres
-      - docker
+  - id: memory-archivist
+    name: MemoryArchivist
+    file: subagents/core/externalscout.md
+    type: subagent
+    description: "Fetches current documentation for external packages - MANDATORY for external libraries"
+    capabilities:
+      - external library docs
+      - API documentation
+      - Integration patterns
+      - Current best practices
+    invoke_by: "@memory-archivist"
+    best_for:
+      - New library integration
+      - API usage patterns
+      - External package setup
+      - Current version docs
 
-  # -----------------------------------------------------------
-  # INTERFACE — UI components and frontend tasks
-  # -----------------------------------------------------------
-  - name: MemoryInterface
-    description: |
-      Frontend and UI agent. Handles Next.js components, Tailwind styling, Payload CMS
-      admin UI, and browser-based testing. Writes Decision nodes for component architecture choices.
-      Ends every run with DONE: / BLOCKED: / ACTION:.
-    file: .opencode/agent/subagents/development/MemoryInterface.md
-    loop: true
-    max_steps: 15
-    tools:
-      - nextjs-devtools
-      - playwright
-      - hyperbrowser
-      - context7
-
-  # -----------------------------------------------------------
-  # ORGANIZER — File hygiene, drift detection, cleanup
-  # -----------------------------------------------------------
-  - name: MemoryOrganizer
-    description: |
-      Hygiene agent. Handles file organization, drift detection between opencode.json /
-      filesystem / Notion registry, and archiving ghost entries.
-      Runs allura:drift protocol. Writes Context nodes documenting system state.
-      Ends every run with DONE: / BLOCKED: / ACTION:.
-    file: .opencode/agent/subagents/utils/MemoryOrganizer.md
-    loop: true
-    max_steps: 10
-    tools:
-      - shell
-      - mcp-postgres
-
-  # -----------------------------------------------------------
-  # CURATOR — Gate agent: quality review before Neo4j promotion
-  # Gate agents do NOT loop — they review once and decide
-  # -----------------------------------------------------------
-  - name: MemoryCurator
-    description: |
-      Quality gate agent. Reviews Agent and Task nodes before promotion to Neo4j.
-      Applies HITL governance: Curator → Auditor approval chain.
-      Does NOT loop — reviews once, approves or rejects, done.
-      Ends with DONE: [approved|rejected] — <reason>.
-    file: .opencode/agent/subagents/core/MemoryCurator.md
+  - id: memory-curator
+    name: MemoryCurator
+    file: subagents/core/task-manager.md
+    type: subagent
+    description: "Curates and organizes tasks - transforms complex features into atomic, verifiable subtasks"
+    capabilities:
+      - task breakdown
+      - dependency tracking
+      - JSON task creation
+      - parallel task identification
+    invoke_by: "@memory-curator"
     loop: false
-    max_steps: 5
-    tools:
-      - mcp-neo4j
-      - mcp-postgres
+    best_for:
+      - Complex feature breakdown
+      - Task planning
+      - Dependency mapping
+      - Creating task JSONs
 
-# =============================================================
-# CUSTOM COMMANDS
-# =============================================================
+  - id: memory-chronicler
+    name: MemoryChronicler
+    file: subagents/core/documentation.md
+    type: subagent
+    description: "Generates comprehensive documentation - chronicler of the roninmemory system"
+    capabilities:
+      - documentation generation
+      - technical writing
+      - knowledge capture
+      - ADR creation
+    invoke_by: "@memory-chronicler"
+    best_for:
+      - Writing docs
+      - Creating ADRs
+      - Technical documentation
+      - Knowledge base updates
 
-commands:
-  # -----------------------------------------------------------
-  # allura:brief — Morning context brief from live memory state
-  # -----------------------------------------------------------
-  - name: allura:brief
-    description: |
-      Generates a prioritized daily plan from live Neo4j + Postgres state.
-      Queries: open tasks, active projects, pending decisions, top lesson.
-      Outputs structured brief with recommended first action.
-      Writes a :Context node with the brief to Neo4j.
-      Updates Notion Daily Brief page via POST-WRITE protocol.
-    agent: MemoryOrchestrator
-    loop: true
-    max_steps: 5
-    prompt: |
-      Run the allura:brief protocol:
-      1. Query Neo4j for active projects, open tasks, pending decisions
-      2. Query Postgres run_log for incomplete tasks from the last 7 days
-      3. Generate a prioritized daily plan in this format:
-         ## Allura Daily Brief — {today's date}
-         ### 🔴 Blocked (needs attention now)
-         ### 🟡 Active (in progress)
-         ### 🟢 Open (ready to start)
-         ### 💡 Top Lesson from Recent Runs
-         ### 🎯 Recommended First Action
-      4. Write a (:Context {domain: 'daily-brief', notes: <brief summary>, related_projects: [<active project names>]}) node to Neo4j
-      5. Update Notion Daily Brief page (POST-WRITE protocol — Notion is display layer only)
-      6. End with: DONE: Daily brief generated. Context node written to Neo4j. Notion updated.
+  - id: memory-retriever
+    name: MemoryRetriever
+    file: subagents/core/context-retriever.md
+    type: subagent
+    description: "Generic context search and retrieval specialist - finds relevant context files and standards"
+    capabilities:
+      - context retrieval
+      - standards lookup
+      - pattern matching
+      - file search
+    invoke_by: "@memory-retriever"
+    best_for:
+      - Finding specific files
+      - Standards lookup
+      - Pattern discovery
 
-  # -----------------------------------------------------------
-  # allura:run — Start a new task through the full brain loop
-  # -----------------------------------------------------------
-  - name: allura:run
-    description: |
-      Runs a task through the full PRE/RUN/POST brain loop.
-      Reads relevant memory, dispatches sub-agents, writes results back.
-      Required arg: task description.
-    agent: MemoryOrchestrator
-    loop: true
-    max_steps: 15
-    prompt: |
-      Execute the Allura Brain Loop for the provided task:
-      PRE: Query Neo4j for relevant context (project nodes, recent lessons, open tasks)
-      RUN: Dispatch appropriate sub-agent(s) with context bundle. Loop until DONE: or max 15 steps.
-      POST: Write Task node, Decision node (if choice made), Lesson node (always) to Neo4j. Update Postgres run_log.
-           If project/status/decision changed: execute Notion write-back (display layer only).
-      End with: DONE: Task complete. [Node types] written to Neo4j. Postgres run_log updated.
+# =============================================================================
+# CODE SUBAGENTS - Development and testing specialists
+# =============================================================================
+code_subagents:
+  - id: memory-builder
+    name: MemoryBuilder
+    file: subagents/code/coder-agent.md
+    type: subagent
+    description: "Builds and implements code - executes subtasks with memory-aware patterns and Steel Frame versioning"
+    capabilities:
+      - code implementation
+      - subtask execution
+      - pattern application
+      - self-review
+    invoke_by: "@memory-builder"
+    best_for:
+      - Writing code
+      - Implementing features
+      - Following task JSONs
+      - Atomic subtasks
 
-  # -----------------------------------------------------------
-  # allura:status — Quick status check of open items
-  # -----------------------------------------------------------
-  - name: allura:status
-    description: |
-      Quick read-only status check. Queries Neo4j and Postgres for open tasks and blocked items.
-      Does not create new nodes — read only.
-    agent: MemoryOrchestrator
-    loop: false
-    max_steps: 3
-    prompt: |
-      Run a status check only (no writes):
-      1. Query Neo4j: MATCH (t:Task {status: 'open'}) RETURN t ORDER BY t.created_at DESC LIMIT 20
-      2. Query Neo4j: MATCH (d:Decision {outcome: 'pending'}) RETURN d
-      3. Query Postgres run_log for any runs with status 'blocked' or 'max_steps_reached' in last 48h
-      4. Output a clean status table: Task | Status | Project | Created
-      End with: DONE: Status check complete. No writes made.
+  - id: memory-tester
+    name: MemoryTester
+    file: subagents/code/test-engineer.md
+    type: subagent
+    description: "Tests the roninmemory system - ensures memory persistence, retrieval accuracy, and HITL gate functionality"
+    capabilities:
+      - test authoring
+      - TDD implementation
+      - coverage analysis
+      - positive/negative testing
+    invoke_by: "@memory-tester"
+    best_for:
+      - Writing tests
+      - Test coverage
+      - TDD workflows
+      - Quality gates
 
-  # -----------------------------------------------------------
-  # allura:drift — Detect and archive ghost entries
-  # -----------------------------------------------------------
-  - name: allura:drift
-    description: |
-      Drift detection protocol. Compares opencode.json agent list vs filesystem vs Notion registry.
-      Archives Notion ghost entries (slugs with no matching agent file).
-      Reports any missing agent files or unregistered agents.
-      Read-heavy — only writes to Notion (archive flag) and Postgres (drift log).
-    agent: MemoryOrganizer
-    loop: false
-    max_steps: 8
-    prompt: |
-      Run the allura:drift protocol:
-      1. Read opencode.json — extract all agent names
-      2. Read .opencode/agent/ filesystem — list all .md files
-      3. Compare: flag any agent in opencode.json with no matching .md file
-      4. Compare: flag any .md file with no matching opencode.json entry
-      5. Query Notion Agent Registry for all entries with roninmemory- slug prefix
-      6. Archive any Notion entries whose slug has no match in opencode.json (set status: archived)
-      7. Write a (:Context {domain: 'drift-report', notes: <summary>}) to Neo4j
-      8. Write drift results to Postgres drift_log table
-      End with: DONE: Drift check complete. [N] ghosts archived. [M] mismatches found. Context node written.
+  - id: memory-guardian
+    name: MemoryGuardian
+    file: subagents/code/reviewer.md
+    type: subagent
+    description: "Guards roninmemory code quality - reviews for security, Steel Frame compliance, and memory system best practices"
+    capabilities:
+      - code review
+      - security audit
+      - pattern validation
+      - quality checks
+    invoke_by: "@memory-guardian"
+    best_for:
+      - Code reviews
+      - Security audits
+      - Pattern validation
+      - Pre-merge checks
 
-# =============================================================
-# LOOP ENFORCEMENT POLICY
-# =============================================================
-#
-# loop: true  — agent will continue running steps until DONE: or max_steps
-# loop: false — gate agents (Curator, status checks, drift) run once and stop
-# max_steps: 15 — hard ceiling on all active agent runs
-# max_steps: 5  — gate agents and read-only commands
-#
-# ALL agents follow the DONE: / BLOCKED: / ACTION: completion protocol.
-# Any run that reaches max_steps without DONE: is logged to Postgres
-# as status: 'max_steps_reached' and a Lesson node is still written.
-#
-# The POST write is non-negotiable.
-# A completed run that writes nothing to Neo4j is architecturally equivalent to failure.
-#
-# NOTION IS A DISPLAY LAYER — NOT A SOURCE OF TRUTH.
-# Neo4j is the source of truth. Notion write-back is fire-and-forget.
-# If Notion write fails, log to Postgres and continue. Never block on Notion.
-# =============================================================
+  - id: memory-validator
+    name: MemoryValidator
+    file: subagents/code/build-agent.md
+    type: subagent
+    description: "Validates builds and types for roninmemory - ensures Steel Frame versioning compliance and memory system integrity"
+    capabilities:
+      - build validation
+      - type checking
+      - lint compliance
+      - integrity checks
+    invoke_by: "@memory-validator"
+    best_for:
+      - Build validation
+      - Type checking
+      - Pre-commit checks
+      - CI verification
+
+# =============================================================================
+# SYSTEM BUILDER SUBAGENTS - Infrastructure and tooling
+# =============================================================================
+system_subagents:
+  - id: memory-organizer
+    name: MemoryOrganizer
+    file: subagents/system-builder/context-organizer.md
+    type: subagent
+    description: "Organizes roninmemory context and knowledge - structures domain information, processes, and standards for optimal memory retrieval"
+    capabilities:
+      - context organization
+      - knowledge structuring
+      - domain modeling
+      - standard creation
+    invoke_by: "@memory-organizer"
+    best_for:
+      - Organizing context
+      - Structuring knowledge
+      - Domain modeling
+      - Standard definition
+
+  - id: memory-generator
+    name: MemoryGenerator
+    file: subagents/system-builder/agent-generator.md
+    type: subagent
+    description: "Generates XML-optimized agent files (orchestrator and subagents) following research-backed patterns"
+    capabilities:
+      - agent generation
+      - XML optimization
+      - pattern application
+      - file creation
+    invoke_by: "@memory-generator"
+    best_for:
+      - Creating agents
+      - Agent optimization
+      - Pattern-based generation
+
+  - id: memory-commander
+    name: MemoryCommander
+    file: subagents/system-builder/command-creator.md
+    type: subagent
+    description: "Creates custom slash commands that route to appropriate agents with clear syntax and examples"
+    capabilities:
+      - command creation
+      - slash command design
+      - routing logic
+      - syntax definition
+    invoke_by: "@memory-commander"
+    best_for:
+      - Creating slash commands
+      - Command routing
+      - CLI design
+
+  - id: memory-workflow
+    name: MemoryWorkflow
+    file: subagents/system-builder/workflow-designer.md
+    type: subagent
+    description: "Designs complete workflow definitions with context dependencies and success criteria"
+    capabilities:
+      - workflow design
+      - process definition
+      - dependency mapping
+      - success criteria
+    invoke_by: "@memory-workflow"
+    best_for:
+      - Designing workflows
+      - Process definition
+      - Workflow optimization
+
+  - id: memory-domain
+    name: MemoryDomain
+    file: subagents/system-builder/domain-analyzer.md
+    type: subagent
+    description: "Analyzes user domains to identify core concepts, recommended agents, and context structure"
+    capabilities:
+      - domain analysis
+      - concept identification
+      - agent recommendation
+      - context structure
+    invoke_by: "@memory-domain"
+    best_for:
+      - Domain analysis
+      - Concept modeling
+      - Context design
+
+# =============================================================================
+# DEVELOPMENT SUBAGENTS - Specialized development roles
+# =============================================================================
+development_subagents:
+  - id: memory-interface
+    name: MemoryInterface
+    file: subagents/development/frontend-specialist.md
+    type: subagent
+    description: "Designs the interface layer for roninmemory - creates UI components, visualizations, and interaction patterns for the unified AI brain"
+    capabilities:
+      - UI design
+      - component creation
+      - visualization
+      - interaction patterns
+    invoke_by: "@memory-interface"
+    best_for:
+      - Frontend development
+      - UI components
+      - Visualizations
+      - React/Next.js work
+
+  - id: memory-infrastructure
+    name: MemoryInfrastructure
+    file: subagents/development/devops-specialist.md
+    type: subagent
+    description: "Builds infrastructure for roninmemory - manages PostgreSQL, Neo4j, Docker, and deployment automation for the unified AI brain"
+    capabilities:
+      - infrastructure setup
+      - database management
+      - docker configuration
+      - deployment automation
+    invoke_by: "@memory-infrastructure"
+    best_for:
+      - Infrastructure setup
+      - Database config
+      - Docker/deployment
+      - DevOps tasks
+
+# =============================================================================
+# UTILITY SUBAGENTS - Specialized utilities
+# =============================================================================
+utility_subagents:
+  - id: memory-visualizer
+    name: MemoryVisualizer
+    file: subagents/utils/image-specialist.md
+    type: subagent
+    description: "Specialized agent for image editing and analysis using Gemini AI tools"
+    capabilities:
+      - image editing
+      - image analysis
+      - visual processing
+      - AI-powered visuals
+    invoke_by: "@memory-visualizer"
+    best_for:
+      - Image editing
+      - Visual analysis
+      - Image processing
+
+# =============================================================================
+# CONTENT AGENTS - Content creation specialists
+# =============================================================================
+content_agents:
+  - id: memory-scribe
+    name: MemoryScribe
+    file: content/technical-writer.md
+    type: subagent
+    description: "Technical documentation specialist and knowledge curator"
+    capabilities:
+      - technical writing
+      - documentation
+      - knowledge curation
+      - content creation
+    invoke_by: "@memory-scribe"
+    best_for:
+      - Technical writing
+      - Documentation
+      - Content curation
+
+  - id: memory-copyist
+    name: MemoryCopyist
+    file: content/copywriter.md
+    type: subagent
+    description: "Copywriting and content creation specialist"
+    capabilities:
+      - copywriting
+      - content creation
+      - marketing copy
+      - user-facing text
+    invoke_by: "@memory-copyist"
+    best_for:
+      - Marketing copy
+      - User-facing content
+      - Creative writing
+
+# =============================================================================
+# DATA AGENTS - Data and analytics specialists
+# =============================================================================
+data_agents:
+  - id: memory-analyst
+    name: MemoryAnalyst
+    file: data/data-analyst.md
+    type: subagent
+    description: "Data analysis and insights specialist"
+    capabilities:
+      - data analysis
+      - insights generation
+      - analytics
+      - reporting
+    invoke_by: "@memory-analyst"
+    best_for:
+      - Data analysis
+      - Insights
+      - Reporting
+      - Analytics tasks
+
+# =============================================================================
+# META AGENTS - Repository and system management
+# =============================================================================
+meta_agents:
+  - id: memory-librarian
+    name: MemoryLibrarian
+    file: meta/repo-manager.md
+    type: subagent
+    description: "Repository management and organization specialist"
+    capabilities:
+      - repo management
+      - file organization
+      - structure maintenance
+      - cleanup tasks
+    invoke_by: "@memory-librarian"
+    best_for:
+      - Repository organization
+      - File management
+      - Structure cleanup
+
+  - id: memory-architect-meta
+    name: MemorySystemBuilder
+    file: meta/system-builder.md
+    type: subagent
+    description: "System-wide architecture and coordination"
+    capabilities:
+      - system architecture
+      - coordination
+      - cross-cutting concerns
+      - system design
+    invoke_by: "@memory-system-builder"
+    best_for:
+      - System design
+      - Cross-cutting concerns
+      - Architecture coordination
+
+# =============================================================================
+# EVALUATION AGENTS - Testing and evaluation
+# =============================================================================
+eval_agents:
+  - id: memory-evaluator
+    name: MemoryEvaluator
+    file: eval-runner.md
+    type: subagent
+    description: "Test harness for evaluation framework - DO NOT USE DIRECTLY"
+    capabilities:
+      - evaluation
+      - test harness
+      - framework testing
+    invoke_by: "@memory-evaluator"
+    best_for:
+      - Evaluation tasks
+      - Framework testing
+
+# =============================================================================
+# QUICK SELECTION GUIDE
+# =============================================================================
+quick_guide:
+  starting_a_task:
+    primary: memory-orchestrator
+    workflow: "Plan → Approve → Execute → Validate → Summarize"
+    
+  writing_code:
+    primary: memory-architect
+    subagent: memory-builder
+    
+  planning_complex_feature:
+    subagent: memory-curator
+    output: ".tmp/tasks/{feature}/task.json + subtask_NN.json"
+    
+  finding_standards:
+    subagent: memory-scout
+    note: "Approval gate exempt - call anytime"
+    
+  external_library_docs:
+    subagent: memory-archivist
+    note: "MANDATORY for any external package"
+    
+  writing_tests:
+    subagent: memory-tester
+    pattern: "Arrange-Act-Assert + Positive/Negative cases"
+    
+  code_review:
+    subagent: memory-guardian
+    focus: "Security, patterns, best practices"
+    
+  documentation:
+    subagent: memory-chronicler
+    type: "Technical writing, ADRs, guides"
+    
+  frontend_development:
+    subagent: memory-interface
+    stack: "React, Next.js, Tailwind"
+    
+  infrastructure:
+    subagent: memory-infrastructure
+    scope: "Docker, DB, deployment"
+
+# =============================================================================
+# WORKFLOW INTEGRATION
+# =============================================================================
+workflows:
+  standard:
+    - step: 1
+      name: "Discover"
+      agent: memory-scout
+      action: "Find context files and standards"
+      
+    - step: 2
+      name: "Approve"
+      agent: memory-orchestrator
+      action: "Present plan and request approval"
+      
+    - step: 3
+      name: "Execute"
+      agent: "[varies by task]"
+      action: "Implement with context loaded"
+      
+    - step: 4
+      name: "Validate"
+      agent: memory-tester
+      action: "Run tests and verify"
+      
+    - step: 5
+      name: "Summarize"
+      agent: memory-orchestrator
+      action: "Report completion"
+
+  complex_feature:
+    - step: 1
+      name: "Break Down"
+      agent: memory-curator
+      action: "Create task.json and subtasks"
+      
+    - step: 2
+      name: "Execute Parallel"
+      agent: memory-builder
+      action: "Implement subtasks in batches"
+      
+    - step: 3
+      name: "Validate"
+      agent: memory-tester
+      action: "Test all components"
+
+# =============================================================================
+# AGENT CATEGORIES
+# These categories align with module structure
+# =============================================================================
+categories:
+  bmm:
+    description: "Business Analysis & Planning"
+    agents:
+      - memory-orchestrator
+      - memory-architect
+      - memory-curator
+      - memory-chronicler
+      
+  bmb:
+    description: "Workflow & Agent Building"
+    agents:
+      - memory-generator
+      - memory-commander
+      - memory-workflow
+      - memory-organizer
+      - memory-domain
+      
+  tea:
+    description: "TEA - Test Architecture Enterprise"
+    agents:
+      - memory-tester
+      - memory-guardian
+      - memory-validator
+      
+  wds:
+    description: "WDS - Workflow Design System"
+    agents:
+      - memory-interface
+      - memory-visualizer
+
+# =============================================================================
+# USAGE NOTES
+# =============================================================================
+notes:
+  - "All agents follow the approval gate rule (except memory-scout)"
+  - "Primary agents can invoke subagents via task tool"
+  - "Subagents are specialized - use the right tool for the job"
+  - "Memory agents are the source of truth for direct agent files"
+  - "Always load context before execution (critical requirement)"
+  - "Use memory-scout for discovery before any implementation"
+  - "Use memory-archivist for ANY external library work"
