@@ -1,7 +1,8 @@
 # =============================================================
 # ALLURA MEMORY — OpenCode Agent Menu
-# Version: 2.0.0 | Updated: 2026-04-06
+# Version: 2.1.0 | Updated: 2026-04-06
 # Brain Loop enforcement: loop: true, max_steps: 15 on all agents
+# 7 active agents + gate agents (loop: false) + 3 new domain agents
 # =============================================================
 
 agents:
@@ -11,7 +12,7 @@ agents:
   - name: MemoryOrchestrator
     description: |
       Master supervisor for the Allura Brain Loop.
-      Runs PRE (read Neo4j context) → RUN (dispatch sub-agents, max 15 steps) → POST (write Task/Decision/Lesson nodes back to Neo4j).
+      Runs PRE (read Neo4j context) → RUN (dispatch sub-agents, max 15 steps) → POST (write Task/Decision/Lesson nodes back to Neo4j + Notion).
       Every run ends with DONE: / BLOCKED: / ACTION: protocol.
       No run concludes without a confirmed memory write.
     file: .opencode/agent/MemoryOrchestrator.md
@@ -24,6 +25,7 @@ agents:
       - allura:brief
       - allura:run
       - allura:status
+      - allura:drift
 
   # -----------------------------------------------------------
   # ANALYST — Research and information gathering
@@ -76,6 +78,73 @@ agents:
       - playwright
       - hyperbrowser
 
+  # -----------------------------------------------------------
+  # INFRASTRUCTURE — Docker, DevOps, containers
+  # -----------------------------------------------------------
+  - name: MemoryInfrastructure
+    description: |
+      Infrastructure agent. Handles Docker builds, container configuration, shell scripts,
+      database admin tasks, and deployment preparation.
+      All builds and tests run in Docker — never on local machine directly.
+      Ends every run with DONE: / BLOCKED: / ACTION:.
+    file: .opencode/agent/subagents/system-builder/MemoryInfrastructure.md
+    loop: true
+    max_steps: 15
+    tools:
+      - shell
+      - mcp-postgres
+      - docker
+
+  # -----------------------------------------------------------
+  # INTERFACE — UI components and frontend tasks
+  # -----------------------------------------------------------
+  - name: MemoryInterface
+    description: |
+      Frontend and UI agent. Handles Next.js components, Tailwind styling, Payload CMS
+      admin UI, and browser-based testing. Writes Decision nodes for component architecture choices.
+      Ends every run with DONE: / BLOCKED: / ACTION:.
+    file: .opencode/agent/subagents/development/MemoryInterface.md
+    loop: true
+    max_steps: 15
+    tools:
+      - nextjs-devtools
+      - playwright
+      - hyperbrowser
+      - context7
+
+  # -----------------------------------------------------------
+  # ORGANIZER — File hygiene, drift detection, cleanup
+  # -----------------------------------------------------------
+  - name: MemoryOrganizer
+    description: |
+      Hygiene agent. Handles file organization, drift detection between opencode.json /
+      filesystem / Notion registry, and archiving ghost entries.
+      Runs allura:drift protocol. Writes Context nodes documenting system state.
+      Ends every run with DONE: / BLOCKED: / ACTION:.
+    file: .opencode/agent/subagents/utils/MemoryOrganizer.md
+    loop: true
+    max_steps: 10
+    tools:
+      - shell
+      - mcp-postgres
+
+  # -----------------------------------------------------------
+  # CURATOR — Gate agent: quality review before Neo4j promotion
+  # Gate agents do NOT loop — they review once and decide
+  # -----------------------------------------------------------
+  - name: MemoryCurator
+    description: |
+      Quality gate agent. Reviews Agent and Task nodes before promotion to Neo4j.
+      Applies HITL governance: Curator → Auditor approval chain.
+      Does NOT loop — reviews once, approves or rejects, done.
+      Ends with DONE: [approved|rejected] — <reason>.
+    file: .opencode/agent/subagents/core/MemoryCurator.md
+    loop: false
+    max_steps: 5
+    tools:
+      - mcp-neo4j
+      - mcp-postgres
+
 # =============================================================
 # CUSTOM COMMANDS
 # =============================================================
@@ -90,6 +159,7 @@ commands:
       Queries: open tasks, active projects, pending decisions, top lesson.
       Outputs structured brief with recommended first action.
       Writes a :Context node with the brief to Neo4j.
+      Updates Notion Daily Brief page via POST-WRITE protocol.
     agent: MemoryOrchestrator
     loop: true
     max_steps: 5
@@ -105,7 +175,8 @@ commands:
          ### 💡 Top Lesson from Recent Runs
          ### 🎯 Recommended First Action
       4. Write a (:Context {domain: 'daily-brief', notes: <brief summary>, related_projects: [<active project names>]}) node to Neo4j
-      5. End with: DONE: Daily brief generated. Context node written to Neo4j with domain 'daily-brief'.
+      5. Update Notion Daily Brief page (POST-WRITE protocol — Notion is display layer only)
+      6. End with: DONE: Daily brief generated. Context node written to Neo4j. Notion updated.
 
   # -----------------------------------------------------------
   # allura:run — Start a new task through the full brain loop
@@ -123,6 +194,7 @@ commands:
       PRE: Query Neo4j for relevant context (project nodes, recent lessons, open tasks)
       RUN: Dispatch appropriate sub-agent(s) with context bundle. Loop until DONE: or max 15 steps.
       POST: Write Task node, Decision node (if choice made), Lesson node (always) to Neo4j. Update Postgres run_log.
+           If project/status/decision changed: execute Notion write-back (display layer only).
       End with: DONE: Task complete. [Node types] written to Neo4j. Postgres run_log updated.
 
   # -----------------------------------------------------------
@@ -143,12 +215,38 @@ commands:
       4. Output a clean status table: Task | Status | Project | Created
       End with: DONE: Status check complete. No writes made.
 
+  # -----------------------------------------------------------
+  # allura:drift — Detect and archive ghost entries
+  # -----------------------------------------------------------
+  - name: allura:drift
+    description: |
+      Drift detection protocol. Compares opencode.json agent list vs filesystem vs Notion registry.
+      Archives Notion ghost entries (slugs with no matching agent file).
+      Reports any missing agent files or unregistered agents.
+      Read-heavy — only writes to Notion (archive flag) and Postgres (drift log).
+    agent: MemoryOrganizer
+    loop: false
+    max_steps: 8
+    prompt: |
+      Run the allura:drift protocol:
+      1. Read opencode.json — extract all agent names
+      2. Read .opencode/agent/ filesystem — list all .md files
+      3. Compare: flag any agent in opencode.json with no matching .md file
+      4. Compare: flag any .md file with no matching opencode.json entry
+      5. Query Notion Agent Registry for all entries with roninmemory- slug prefix
+      6. Archive any Notion entries whose slug has no match in opencode.json (set status: archived)
+      7. Write a (:Context {domain: 'drift-report', notes: <summary>}) to Neo4j
+      8. Write drift results to Postgres drift_log table
+      End with: DONE: Drift check complete. [N] ghosts archived. [M] mismatches found. Context node written.
+
 # =============================================================
 # LOOP ENFORCEMENT POLICY
 # =============================================================
 #
 # loop: true  — agent will continue running steps until DONE: or max_steps
-# max_steps: 15 — hard ceiling on all agent runs
+# loop: false — gate agents (Curator, status checks, drift) run once and stop
+# max_steps: 15 — hard ceiling on all active agent runs
+# max_steps: 5  — gate agents and read-only commands
 #
 # ALL agents follow the DONE: / BLOCKED: / ACTION: completion protocol.
 # Any run that reaches max_steps without DONE: is logged to Postgres
@@ -156,4 +254,8 @@ commands:
 #
 # The POST write is non-negotiable.
 # A completed run that writes nothing to Neo4j is architecturally equivalent to failure.
+#
+# NOTION IS A DISPLAY LAYER — NOT A SOURCE OF TRUTH.
+# Neo4j is the source of truth. Notion write-back is fire-and-forget.
+# If Notion write fails, log to Postgres and continue. Never block on Notion.
 # =============================================================

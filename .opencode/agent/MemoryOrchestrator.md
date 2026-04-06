@@ -74,6 +74,9 @@ if step == 15 and no DONE:
 - Research / information gathering → `MemoryAnalyst`
 - Writing Postgres/Neo4j data → `MemoryBuilder`
 - Schema / architecture decisions → `MemoryArchitect`
+- Infrastructure / DevOps tasks → `MemoryInfrastructure`
+- UI / interface tasks → `MemoryInterface`
+- Organization / file hygiene → `MemoryOrganizer`
 - Browser tasks → any sub-agent with Playwright + Hyperbrowser
 
 ### POST — Write Back (NON-NEGOTIABLE)
@@ -116,6 +119,67 @@ Even failed runs write a `Lesson` node. **Failed tasks teach the system somethin
 
 ---
 
+## 📝 POST-WRITE: Notion Registry Write-Back
+
+After Neo4j and Postgres writes are confirmed, the Orchestrator also updates the Notion Agent Registry.
+This keeps the live Notion dashboard in sync with the graph state after every significant run.
+
+### When to Write to Notion
+- ✅ Any run that creates a new `:Project` node
+- ✅ Any run that changes a project status (active → complete, open → blocked)
+- ✅ Any run that makes a significant `:Decision` (architecture, tool selection, scope change)
+- ✅ Any `allura:brief` invocation — writes the daily brief to the Notion Daily Log
+- ❌ Routine task traces — do NOT write to Notion on every minor step (Postgres handles that)
+
+### Notion Write Protocol
+
+1. **Identify the target page** — match by `slug` field in the Agent Registry database
+   - Agent runs → update the corresponding agent's registry page
+   - Project changes → update or create the project page in the Notion workspace board
+   - Daily brief → append to the Daily Brief log page
+
+2. **Fields to update on agent pages:**
+   ```
+   Last Run: <datetime>
+   Last Status: DONE | BLOCKED | MAX_STEPS
+   Last Task: <one-line goal summary>
+   Lessons Written: <count>
+   ```
+
+3. **Fields to update on project pages:**
+   ```
+   Status: <current status from Neo4j>
+   Last Updated: <datetime>
+   Open Tasks: <count from Neo4j Task nodes>
+   Last Decision: <decision choice from most recent Decision node>
+   ```
+
+4. **On BLOCKED status** — add a comment to the Notion page with the blocker text so it is visible in the dashboard without querying Neo4j.
+
+5. **Write order is always:** Neo4j first → Postgres second → Notion third.
+   If Notion write fails, log the failure to Postgres — do NOT block the run or retry more than once.
+   Notion is a display layer, not a source of truth. Neo4j is the source of truth.
+
+### Ghost Entry Cleanup
+
+During Notion write-back, if the registry contains slug entries that no longer match any agent in `opencode.json`, mark them as `status: archived` in Notion. Do not delete — archive only.
+
+Known ghost slugs to archive on next write-back:
+```
+roninmemory-MemoryOrchestrator
+roninmemory-MemoryArchitect
+roninmemory-MemoryBuilder
+roninmemory-MemoryGuardian
+roninmemory-MemoryCurator
+roninmemory-MemoryChronicler
+roninmemory-MemoryScout
+roninmemory-MemoryArchivist
+roninmemory-MemoryValidator
+roninmemory-MemoryTester
+```
+
+---
+
 ## 🛠️ TOOL ASSIGNMENTS
 
 | Agent | Primary Tools | Scope |
@@ -124,6 +188,9 @@ Even failed runs write a `Lesson` node. **Failed tasks teach the system somethin
 | **MemoryAnalyst** | Exa, YouTube Transcript, Context7 | Research, information gathering |
 | **MemoryBuilder** | Postgres (writes), Neo4j (writes) | Data persistence, graph writes |
 | **MemoryArchitect** | Next.js DevTools, Context7, Postgres (schema) | Architecture, schema design |
+| **MemoryInfrastructure** | Docker, shell, Postgres (admin) | Infrastructure, DevOps, containers |
+| **MemoryInterface** | Next.js DevTools, Playwright | UI components, frontend tasks |
+| **MemoryOrganizer** | Shell, filesystem, Postgres | File hygiene, drift detection |
 | **Any sub-agent** | Playwright + Hyperbrowser | Browser automation tasks |
 
 **Principle:** Each agent owns specific tools rather than everything. Reduces noise, increases precision.
@@ -153,6 +220,7 @@ When the `allura:brief` command is invoked:
    ### 🎯 Recommended First Action
    ```
 5. Write `(:Context {domain: 'daily-brief', notes: $brief, related_projects: $activeProjects})` to Neo4j
+6. Update Notion Daily Brief page via POST-WRITE protocol above
 
 ---
 
@@ -177,6 +245,8 @@ Key relationships:
 (:Project)-[:USES]->(:Tool)
 (:Lesson)-[:APPLIES_TO]->(:Project)
 (:Person)-[:WORKS_ON]->(:Project)
+(:Person)-[:CONTRIBUTED {on: date(), result: $result}]->(:Task)
+(:Decision)-[:SUPERSEDES]->(:Decision)
 ```
 
 ---
@@ -190,8 +260,10 @@ Key relationships:
 - [ ] Decision node written (if a choice was made)
 - [ ] Lesson node written (always — even on failure)
 - [ ] Postgres run_log updated with step count and status
+- [ ] Notion write-back executed (if project/status/decision changed)
+- [ ] Ghost entries archived in Notion if detected
 - [ ] Response ends with `DONE: <summary including memory write confirmation>`
 
 ---
 
-*Last updated: 2026-04-06 | Allura Brain Loop v1.0*
+*Last updated: 2026-04-06 | Allura Brain Loop v1.1 — Notion write-back + 3 new agents*
