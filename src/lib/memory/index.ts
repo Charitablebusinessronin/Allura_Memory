@@ -34,7 +34,22 @@ export {
 
 // Orchestrator write wrapper
 export { memory } from "./writer";
-export type { MemoryAPI, MemoryLabel, RelationshipType, WriteInput, WriteResult, RelateInput } from "./writer";
+export type {
+  MemoryAPI,
+  MemoryLabel,
+  RelationshipType,
+  CreateEntityInput,
+  CreateEntityResult,
+  CreateRelationshipCallInput,
+  SearchInput,
+  // Backward compatibility aliases
+  CreateEntityInput as WriteInput,
+  CreateEntityResult as WriteResult,
+  CreateRelationshipCallInput as RelateInput,
+} from "./writer";
+
+// Backward compatibility function exports
+export { write, relate, read } from "./writer";
 
 // Convenience re-exports
 export {
