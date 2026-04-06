@@ -1,8 +1,39 @@
 # Active Context
 
-> **Last Updated:** 2026-04-05
+> **Last Updated:** 2026-04-06
 > **Current Sprint:** Epic 1 — Persistent Knowledge Capture
-> **Session Focus:** Agent Registry Sync + Allura Brain Optimization + MCP Configuration
+> **Session Focus:** Agent Bootstrap Optimization + TraceMiddleware Integration
+
+---
+
+## Bootstrap Optimization (2026-04-06)
+
+**Status:** ✅ COMPLETE
+
+**Problem:** Cold-reading 4 files (~8,000-12,000 tokens) before every session start.
+
+**Solution:** Lazy-loading bootstrap with on-demand context retrieval.
+
+**Files Created:**
+- `.opencode/agents/_bootstrap.md` — Single 400-token entry point
+- Updated `MemoryOrchestrator.md` — Bootstrap protocol header
+
+**On-Demand Load Map:**
+| Command | Loads |
+|---------|-------|
+| WS / OW | memory-bank/progress.md |
+| CA / VA | memory-bank/systemPatterns.md |
+| BP / CR | _bmad/bmm/config.yaml |
+| allura:brief | memory-bank/activeContext.md |
+| PM | all files |
+
+**Impact:** ~97% token reduction on session start (~12,000 → ~400 tokens).
+
+---
+
+## MCP Configuration (2026-04-05)
+
+**Status:** ✅ COMPLETE
 
 ---
 

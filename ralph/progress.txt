@@ -1,0 +1,15 @@
+# Ralph Progress Log — Epic 1 Completion
+Started: 2026-04-06
+Branch: ralph/epic-1-complete
+
+## Codebase Patterns
+- Package manager: bun only — never npm/npx (zero-trust supply chain policy)
+- Quality checks: bun run typecheck && bun test
+- DB writes: mcp__MCP_DOCKER__insert_data (never docker exec)
+- Neo4j writes: memory() wrapper in src/lib/memory/writer.ts
+- Postgres events: append-only — INSERT only, never UPDATE/DELETE
+- group_id: always allura-* namespace, required on every DB operation
+- Tests: vitest with vi.hoisted() for mocks that reference outer vars inside vi.mock()
+- Kernel routing: trace writes must go through RuVixKernel.syscall('trace'), not direct inserts
+- TypeScript: strict mode, unknown over any, explicit return types on exports
+---

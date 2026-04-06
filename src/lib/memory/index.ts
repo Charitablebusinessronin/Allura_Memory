@@ -32,6 +32,10 @@ export {
   validateInsightForPromotion,
 } from "./knowledge-promotion";
 
+// Orchestrator write wrapper
+export { memory } from "./writer";
+export type { MemoryAPI, MemoryLabel, RelationshipType, WriteInput, WriteResult, RelateInput } from "./writer";
+
 // Convenience re-exports
 export {
   buildTopicKey,
