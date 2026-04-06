@@ -1,0 +1,26 @@
+#!/bin/bash
+# Pre-commit hook to prevent .env files with secrets from being committed
+
+set -e
+
+# Check for .env files with potential secrets
+forbidden_files=$(git diff --cached --name-only | grep -E '\.env$|\.env\.|\.env\.local$|\.env\.decrypted$' || true)
+
+if [ -n "$forbidden_files" ]; then
+    echo "❌ ERROR: Attempting to commit .env files with potential secrets:"
+    echo "$forbidden_files"
+    echo ""
+    echo "These files may contain sensitive credentials and should not be committed."
+    echo "If you need to commit environment templates, use .env.example with placeholder values."
+    exit 1
+fi
+
+# Check for potential secrets in committed files
+secrets_pattern='(password|secret|api_key|token|credential)\s*=\s*[^$].*'
+
+if git diff --cached | grep -iE "$secrets_pattern" | grep -v 'your_.*_here' | grep -v 'placeholder' > /dev/null 2>&1; then
+    echo "⚠️  WARNING: Potential secrets detected in staged changes"
+    echo "Please ensure no real credentials are being committed"
+fi
+
+exit 0
