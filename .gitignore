@@ -29,7 +29,13 @@ pnpm-debug.log*
 # TypeScript build cache
 tsconfig.tsbuildinfo
 
-# Environment variables
+# Environment variables - NEVER COMMIT SECRETS
+.env
+.env.local
+.env.*.local
+.env.decrypted
+*.pem
+*.key
 
 # Misc
 .cache
