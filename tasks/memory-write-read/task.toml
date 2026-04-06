@@ -1,0 +1,19 @@
+[task]
+name = "memory-write-read"
+description = "Write a trace event to PostgreSQL and read it back with correct tenant isolation"
+version = "1.0.0"
+domain = "memory-system"
+timeout_sec = 30
+max_turns = 10
+
+[scoring]
+method = "deterministic"
+pass_threshold = 0.8
+
+[environment]
+requires_postgres = true
+group_id = "allura-test"
+
+[metadata]
+tags = ["postgres", "traces", "tenant-isolation", "append-only"]
+invariants = ["group_id required", "append-only", "no UPDATE/DELETE"]

@@ -6,6 +6,7 @@
 name: DomainAnalyzer
 description: "The Brooks-bound domain analyst of roninmemory - extracts core concepts, recommended agents, and knowledge structure with conceptual integrity"
 mode: subagent
+model: ollama/gpt-oss:120b-cloud
 temperature: 0.1
 permission:
   task:

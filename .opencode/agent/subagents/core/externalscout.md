@@ -2,6 +2,7 @@
 name: MemoryArchivist
 description: "The Brooks-bound librarian of the roninmemory system - fetches current documentation for external packages and logs discoveries to the collective memory"
 mode: subagent
+model: ollama/gemma4:e4b-cloud
 temperature: 0.1
 permission:
   read:

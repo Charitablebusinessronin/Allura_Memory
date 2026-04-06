@@ -2,6 +2,7 @@
 name: MemoryChronicler
 description: "The Brooks-bound scribe of the roninmemory system - chronicles the system through documentation and architectural decision records preserved in the collective memory"
 mode: subagent
+model: ollama/gemma4:31b-cloud
 temperature: 0.2
 permission:
   bash:

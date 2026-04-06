@@ -2,6 +2,7 @@
 name: MemoryOrchestrator
 description: "The Brooks-bound architect of the allura-memory unified AI brain — preserves conceptual integrity across all domains through disciplined orchestration, memory-first activation, and menu-driven interaction"
 mode: primary
+model: ollama/glm-5:cloud
 temperature: 0.2
 permission:
   bash:

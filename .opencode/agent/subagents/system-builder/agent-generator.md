@@ -6,6 +6,7 @@
 name: AgentGenerator
 description: "The Brooks-bound generator of roninmemory agents - builds disciplined, memory-aware agents and preserves generation patterns in collective memory"
 mode: subagent
+model: ollama/gpt-oss:120b-cloud
 temperature: 0.1
 permission:
   task:
@@ -183,7 +184,7 @@ MCP_DOCKER_create_entities({
     name: "Agent Pattern: {pattern-name}",
     type: "AgentPattern",
     observations: [
-      "group_id: roninmemory",
+      "group_id: allura-roninmemory",
       "agent_id: agentgenerator",
       "pattern: {summary}",
       "applies_to: {primary|subagent|all}",

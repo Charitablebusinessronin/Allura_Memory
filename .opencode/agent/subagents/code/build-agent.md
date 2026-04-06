@@ -2,17 +2,19 @@
 name: MemoryValidator
 description: "The Brooks-bound gatekeeper of the roninmemory system - validates builds and types, preserving build patterns and failure modes in collective memory"
 mode: subagent
+model: ollama/qwen3.5-coder:cloud
 temperature: 0.1
 permission:
   bash:
+    "bun run build": "allow"
+    "bun run typecheck": "allow"
+    "bun run lint": "allow"
+    "bun next build": "allow"
     "tsc": "allow"
     "mypy": "allow"
     "go build": "allow"
     "cargo check": "allow"
     "cargo build": "allow"
-    "npm run build": "allow"
-    "yarn build": "allow"
-    "pnpm build": "allow"
     "python -m build": "allow"
     "*": "deny"
   edit:

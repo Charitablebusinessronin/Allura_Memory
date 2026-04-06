@@ -1309,8 +1309,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             text: JSON.stringify({
               postgresql: pgHealthy.rows.length === 1 ? 'healthy' : 'unhealthy',
               neo4j: neoHealthy ? 'healthy' : 'unhealthy',
-              notion: 'connected_via_smithery',
-              note: 'Notion operations use Smithery MCP tools',
+              notion: 'connected_via_mcp_docker',
+              note: 'Notion operations use mcp__MCP_DOCKER__notion-* tools directly',
               canonical_tags: CANONICAL_TAGS,
               insight_statuses: INSIGHT_STATUSES,
               timestamp: new Date().toISOString()
@@ -1373,7 +1373,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             };
           }
           
-          // Create Notion page via Smithery (would need actual implementation)
+          // Create Notion page via mcp__MCP_DOCKER__notion-create-pages
           const notionPageId = `promoted_${Date.now()}`;
           
           // Update Neo4j insight with promotion status
@@ -1635,8 +1635,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
       
       // Notion tools - Human Workspace integration
-      // These tools use Smithery's connected Notion MCP
-      // The actual Notion operations are handled by the notion-* tools via Smithery
+      // Notion operations use mcp__MCP_DOCKER__notion-* tools directly (auth is configured in MCP_DOCKER)
       // These are convenience wrappers that combine Notion + Neo4j operations
       
       case "search_knowledge_base": {
@@ -1687,7 +1686,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   ai_accessible: k.ai_accessible,
                   confidence: k.confidence
                 })),
-                note: "Use Smithery's notion-fetch tool to search Notion directly"
+                note: "Use mcp__MCP_DOCKER__notion-search or mcp__MCP_DOCKER__notion-fetch to search Notion directly"
               }, null, 2)
             }]
           };
@@ -1737,8 +1736,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 tags: tags || [],
                 ai_accessible,
                 status: 'created_in_neo4j',
-                note: "Use Smithery's notion-create-page tool to create in Notion",
-                smithery_command: `smithery tool call notion-create-page '{"title": "${title}", "parent": {"type": "workspace"}}'`
+                note: "Use mcp__MCP_DOCKER__notion-create-pages to create in Notion",
+                mcp_tool: "mcp__MCP_DOCKER__notion-create-pages",
+                mcp_params: { title, properties: { Name: { title: [{ text: { content: title } }] } } }
               }, null, 2)
             }]
           };
@@ -1778,8 +1778,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 status: 'promoted',
                 summary: summary || insight.summary,
                 confidence: insight.confidence,
-                note: "Use Smithery's notion-create-page tool to create in Notion Insights database",
-                smithery_command: `smithery tool call notion-create-page '{"title": "${summary || insight.summary}", "parent": {"database_id": "YOUR_INSIGHTS_DB_ID"}, "properties": {"Status": {"status": {"name": "Pending Review"}}, "Confidence": {"number": ${insight.confidence}}}}'`
+                note: "Use mcp__MCP_DOCKER__notion-create-pages to create in Notion Insights database",
+                mcp_tool: "mcp__MCP_DOCKER__notion-create-pages",
+                mcp_params: {
+                  title: summary || insight.summary,
+                  properties: {
+                    Status: { status: { name: "Pending Review" } },
+                    Confidence: { number: insight.confidence }
+                  }
+                }
               }, null, 2)
             }]
           };
@@ -1908,9 +1915,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 neo4j_items: neoItems.length,
                 synced_count: syncedItems.length,
                 unsynced_neo4j: unsyncedItems,
-                note: "Use Smithery's notion-fetch tool to check Notion database status",
-                recommendation: unsyncedItems.length > 0 
-                  ? 'Use Smithery notion-create-page to sync unsynced items to Notion'
+                note: "Use mcp__MCP_DOCKER__notion-fetch to check Notion database status",
+                recommendation: unsyncedItems.length > 0
+                  ? 'Use mcp__MCP_DOCKER__notion-create-pages to sync unsynced items to Notion'
                   : 'Knowledge bases are in sync'
               }, null, 2)
             }]

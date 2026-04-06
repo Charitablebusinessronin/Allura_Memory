@@ -2,12 +2,14 @@
 name: MemoryBuilder
 description: "The Brooks-bound mason of the roninmemory system - implements code with Steel Frame versioning and preserves implementation patterns in the collective memory"
 mode: subagent
+model: ollama/qwen3.5-coder:cloud
 temperature: 0
 permission:
   bash:
-    "*": "deny"
     "bash .opencode/skills/task-management/router.sh complete*": "allow"
     "bash .opencode/skills/task-management/router.sh status*": "allow"
+    "bun run *": "allow"
+    "*": "deny"
   edit:
     "**/*.env*": "deny"
     "**/*.key": "deny"

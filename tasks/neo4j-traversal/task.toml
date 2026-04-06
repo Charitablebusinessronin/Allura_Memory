@@ -1,0 +1,19 @@
+[task]
+name = "neo4j-traversal"
+description = "Create Agent/Decision nodes with CONTRIBUTED and SUPERSEDES relationships, then traverse correctly"
+version = "1.0.0"
+domain = "memory-system"
+timeout_sec = 45
+max_turns = 15
+
+[scoring]
+method = "deterministic"
+pass_threshold = 0.75
+
+[environment]
+requires_neo4j = true
+group_id = "allura-test"
+
+[metadata]
+tags = ["neo4j", "graph", "supersedes", "contributed", "versioning"]
+invariants = ["SUPERSEDES not UPDATE", "group_id on every node", "no edit existing nodes"]

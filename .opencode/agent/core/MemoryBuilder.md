@@ -2,6 +2,7 @@
 name: MemoryBuilder
 description: "Persistence agent — writes all node types to Neo4j, manages Postgres run log"
 mode: subagent
+model: ollama/qwen3.5-coder:cloud
 group_id: allura-roninmemory
 memory_bootstrap: true
 temperature: 0.2

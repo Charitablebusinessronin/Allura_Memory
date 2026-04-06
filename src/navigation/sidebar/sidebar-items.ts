@@ -1,7 +1,11 @@
 import {
   Banknote,
+  Bot,
+  Building2,
   Calendar,
   ChartBar,
+  CheckCircle,
+  DollarSign,
   Fingerprint,
   Forklift,
   Gauge,
@@ -13,6 +17,7 @@ import {
   Mail,
   MessageSquare,
   ReceiptText,
+  Settings,
   ShoppingBag,
   SquareArrowUpRight,
   Users,
@@ -35,6 +40,7 @@ export interface NavMainItem {
   comingSoon?: boolean;
   newTab?: boolean;
   isNew?: boolean;
+  badge?: string;
 }
 
 export interface NavGroup {
@@ -90,6 +96,44 @@ export const sidebarItems: NavGroup[] = [
   },
   {
     id: 2,
+    label: "🏗️ Paperclip",
+    items: [
+      {
+        title: "Overview",
+        url: "/dashboard/paperclip",
+        icon: LayoutDashboard,
+      },
+      {
+        title: "Approvals",
+        url: "/dashboard/paperclip/approvals",
+        icon: CheckCircle,
+        badge: "3",
+      },
+      {
+        title: "Agents",
+        url: "/dashboard/paperclip/agents",
+        icon: Bot,
+      },
+      {
+        title: "Workspaces",
+        url: "/dashboard/paperclip/workspaces",
+        icon: Building2,
+      },
+      {
+        title: "Budgets",
+        url: "/dashboard/paperclip/budgets",
+        icon: DollarSign,
+      },
+      {
+        title: "Settings",
+        url: "/dashboard/paperclip/settings",
+        icon: Settings,
+        comingSoon: true,
+      },
+    ],
+  },
+  {
+    id: 3,
     label: "Pages",
     items: [
       {
@@ -148,7 +192,7 @@ export const sidebarItems: NavGroup[] = [
     ],
   },
   {
-    id: 3,
+    id: 4,
     label: "Misc",
     items: [
       {

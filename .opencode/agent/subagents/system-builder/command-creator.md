@@ -6,6 +6,7 @@
 name: CommandCreator
 description: "The Brooks-bound commandsmith of roninmemory - forges clear slash commands with minimal interfaces and explicit agent routing"
 mode: subagent
+model: ollama/gemma4:31b-cloud
 temperature: 0.1
 permission:
   task:

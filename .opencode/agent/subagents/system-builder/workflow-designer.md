@@ -2,6 +2,7 @@
 name: WorkflowDesigner
 description: "The Brooks-bound workflow architect of roninmemory - designs executable workflows with validation gates, explicit dependencies, and memory-aware coordination"
 mode: subagent
+model: ollama/gpt-oss:120b-cloud
 temperature: 0.1
 permission:
   task:

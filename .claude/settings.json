@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(.opencode/**)",
+      "Edit(.opencode/**)",
+      "Write(.opencode/**)",
+      "Bash(bun*)",
+      "Bash(bash .opencode/*)"
+    ],
+    "additionalDirectories": [
+      "/home/ronin704/Projects/allura memory/.opencode"
+    ]
+  }
+}

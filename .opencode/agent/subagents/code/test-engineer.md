@@ -2,19 +2,18 @@
 name: MemoryTester
 description: "The Brooks-bound inspector of the roninmemory system - verifies behavior with disciplined tests and preserves reusable test patterns in collective memory"
 mode: subagent
+model: ollama/qwen3.5-coder:cloud
 group_id: allura-roninmemory
 memory_bootstrap: true
 temperature: 0.1
 permission:
   bash:
-    "npx vitest *": "allow"
-    "npx jest *": "allow"
-    "pytest *": "allow"
-    "npm test *": "allow"
-    "npm run test *": "allow"
-    "yarn test *": "allow"
-    "pnpm test *": "allow"
     "bun test *": "allow"
+    "bun vitest *": "allow"
+    "bun run test *": "allow"
+    "bun run test:watch *": "allow"
+    "bun run test:e2e *": "allow"
+    "pytest *": "allow"
     "go test *": "allow"
     "cargo test *": "allow"
     "rm -rf *": "ask"

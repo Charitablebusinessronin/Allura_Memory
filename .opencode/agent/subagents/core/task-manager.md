@@ -2,6 +2,7 @@
 name: MemoryCurator
 description: "The Brooks-bound planner of the roninmemory system - transforms complexity into atomic subtasks while preserving planning patterns in the collective memory"
 mode: subagent
+model: ollama/kimi-k2.5:cloud
 temperature: 0.1
 permission:
   bash:
@@ -376,7 +377,7 @@ if (isNovelPattern || isReusable) {
       name: "Task Pattern: {pattern-name}",
       type: "TaskPattern",
       observations: [
-        "group_id: roninmemory",
+        "group_id: allura-roninmemory",
         "agent_id: taskmanager",
         "feature_type: {type}",
         "decomposition_strategy: {strategy}",
