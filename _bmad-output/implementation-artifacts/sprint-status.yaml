@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-04
-last_updated: 2026-04-05
+last_updated: 2026-04-06
 project: roninmemory
 project_key: NOKEY
 tracking_system: file-system
@@ -60,13 +60,23 @@ development_status:
   # Epic 1: Persistent Knowledge Capture and Tenant-Aware Memory
   # ─────────────────────────────────────────────
   epic-1: in-progress
-  1-1-record-raw-execution-traces: in-progress   # Now unblocked
-  1-2-implement-notion-sync-workflow: backlog
+  1-1-record-raw-execution-traces: done   # ✅ COMPLETE — Evidence & confidence columns added
+  #   - Migration: postgres-init/05-evidence-confidence.sql
+  #   - TraceLogger wired to kernel with evidence_ref support
+  1-2-implement-notion-sync-workflow: done   # ✅ COMPLETE — Sync workflow implemented
+  #   - src/workflows/notion-sync.ts with 12 passing tests
+  #   - getUnsyncedTraces(), runSyncWorkflow(), getSyncStatus()
   1-3-create-agent-knowledge-nodes: done
   1-4-implement-relationship-schemas: done
-  1-5-implement-contributed-relationship: backlog
-  1-6-implement-learned-relationship: backlog
-  1-7-create-memory-typescript-wrapper: backlog
+  1-5-implement-contributed-relationship: done   # ✅ COMPLETE — CONTRIBUTED tracking
+  #   - src/lib/memory/relationships/contributed.ts
+  #   - recordContribution(), getAgentContributions(), getAgentContributionStats()
+  1-6-implement-learned-relationship: done   # ✅ COMPLETE — LEARNED tracking
+  #   - src/lib/memory/relationships/learned.ts
+  #   - recordLearning(), getAgentLearnings(), getHighRelevanceLearnings()
+  1-7-create-memory-typescript-wrapper: done   # ✅ COMPLETE — Interface renamed & auto group_id
+  #   - write() → createEntity(), relate() → createRelationship(), read() → query()
+  #   - Added search(), auto group_id injection, backward compatibility exports
   epic-1-retrospective: optional
 
   # ─────────────────────────────────────────────
