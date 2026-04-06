@@ -112,7 +112,7 @@ async function executeTool(
 // Request handler
 async function handleRequest(req: Request): Promise<Response> {
   const url = parse(req.url || "/", true);
-  const path = url.pathname;
+  const path = url.pathname ?? "/";
 
   // CORS preflight
   if (req.method === "OPTIONS") {

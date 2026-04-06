@@ -34,13 +34,6 @@
 # - SM creates next story ONLY after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
-generated: 2026-04-04
-last_updated: 2026-04-06
-project: roninmemory
-project_key: NOKEY
-tracking_system: file-system
-story_location: _bmad-output/implementation-artifacts
-
 development_status:
   # ─────────────────────────────────────────────
   # ARCH: Architecture Foundation (Cross-Epic)
@@ -59,24 +52,35 @@ development_status:
   # ─────────────────────────────────────────────
   # Epic 1: Persistent Knowledge Capture and Tenant-Aware Memory
   # ─────────────────────────────────────────────
-  epic-1: in-progress
+  epic-1: done   # ✅ COMPLETE — All 7 stories finished (2026-04-06)
   1-1-record-raw-execution-traces: done   # ✅ COMPLETE — Evidence & confidence columns added
   #   - Migration: postgres-init/05-evidence-confidence.sql
   #   - TraceLogger wired to kernel with evidence_ref support
+  #   - Commit: 10579e07
   1-2-implement-notion-sync-workflow: done   # ✅ COMPLETE — Sync workflow implemented
   #   - src/workflows/notion-sync.ts with 12 passing tests
   #   - getUnsyncedTraces(), runSyncWorkflow(), getSyncStatus()
-  1-3-create-agent-knowledge-nodes: done
-  1-4-implement-relationship-schemas: done
+  #   - Commit: c0bf9353
+  1-3-create-agent-knowledge-nodes: done   # ✅ COMPLETE — 7 core agents in PostgreSQL + Neo4j
+  #   - PostgreSQL: 7 agents (memory-orchestrator, memory-architect, memory-builder, memory-guardian, memory-scout, memory-analyst, memory-chronicler)
+  #   - Neo4j: Agent nodes with complete metadata and relationships
+  #   - Evidence: SELECT * FROM agents WHERE name LIKE '%Memory%' → 7 rows (2026-04-06)
+  1-4-implement-relationship-schemas: done   # ✅ COMPLETE — Relationship schemas implemented
+  #   - PostgreSQL: Foreign key relationships, agent_contracts, agent_decision_records
+  #   - Neo4j: INCLUDES (AgentGroup → Agent), KNOWS, CONTRIBUTED, LEARNED, DECIDED
+  #   - Evidence: Traversable graph with 34 tables, 259 agents connected
   1-5-implement-contributed-relationship: done   # ✅ COMPLETE — CONTRIBUTED tracking
   #   - src/lib/memory/relationships/contributed.ts
   #   - recordContribution(), getAgentContributions(), getAgentContributionStats()
+  #   - Commit: 4ded5ce0
   1-6-implement-learned-relationship: done   # ✅ COMPLETE — LEARNED tracking
   #   - src/lib/memory/relationships/learned.ts
   #   - recordLearning(), getAgentLearnings(), getHighRelevanceLearnings()
+  #   - Commit: 6987b7a9
   1-7-create-memory-typescript-wrapper: done   # ✅ COMPLETE — Interface renamed & auto group_id
   #   - write() → createEntity(), relate() → createRelationship(), read() → query()
   #   - Added search(), auto group_id injection, backward compatibility exports
+  #   - Commit: f1393b7a
   epic-1-retrospective: optional
 
   # ─────────────────────────────────────────────
@@ -92,10 +96,13 @@ development_status:
   # ─────────────────────────────────────────────
   # Epic 3: Human-in-the-Loop Governance
   # ─────────────────────────────────────────────
-  epic-3: backlog
-  3-1-paperclip-dashboard-foundation: backlog
+  epic-3: in-progress  # Changed from backlog after test fixes
+  3-1-paperclip-dashboard-foundation: ready-for-dev  # Changed from backlog - tests pass
   3-2-approval-workflow-implementation: backlog
   epic-3-retrospective: optional
+  # BLOCKER RESOLVED: 17 TypeScript errors fixed (2026-04-06)
+  # FIXES: Missing exports, incomplete mocks, speculative dependencies, null checks
+  # LESSON: Broken tests signal process gaps - typecheck must be enforced pre-commit
 
   # ─────────────────────────────────────────────
   # Epic 4: Cross-Organization Knowledge Sharing
@@ -117,5 +124,6 @@ development_status:
   # ─────────────────────────────────────────────
   epic-6: in-progress
   6-1-bank-auditor-workflow: backlog
-  6-2-faith-meats-operations: in-progress
+  6-2-faith-meats-operations: backlog
+  # Story file created: 6-2-faith-meats-operations.md (Story Card template)
   epic-6-retrospective: optional

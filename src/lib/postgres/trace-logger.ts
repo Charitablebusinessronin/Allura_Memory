@@ -412,3 +412,113 @@ export async function countTraces(group_id: string): Promise<number> {
   return parseInt(result.rows[0].count, 10);
 }
 
+/**
+ * Query traces with flexible filters
+ * 
+ * Supports filtering by agent, trace type, workflow, and time range.
+ * Returns paginated results with total count.
+ * 
+ * @param options - Query options including required group_id
+ * @returns Paginated trace results with total count
+ */
+export async function queryTraces(options: QueryTracesOptions): Promise<QueryTracesResult> {
+  const {
+    group_id,
+    agent_id,
+    trace_type,
+    workflow_id,
+    startTime,
+    endTime,
+    limit = 100,
+    offset = 0,
+  } = options;
+
+  // Enforce group_id
+  if (!group_id || group_id.trim().length === 0) {
+    throw new TraceValidationError("group_id is required for all trace queries");
+  }
+
+  const pool = getPool();
+
+  // Build WHERE clause conditions
+  const conditions: string[] = ["group_id = $1"];
+  const values: (string | number | Date)[] = [group_id];
+  let paramIndex = 2;
+
+  if (agent_id) {
+    conditions.push(`agent_id = $${paramIndex}`);
+    values.push(agent_id);
+    paramIndex++;
+  }
+
+  if (trace_type) {
+    conditions.push(`event_type = $${paramIndex}`);
+    values.push(`trace.${trace_type}`);
+    paramIndex++;
+  }
+
+  if (workflow_id) {
+    conditions.push(`workflow_id = $${paramIndex}`);
+    values.push(workflow_id);
+    paramIndex++;
+  }
+
+  if (startTime) {
+    conditions.push(`created_at >= $${paramIndex}`);
+    values.push(startTime);
+    paramIndex++;
+  }
+
+  if (endTime) {
+    conditions.push(`created_at <= $${paramIndex}`);
+    values.push(endTime);
+    paramIndex++;
+  }
+
+  // Count query (ignores limit/offset)
+  const countValues = [...values];
+  const countResult = await pool.query<{ count: string }>(
+    `
+    SELECT COUNT(*)::text as count
+    FROM events
+    WHERE ${conditions.join(' AND ')}
+    `,
+    countValues
+  );
+  const total = parseInt(countResult.rows[0].count, 10);
+
+  // Data query with pagination
+  values.push(limit);
+  values.push(offset);
+
+  const result = await pool.query<TraceRecord>(
+    `
+    SELECT
+      id,
+      group_id,
+      event_type,
+      agent_id,
+      workflow_id,
+      step_id,
+      parent_event_id,
+      metadata,
+      outcome,
+      status,
+      created_at,
+      inserted_at
+    FROM events
+    WHERE ${conditions.join(' AND ')}
+    ORDER BY created_at DESC
+    LIMIT $${paramIndex}
+    OFFSET $${paramIndex + 1}
+    `,
+    values
+  );
+
+  return {
+    traces: result.rows,
+    total,
+    hasMore: offset + limit < total,
+  };
+}
+

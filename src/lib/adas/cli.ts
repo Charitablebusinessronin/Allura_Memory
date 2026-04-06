@@ -253,7 +253,7 @@ async function main(): Promise<void> {
         results.push({
           designId: design.design_id,
           name: design.name,
-          metrics: { accuracy: 0, cost: 0, latencyMs: 0, compositeScore: 0 },
+          metrics: { accuracy: 0, cost: 0, latency: 0, composite: 0 },
         });
       }
     }

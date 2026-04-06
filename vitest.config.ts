@@ -15,8 +15,19 @@ export default defineConfig({
     passWithNoTests: true,
   },
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
+    alias: [
+      {
+        find: "@",
+        replacement: path.resolve(__dirname, "./src"),
+      },
+      {
+        find: "@mcp-docker/playwright",
+        replacement: path.resolve(__dirname, "./tests/mcp/browser/__mocks__/@mcp-docker/playwright.ts"),
+      },
+      {
+        find: "@mcp-docker/next-devtools",
+        replacement: path.resolve(__dirname, "./tests/mcp/integration/__mocks__/@mcp-docker/next-devtools.ts"),
+      },
+    ],
   },
 });

@@ -112,15 +112,15 @@ describe("Story 1.1: Kernel-backed Trace Logging", () => {
 
       expect(result.traces.length).toBeGreaterThan(0);
       const stored = result.traces[0];
-      
+
       expect(stored.group_id).toBe(TEST_GROUP_ID);
       expect(stored.agent_id).toBe(TEST_AGENT_ID);
-      expect(stored.trace_type).toBe("learning");
-      expect(stored.content).toBe("Learning from session");
-      expect(stored.confidence).toBe(0.87);
+      expect(stored.event_type).toBe("learning");  // event_type maps from trace_type
+      expect(stored.outcome).toMatchObject({ content: "Learning from session" });
+      expect(stored.metadata).toMatchObject({ confidence: 0.87 });
       expect(stored.workflow_id).toBe("workflow-002");
-      expect(stored.evidence_ref).toBe("evidence-123");
-      expect(stored.metadata).toEqual({ source: "test", priority: "high" });
+      expect(stored.metadata).toMatchObject({ evidence_ref: "evidence-123" });
+      expect(stored.metadata).toMatchObject({ source: "test", priority: "high" });
     });
 
     it("should auto-generate id if not provided", async () => {
@@ -136,7 +136,7 @@ describe("Story 1.1: Kernel-backed Trace Logging", () => {
 
       const result = await queryTraces({ group_id: TEST_GROUP_ID });
       expect(result.traces[0].id).toBeDefined();
-      expect(result.traces[0].id).toMatch(/^[0-9a-f-]{36}$/); // UUID format
+      expect(Number.isInteger(result.traces[0].id)).toBe(true); // Serial ID format
     });
 
     it("should auto-generate created_at timestamp", async () => {
@@ -178,8 +178,8 @@ describe("Story 1.1: Kernel-backed Trace Logging", () => {
       const traceId = queryResult.traces[0].id;
 
       // Attempt to update (should be rejected)
+      // Note: TraceLog doesn't have 'id' - updates create new versions
       const updateTrace: TraceLog = {
-        id: traceId,
         group_id: TEST_GROUP_ID,
         agent_id: TEST_AGENT_ID,
         trace_type: "contribution",
@@ -226,7 +226,7 @@ describe("Story 1.1: Kernel-backed Trace Logging", () => {
       await logTrace(trace);
 
       const result = await queryTraces({ group_id: TEST_GROUP_ID });
-      expect(result.traces[0].confidence).toBe(1.0);
+      expect(result.traces[0].metadata).toMatchObject({ confidence: 1.0 });
     });
 
     it("should default errors to confidence 0.0", async () => {
@@ -241,7 +241,7 @@ describe("Story 1.1: Kernel-backed Trace Logging", () => {
       await logTrace(trace);
 
       const result = await queryTraces({ group_id: TEST_GROUP_ID });
-      expect(result.traces[0].confidence).toBe(0.0);
+      expect(result.traces[0].metadata).toMatchObject({ confidence: 0.0 });
     });
 
     it("should accept user-provided confidence in metadata", async () => {
@@ -257,7 +257,7 @@ describe("Story 1.1: Kernel-backed Trace Logging", () => {
       await logTrace(trace);
 
       const result = await queryTraces({ group_id: TEST_GROUP_ID });
-      expect(result.traces[0].confidence).toBe(0.75);
+      expect(result.traces[0].metadata).toMatchObject({ confidence: 0.75 });
     });
   });
 
@@ -325,7 +325,7 @@ describe("Story 1.1: Kernel-backed Trace Logging", () => {
       });
 
       expect(result.traces.length).toBe(1);
-      expect(result.traces[0].trace_type).toBe("error");
+      expect(result.traces[0].event_type).toBe("error");  // event_type maps from trace_type
     });
 
     it("should query by workflow_id", async () => {

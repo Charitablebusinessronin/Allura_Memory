@@ -6,6 +6,9 @@
 
 import type { TraceType } from "./trace-logger";
 
+// Re-export TraceLog from trace-logger for convenience
+export type { TraceLog } from "./trace-logger";
+
 /**
  * Options for querying traces
  * 

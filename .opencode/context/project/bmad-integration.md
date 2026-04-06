@@ -23,17 +23,25 @@ Do not invent alternate skill names. Use the exact registered `bmad-*`, `wds-*`,
 
 ## Canonical OpenCode Agent Names (7 Agents)
 
-### Primary Agents (OpenCode CLI Only)
+### Primary Agents (OpenCode CLI Only) - The Surgical Team
 
-| Name | Path | Role |
-|------|------|------|
-| `MemoryOrchestrator` | `.opencode/agent/MemoryOrchestrator.md` | Brooks-bound primary orchestrator |
-| `MemoryArchitect` | `.opencode/agent/MemoryArchitect.md` | System design lead |
-| `MemoryBuilder` | `.opencode/agent/MemoryBuilder.md` | Infrastructure implementation |
-| `MemoryAnalyst` | `.opencode/agent/MemoryAnalyst.md` | Memory system metrics |
-| `MemoryCopywriter` | `.opencode/agent/MemoryCopywriter.md` | Agent prompt writing |
-| `MemoryRepoManager` | `.opencode/agent/MemoryRepoManager.md` | Git operations |
-| `MemoryScribe` | `.opencode/agent/MemoryScribe.md` | Documentation/specs |
+| Name | Path | Role | Status |
+|------|------|------|--------|
+| `MemoryOrchestrator` | `.opencode/agent/core/openagent.md` | Brooks-bound chief surgeon | ✅ Active |
+| `MemoryArchitect` | `.opencode/agent/core/MemoryArchitect.md` | First Assistant - Design | ✅ Active |
+| `MemoryBuilder` | `.opencode/agent/core/MemoryBuilder.md` | Builder - Implementation | ✅ Active |
+| `MemoryGuardian` | `.opencode/agent/subagents/code/reviewer.md` | Inspector - Validation | ✅ Active |
+| `MemoryScout` | `.opencode/agent/subagents/core/contextscout.md` | Scout - Discovery | ✅ Active |
+| `MemoryAnalyst` | `.opencode/agent/core/MemoryAnalyst.md` | Analyst - Metrics | ✅ Active |
+| `MemoryChronicler` | `.opencode/agent/subagents/core/documentation.md` | Chronicler - Documentation | ✅ Active |
+
+### Archived Agents (Inactive)
+
+| Name | Path | Reason |
+|------|------|--------|
+| `MemoryCopywriter` | `.opencode/agent/archive/MemoryCopywriter.md` | Consolidated into MemoryChronicler |
+| `MemoryRepoManager` | `.opencode/agent/archive/MemoryRepoManager.md` | Git handled by MemoryBuilder |
+| `MemoryScribe` | `.opencode/agent/archive/MemoryScribe.md` | Consolidated into MemoryChronicler |
 
 **Note**: These are Winston's hands - how YOU work in OpenCode CLI.
 
@@ -52,10 +60,10 @@ These are digital employees that work FOR clients/orgs:
 - `MemoryOrchestrator` → Winston (primary)
 - `MemoryArchitect` → Winston (design)
 - `MemoryBuilder` → Amelia (implementation)
-- `MemoryAnalyst` → Quinn (validation)
-- `MemoryCopywriter` → Paige (writing)
-- `MemoryRepoManager` → Winston (coordination)
-- `MemoryScribe` → Paige (documentation)
+- `MemoryGuardian` → Quinn (validation)
+- `MemoryScout` → Discovery (exempt from approval)
+- `MemoryAnalyst` → Metrics (read-only)
+- `MemoryChronicler` → Paige (documentation)
 
 ## Practical Rules
 

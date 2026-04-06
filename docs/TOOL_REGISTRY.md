@@ -1,4 +1,16 @@
 # Allura Brain Tool Registry
+
+> [!NOTE]
+> **AI-Assisted Documentation**
+> Portions of this document were drafted with the assistance of an AI language model.
+> Content has not yet been fully reviewed — this is a working design reference, not a final specification.
+> When in doubt, defer to the source code, JSON schemas, and team consensus.
+
+> **Document Type:** Reference Guide  
+> **Status:** Active — Maintained  
+> **Last Updated:** 2026-04-06  
+> **Owner:** MemoryOrchestrator  
+
 ## Quick Reference for MCP Tools
 
 ### Database Tools (database-server)
