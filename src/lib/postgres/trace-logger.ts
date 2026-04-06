@@ -46,6 +46,8 @@ export interface TraceLog {
   metadata?: Record<string, unknown>;
   /** Optional: Outcome payload */
   outcome?: Record<string, unknown>;
+  /** Optional: Evidence reference (file path, URL, document ID) */
+  evidence_ref?: string;
 }
 
 /**
@@ -62,6 +64,8 @@ export interface TraceRecord {
   metadata: Record<string, unknown>;
   outcome: Record<string, unknown>;
   status: string;
+  confidence: number | null;
+  evidence_ref: string | null;
   created_at: Date;
   inserted_at: Date;
 }
@@ -149,6 +153,7 @@ export async function logTrace(trace: TraceLog): Promise<TraceRecord> {
       trace_type: trace.trace_type,
       content: trace.content,
       confidence: trace.confidence,
+      evidence_ref: trace.evidence_ref,
       workflow_id: trace.workflow_id,
       step_id: trace.step_id,
       parent_event_id: trace.parent_event_id,
@@ -201,6 +206,8 @@ export async function logTrace(trace: TraceLog): Promise<TraceRecord> {
     metadata,
     outcome,
     status: "completed",
+    confidence: trace.confidence,
+    evidence_ref: trace.evidence_ref,
   };
 
   // Insert into PostgreSQL
@@ -218,6 +225,8 @@ export async function logTrace(trace: TraceLog): Promise<TraceRecord> {
     metadata: eventRecord.metadata,
     outcome: eventRecord.outcome,
     status: eventRecord.status,
+    confidence: eventRecord.confidence,
+    evidence_ref: eventRecord.evidence_ref,
     created_at: eventRecord.created_at,
     inserted_at: eventRecord.inserted_at,
   };

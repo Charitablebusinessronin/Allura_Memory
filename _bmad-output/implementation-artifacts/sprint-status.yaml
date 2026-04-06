@@ -105,7 +105,7 @@ development_status:
   # ─────────────────────────────────────────────
   # Epic 6: Production Workflows
   # ─────────────────────────────────────────────
-  epic-6: backlog
+  epic-6: in-progress
   6-1-bank-auditor-workflow: backlog
-  6-2-faith-meats-operations: backlog
+  6-2-faith-meats-operations: in-progress
   epic-6-retrospective: optional

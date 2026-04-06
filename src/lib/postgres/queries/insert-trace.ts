@@ -33,6 +33,10 @@ export interface EventInsert {
   error_message?: string;
   /** Optional: Error code (for failed events) */
   error_code?: string;
+  /** Optional: Confidence score (0.0 to 1.0) for knowledge promotion */
+  confidence?: number;
+  /** Optional: Evidence reference (file path, URL, document ID) */
+  evidence_ref?: string;
 }
 
 /**
@@ -53,6 +57,8 @@ export interface EventRecord {
   error_message: string | null;
   error_code: string | null;
   inserted_at: Date;
+  confidence: number | null;
+  evidence_ref: string | null;
 }
 
 /**
@@ -167,8 +173,10 @@ export async function insertEvent(event: EventInsert): Promise<EventRecord> {
       outcome,
       status,
       error_message,
-      error_code
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      error_code,
+      confidence,
+      evidence_ref
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
     RETURNING *
   `;
 
@@ -184,6 +192,8 @@ export async function insertEvent(event: EventInsert): Promise<EventRecord> {
     event.status ?? "pending",
     event.error_message ?? null,
     event.error_code ?? null,
+    event.confidence ?? null,
+    event.evidence_ref ?? null,
   ];
 
   const result = await pool.query<EventRecord>(query, values);
