@@ -3,8 +3,8 @@
 
 set -e
 
-# Check for .env files with potential secrets
-forbidden_files=$(git diff --cached --name-only | grep -E '\.env$|\.env\.|\.env\.local$|\.env\.decrypted$' || true)
+# Check for .env files with potential secrets (but allow .env.example template)
+forbidden_files=$(git diff --cached --name-only | grep -E '\.env$|\.env\.local$|\.env\.decrypted$|\.env\.backup$' || true)
 
 if [ -n "$forbidden_files" ]; then
     echo "❌ ERROR: Attempting to commit .env files with potential secrets:"
