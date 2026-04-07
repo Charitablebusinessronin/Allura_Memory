@@ -1,15 +1,15 @@
 # Paperclip Dashboard Service
-# Standalone HITL governance interface
-
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Install dependencies
+# Copy package files
 COPY package*.json ./
+
+# Install dependencies
 RUN npm install
 
-# Copy Paperclip source
+# Copy source code
 COPY . .
 
 # Build the application
@@ -18,5 +18,5 @@ RUN npm run build
 # Expose port
 EXPOSE 3000
 
-# Start Paperclip
+# Start the application
 CMD ["npm", "start"]
