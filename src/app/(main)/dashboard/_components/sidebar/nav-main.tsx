@@ -157,7 +157,10 @@ export function NavMain({ items }: NavMainProps) {
   };
 
   return (
-    <>
+    // suppressHydrationWarning: Radix Tooltip generates aria-describedby IDs only client-side
+    // (tooltip content rendered via portal), causing server/client attribute mismatch.
+    // The mismatch is cosmetic — layout and interaction are unaffected.
+    <div suppressHydrationWarning>
       <SidebarGroup>
         <SidebarGroupContent className="flex flex-col gap-2">
           <SidebarMenu>
@@ -218,6 +221,6 @@ export function NavMain({ items }: NavMainProps) {
           </SidebarGroupContent>
         </SidebarGroup>
       ))}
-    </>
+    </div>
   );
 }

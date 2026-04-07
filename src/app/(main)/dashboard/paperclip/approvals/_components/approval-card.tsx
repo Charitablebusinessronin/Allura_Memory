@@ -8,7 +8,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CheckCircle, XCircle, Clock } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,20 @@ export function ApprovalCard({ approval, onApprove, onReject }: ApprovalCardProp
   const [isRejecting, setIsRejecting] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [relativeTime, setRelativeTime] = useState<string | null>(null);
+
+  useEffect(() => {
+    const calc = () => {
+      const diff = Math.floor((Date.now() - new Date(approval.created_at).getTime()) / 1000);
+      if (diff < 60) return 'just now';
+      const m = Math.floor(diff / 60);
+      if (m < 60) return `${m}m ago`;
+      const h = Math.floor(m / 60);
+      if (h < 24) return `${h}h ago`;
+      return `${Math.floor(h / 24)}d ago`;
+    };
+    setRelativeTime(calc());
+  }, [approval.created_at]);
 
   const handleApprove = async () => {
     if (!onApprove) return;
@@ -74,22 +88,11 @@ export function ApprovalCard({ approval, onApprove, onReject }: ApprovalCardProp
     }
   };
 
-  const confidenceColor = approval.confidence_score >= 0.9 
-    ? 'text-green-600' 
-    : approval.confidence_score >= 0.8 
-    ? 'text-yellow-600' 
+  const confidenceColor = approval.confidence_score >= 0.9
+    ? 'text-green-600'
+    : approval.confidence_score >= 0.8
+    ? 'text-yellow-600'
     : 'text-red-600';
-
-  const timeAgo = (date: Date) => {
-    const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
-    if (seconds < 60) return 'just now';
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    return `${days}d ago`;
-  };
 
   return (
     <Card className="border-l-4 border-l-yellow-500">
@@ -100,7 +103,7 @@ export function ApprovalCard({ approval, onApprove, onReject }: ApprovalCardProp
               Agent Promotion: {approval.agent_name}
             </CardTitle>
             <CardDescription>
-              Requested {timeAgo(approval.created_at)}
+              Requested {relativeTime ?? new Date(approval.created_at).toLocaleDateString()}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
