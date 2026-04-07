@@ -190,11 +190,11 @@ export const MODEL_CONFIGS: ModelConfig[] = [
   // Stable tier — proven performers for baseline comparisons
   {
     provider: "ollama",
-    modelId: "qwen3-coder-480b-a35b-instruct:cloud",
+    modelId: "qwen3.5:397b-cloud",
     temperature: 0.7,
     maxTokens: 8192,
     tier: "stable",
-    description: "SOTA Code generation (480B, FP8)",
+    description: "SOTA general reasoning (397B)",
     supportsTools: false,
   },
   {
