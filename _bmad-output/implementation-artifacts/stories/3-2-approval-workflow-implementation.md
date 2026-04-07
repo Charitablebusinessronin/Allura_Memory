@@ -1,6 +1,13 @@
 # Story 3.2: Approval Workflow Implementation
 
-Status: done
+Status: backlog  # ⏸️ UNINSTALLED — Implementation removed from codebase
+
+## ⚠️ Decision Log
+
+**Date:** 2026-04-06  
+**Decision:** Uninstalled all Paperclip-related code including approval workflows  
+**Reason:** Part of complete Paperclip removal due to persistent UI failures  
+**Note:** Core promotion workflow logic (`src/lib/promotions/`) remains in codebase and is functional.
 
 ## Story
 

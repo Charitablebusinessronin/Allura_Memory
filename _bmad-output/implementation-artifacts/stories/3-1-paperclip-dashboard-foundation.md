@@ -1,6 +1,15 @@
 # Story 3.1: Paperclip Dashboard Foundation
 
-Status: review
+Status: backlog  # ⏸️ UNINSTALLED — Code removed from src/app/(main)/dashboard/paperclip/ (2026-04-06)
+
+## ⚠️ Decision Log
+
+**Date:** 2026-04-06  
+**Decision:** Uninstalled Paperclip dashboard and all associated code  
+**Reason:** Persistent hydration errors, black screen on load, client-side crashes in Recharts components  
+**Action:** Removed entire `/paperclip` directory from codebase. Will restart with minimal, solid foundation approach.
+
+---
 
 ## Story
 
