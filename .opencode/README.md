@@ -1,98 +1,37 @@
 <div align="center">
 
-# RoninMemory OpenCode Runtime
+![OpenAgents Control Hero](docs/images/hero-image.png)
 
-### Brooks-governed orchestration, memory-aware execution, and BMad workflow routing
+# OpenAgents Control (OAC)
+
+### Control your AI patterns. Get repeatable results.
+
+**AI agents that learn YOUR coding patterns and generate matching code every time.**
+
+🎯 **Pattern Control** - Define your patterns once, AI uses them forever  
+✋ **Approval Gates** - Review and approve before execution  
+🔁 **Repeatable Results** - Same patterns = Same quality code  
+📝 **Editable Agents** - Full control over AI behavior  
+👥 **Team-Ready** - Everyone uses the same patterns
+
+**Multi-language:** TypeScript • Python • Go • Rust  • C# • Any language*  
+**Model Agnostic:** Claude • GPT • Gemini • MiniMax • Local models
+
+
+[![GitHub stars](https://img.shields.io/github/stars/darrenhinde/OpenAgentsControl?style=flat-square&logo=github&labelColor=black&color=ffcb47)](https://github.com/darrenhinde/OpenAgentsControl/stargazers)
+[![X Follow](https://img.shields.io/twitter/follow/DarrenBuildsAI?style=flat-square&logo=x&labelColor=black&color=1DA1F2)](https://x.com/DarrenBuildsAI)
+[![License: MIT](https://img.shields.io/badge/License-MIT-3fb950?style=flat-square&labelColor=black)](https://opensource.org/licenses/MIT)
+[![Last Commit](https://img.shields.io/github/last-commit/darrenhinde/OpenAgentsControl?style=flat-square&labelColor=black&color=8957e5)](https://github.com/darrenhinde/OpenAgentsControl/commits/main)
+
+[🚀 Quick Start](#-quick-start) • [💻 Show Me Code](#-example-workflow) • [🗺️ Roadmap](https://github.com/darrenhinde/OpenAgentsControl/projects) • [💬 Community](https://nextsystems.ai)
 
 </div>
 
 ---
 
-This `.opencode` directory is the runtime control plane for the roninmemory workspace.
-
-It combines four ideas into one governed system:
-
-1. **Brooks-bound orchestration** via `memory-orchestrator`
-2. **Subagent execution** via `memory-*` specialists
-3. **BMad workflow routing** via `.opencode/skills` and `_bmad/_config`
-4. **Institutional memory** via PostgreSQL audit events and Neo4j insight graphs
-
-## Operating Model
-
-### 1. Orchestrator
-
-- Primary runtime id: `memory-orchestrator`
-- Bound persona: **Frederick P. Brooks Jr.**
-- Responsibility: planning, governance, conceptual integrity, memory hydration, and coordination
-
-### 2. Execution Layer
-
-- `memory-scout`
-- `memory-archivist`
-- `memory-curator`
-- `memory-chronicler`
-- `memory-builder`
-- `memory-tester`
-- `memory-guardian`
-- `memory-validator`
-- `memory-organizer`
-- `memory-interface`
-- `memory-infrastructure`
-
-Subagents remain the default execution model. The orchestrator governs; subagents do the work.
-
-### 3. Party Mode
-
-- Skill: `bmad-party-mode`
-- Purpose: optional multi-agent discussion when multiple viewpoints are useful
-- Constraint: party mode is additive; it does **not** replace subagent delegation
-
-### 4. Memory System
-
-- **PostgreSQL** = append-only operational events and audit evidence
-- **Neo4j** = reusable semantic memory, decisions, patterns, lineage
-- **Policy** = no claim of persistence without successful write + readback evidence
-
-## Tenant Boundary Policy
-
-- `organization_id` = business boundary
-- `group_id` = memory partition boundary
-- `global-coding-skills` = governed global pattern partition
-
-All orchestration, execution, and memory writes should be scoped by both keys unless explicitly promoted into a governed global partition.
-
-## Source Of Truth
-
-- Runtime metadata: `.opencode/config/agent-metadata.json`
-- Memory policy: `.opencode/config/memory-contract.md`
-- BMad/OpenCode integration: `_bmad/_config/ides/opencode.yaml`
-- BMad manifests: `_bmad/_config/agent-manifest.csv`, `_bmad/_config/skill-manifest.csv`, `_bmad/_config/bmad-help.csv`
-- Catalog mirror: Notion `Agents` / `Frameworks`
-
-## Quick Start
-
-```bash
-opencode --agent memory-orchestrator
-```
-
-Example prompts:
-
-- `Plan the bank-auditor workflow with full audit requirements`
-- `Use party mode to compare CRM assistant governance options`
-- `Delegate implementation to subagents after the plan is approved`
-
-## What This Runtime Is For
-
-- Multi-organization governed workflows
-- Audit-friendly execution and replayability
-- Memory-aware planning and development
-- BMad method, WDS, and TEA routing from one OpenCode runtime
+> **Built on [OpenCode](https://opencode.ai)** - An open-source AI coding framework. OAC extends OpenCode with specialized agents, context management, and team workflows.
 
 ---
-
-## Legacy Reference Material
-
-The remainder of this README preserves earlier OpenAgents Control reference material for historical context while the runtime is being realigned around roninmemory.
 
 ## The Problem
 
