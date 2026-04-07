@@ -1,0 +1,25 @@
+{
+  "name": "paperclip-dashboard",
+  "version": "1.0.0",
+  "description": "HITL Governance Dashboard for Allura Agent-OS",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000"
+  },
+  "dependencies": {
+    "next": "^16.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "pg": "^8.11.0",
+    "neo4j-driver": "^5.15.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^19.0.0",
+    "typescript": "^5.9.0"
+  }
+}
