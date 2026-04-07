@@ -52,7 +52,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         {/* Applies theme and layout preferences on load to avoid flicker and unnecessary server rerenders. */}
         <ThemeBootScript />
       </head>
-      <body className={`${fontVars} min-h-screen antialiased`}>
+      {/* suppressHydrationWarning: browser extensions inject attributes (e.g. data-gptw) onto body before React hydrates */}
+      <body className={`${fontVars} min-h-screen antialiased`} suppressHydrationWarning>
         <TooltipProvider>
           <PreferencesStoreProvider
             themeMode={theme_mode}
