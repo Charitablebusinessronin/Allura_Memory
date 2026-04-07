@@ -89,7 +89,14 @@ The hard isolation boundary. Every read and write MUST include a valid `group_id
 | B5 | The system is deployable via a single `docker compose up` command |
 | B6 | Agents connect via MCP (Model Context Protocol) |
 | B7 | Operators choose between human-gated (SOC2) and auto-promotion modes |
-| B8 | The memory viewer UI shows, searches, and deletes memories |
+| B8 | Consumer memory viewer: no sidebar, search dominant, swipe to forget |
+| B9 | Every memory shows provenance: "from conversation" or "added manually" |
+| B10 | Memory usage indicator: "used N times this week" on expand |
+| B11 | Undo: recently forgotten memories recoverable within 30 days |
+| B12 | Enterprise admin view: tenant overview, SOC2 pending queue, audit log |
+| B13 | Audit log exportable as CSV for compliance |
+| B14 | TypeScript SDK (`@allura/sdk`) |
+| B15 | BYOK encryption |
 
 ---
 
