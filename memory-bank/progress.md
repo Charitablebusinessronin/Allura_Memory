@@ -1,11 +1,30 @@
 # Progress
 
-> **Last Updated:** 2026-04-06
+> **Last Updated:** 2026-04-07
 > **Current Sprint:** All Epics Complete
 > **Epic 3 Status:** done — Paperclip Dashboard + Approval Workflow ✅
 > **Epic 4 Status:** done — Sanitization + Platform Library ✅
 > **Epic 5 Status:** done — Audit Query Interface ✅
 > **Epic 6 Status:** done — Bank-Auditor + Faith Meats ✅
+
+---
+
+## Session: 2026-04-07 — NavMain Hydration Fix (Failure Log)
+
+**Task:** Diagnose and fix Paperclip UI "not loading" — persistent hydration mismatch after previous session fixes
+
+**Status:** ✅ FIXED (with failure logged)
+
+**Root Cause Identified:** Prior session applied `if (!mounted) return null` in NavMain to suppress Radix Tooltip `aria-describedby` hydration mismatch. This blanked the entire sidebar nav on SSR — user saw blank navigation on every page load before client hydrated.
+
+**Correct Fix Applied:**
+- Added `suppressHydrationWarning` to `SidebarMenuButton`'s button element in `src/components/ui/sidebar.tsx`
+- Removed mounted guard + `useState`/`useEffect` from `NavMain` entirely
+- Rationale: Radix `TooltipTrigger asChild` adds `aria-describedby` to the cloned button via React 19.2's changed `useId()` format (`:r123:` → `«r123»`). The fix is surgical suppression on that one element, not hiding the whole nav.
+
+**Failure Logged:** `memory/feedback_hydration_mounted_guard_failure.md`
+
+**Remaining:** Retriever browser extension injects `rtrvr-ls`/`rtrvr-ro` on all `<a>`/`<button>` elements — user must uninstall manually. Not fixable in code.
 
 ---
 

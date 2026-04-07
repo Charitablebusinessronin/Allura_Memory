@@ -1,8 +1,8 @@
 # Active Context
 
-> **Last Updated:** 2026-04-06
-> **Status:** Ralph Loop Complete — All Stories Done
-> **Current Focus:** Post-completion review and next steps
+> **Last Updated:** 2026-04-07
+> **Status:** UI hydration fixed — sidebar renders correctly on SSR
+> **Current Focus:** Retriever extension removal (user action required)
 
 ---
 
@@ -102,9 +102,9 @@ All 7 stories across Epics 3-6 have been successfully completed:
 
 ---
 
-## Blockers: None
+## Blockers
 
-All stories complete. No remaining blockers.
+**Retriever browser extension** — injects `rtrvr-ls`/`rtrvr-ro` onto every `<a>`/`<button>` before React hydrates. Produces console hydration warnings. Not fixable in code. User action: disable/uninstall extension at `chrome://extensions`.
 
 ---
 
