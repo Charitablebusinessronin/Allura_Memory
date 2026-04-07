@@ -1,11 +1,41 @@
 # Progress
 
 > **Last Updated:** 2026-04-07
-> **Current Sprint:** All Epics Complete
+> **Current Sprint:** Sovereign Memory MVP
 > **Epic 3 Status:** done — Paperclip Dashboard + Approval Workflow ✅
 > **Epic 4 Status:** done — Sanitization + Platform Library ✅
 > **Epic 5 Status:** done — Audit Query Interface ✅
 > **Epic 6 Status:** done — Bank-Auditor + Faith Meats ✅
+> **Sovereign MVP Status:** ready — Blueprint complete, deployment files ready
+
+---
+
+## Session: 2026-04-07 — Sovereign Memory MVP Blueprint
+
+**Task:** Create MVP blueprint for self-hosted mem0 competitor with HITL governance
+
+**Status:** ✅ COMPLETE
+
+**What Was Done:**
+
+### Blueprint Created:
+- `docs/sovereign-memory-mvp/PROJECT.md` — Full 8-section blueprint
+- `sovereign-memory-mvp/docker-compose.yml` — One-command deployment
+- `sovereign-memory-mvp/Dockerfile` — MCP server container
+- `sovereign-memory-mvp/init.sh` — Schema initialization script
+- `sovereign-memory-mvp/README.md` — Quick start guide
+
+### Competitive Analysis (via Context7):
+- mem0 architecture analyzed: Retrieve-Generate-Store loop, three-tier memory
+- Critical gaps identified: versioning, governance, audit trail, deployment
+- Sovereign advantages: SUPERSEDES, HITL gates, append-only ledger, Docker-native
+
+### Architecture Decisions:
+- AD-01: PostgreSQL for raw traces (append-only)
+- AD-02: Neo4j for knowledge graph (SUPERSEDES lineage)
+- AD-03: MCP as primary protocol (standard, wide adoption)
+- AD-04: Docker Compose for MVP deployment (simplicity)
+- AD-05: HITL required for all promotions (prevents AI hallucination)
 
 ---
 

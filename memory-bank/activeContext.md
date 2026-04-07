@@ -1,14 +1,23 @@
 # Active Context
 
 > **Last Updated:** 2026-04-07
-> **Status:** UI hydration fixed — sidebar renders correctly on SSR
-> **Current Focus:** Retriever extension removal (user action required)
+> **Status:** Sovereign Memory MVP — Blueprint complete, implementation ready
+> **Current Focus:** MVP deployment and testing
 
 ---
 
 ## Current State
 
-### ✅ Ralph Loop COMPLETE
+### ✅ Sovereign Memory MVP Blueprint COMPLETE
+
+The `PROJECT.md` for the Sovereign Memory MVP is complete with:
+- Full architecture (PostgreSQL traces → HITL Gate → Neo4j knowledge)
+- Data dictionary (tables, constraints, Neo4j node types)
+- Requirements matrix (B1-B8, F1-F9)
+- Risk register (RK-01 through RK-04)
+- Task list (T1-T6 Must Have, T7-T10 Should Have)
+
+### ✅ Ralph Loop COMPLETE (Prior Work)
 
 All 7 stories across Epics 3-6 have been successfully completed:
 
@@ -22,31 +31,53 @@ All 7 stories across Epics 3-6 have been successfully completed:
 ### Architecture Status
 
 ✅ **ARCH-001: Group ID Enforcement** — Complete
-- Multi-layer enforcement (MCP client, API routes, OpenCode plugin)
-- All new DB operations validate `group_id`
-- CHECK constraints on all tables
-
 ✅ **Steel Frame Versioning** — Complete
-- Neo4j SUPERSEDES relationships
-- Immutable knowledge graph
-- Full audit trail
-
 ✅ **HITL Governance** — Complete (Epic 3)
-- Paperclip approval queue
-- Promotion workflow
-- State machine for proposals
 
 ---
 
-## Implementation Summary
+## Sovereign Memory MVP
 
-### Epic 3: Human-in-the-Loop Governance
-- **Story 3-1:** Paperclip Dashboard with approval queue UI
-- **Story 3-2:** Promotion workflow with audit trail
+### Competitive Positioning
 
-### Epic 4: Cross-Organization Knowledge Sharing
-- **Story 4-1:** Sanitization engine with rules and validation
-- **Story 4-2:** Platform library with adoption tracking
+| Feature | Sovereign Memory MVP | mem0 | Letta/MemGPT |
+|---------|---------------------|------|--------------|
+| **Deployment** | Docker-native, self-hosted | Cloud-first | Self-hosted available |
+| **Versioning** | SUPERSEDES lineage | In-place updates | Block-based |
+| **Governance** | HITL required | Auto-add | Configurable |
+| **Audit Trail** | Append-only PostgreSQL | Timestamps only | Limited |
+| **Tenant Isolation** | Schema-level CHECK | Application-level | Application-level |
+| **Protocol** | MCP (standard) | Custom API | Custom API |
+| **Cloud-Optional** | ✅ Yes | ❌ No | ⚠️ Limited |
+
+### Implementation Files
+
+| File | Status | Purpose |
+|------|--------|---------|
+| `docs/sovereign-memory-mvp/PROJECT.md` | ✅ Complete | Blueprint |
+| `sovereign-memory-mvp/docker-compose.yml` | ✅ Ready | One-command deploy |
+| `sovereign-memory-mvp/Dockerfile` | ✅ Ready | MCP server container |
+| `sovereign-memory-mvp/init.sh` | ✅ Ready | Schema initialization |
+| `sovereign-memory-mvp/README.md` | ✅ Ready | Quick start guide |
+| `src/mcp/memory-server.ts` | ✅ Ready | MCP protocol implementation |
+| `src/mcp/tools.ts` | ✅ Ready | Tool handlers |
+
+---
+
+## What's Next
+
+### Immediate:
+1. ✅ Blueprint complete
+2. ✅ Docker Compose ready
+3. ⏳ Test one-command deploy (`docker compose up -d`)
+4. ⏳ Verify MCP tools work end-to-end
+
+### Future Work:
+1. Push to remote (requires user approval)
+2. Create PR for review
+3. Integration testing with Neo4j/PostgreSQL
+4. Auto-research background agents (Nice to Have)
+5. SOC2 compliance mode (Nice to Have)
 
 ### Epic 5: Regulator-Grade Audit Trail
 - **Story 5-1:** Audit query interface with provenance
