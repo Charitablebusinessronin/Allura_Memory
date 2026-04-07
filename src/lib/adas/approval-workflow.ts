@@ -246,6 +246,39 @@ export class ApprovalWorkflowManager {
   }
 
   /**
+   * Auto-approve a proposal when its Harbor benchmark score meets a threshold.
+   * Used by ADAS self-improvement loop to bypass HITL for benchmark runs.
+   *
+   * If score >= threshold: approves with actor 'system:harbor-auto-approve'
+   * and a machine-generated reason. Full audit trail is preserved.
+   *
+   * If score < threshold: returns null — human review remains required.
+   *
+   * The existing HITL path (approveProposal) is unchanged for all non-Harbor flows.
+   */
+  async autoApproveIfThresholdMet(
+    designId: string,
+    groupId: string,
+    score: number,
+    threshold: number
+  ): Promise<ApprovalResult | null> {
+    if (score < threshold) {
+      return null;
+    }
+
+    const reason =
+      `Harbor benchmark auto-approval: score ${score.toFixed(4)} >= threshold ${threshold.toFixed(4)}. ` +
+      `Approved by system at ${new Date().toISOString()}.`;
+
+    return this.approveProposal({
+      designId,
+      groupId,
+      approverId: "system:harbor-auto-approve",
+      reason,
+    });
+  }
+
+  /**
    * Get approval history for a proposal
    */
   async getApprovalHistory(designId: string, groupId: string): Promise<ApprovalHistoryRecord[]> {
@@ -584,4 +617,18 @@ export async function listProposalsByStatus(
 ): Promise<AgentDesignNode[]> {
   const manager = new ApprovalWorkflowManager();
   return manager.listProposalsByStatus(groupId, status);
+}
+
+/**
+ * Convenience function for Harbor benchmark auto-approval.
+ * Returns ApprovalResult if score >= threshold, null otherwise.
+ */
+export async function autoApproveIfThresholdMet(
+  designId: string,
+  groupId: string,
+  score: number,
+  threshold: number
+): Promise<ApprovalResult | null> {
+  const manager = new ApprovalWorkflowManager();
+  return manager.autoApproveIfThresholdMet(designId, groupId, score, threshold);
 }

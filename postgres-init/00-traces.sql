@@ -186,6 +186,10 @@ CREATE TABLE IF NOT EXISTS adas_runs (
   best_design_id VARCHAR(255),
   best_score DECIMAL(10, 6),
 
+  -- Promotion guard: must be written to Neo4j before this can be set true
+  -- Prevents premature promotion flagging; enforced by trg_promotion_guard
+  promoted BOOLEAN NOT NULL DEFAULT FALSE,
+
   -- Timestamps
   started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   completed_at TIMESTAMPTZ,
