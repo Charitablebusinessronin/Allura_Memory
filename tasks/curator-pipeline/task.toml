@@ -1,0 +1,20 @@
+[task]
+name = "curator-pipeline"
+description = "Verify the full curator flow: propose insight to Neo4j, approve it via HITL gate, confirm SUPERSEDES versioning and audit trail"
+version = "1.0.0"
+domain = "curator"
+timeout_sec = 60
+max_turns = 20
+
+[scoring]
+method = "deterministic"
+pass_threshold = 0.75
+
+[environment]
+requires_neo4j = true
+requires_postgres = true
+group_id = "allura-test"
+
+[metadata]
+tags = ["neo4j", "curator", "hitl", "supersedes", "promotion"]
+invariants = ["SUPERSEDES not UPDATE", "group_id on every node", "approved_by populated", "HITL required"]

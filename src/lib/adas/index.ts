@@ -159,4 +159,19 @@ export {
   rejectProposal,
   getApprovalStatus,
   listProposalsByStatus,
+  autoApproveIfThresholdMet,
 } from "./approval-workflow";
+
+// Harbor Adapter exports — bridges AutoAgent Harbor tasks into ADAS
+export type {
+  HarborTaskManifest,
+  HarborTaskScoring,
+  HarborTaskEnvironment,
+  HarborTaskMeta,
+} from "./harbor-adapter";
+export {
+  loadHarborTask,
+  harborToDomainConfig,
+  createHarborForwardFn,
+  loadHarborDomain,
+} from "./harbor-adapter";

@@ -16,6 +16,8 @@ import {
   rankCandidates,
   getStableModels,
   getModelsByTier,
+  autoApproveIfThresholdMet,
+  loadHarborDomain,
   type DomainConfig,
   type AgentDesign,
   type ModelConfig,
@@ -101,10 +103,13 @@ function createDesignFromModel(domain: string, model: ModelConfig): AgentDesign 
 
 interface CliOptions {
   domain: string;
+  harborTask: string | undefined;
   iterations: number;
   population: number;
   eliteCount: number;
   modelTier: "stable" | "experimental" | "all";
+  autoApproveThreshold: number | undefined;
+  groupId: string;
   help: boolean;
 }
 
@@ -113,20 +118,24 @@ function showHelp(): void {
 🤖 ADAS CLI - Automated Agent Design & Assistant System
 
 USAGE:
-  npx tsx src/lib/adas/cli.ts [OPTIONS]
+  bun run src/lib/adas/cli.ts [OPTIONS]
 
 OPTIONS:
-  --domain <name>       Domain to use: math, reasoning, code (default: math)
-  --iterations <n>       Number of search iterations (default: 3)
-  --population <n>      Population size per iteration (default: 3)
-  --elite-count <n>      Number of top candidates to keep (default: 2)
-  --model-tier <tier>   Model tier: stable, experimental, all (default: stable)
-  --help                Show this help message
+  --domain <name>              Domain to use: math, reasoning, code (default: math)
+  --harbor-task <path>         Path to a Harbor task directory (overrides --domain)
+  --auto-approve-threshold <f> Auto-approve best design if score >= threshold (0.0-1.0)
+  --group-id <id>              Group ID for tenant isolation (default: adas-cli)
+  --iterations <n>             Number of search iterations (default: 3)
+  --population <n>             Population size per iteration (default: 3)
+  --elite-count <n>            Number of top candidates to keep (default: 2)
+  --model-tier <tier>          Model tier: stable, experimental, all (default: stable)
+  --help                       Show this help message
 
 EXAMPLES:
-  npx tsx src/lib/adas/cli.ts --domain math --iterations 3
-  npx tsx src/lib/adas/cli.ts --domain reasoning --population 5
-  npx tsx src/lib/adas/cli.ts --domain code --model-tier experimental
+  bun run src/lib/adas/cli.ts --domain math --iterations 3
+  bun run src/lib/adas/cli.ts --harbor-task tasks/neo4j-traversal --iterations 3
+  bun run src/lib/adas/cli.ts --harbor-task tasks/group-id-isolation --auto-approve-threshold 0.75
+  bun run src/lib/adas/cli.ts --domain reasoning --population 5 --model-tier experimental
 `);
 }
 
@@ -135,6 +144,9 @@ async function main(): Promise<void> {
   const { values } = parseArgs({
     options: {
       domain: { type: "string", default: "math" },
+      "harbor-task": { type: "string" },
+      "auto-approve-threshold": { type: "string" },
+      "group-id": { type: "string", default: "adas-cli" },
       iterations: { type: "string", default: "3" },
       population: { type: "string", default: "3" },
       "elite-count": { type: "string", default: "2" },
@@ -143,12 +155,16 @@ async function main(): Promise<void> {
     },
   });
 
+  const rawThreshold = values["auto-approve-threshold"] as string | undefined;
   const opts: CliOptions = {
     domain: values.domain as string,
+    harborTask: values["harbor-task"] as string | undefined,
     iterations: parseInt(values.iterations as string, 10),
     population: parseInt(values.population as string, 10),
     eliteCount: parseInt(values["elite-count"] as string, 10),
     modelTier: values["model-tier"] as "stable" | "experimental" | "all",
+    autoApproveThreshold: rawThreshold !== undefined ? parseFloat(rawThreshold) : undefined,
+    groupId: values["group-id"] as string,
     help: values.help as boolean,
   };
 
@@ -157,16 +173,34 @@ async function main(): Promise<void> {
     return;
   }
 
-  // Validate domain
-  const domain = DOMAINS[opts.domain];
-  if (!domain) {
-    console.error(`❌ Unknown domain: ${opts.domain}`);
-    console.log("Available domains:", Object.keys(DOMAINS).join(", "));
-    process.exit(1);
+  // Resolve domain — Harbor task overrides built-in domains
+  let domain: DomainConfig;
+  let harborForwardFn: ((input: unknown) => Promise<number>) | undefined;
+
+  if (opts.harborTask) {
+    try {
+      const { domain: harborDomain, forwardFn, manifest } = loadHarborDomain(opts.harborTask);
+      domain = harborDomain;
+      harborForwardFn = forwardFn as (input: unknown) => Promise<number>;
+      console.log(`📦 Harbor task loaded: ${manifest.task.name} (v${manifest.task.version})`);
+    } catch (err) {
+      console.error(`❌ Failed to load Harbor task from: ${opts.harborTask}`);
+      console.error((err as Error).message);
+      process.exit(1);
+    }
+  } else {
+    const builtinDomain = DOMAINS[opts.domain];
+    if (!builtinDomain) {
+      console.error(`❌ Unknown domain: ${opts.domain}`);
+      console.log("Available built-in domains:", Object.keys(DOMAINS).join(", "));
+      console.log("Or use --harbor-task <path> to load a Harbor benchmark task.");
+      process.exit(1);
+    }
+    domain = builtinDomain;
   }
 
   // Get models based on tier
-  let models = opts.modelTier === "all" 
+  let models = opts.modelTier === "all"
     ? [...getModelsByTier("stable"), ...getModelsByTier("experimental")]
     : getModelsByTier(opts.modelTier);
 
@@ -175,15 +209,17 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  const modeLabel = opts.harborTask ? `Harbor: ${opts.harborTask}` : domain.name;
   console.log(`
 ╔══════════════════════════════════════════════════════════════╗
 ║           ADAS CLI - Evolutionary Agent Design             ║
 ╠══════════════════════════════════════════════════════════════╣
-║ Domain:        ${domain.name.padEnd(40)}║
+║ Domain:        ${modeLabel.padEnd(40)}║
 ║ Iterations:    ${String(opts.iterations).padEnd(40)}║
 ║ Population:    ${String(opts.population).padEnd(40)}║
 ║ Elite Count:   ${String(opts.eliteCount).padEnd(40)}║
 ║ Model Tier:    ${opts.modelTier.padEnd(40)}║
+║ Group ID:      ${opts.groupId.padEnd(40)}║
 ╚══════════════════════════════════════════════════════════════╝
 `);
 
@@ -222,24 +258,28 @@ async function main(): Promise<void> {
     const results = [];
     for (const design of designs) {
       const harness = createEvaluationHarness({
-        groupId: "adas-cli",
+        groupId: opts.groupId,
         domain,
       });
       
       const model = design.config.model!;
-      
-      const forwardFn = async (input: unknown): Promise<string> => {
-        try {
-          const result = await ollama.complete(String(input), model.modelId, {
-            temperature: model.temperature ?? 0.7,
-            num_predict: model.maxTokens ?? 200,
-          });
-          return result.text;
-        } catch (err) {
-          console.error(`   ⚠️  Ollama error for ${model.modelId}:`, (err as Error).message);
-          return "Error: could not get response";
-        }
-      };
+
+      // Harbor tasks use their own verifier-based ForwardFn;
+      // built-in domains use Ollama inference.
+      const forwardFn = harborForwardFn
+        ? harborForwardFn
+        : async (input: unknown): Promise<string> => {
+            try {
+              const result = await ollama.complete(String(input), model.modelId, {
+                temperature: model.temperature ?? 0.7,
+                num_predict: model.maxTokens ?? 200,
+              });
+              return result.text;
+            } catch (err) {
+              console.error(`   ⚠️  Ollama error for ${model.modelId}:`, (err as Error).message);
+              return "Error: could not get response";
+            }
+          };
 
       try {
         const result = await harness.evaluateCandidate(design, forwardFn);
@@ -299,6 +339,45 @@ async function main(): Promise<void> {
   console.log(`║   Accuracy: ${((bestDesign.accuracy ?? 0) * 100).toFixed(0)}%`.padEnd(51) + "║");
   console.log("╚══════════════════════════════════════════════════════════════╝");
   console.log("\n🎉 ADAS search complete!");
+
+  // Resolve effective threshold: CLI flag > env var (only when PROMOTION_MODE=auto)
+  const promotionMode = process.env.PROMOTION_MODE ?? "soc2";
+  const envThreshold = process.env.AUTO_APPROVAL_THRESHOLD
+    ? parseFloat(process.env.AUTO_APPROVAL_THRESHOLD)
+    : undefined;
+  const effectiveThreshold =
+    opts.autoApproveThreshold ?? (promotionMode === "auto" ? envThreshold : undefined);
+
+  // Auto-approve best design if Harbor threshold is set and score qualifies
+  if (effectiveThreshold !== undefined && opts.harborTask) {
+    const bestScore = overallBest.bestScore;
+    const threshold = effectiveThreshold!;
+    console.log(`\n🔐 Auto-approve check: score=${bestScore.toFixed(4)} threshold=${threshold.toFixed(4)}`);
+
+    if (bestScore >= threshold) {
+      const designId = bestDesign.designId;
+      try {
+        const result = await autoApproveIfThresholdMet(
+          designId,
+          opts.groupId,
+          bestScore,
+          threshold
+        );
+        if (result) {
+          console.log(`✅ Auto-approved design ${designId}`);
+          console.log(`   Approved by: ${result.approvedBy}`);
+          if (result.insightId) {
+            console.log(`   Insight ID:  ${result.insightId}`);
+          }
+        }
+      } catch (err) {
+        // Design may not be in Neo4j (no promotion proposal) — skip gracefully
+        console.warn(`⚠️  Auto-approve skipped (no pending proposal for ${designId}):`, (err as Error).message);
+      }
+    } else {
+      console.log(`⏸️  Score below threshold — human review required.`);
+    }
+  }
 }
 
 main().catch((err) => {
