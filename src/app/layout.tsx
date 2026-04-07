@@ -2,13 +2,18 @@ import type { ReactNode } from "react";
 
 import type { Metadata } from "next";
 
+import { cookies } from "next/headers";
+
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { APP_CONFIG } from "@/config/app-config";
 import { fontVars } from "@/lib/fonts/registry";
 import { PREFERENCE_DEFAULTS } from "@/lib/preferences/preferences-config";
+import { CONTENT_LAYOUT_VALUES, NAVBAR_STYLE_VALUES } from "@/lib/preferences/layout";
+import { THEME_MODE_VALUES, THEME_PRESET_VALUES } from "@/lib/preferences/theme";
 import { ThemeBootScript } from "@/scripts/theme-boot";
 import { PreferencesStoreProvider } from "@/stores/preferences/preferences-provider";
+import { getPreference } from "@/server/server-actions";
 
 import "./globals.css";
 
@@ -17,9 +22,20 @@ export const metadata: Metadata = {
   description: APP_CONFIG.meta.description,
 };
 
-export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
-  const { theme_mode, theme_preset, content_layout, navbar_style, sidebar_variant, sidebar_collapsible, font } =
-    PREFERENCE_DEFAULTS;
+function getSafe<T extends string>(raw: string | undefined, allowed: readonly T[], fallback: T): T {
+  return raw && allowed.includes(raw as T) ? (raw as T) : fallback;
+}
+
+export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+  const cookieStore = await cookies();
+  const get = (key: string) => cookieStore.get(key)?.value;
+
+  const theme_mode = getSafe(get("theme_mode"), THEME_MODE_VALUES, PREFERENCE_DEFAULTS.theme_mode);
+  const theme_preset = getSafe(get("theme_preset"), THEME_PRESET_VALUES, PREFERENCE_DEFAULTS.theme_preset);
+  const content_layout = getSafe(get("content_layout"), CONTENT_LAYOUT_VALUES, PREFERENCE_DEFAULTS.content_layout);
+  const navbar_style = getSafe(get("navbar_style"), NAVBAR_STYLE_VALUES, PREFERENCE_DEFAULTS.navbar_style);
+  const font = (get("font") ?? PREFERENCE_DEFAULTS.font) as typeof PREFERENCE_DEFAULTS.font;
+
   return (
     <html
       lang="en"
@@ -27,8 +43,8 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       data-theme-preset={theme_preset}
       data-content-layout={content_layout}
       data-navbar-style={navbar_style}
-      data-sidebar-variant={sidebar_variant}
-      data-sidebar-collapsible={sidebar_collapsible}
+      data-sidebar-variant={PREFERENCE_DEFAULTS.sidebar_variant}
+      data-sidebar-collapsible={PREFERENCE_DEFAULTS.sidebar_collapsible}
       data-font={font}
       suppressHydrationWarning
     >
@@ -45,6 +61,9 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
             navbarStyle={navbar_style}
             font={font}
           >
+          {/* Server reads actual cookie values so client and server agree on first render.
+              ThemeBootScript remains as a fast-paint fallback for the very first visit
+              (before cookies are set) and for system theme detection. */}
             {children}
             <Toaster />
           </PreferencesStoreProvider>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { ChevronRight, MailIcon, PlusCircleIcon } from "lucide-react";
 
@@ -144,6 +145,8 @@ const NavItemCollapsed = ({
 export function NavMain({ items }: NavMainProps) {
   const path = usePathname();
   const { state, isMobile } = useSidebar();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const isItemActive = (url: string, subItems?: NavMainItem["subItems"]) => {
     if (subItems?.length) {
@@ -156,11 +159,13 @@ export function NavMain({ items }: NavMainProps) {
     return subItems?.some((sub) => path.startsWith(sub.url)) ?? false;
   };
 
+  // Defer rendering until after hydration so Radix Tooltip portals
+  // (which generate aria-describedby IDs only on the client) don't
+  // cause a server/client tree mismatch.
+  if (!mounted) return null;
+
   return (
-    // suppressHydrationWarning: Radix Tooltip generates aria-describedby IDs only client-side
-    // (tooltip content rendered via portal), causing server/client attribute mismatch.
-    // The mismatch is cosmetic — layout and interaction are unaffected.
-    <div suppressHydrationWarning>
+    <>
       <SidebarGroup>
         <SidebarGroupContent className="flex flex-col gap-2">
           <SidebarMenu>
@@ -221,6 +226,6 @@ export function NavMain({ items }: NavMainProps) {
           </SidebarGroupContent>
         </SidebarGroup>
       ))}
-    </div>
+    </>
   );
 }
