@@ -144,6 +144,18 @@ export function ChartAreaInteractive() {
     return date >= startDate;
   });
 
+  // Guard against empty data
+  if (!filteredData || filteredData.length === 0) {
+    return (
+      <Card className="@container/card">
+        <CardHeader>
+          <CardTitle>Total Visitors</CardTitle>
+          <CardDescription>No data available</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <Card className="@container/card">
       <CardHeader>
