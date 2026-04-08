@@ -1,134 +1,118 @@
-# Allura's Memory
+# Allura: Enterprise AI Governance + Consumer Memory
 
 ![Tests](https://img.shields.io/badge/tests-1854%20passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
+![Architecture](https://img.shields.io/badge/postgres%2Bneo4j-dual--database-brightgreen)
 
-**MISSION:** Give AI agents a brain that does not forget. We separate raw flight logs (PostgreSQL) from refined intel (Neo4j). Humans stay in control.
-
-**THE PROBLEM:** AI agents wake up with amnesia. They do not remember past missions. They repeat mistakes. They build zero ongoing knowledge.
-
-**THE SOLUTION:** A 6-layer memory system. It locks in agent knowledge with strict rules, clear audit trails, and totally isolated project zones.
+**Allura is a sovereign, self-hosted AI memory and governance engine.** It's the mem0 alternative for organizations that need compliance-grade audit trails, human-in-the-loop promotion workflows, and multi-tenant isolation enforced at the schema level — not application code.
 
 ---
 
-## MISSION DIRECTIVES 
+## Table of Contents
 
+- [Why Allura?](#why-allura)
+- [How It Works](#how-it-works)
 - [Quick Start](#quick-start)
-- [Capabilities](#capabilities)
+- [Use Cases](#use-cases)
+- [API Reference](#api-reference)
 - [Architecture](#architecture)
-- [Boot Protocol](#boot-protocol)
-- [Field Usage](#field-usage)
-- [API Intel](#api-intel)
-- [Testing](#testing)
-- [Ops Docs](#ops-docs)
-- [Enlistment](#enlistment)
-- [License](#license)
+- [Deployment](#deployment)
+- [Governance](#governance)
+- [Contributing](#contributing)
 
 ---
 
-## QUICK START
+## Why Allura?
 
-*Execute via Bun for maximum security. Npm/npx are banned.*
+| Feature | Allura | mem0 |
+|---------|--------|------|
+| **Deployment** | Self-hosted, docker-compose | Cloud SaaS only |
+| **Tenant Isolation** | Schema-level CHECK constraints (hard boundary) | Application-layer soft tenancy |
+| **Audit Trail** | Append-only PostgreSQL + versioned Neo4j | Limited SaaS audit |
+| **Human Approval** | HITL curator workflow for promotion | Autonomous agent writes everywhere |
+| **Compliance** | SOC 2 ready, CSV audit export, redaction rules | Not enterprise-grade |
+| **Dual-Use** | Enterprise governance + consumer growth | Single use case |
+| **Cost** | Self-hosted (your infra) | ~$50-300/user/month |
+| **Lock-In** | None (data is yours) | Complete vendor lock-in |
+
+---
+
+## How It Works
+
+Allura separates **what happened** (episodic) from **what we learned** (semantic):
+
+```
+AI Agent (Claude, Cursor, OpenClaw, etc.)
+        ↓ (MCP Protocol)
+┌─────────────────────────────────────┐
+│      Memory Engine                  │
+│  - Score content                    │
+│  - Route to storage                 │
+│  - Deduplicate                      │
+└──────────┬──────────────────────────┘
+           ↓
+      ┌────┴─────┐
+      ↓          ↓
+  PostgreSQL   Neo4j
+  (Raw Logs)   (Knowledge Graph)
+  Append-only  Versioned w/ SUPERSEDES
+  Immutable    Curator-gated promotion
+```
+
+**PostgreSQL (Episodic):** Every memory operation creates an immutable row. No UPDATE/DELETE. Audit trail is automatic. Curator manually reviews high-confidence traces and promotes them.
+
+**Neo4j (Semantic):** Only promoted, verified knowledge. All updates create new nodes with `(v2)-[:SUPERSEDES]->(v1)`. Agents query here to avoid re-learning.
+
+---
+
+## Quick Start
+
+### Prerequisites
+- Docker + Docker Compose
+- Bun (zero-trust Node.js runtime, no npm)
+- PostgreSQL 16 + Neo4j 5.26 (included in docker-compose)
+
+### 1. Setup
 
 ```bash
-# Clone and build
-git clone https://github.com/Charitablebusinessronin/allura-memory.git
-cd allura-memory
+git clone https://github.com/yourorg/allura.git
+cd allura
 
-# We only use Bun. Period.
+# Install dependencies (Bun only)
 bun install
 
-# Start the data engines
-docker compose up -d
-
-# Verify system integrity
-bun test
-
-# Launch the MCP comms server
-bun run mcp
+# Copy environment template
+cp .env.example .env
+# Edit .env with your settings
 ```
 
----
-
-## CAPABILITIES
-
-### Core Tools
-
-| Feature | Description |
-|---------|-------------|
-| **Dual-Layer Brain** | Raw logs go to PostgreSQL. Curated truth goes to Neo4j. |
-| **Versioned Truth** | Knowledge is locked. Old truth is SUPERSEDED, never erased. |
-| **Human Checkpoint** | High-level changes require a human to say YES. |
-| **Data Lockdown** | Projects are separated by `group_id`. No cross-talk. |
-| **Audit Trails** | We store 5 layers of decision records for compliance. |
-| **MCP Ready** | Connects to Claude Desktop, OpenClaw, and MCP agents. |
-| **OpenCode Skills** | Loaded with custom tools for memory-first coding. |
-
-### Command & Control
-
-- **Approval Gates:** Humans review big changes.
-- **Circuit Breakers:** Shuts down operations if too many errors hit.
-- **Strict Limits:** Budgets, timers, and absolute hard-stops control the AI.
-- **Steel Frame:** History is set in stone. You cannot change the past.
-
----
-
-## ARCHITECTURE
-
-<p align="center">
-  <img src="docs/assets/memory_architecture.png" alt="Allura's Memory Central Brain Infographic" width="800"/>
-</p>
-
-The machine thinks in six layers. Top to bottom:
-
-1. **AGENT:** The front-line operator (OpenClaw).
-2. **AUDIT:** 5-layer decision logs (ADR Layer).
-3. **GOVERNANCE:** Human checkpoints and circuit breakers.
-4. **DISCOVERY (ADAS):** Agent upgrades itself with Ollama + Docker.
-5. **CONTROL:** Self-correcting loop (Perceive -> Plan -> Act -> Check).
-6. **MEMORY (Base):** Neo4j (Curated Intel) linked to PostgreSQL (Raw Logs).
-
----
-
-## BOOT PROTOCOL (Installation)
-
-### Gear Required
-
-- Node.js 18+ runtime via Bun
-- Docker (Runs the databases)
-- 4GB RAM minimum
-
-### Setup
+### 2. Start Infrastructure
 
 ```bash
-git clone https://github.com/Charitablebusinessronin/allura-memory.git
-cd allura-memory
-bun install
 docker compose up -d
-bun test
 ```
 
-### Environment Keys
+Starts:
+- **PostgreSQL** on 5432
+- **Neo4j** on 7687 (Bolt)
+- **MCP Server** (listening for agent connections)
+
+### 3. Health Check
 
 ```bash
-POSTGRES_PASSWORD=your_password
-NEO4J_PASSWORD=your_password
-NOTION_API_KEY=optional
+curl http://localhost:3000/api/health
+# { "status": "ok", "postgres": "connected", "neo4j": "connected" }
 ```
 
----
+### 4. Connect Your Agent
 
-## FIELD USAGE
-
-### MCP Comms Link
-
-Plug into Claude Desktop or OpenClaw:
+Configure your MCP client (Claude Desktop, VS Code Cursor, or OpenCode):
 
 ```json
 {
   "mcpServers": {
-    "memory": {
+    "allura": {
       "command": "bun",
       "args": ["run", "src/mcp/memory-server.ts"]
     }
@@ -136,181 +120,324 @@ Plug into Claude Desktop or OpenClaw:
 }
 ```
 
-### Memory Snapshots
+Now your agent has 5 memory tools:
+- `memory_add(content, userId, metadata?)` — Write
+- `memory_search(query, userId)` — Semantic search
+- `memory_get(memoryId)` — Fetch by ID
+- `memory_list(userId)` — All memories for user
+- `memory_delete(memoryId)` — Soft-delete (recoverable)
 
-Before a long mission, build a snapshot to brief your agents. 
+### 5. Open Memory Viewer
 
-```bash
-# Build the brief
-bun run snapshot:build \
-  --source docs/allura-memory \
-  --output memory-bank \
-  --group-id allura-roninmemory \
-  --max-summary-chars 600
+Consumer view: `http://localhost:3000/memory`  
+Enterprise admin: `http://localhost:3000/admin`
 
-# Hydrate the databases with the brief
-GROUP_ID=allura-roninmemory bun run session:hydrate \
-  --snapshot memory-bank/index.json \
-  --concurrency 4
+---
+
+## Use Cases
+
+### 1. Enterprise: Bank Lending
+
+**Problem:** Loan officers process 100+ applications daily. Need to remember borrower financial history, regulatory flags, and past decisions.
+
+**Allura:**
+- Conversation → episodic trace (append-only)
+- High-confidence facts → curator reviews → Neo4j
+- Next loan officer queries: "What do we know about this borrower type?"
+- Audit log proves regulatory compliance
+
+### 2. Enterprise: HACCP Food Safety
+
+**Problem:** Manufacturers need AI to remember hazard patterns, corrective actions, and non-conformance history.
+
+**Allura:**
+- HACCP audit → episodic event
+- Hazard patterns → curator approves → semantic knowledge
+- Next audit: "Have we seen this risk? What mitigated it?"
+- CSV export proves traceability
+
+### 3. Consumer: OpenClaw Session Memory
+
+**Problem:** Sessions end. Next session, AI has no memory of tech stack, preferences, or project structure.
+
+**Allura:**
+- During session: traces stored episodically
+- User opens memory viewer: "What should I remember?"
+- User (or curator) promotes facts to semantic layer
+- Next session: Agent loads context automatically
+
+---
+
+## API Reference
+
+### MCP Tools (Agent Interface)
+
+#### `memory_add` — Write a memory
+
+```typescript
+// Request
+{
+  "content": "Sabir prefers dark mode and uses Bun instead of npm",
+  "userId": "sabir",
+  "metadata": {
+    "source": "conversation",
+    "context": "IDE setup discussion",
+    "confidence": 0.92
+  }
+}
+
+// Response (SOC2 mode)
+{
+  "id": "mem_7f9e2c3a1b5d",
+  "status": "pending_review",
+  "stored": "episodic",
+  "message": "High-confidence memory queued for curator approval"
+}
+
+// Response (auto mode)
+{
+  "id": "mem_7f9e2c3a1b5d",
+  "status": "promoted",
+  "stored": "both",
+  "message": "Memory stored in PostgreSQL and Neo4j"
+}
 ```
 
-### Quick Boot
+#### `memory_search` — Federated search
 
-Run the whole brief and hydrate cycle in one shot:
+```typescript
+// Request
+{
+  "query": "dark mode preferences",
+  "userId": "sabir",
+  "limit": 10
+}
 
-```bash
-POSTGRES_PASSWORD="..." NEO4J_PASSWORD="..." bun run session:bootstrap
+// Response
+[
+  {
+    "id": "mem_7f9e2c3a1b5d",
+    "content": "Sabir prefers dark mode",
+    "source": "semantic",
+    "score": 0.96,
+    "created": "2 hours ago",
+    "used_count": 3
+  },
+  {
+    "id": "evt_a1b2c3d4e5f6",
+    "content": "IDE theme set to dark (VS Code)",
+    "source": "episodic",
+    "score": 0.87,
+    "created": "2 weeks ago"
+  }
+]
+```
+
+#### `memory_get` — Fetch by ID
+
+```typescript
+// Request
+{ "memoryId": "mem_7f9e2c3a1b5d" }
+
+// Response
+{
+  "id": "mem_7f9e2c3a1b5d",
+  "content": "Sabir prefers dark mode",
+  "score": 0.92,
+  "created": "2026-04-07T06:30:00Z",
+  "source": "conversation",
+  "context": "IDE setup discussion",
+  "used_count": 3
+}
+```
+
+#### `memory_list` — All memories for a user
+
+```typescript
+// Request
+{ "userId": "sabir", "limit": 25, "offset": 0 }
+
+// Response
+{
+  "memories": [ ... ],
+  "total": 247,
+  "limit": 25,
+  "offset": 0
+}
+```
+
+#### `memory_delete` — Soft-delete (recoverable for 30 days)
+
+```typescript
+// Request
+{ "memoryId": "mem_7f9e2c3a1b5d" }
+
+// Response
+{
+  "id": "mem_7f9e2c3a1b5d",
+  "status": "deleted",
+  "recoverable_until": "2026-05-08T06:30:00Z"
+}
 ```
 
 ---
 
-## API INTEL
+## Architecture
 
-### Core Tools
+### Data Model
 
-| Tool | Mission |
-|------|---------|
-| `store_memory` | Save a new piece of truth. |
-| `search_memories` | Find target intel fast. |
-| `get_memory` | Pull an exact file. |
-| `promote_memory` | Move info from Draft to Active. Requires human YES. |
-| `deprecate_memory` | Mark info as old/useless. |
-| `archive_memory` | Lock info away for audits. |
+**PostgreSQL `events` table (append-only):**
 
-*(Full skill registry in `.opencode/skills/` — the single source of truth for all agent capabilities)*
+```sql
+CREATE TABLE events (
+  id BIGSERIAL PRIMARY KEY,
+  group_id VARCHAR(255) NOT NULL CHECK (group_id ~ '^allura-'),
+  event_type VARCHAR(100) NOT NULL,
+  agent_id VARCHAR(255) NOT NULL,
+  status VARCHAR(50) DEFAULT 'completed',
+  metadata JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+**Neo4j `Memory` node (versioned):**
+
+```cypher
+(m:Memory {
+  id: "mem_7f9e2c3a1b5d",
+  group_id: "allura-myproject",
+  content: "Sabir prefers dark mode",
+  score: 0.92,
+  deprecated: false,
+  created_at: 2026-04-07T06:30:00Z
+})
+
+(m2:Memory)-[:SUPERSEDES]->(m1:Memory)  -- versioning
+```
+
+### Core Components
+
+| Component | Responsibility |
+|-----------|--------------|
+| **MCP Server** | Exposes 5 memory tools to agents |
+| **Memory Engine** | Score, route, deduplicate writes |
+| **Curator** | HITL approval for promotion |
+| **PostgreSQL** | Episodic memory (immutable) |
+| **Neo4j** | Semantic memory (versioned) |
+| **Dashboard** | Consumer + admin views |
+
+Full architecture details: [docs/allura/BLUEPRINT.md](docs/allura/BLUEPRINT.md)
 
 ---
 
-## TESTING
+## Deployment
 
-Validate the gear before deployment.
+### Docker Compose (Local & Production)
 
 ```bash
-# Basic check
+docker compose up -d
+```
+
+### Kubernetes (Enterprise)
+
+See [.github/DEPLOYMENT.md](.github/DEPLOYMENT.md) for Helm charts and persistent volume setup.
+
+### Environment Variables
+
+```bash
+# Core
+DATABASE_URL=postgresql://postgres:password@localhost:5432/allura
+NEO4J_URI=neo4j://localhost:7687
+NEO4J_AUTH=neo4j:password
+
+# Governance
+PROMOTION_MODE=soc2          # or auto
+AUTO_APPROVAL_THRESHOLD=0.85
+SOFT_DELETE_RETENTION_DAYS=30
+
+# Security
+JWT_SECRET=your-secret-key
+ENCRYPTION_KEY=your-encryption-key  # for BYOK
+
+# Optional: Slack notifications for curator
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
+```
+
+---
+
+## Governance
+
+### Promotion Modes
+
+**SOC2 Mode (Default):**
+- Score ≥ 0.85 → queued for curator review
+- Requires human approval before Neo4j write
+- Zero autonomous agent writes to semantic layer
+
+**Auto Mode (Consumer):**
+- Score ≥ 0.85 → immediately promoted to Neo4j
+- Suitable for low-stakes preferences (theme, language, etc.)
+- All writes still audited to PostgreSQL
+
+### Multi-Tenancy
+
+Hard-enforced isolation via `group_id`:
+
+```sql
+-- Missing or invalid group_id causes schema error
+ALTER TABLE events
+ADD CONSTRAINT group_id_format
+CHECK (group_id ~ '^allura-');
+```
+
+---
+
+## Documentation
+
+| Doc | Purpose |
+|-----|---------|
+| **[docs/allura/BLUEPRINT.md](docs/allura/BLUEPRINT.md)** | Core concepts, requirements, execution rules |
+| **[docs/allura/SOLUTION-ARCHITECTURE.md](docs/allura/SOLUTION-ARCHITECTURE.md)** | System topologies, interfaces, risk mapping |
+| **[docs/allura/DATA-DICTIONARY.md](docs/allura/DATA-DICTIONARY.md)** | Field-level reference |
+| **[docs/allura/WIREFRAMES.md](docs/allura/WIREFRAMES.md)** | UI/UX design |
+| **[docs/allura/RISKS-AND-DECISIONS.md](docs/allura/RISKS-AND-DECISIONS.md)** | Architectural decisions + known risks |
+| **[AI-GUIDELINES.md](AI-GUIDELINES.md)** | Documentation standards |
+
+---
+
+## Testing
+
+```bash
+# Unit tests
 bun test
 
-# E2E integration
-RUN_E2E_TESTS=true bun test
-
-# Stress tests
+# Integration tests (requires docker-compose up)
 bun run test:e2e
-```
 
-**Status:** Over 1,854 tests passing across 6 heavy epics.
+# Type check
+bun run typecheck
 
----
-
-## OPS DOCS
-
-### Project Documentation
-
-| File | Content |
-|------|---------|
-| **Master Document** | |
-| `docs/allura-memory/PROJECT.md` | Single cohesive project document. Blueprint, requirements, architecture, data dictionary, decisions, and epic tracking. |
-| **Planning Artifacts** | |
-| `_bmad-output/planning-artifacts/` | Epic definitions and planning documents |
-| `_bmad-output/implementation-artifacts/` | Technical specifications and story implementation specs |
-| `docs/validation/` | Phase completion reports and validation artifacts |
-| **Reference Docs** | |
-| `docs/api/` | API reference documentation |
-| `docs/architecture/` | Architecture and design documentation |
-| `docs/ROADMAP-LETTA-INSPIRATION.md` | Project roadmap and inspiration |
-| `docs/SECURITY.md` | Security policies and procedures |
-| **Agent Context** | |
-| `AGENTS.md` | Standard Operating Procedures (SOPs) |
-| `.opencode/skills/` | **Single source of truth** — all agent skills live here (127 skills) |
-| `.opencode/command/` | User-facing slash commands |
-| `.opencode/agent/` | Agent definitions (7 Memory agents) |
-| `.opencode/context/` | Agent instructions and navigation |
-| `memory-bank/` | Active mission context |
-| `AI-GUIDELINES.md` | Documentation standards and AI assistance policies |
-
-### BMad Workflow Outputs
-
-BMad artifacts follow this structure:
-- **Planning**: `_bmad-output/planning-artifacts/` — Epic definitions, sprint planning
-- **Implementation**: `_bmad-output/implementation-artifacts/` — Tech specs, story files
-- **Validation**: `docs/validation/` — Phase completion reports
-
-**Key Files:**
-- **Current Epic**: `_bmad-output/planning-artifacts/epic-7-openagents-control-registry.md`
-- **Tech Spec**: `_bmad-output/implementation-artifacts/tech-spec-epic-7-openagents-control-registry.md`
-- **Active Story**: `_bmad-output/implementation-artifacts/spec-notion-client-implementation.md`
-
----
-
-## DOCUMENTATION STANDARDS
-
-This repository follows the **AI-GUIDELINES.md** documentation standards:
-
-- **Single Master Document**: `docs/allura-memory/PROJECT.md` is the canonical source of truth
-- **BMad Structured Output**: Epics, stories, and validation follow BMad conventions
-- **Disclosure**: AI-assisted content includes disclosure notices
-- **Cross-References**: All artifacts are linked from PROJECT.md
-
-### Documentation Structure
-
-```
-docs/
-├── allura-memory/
-│   ├── PROJECT.md          # Master document (blueprint, requirements, architecture)
-│   ├── BLUEPRINT.md        # Core concepts reference
-│   ├── REQUIREMENTS-MATRIX.md
-│   ├── SOLUTION-ARCHITECTURE.md
-│   ├── DATA-DICTIONARY.md
-│   └── RISKS-AND-DECISIONS.md
-├── planning-artifacts/
-│   └── epic-7-*.md         # Epic definitions (BMad output)
-├── implementation-artifacts/
-│   ├── tech-spec-*.md      # Technical specifications
-│   └── spec-*.md          # Story implementation specs
-├── validation/
-│   └── phase-*.md         # Validation reports
-├── api/                   # API reference
-└── architecture/          # Architecture docs
+# Lint
+bun run lint
 ```
 
 ---
 
-## TECH STACK
+## Contributing
 
-| Slot | Gear |
-|-------|-------------|
-| Language | TypeScript (Strict Rules) |
-| Runtime | Bun |
-| Data Engines | PostgreSQL 16, Neo4j 5.26 |
-| Comms Protocol | Model Context Protocol (MCP) |
-| Testing | Vitest |
+We welcome contributions. Before submitting:
 
----
-
-## ENLISTMENT (Contributing)
-
-If you join the fight, follow these rules:
-
-1. **Pass the Checks:** All code must pass `bun run typecheck`.
-2. **Prove It Works:** Send tests with every change.
-3. **Follow the SOP:** Read and obey `AGENTS.md`.
-4. **Stay in Your Lane:** Always use `group_id` so data does not mix.
-5. **Log Everything:** Use MCP tools (`log_event`, `create_insight`) to track history.
+1. Read [AI-GUIDELINES.md](AI-GUIDELINES.md)
+2. Pass all checks: `bun run typecheck && bun run lint && bun test`
+3. Follow [CLAUDE.md](CLAUDE.md) code conventions
+4. Include unit tests for any new functionality
 
 ---
 
-## ZERO-TRUST SECURITY
-
-- **No npm/npx:** We only use `bun`. Supply chain attacks stop here.
-- **Total Isolation:** Data is locked by `group_id`.
-- **Self-Editing Logs:** MemFS safely handles agent reflections securely.
-
----
-
-## LICENSE
+## License
 
 MIT
 
 ---
 
-## COMMANDER
-
-Built by [ronin4life](https://github.com/Charitablebusinessronin) for AI agent memory dominance.
+Built for organizations that need compliance-grade AI memory with zero vendor lock-in.
