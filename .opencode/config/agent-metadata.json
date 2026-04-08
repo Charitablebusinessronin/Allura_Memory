@@ -253,6 +253,56 @@
       "tags": ["build", "validation", "type-checking"],
       "dependencies": []
     },
+    "steve-jobs-ux": {
+      "id": "steve-jobs-ux",
+      "name": "SteveJobsUX",
+      "category": "subagents/development",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["ux", "design", "blueprint-execution", "steve-jobs"],
+      "dependencies": [
+        "context:standards-code",
+        "context:ui-design-systems",
+        "context:ui-animation-basics"
+      ]
+    },
+    "carmack": {
+      "id": "carmack",
+      "name": "Carmack",
+      "category": "subagents/development",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["performance", "optimization", "backend", "latency"],
+      "dependencies": [
+        "context:standards-code"
+      ]
+    },
+    "knuth": {
+      "id": "knuth",
+      "name": "Knuth",
+      "category": "subagents/development",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["data", "schema", "database", "postgresql", "neo4j"],
+      "dependencies": [
+        "context:standards-code"
+      ]
+    },
+    "hopper": {
+      "id": "hopper",
+      "name": "Hopper",
+      "category": "subagents/development",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["debug", "integration", "bug-hunting", "mcp"],
+      "dependencies": [
+        "context:standards-code"
+      ]
+    },
     "frontend-specialist": {
       "id": "frontend-specialist",
       "name": "OpenFrontendSpecialist",
