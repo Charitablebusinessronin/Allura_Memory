@@ -4,9 +4,16 @@
 import fs from 'fs';
 import path from 'path';
 import yaml from 'yaml';
+
 import { AgentSchema } from './notion-client';
+import {
+  type AgentMetadataLookup,
+  DEFAULT_NOTION_GROUP_ID,
+  resolveAgentIdentity,
+} from './agent-identity';
 
 export interface ParsedAgent {
+  agentId: string;
   filename: string;
   filePath: string;
   name: string;
@@ -21,9 +28,14 @@ export interface ParsedAgent {
 }
 
 /**
- * Parse an agent markdown file and extract frontmatter metadata
+ * Parse an agent markdown file and extract frontmatter metadata.
+ * Canonical agent IDs and display names come from agent-metadata.json when available.
  */
-export function parseAgentFile(filePath: string): ParsedAgent {
+export function parseAgentFile(
+  baseDir: string,
+  filePath: string,
+  metadataLookup: AgentMetadataLookup,
+): ParsedAgent {
   const content = fs.readFileSync(filePath, 'utf-8');
 
   // Extract frontmatter (YAML between --- delimiters)
@@ -34,15 +46,17 @@ export function parseAgentFile(filePath: string): ParsedAgent {
 
   try {
     const frontmatter = yaml.parse(frontmatterMatch[1]);
+    const identity = resolveAgentIdentity(baseDir, filePath, metadataLookup, frontmatter.name);
 
     // Extract role from markdown content (first ## heading after frontmatter)
     const roleMatch = content.match(/^##\s+(.+)$/m);
     const role = roleMatch ? roleMatch[1] : frontmatter.description || 'Agent';
 
     return {
+      agentId: identity.id,
       filename: path.basename(filePath),
       filePath,
-      name: frontmatter.name,
+      name: identity.name,
       description: frontmatter.description || role,
       mode: frontmatter.mode || 'subagent',
       temperature: frontmatter.temperature ?? 0.2,
@@ -138,7 +152,7 @@ export function agentsToNotionProperties(
       type: agentType,
       status: 'active',
       role: agent.description.substring(0, 100),
-      groupId: 'roninmemory',
+      groupId: DEFAULT_NOTION_GROUP_ID,
       skills,
       tokenBudget: agent.temperature === 0 ? 100000 : 200000,
     });
@@ -150,7 +164,7 @@ export function agentsToNotionProperties(
       Status: { select: { name: agentData.status } },
       Role: { rich_text: [{ text: { content: agentData.role } }] },
       'Group ID': { rich_text: [{ text: { content: agentData.groupId } }] },
-      Skills: { multi_select: agentData.skills?.map(s => ({ name: s })) || [] },
+      Skills: { multi_select: agentData.skills?.map((s: string) => ({ name: s })) || [] },
       'Token Budget': { number: agentData.tokenBudget },
       'USD Budget': { number: agentData.usdBudget },
       'Last Heartbeat': { date: null },
