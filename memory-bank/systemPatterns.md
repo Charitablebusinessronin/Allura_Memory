@@ -1,7 +1,51 @@
 # System Patterns
 
-> **Last Updated:** 2026-04-06
+> **Last Updated:** 2026-04-09
 > **Pattern Source:** `_bmad-output/planning-artifacts/architectural-brief.md`
+
+---
+
+## Surgical Team Logging Pattern
+
+**Status**: Validated 2026-04-09  
+**Applies To**: Allura Agent System (8-agent surgical team)
+
+### Observation
+Only Brooks logs architecture decisions; other agents appear silent in event logs.
+
+### Root Cause (By Design)
+Tool restrictions enforce role-based logging:
+
+| Agent | Role | Can Log? | Why Silent? |
+|-------|------|----------|-------------|
+| Oracle | Consultant | ❌ No | Read-only; architecture consultation only |
+| Librarian | Researcher | ❌ No | Read-only; external docs search |
+| Explore | Searcher | ❌ No | Read-only; codebase pattern discovery |
+| UX | Designer | ❌ No | Review-only; accessibility review |
+| Hephaestus | Implementer | ✅ Yes | Invoked by orchestrator; execution only |
+| Atlas | Conductor | ✅ Yes | Invoked by orchestrator; coordinates |
+| Prometheus | Planner | ✅ Yes | Invoked by orchestrator; plans |
+| Sisyphus | Orchestrator | ✅ Yes | **Should log delegations** |
+
+### Pattern
+When Sisyphus is invoked:
+1. Sisyphus logs `AGENT_DELEGATION_START`
+2. Specialists execute (may not log)
+3. Sisyphus logs `AGENT_DELEGATION_COMPLETE`
+
+### Current State
+Sisyphus hasn't been invoked in 19 days → direct mode (Brooks only) → expected silence.
+
+### Validation
+Invoke Sisyphus for next multi-agent task to verify chain:
+```
+/orchestrate <task>
+```
+
+### Implication
+**Silence ≠ Broken.** Silence = orchestrator not invoked. This is correct surgical team behavior.
+
+---
 
 ---
 
