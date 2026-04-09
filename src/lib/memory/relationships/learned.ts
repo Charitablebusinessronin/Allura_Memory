@@ -8,6 +8,7 @@
 
 import { memory } from "../writer";
 import type { MemoryLabel } from "../writer";
+import { resolveCanonicalAgentIdentity, canonicalizeAgentId } from "@/lib/agents/canonical-identity";
 
 /**
  * Agent learning input
@@ -44,21 +45,22 @@ export async function recordLearning(
   group_id: string
 ): Promise<void> {
   const mem = memory();
+  const canonicalAgent = resolveCanonicalAgentIdentity(learning.agentId);
 
   // Ensure agent node exists
   await mem.createEntity({
     label: "Agent",
     group_id,
     props: {
-      agent_id: learning.agentId,
-      name: learning.agentId.replace(/-/g, " "),
+      agent_id: canonicalAgent.id,
+      name: canonicalAgent.name,
       type: "AI Agent",
     },
   });
 
   // Create LEARNED relationship
   await mem.createRelationship({
-    fromId: learning.agentId,
+    fromId: canonicalAgent.id,
     fromLabel: "Agent",
     toId: learning.entityId,
     toLabel: learning.entityLabel,
@@ -124,6 +126,7 @@ export async function getAgentLearnings(
   context?: string;
 }>> {
   const mem = memory();
+  const canonicalAgentId = canonicalizeAgentId(agentId);
 
   const result = await mem.query<{
     entityId: string;
@@ -144,7 +147,7 @@ export async function getAgentLearnings(
       r.context AS context
     ORDER BY r.timestamp DESC
   `,
-    { agentId, groupId: group_id }
+    { agentId: canonicalAgentId, groupId: group_id }
   );
 
   return result;
@@ -212,6 +215,7 @@ export async function createLessonWithLearning(
   group_id: string
 ): Promise<{ lessonId: string }> {
   const mem = memory();
+  const canonicalAgentId = canonicalizeAgentId(agentId);
 
   // Create lesson
   const { node_id: lessonId } = await mem.createEntity({
@@ -227,7 +231,7 @@ export async function createLessonWithLearning(
   // Record learning
   await recordLearning(
     {
-      agentId,
+      agentId: canonicalAgentId,
       entityId: lessonId,
       entityLabel: "Lesson",
       relevanceScore: 0.8,

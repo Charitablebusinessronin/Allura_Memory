@@ -2,6 +2,43 @@
 
 > [!IMPORTANT]
 > This document provides guidelines for using AI assistance (e.g., GitHub Copilot) effectively within this repository. It captures the documentation patterns, required artifacts, and quality standards that every contributor — human or AI-assisted — must follow.
+> 
+> **AI-Assisted Documentation**
+> Portions of this document were drafted with the assistance of an AI language model.
+> Content has been reviewed against Brooksian architectural principles and should be kept in sync with source-of-truth docs.
+> When in doubt, defer to code, schemas, and team consensus.
+
+---
+
+## Architectural Philosophy (Brooksian Lens)
+
+Before generating any documentation with AI assistance, understand these principles from *The Mythical Man-Month*:
+
+### Conceptual Integrity Above All
+Documentation, like code, must have **one consistent vision**. A slightly inferior design applied consistently beats a patchwork of conflicting "best" ideas. AI can draft, but **one architect** (human) must own the conceptual integrity.
+
+### Separation of Architecture from Implementation
+- **Architecture** (the *what*) → Blueprint, Solution Architecture, Design docs
+- **Implementation** (the *how*) → Code, schemas, configurations
+
+AI should assist implementation docs, but **must not decide architecture alone**.
+
+### No Silver Bullet
+AI assistance addresses **accidental complexity** (typing, formatting, cross-referencing) — not **essential complexity** (what the system actually does, why it exists, what constraints govern it). 
+
+> "There is no single development, in either technology or management technique, which by itself promises even one order-of-magnitude improvement within a decade in productivity, reliability, or simplicity." — Frederick P. Brooks Jr.
+
+### The Surgical Team
+Not every contributor writes core architecture. Some are:
+- **Toolsmiths** → maintain templates, schemas, diagram generators
+- **Language lawyers** → naming conventions, style guides
+- **Testers** → validation scripts, completeness checkers
+- **Documenters** → cross-referencing, formatting
+
+The **architect decides what gets built**. The team executes how.
+
+### Plan to Throw One Away
+Your first AI-drafted document will be wrong. Design for revision. Expect to rewrite after human review.
 
 ---
 

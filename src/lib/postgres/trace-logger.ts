@@ -12,6 +12,7 @@ import type { Pool } from "pg";
 import { getPool } from "./connection";
 import { insertEvent, type EventInsert, type EventRecord } from "./queries/insert-trace";
 import { RuVixKernel } from "@/kernel/ruvix";
+import { canonicalizeAgentId } from "@/lib/agents/canonical-identity";
 import type { QueryTracesOptions, QueryTracesResult } from "./types";
 
 // Re-export types for backward compatibility
@@ -142,34 +143,40 @@ function validateTraceLog(trace: TraceLog): void {
  * @throws Error if kernel syscall fails
  */
 export async function logTrace(trace: TraceLog): Promise<TraceRecord> {
+  const canonicalAgentId = canonicalizeAgentId(trace.agent_id);
+  const canonicalTrace: TraceLog = {
+    ...trace,
+    agent_id: canonicalAgentId,
+  };
+
   // Validate required fields first
-  validateTraceLog(trace);
+  validateTraceLog(canonicalTrace);
 
   // Prepare trace data for kernel
   const traceData = {
-    table: "events",
-    data: {
-      agent_id: trace.agent_id,
-      trace_type: trace.trace_type,
-      content: trace.content,
-      confidence: trace.confidence,
-      evidence_ref: trace.evidence_ref,
-      workflow_id: trace.workflow_id,
-      step_id: trace.step_id,
-      parent_event_id: trace.parent_event_id,
-      metadata: trace.metadata,
-      outcome: trace.outcome,
-    },
-  };
+      table: "events",
+      data: {
+        agent_id: canonicalTrace.agent_id,
+        trace_type: canonicalTrace.trace_type,
+        content: canonicalTrace.content,
+        confidence: canonicalTrace.confidence,
+        evidence_ref: canonicalTrace.evidence_ref,
+        workflow_id: canonicalTrace.workflow_id,
+        step_id: canonicalTrace.step_id,
+        parent_event_id: canonicalTrace.parent_event_id,
+        metadata: canonicalTrace.metadata,
+        outcome: canonicalTrace.outcome,
+      },
+    };
 
   // Call kernel trace syscall with proof-of-intent
   const result = await RuVixKernel.syscall("trace", traceData, {
-    actor: trace.agent_id,
-    group_id: trace.group_id,
+    actor: canonicalTrace.agent_id,
+    group_id: canonicalTrace.group_id,
     permission_tier: "plugin",
     audit_context: {
-      trace_type: trace.trace_type,
-      content_preview: trace.content.slice(0, 100), // First 100 chars for audit
+      trace_type: canonicalTrace.trace_type,
+      content_preview: canonicalTrace.content.slice(0, 100), // First 100 chars for audit
     },
   });
 
@@ -183,7 +190,7 @@ export async function logTrace(trace: TraceLog): Promise<TraceRecord> {
   // Build structured metadata with confidence embedded
   const metadata: Record<string, unknown> = {
     ...trace.metadata,
-    confidence: trace.confidence,
+    confidence: canonicalTrace.confidence,
     logged_at: new Date().toISOString(),
     agent_version: "1.0.0",
     kernel_audit_id: result.auditId, // Track kernel audit ID
@@ -192,22 +199,22 @@ export async function logTrace(trace: TraceLog): Promise<TraceRecord> {
   // Build outcome with content
   const outcome: Record<string, unknown> = {
     ...trace.outcome,
-    content: trace.content,
+    content: canonicalTrace.content,
   };
 
   // Create the event insert payload
   const eventInsert: EventInsert = {
-    group_id: trace.group_id,
+    group_id: canonicalTrace.group_id,
     event_type,
-    agent_id: trace.agent_id,
-    workflow_id: trace.workflow_id,
-    step_id: trace.step_id,
-    parent_event_id: trace.parent_event_id,
+    agent_id: canonicalTrace.agent_id,
+    workflow_id: canonicalTrace.workflow_id,
+    step_id: canonicalTrace.step_id,
+    parent_event_id: canonicalTrace.parent_event_id,
     metadata,
     outcome,
     status: "completed",
-    confidence: trace.confidence,
-    evidence_ref: trace.evidence_ref,
+    confidence: canonicalTrace.confidence,
+    evidence_ref: canonicalTrace.evidence_ref,
   };
 
   // Insert into PostgreSQL
@@ -257,6 +264,8 @@ export async function getTracesByAgent(
 
   const pool = getPool();
 
+  const canonicalAgentId = canonicalizeAgentId(agentId);
+
   const result = await pool.query<TraceRecord>(
     `
     SELECT 
@@ -278,7 +287,7 @@ export async function getTracesByAgent(
     ORDER BY created_at DESC
     LIMIT $3
     `,
-    [agentId, group_id, limit]
+    [canonicalAgentId, group_id, limit]
   );
 
   return result.rows;
@@ -439,15 +448,16 @@ export async function queryTraces(options: QueryTracesOptions): Promise<QueryTra
   }
 
   const pool = getPool();
+  const canonicalAgentId = agent_id ? canonicalizeAgentId(agent_id) : undefined;
 
   // Build WHERE clause conditions
   const conditions: string[] = ["group_id = $1"];
   const values: (string | number | Date)[] = [group_id];
   let paramIndex = 2;
 
-  if (agent_id) {
+  if (canonicalAgentId) {
     conditions.push(`agent_id = $${paramIndex}`);
-    values.push(agent_id);
+    values.push(canonicalAgentId);
     paramIndex++;
   }
 
@@ -521,4 +531,3 @@ export async function queryTraces(options: QueryTracesOptions): Promise<QueryTra
     hasMore: offset + limit < total,
   };
 }
-

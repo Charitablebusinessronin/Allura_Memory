@@ -3,7 +3,9 @@
 
 import { z } from 'zod';
 
-const GROUP_ID = 'roninmemory';
+import { DEFAULT_NOTION_GROUP_ID } from './agent-identity';
+
+const GROUP_ID = DEFAULT_NOTION_GROUP_ID;
 
 // Database IDs from Session 1
 const DATABASE_IDS = {
@@ -74,6 +76,9 @@ export const ChangeSchema = z.object({
 
 import { setTimeout } from 'timers/promises';
 
+const NOTION_API_BASE_URL = 'https://api.notion.com/v1';
+const NOTION_API_VERSION = '2022-06-28';
+
 /**
  * Retry wrapper with exponential backoff
  */
@@ -98,32 +103,66 @@ async function withRetry<T>(
 }
 
 // Type definitions for MCP_DOCKER responses
-interface NotionCreateResponse {
-  results?: Array<{ id: string }>;
+interface NotionPageResponse {
+  id: string;
 }
 
-interface NotionQueryResponse {
+interface NotionDatabaseQueryResponse {
   results?: Array<Record<string, unknown>>;
 }
 
-interface NotionFetchResponse {
-  database?: { schema: Record<string, unknown> };
-  data_sources?: Array<{ id: string; url: string }>;
+interface NotionDatabaseResponse {
+  properties?: Record<string, unknown>;
+  url?: string;
 }
 
-// Declare global MCP_DOCKER tools (provided by runtime)
-declare const MCP_DOCKER_notion_create_pages: (args: {
-  parent: { database_id: string };
-  pages: Array<{ properties: Record<string, unknown> }>;
-}) => Promise<NotionCreateResponse>;
+function getNotionApiKey(): string {
+  const apiKey = process.env.NOTION_API_KEY;
 
-declare const MCP_DOCKER_notion_query_database_view: (args: {
-  view_url: string;
-}) => Promise<NotionQueryResponse>;
+  if (!apiKey) {
+    throw new Error('NOTION_API_KEY is required for hydration');
+  }
 
-declare const MCP_DOCKER_notion_fetch: (args: {
-  id: string;
-}) => Promise<NotionFetchResponse>;
+  return apiKey;
+}
+
+function getNotionHeaders(): Record<string, string> {
+  return {
+    'Authorization': `Bearer ${getNotionApiKey()}`,
+    'Notion-Version': NOTION_API_VERSION,
+    'Content-Type': 'application/json',
+  };
+}
+
+async function notionRequest<T>(
+  path: string,
+  init: RequestInit,
+): Promise<T> {
+  const response = await fetch(`${NOTION_API_BASE_URL}${path}`, {
+    ...init,
+    headers: {
+      ...getNotionHeaders(),
+      ...(init.headers ?? {}),
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Notion request failed (${response.status}): ${errorText}`);
+  }
+
+  return response.json() as Promise<T>;
+}
+
+function extractDatabaseIdFromViewUrl(viewUrl: string): string {
+  const match = viewUrl.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+
+  if (!match) {
+    throw new Error(`Unable to extract database ID from view URL: ${viewUrl}`);
+  }
+
+  return match[0];
+}
 
 /**
  * Create a Notion page in a database using MCP_DOCKER_notion-create-pages
@@ -133,14 +172,16 @@ export async function createNotionPage(
   properties: Record<string, unknown>
 ): Promise<string> {
   const response = await withRetry(() =>
-    MCP_DOCKER_notion_create_pages({
-      parent: { database_id: databaseId },
-      pages: [{ properties }],
+    notionRequest<NotionPageResponse>('/pages', {
+      method: 'POST',
+      body: JSON.stringify({
+        parent: { database_id: databaseId },
+        properties,
+      }),
     })
   );
 
-  // Extract page ID from response
-  const pageId = response.results?.[0]?.id;
+  const pageId = response.id;
   if (!pageId) {
     throw new Error('Failed to create Notion page');
   }
@@ -153,8 +194,12 @@ export async function createNotionPage(
 export async function queryNotionDatabase(
   viewUrl: string
 ): Promise<Array<Record<string, unknown>>> {
+  const databaseId = extractDatabaseIdFromViewUrl(viewUrl);
   const response = await withRetry(() =>
-    MCP_DOCKER_notion_query_database_view({ view_url: viewUrl })
+    notionRequest<NotionDatabaseQueryResponse>(`/databases/${databaseId}/query`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    })
   );
   return response.results || [];
 }
@@ -166,11 +211,15 @@ export async function fetchNotionDatabase(
   databaseId: string
 ): Promise<{ schema: Record<string, unknown>; dataSources: Array<{ id: string; url: string }> }> {
   const response = await withRetry(() =>
-    MCP_DOCKER_notion_fetch({ id: databaseId })
+    notionRequest<NotionDatabaseResponse>(`/databases/${databaseId}`, {
+      method: 'GET',
+    })
   );
   return {
-    schema: response.database?.schema || {},
-    dataSources: response.data_sources || [],
+    schema: response.properties || {},
+    dataSources: response.url
+      ? [{ id: databaseId, url: response.url }]
+      : [],
   };
 }
 

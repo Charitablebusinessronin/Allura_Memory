@@ -255,7 +255,107 @@ sequenceDiagram
 
 - [BLUEPRINT.md](./BLUEPRINT.md) — Core data model, API surface, execution rules
 - [DATA-DICTIONARY.md](./DATA-DICTIONARY.md) — Field-level definitions
-- [RISKS-AND-DECISIONS.md](./RISKS-AND-DECISIONS.md) — AD-## and RK-## entries
+- [RISKS-AND-DECISIONS.md](./RISKS-AND-DISIONS.md) — AD-## and RK-## entries
 - `src/mcp/memory-server.ts` — MCP implementation
 - `src/lib/memory/` — Memory engine
 - `src/lib/dedup/` — Deduplication logic
+
+---
+
+## 8. Integration Plan
+
+### 8.1 Deployment Scenarios
+
+#### Scenario 1: Local Development (Stdio)
+
+```bash
+# Terminal 1: API server
+bun run api
+
+# Terminal 2: Claude Code
+claude mcp add --transport stdio bun run src/mcp/allura-server.ts
+
+# Terminal 3: OpenClaw
+openclaw gateway restart
+# (loads allura plugin from config)
+```
+
+#### Scenario 2: Remote Deployment (HTTP + OAuth)
+
+```bash
+# Cloud: Allura MCP Server
+bun run api --port 3100 --auth-enabled
+
+# Claude Code config
+{
+  "mcpServers": {
+    "allura": {
+      "command": "node",
+      "args": ["allura-mcp-client.js"],
+      "env": {
+        "ALLURA_MCP_URL": "https://allura-mcp.example.com",
+        "ALLURA_API_KEY": "..."
+      }
+    }
+  }
+}
+```
+
+#### Scenario 3: Containerized (Docker)
+
+```yaml
+# docker-compose.yml
+services:
+  allura-mcp:
+    build: .
+    command: bun run api
+    ports:
+      - "3100:3100"
+    environment:
+      - DATABASE_URL=...
+      - NEO4J_URI=...
+      - AUTH_ENABLED=true
+
+  claude-code:
+    # Your development container
+    environment:
+      - ALLURA_MCP_URL=http://allura-mcp:3100/mcp
+```
+
+### 8.2 Plugin Wrappers
+
+**One MCP Server. Three Optional Wrappers.**
+
+```
+Allura MCP Server (src/mcp/allura-server.ts)
+├─ Transport: stdio (local) + HTTP (remote)
+├─ Tools: memory_retrieve, memory_write, memory_propose_insight
+└─ Auth: JWT + API key validation
+    ↓
+    ├─ Claude Code Plugin (~50 lines)
+    │   └─ Registers MCP server in .mcp.json
+    │
+    ├─ OpenCode Plugin (~80 lines)
+    │   └─ Auto-registers in opencode.json
+    │   └─ NPM: npm install @allura/opencode-plugin
+    │
+    └─ OpenClaw Plugin (~100 lines)
+        └─ Gateway plugin entry point
+```
+
+### 8.3 Implementation Phases
+
+| Phase | Component | Status |
+|-------|-----------|--------|
+| 1 | MCP Server (Core) — Base server with stdio transport | Ready |
+| 2 | HTTP Wrapper — Express wrapper for remote deployment | Ready |
+| 3 | OpenCode Plugin — Auto-register MCP server | Future |
+| 4 | Claude Code Plugin — Marketplace integration | Future |
+| 5 | OpenClaw Plugin — Gateway integration | Future |
+
+### 8.4 Success Metrics
+
+- ✓ MCP server handles 100+ concurrent queries
+- ✓ Plugin installs in <30 seconds
+- ✓ Auth (JWT/OAuth) works end-to-end
+- ✓ All three tools can retrieve, write, and propose insights

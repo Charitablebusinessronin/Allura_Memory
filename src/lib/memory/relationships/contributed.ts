@@ -8,6 +8,7 @@
 
 import { memory } from "../writer";
 import type { MemoryLabel, RelationshipType } from "../writer";
+import { resolveCanonicalAgentIdentity, canonicalizeAgentId } from "@/lib/agents/canonical-identity";
 
 /**
  * Agent contribution input
@@ -44,21 +45,22 @@ export async function recordContribution(
   group_id: string
 ): Promise<void> {
   const mem = memory();
+  const canonicalAgent = resolveCanonicalAgentIdentity(contribution.agentId);
 
   // Ensure agent node exists
   await mem.createEntity({
     label: "Agent",
     group_id,
     props: {
-      agent_id: contribution.agentId,
-      name: contribution.agentId.replace(/-/g, " "),
+      agent_id: canonicalAgent.id,
+      name: canonicalAgent.name,
       type: "AI Agent",
     },
   });
 
   // Create CONTRIBUTED relationship
   await mem.createRelationship({
-    fromId: contribution.agentId,
+    fromId: canonicalAgent.id,
     fromLabel: "Agent",
     toId: contribution.entityId,
     toLabel: contribution.entityLabel,
@@ -123,6 +125,7 @@ export async function getAgentContributions(
   result: string;
 }>> {
   const mem = memory();
+  const canonicalAgentId = canonicalizeAgentId(agentId);
 
   const result = await mem.query<{
     entityId: string;
@@ -141,7 +144,7 @@ export async function getAgentContributions(
       r.result AS result
     ORDER BY r.on DESC
   `,
-    { agentId, groupId: group_id }
+    { agentId: canonicalAgentId, groupId: group_id }
   );
 
   return result;
@@ -208,6 +211,7 @@ export async function createTaskWithContribution(
   group_id: string
 ): Promise<{ taskId: string }> {
   const mem = memory();
+  const canonicalAgentId = canonicalizeAgentId(agentId);
 
   // Create task
   const { node_id: taskId } = await mem.createEntity({
@@ -223,7 +227,7 @@ export async function createTaskWithContribution(
   // Record contribution
   await recordContribution(
     {
-      agentId,
+      agentId: canonicalAgentId,
       entityId: taskId,
       entityLabel: "Task",
       result: "created",

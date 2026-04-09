@@ -1,5 +1,12 @@
+/**
+ * Kernel-backed Trace API
+ * 
+ * Replaces the direct PostgreSQL implementation with RuVix kernel syscalls.
+ * All trace operations now flow through the kernel for proof-gated mutation.
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { queryTraces, logTraceToPostgres } from '@/lib/postgres/traces';
+import { logTrace, TraceLog } from '@/lib/postgres/trace-logger';
 import { validateGroupId, GroupIdValidationError } from '@/lib/validation/group-id';
 
 /**
@@ -43,6 +50,9 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0');
     const type = searchParams.get('type');
 
+    // TEMP: Still using direct query for GET (kernel-backed query not implemented)
+    // TODO: Add kernel-backed query syscall
+    const { queryTraces } = await import('@/lib/postgres/traces');
     const traces = await queryTraces({
       group_id,
       limit,
@@ -63,18 +73,19 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/memory/traces
  * 
- * Log a trace with group_id enforcement.
+ * Log a trace with RuVix kernel proof-gated mutation.
  * Body:
  * - group_id: Required tenant identifier (format: allura-*)
  * - type: Trace type (memory | decision | action | prompt)
  * - content: Trace content (required)
  * - agent: Agent identifier (default: 'api')
  * - metadata: Optional metadata object
+ * - confidence: Confidence score (0.0-1.0, default: 0.5)
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { group_id, type, content, agent, metadata } = body;
+    const { group_id, type, content, agent, metadata, confidence = 0.5 } = body;
 
     // Validate group_id is provided
     if (!group_id) {
@@ -105,19 +116,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const trace = await logTraceToPostgres({
+    // Build kernel-backed trace log
+    const traceLog: TraceLog = {
+      agent_id: agent || 'api',
       group_id: validatedGroupId,
-      type: type || 'memory',
+      trace_type: type || 'memory',
       content,
-      agent: agent || 'api',
-      metadata: metadata || {}
-    });
+      confidence,
+      metadata: metadata || {},
+    };
+
+    // Log through kernel (proof-gated)
+    const trace = await logTrace(traceLog);
 
     return NextResponse.json({ success: true, trace });
   } catch (error) {
-    console.error('Failed to log trace:', error);
+    console.error('Failed to log trace via kernel:', error);
+    
+    // Check if it's a kernel initialization error
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    if (errorMessage.includes('RUVIX_KERNEL_SECRET') || errorMessage.includes('kernel')) {
+      return NextResponse.json(
+        { 
+          error: 'Kernel not initialized', 
+          details: 'RUVIX_KERNEL_SECRET environment variable must be set',
+          hint: 'Add RUVIX_KERNEL_SECRET to your .env.local file'
+        },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to log trace' },
+      { error: 'Failed to log trace', details: errorMessage },
       { status: 500 }
     );
   }

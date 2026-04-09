@@ -5,7 +5,7 @@
   "agents": {
     "openagent": {
       "id": "openagent",
-      "name": "OpenAgent",
+      "name": "Frederick P. Brooks Jr.",
       "category": "core",
       "type": "agent",
       "version": "1.0.0",
