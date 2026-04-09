@@ -1,6 +1,6 @@
 ---
 description: "Session finalization - persist a durable session reflection to Neo4j memory"
-allowed-tools: ["mcp__MCP_DOCKER__notion-fetch"]
+allowed-tools: ["mcp__MCP_DOCKER__write_neo4j_cypher", "mcp__MCP_DOCKER__read_neo4j_cypher", "mcp__MCP_DOCKER__insert_data", "mcp__MCP_DOCKER__execute_sql"]
 ---
 
 # Session End Protocol
@@ -11,42 +11,48 @@ Persists a session reflection entity to Neo4j and verifies write success.
 
 ## Required Steps
 
-### Step 1: Create Reflection Entity
+### Step 1: Create Reflection Entity in Neo4j
 
 ```javascript
-mcp__MCP_DOCKER__create_entities({
-  entities: [{
-    name: "Session Reflection " + new Date().toISOString(),
-    type: "Reflection",
-    observations: [
-      "group_id: allura-roninmemory",
-      "agent_id: claude-code",
-      "event_type: session_complete",
-      "status: completed",
-      "timestamp: " + new Date().toISOString(),
-      "summary: $ARGUMENTS"
-    ]
-  }]
+mcp__MCP_DOCKER__write_neo4j_cypher({
+  query: `
+    CREATE (r:Reflection {
+      reflection_id: 'refl_' + randomUUID(),
+      name: 'Session Reflection ' + datetime(),
+      group_id: 'allura-roninmemory',
+      agent_id: 'brooks',
+      event_type: 'session_complete',
+      status: 'completed',
+      timestamp: datetime(),
+      summary: $summary
+    })
+    RETURN r
+  `,
+  parameters: { summary: "$ARGUMENTS" }
 })
 ```
 
-### Step 2: Link to Memory Master
+### Step 2: Log to PostgreSQL (Append-Only)
 
 ```javascript
-mcp__MCP_DOCKER__create_relations({
-  relations: [{
-    source: "Session Reflection " + new Date().toISOString(),
-    target: "Memory Master",
-    relationType: "PERFORMED_BY"
-  }]
+mcp__MCP_DOCKER__insert_data({
+  table_name: "events",
+  columns: "event_type, group_id, agent_id, status, metadata",
+  values: "'SESSION_COMPLETE', 'allura-roninmemory', 'brooks', 'completed', '{\"summary\": \"$ARGUMENTS\"}'"
 })
 ```
 
 ### Step 3: Verify Write (Read Back)
 
 ```javascript
-mcp__MCP_DOCKER__search_memories({ query: "Session Reflection" })
+mcp__MCP_DOCKER__execute_sql({
+  sql_query: "SELECT * FROM events WHERE event_type = 'SESSION_COMPLETE' ORDER BY created_at DESC LIMIT 1"
+})
 ```
+
+---
+
+**Invoke with:** `/end-session <summary>`
 
 Confirm the new entity appears in results.
 

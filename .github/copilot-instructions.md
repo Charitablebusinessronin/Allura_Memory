@@ -1,53 +1,83 @@
-# Copilot Memory Bank
+# GitHub Copilot Instructions
 
-This project uses a **Memory Bank** to provide persistent context for AI coding agents. The Memory Bank is a structured, markdown-based documentation system that acts as long-term memory across sessions.
+> [!IMPORTANT]
+> This file configures GitHub Copilot behavior in this repository.
 
-## How It Works
+## AI-Assisted Documentation Policy
 
-1. **Read first**: Always read the Memory Bank files at the start of each session
-2. **Update regularly**: Update `activeContext.md` and `progress.md` as work progresses
-3. **Keep current**: Update `systemPatterns.md` when architectural decisions are made
+All code and documentation generated with AI assistance (GitHub Copilot, Claude, etc.) must:
 
-## Memory Bank Files
+1. **Include disclosure block** (see AI-GUIDELINES.md)
+   - Added at top of file after title
+   - Removed only after full human review
 
-| File | Purpose | When to Read/Update |
-|------|---------|---------------------|
-| `memory-bank/projectbrief.md` | Overall scope and goals | Start of project, major changes |
-| `memory-bank/productContext.md` | UX, users, problems being solved | Understanding requirements |
-| `memory-bank/systemPatterns.md` | Architecture, patterns, decisions | Before making design choices |
-| `memory-bank/techContext.md` | Stack, dependencies, constraints | Before implementing |
-| `memory-bank/activeContext.md` | Current task, working notes | Start of each session |
-| `memory-bank/progress.md` | Status log, completed items | End of each session |
+2. **Follow Brooksian principles**
+   - AI assists implementation, not architecture
+   - One human architect owns conceptual integrity
+   - Never let AI decide system design alone
 
-## Project Overview
+3. **Validate against source of truth**
+   - Code is authoritative (not documentation)
+   - JSON schemas are definitive
+   - Team consensus overrides AI output
 
-The `memory` project is building a **Unified AI Engineering Brain** - a goal-directed, closed-loop control system that:
+## When Copilot Should Help
 
-1. **Separates noise from signal**: Raw traces in PostgreSQL, curated knowledge in Neo4j
-2. **Enables audit reconstruction**: 6-12 month decision trails with ADR 5-layer framework
-3. **Implements HITL governance**: Human approval required for behavior-changing knowledge
-4. **Provides dual-context queries**: Project-specific + global best practices together
+✅ Drafting initial document structure
+✅ Generating field tables from schemas
+✅ Cross-referencing existing documentation
+✅ Formatting and spell-checking
+✅ Naming conventions (following established patterns)
 
-## Architecture Snapshot
+## When Copilot Should NOT Decide
 
-```
-AI Reasoning (OpenClaw)
-    ↓ Traces logged to
-Raw Trace Layer (PostgreSQL)
-    ↓ Promotion Gate (HITL)
-Promoted Knowledge (Neo4j)
-    ↓ Mirroring
-Human Workspace (Notion)
-```
+❌ Architecture decisions (APIs, data models, system design)
+❌ Security constraints or threat models
+❌ Performance trade-offs
+❌ Governance rules (HITL, curator approval gates)
+❌ Naming conventions (must match existing patterns)
 
-## Current Sprint
+## Required Artifacts (Before Coding)
 
-**Epic 1: Persistent Knowledge Capture and Tenant-Aware Memory**
+- **BLUEPRINT.md** — Service purpose, concepts, requirements
+- **SOLUTION-ARCHITECTURE.md** — Design decisions, trade-offs
+- **DESIGN-*.md** — Component-level designs
+- **REQUIREMENTS-MATRIX.md** — B# → code mapping
+- **DATA-DICTIONARY.md** — All entities and fields
 
-| Story | Status |
-|-------|--------|
-| 1.1 Record Raw Execution Traces | `ready-for-dev` |
-| 1.2-1.7 | `backlog` |
+See `AI-GUIDELINES.md` for complete guidance.
+
+## Review & Sign-Off
+
+Every AI-assisted document requires:
+1. PR review (human eyes on output)
+2. Architectural sign-off (architect approves design intent)
+3. Disclosure removal (only after sign-off)
+
+Copilot output is a draft, not a final specification.
+
+## Agent Harness Integration
+
+This repository uses three AI harnesses:
+- **Claude Code** (primary) — `.claude/` configuration
+- **GitHub Copilot** — This file
+- **OpenCode** — `.opencode/` configuration
+
+All harnesses must reference AI-GUIDELINES.md and enforce disclosure requirements.
+
+## Memory Bank
+
+This project uses a **Memory Bank** for persistent context. See memory-bank/ for details.
+
+## Brooks as Architect
+
+Frederick Brooks (the persona) serves as the architectural authority:
+- Reviews all AI-assisted architecture decisions
+- Maintains conceptual integrity across harnesses
+- Approves removal of disclosure blocks
+- Validates against Brooksian principles
+
+When in doubt, defer to Brooks.
 
 ## Key Patterns to Follow
 

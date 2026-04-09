@@ -263,7 +263,81 @@ If 3+ fixes failed → Question architecture (Phase 4.5)
 
 **Governance Rule:** "Allura governs. Runtimes execute. Curators promote."
 
-## 17) Quick Verification
+## 17) MCP Docker Toolkit — Tool Discovery & Usage
+
+**NEVER use `docker exec` for database operations. ALWAYS use MCP_DOCKER tools.**
+
+### How to discover and add tools
+
+```
+# Step 1 — search the Docker MCP catalog (300+ servers)
+mcp-find("keyword")      → returns: name, description, required_secrets
+
+# Step 2 — add it (pulls image, registers tools in session immediately)
+mcp-add("server-name")   → tools surface as mcp__MCP_DOCKER__<tool_name>
+
+# No required_secrets → add immediately
+# Has required_secrets → ensure env vars are set first, then add
+```
+
+### Active tool stack (already added — use directly)
+
+**Web research:**
+| Tool | When to use |
+|------|-------------|
+| `mcp__MCP_DOCKER__tavily_search` | Fast current web search |
+| `mcp__MCP_DOCKER__tavily_research` | Deep multi-source research |
+| `mcp__MCP_DOCKER__tavily_crawl` | Crawl a site from root URL |
+| `mcp__MCP_DOCKER__tavily_extract` | Extract content from specific URL |
+| `mcp__MCP_DOCKER__web_search_exa` | Neural/semantic search |
+
+**Browser automation (HyperBrowser):**
+| Tool | When to use |
+|------|-------------|
+| `mcp__MCP_DOCKER__scrape_webpage` | Single page → markdown/html/links/screenshot |
+| `mcp__MCP_DOCKER__crawl_webpages` | Multi-page site crawl |
+| `mcp__MCP_DOCKER__extract_structured_data` | Structured JSON from page via schema |
+| `mcp__MCP_DOCKER__browser_use_agent` | Fast explicit browser tasks (cheapest) |
+| `mcp__MCP_DOCKER__claude_computer_use_agent` | Complex reasoning in cloud browser |
+| `mcp__MCP_DOCKER__openai_computer_use_agent` | General browser tasks via GPT |
+| `mcp__MCP_DOCKER__search_with_bing` | Bing search via real browser |
+
+**Live docs (Context7):**
+| Tool | When to use |
+|------|-------------|
+| `mcp__MCP_DOCKER__resolve-library-id` | Look up library → get Context7 ID |
+| `mcp__MCP_DOCKER__get-library-docs` | Fetch live docs for any library/version |
+
+**Database (Allura Brain):**
+| Tool | When to use |
+|------|-------------|
+| `mcp__MCP_DOCKER__query_database` | Natural language SQL (fast reads) |
+| `mcp__MCP_DOCKER__execute_sql` | Raw SQL (precise reads) |
+| `mcp__MCP_DOCKER__insert_data` | Append events — NEVER UPDATE/DELETE |
+| `mcp__MCP_DOCKER__read_neo4j_cypher` | Neo4j reads |
+| `mcp__MCP_DOCKER__write_neo4j_cypher` | Neo4j writes (SUPERSEDES pattern only) |
+
+### Tool selection guide
+
+```
+Need web info?
+  quick answer        → tavily_search
+  deep research       → tavily_research
+  specific page       → tavily_extract or scrape_webpage
+  neural/semantic     → web_search_exa
+  JS-heavy site       → scrape_webpage (HyperBrowser renders JS)
+  automate browser    → browser_use_agent (cheap) or claude_computer_use_agent (smart)
+
+Need library docs?
+  → resolve-library-id → get-library-docs
+
+Need DB?
+  read                → query_database (NL) or execute_sql (SQL)
+  write event         → insert_data (append-only, never mutate)
+  knowledge graph     → read/write_neo4j_cypher
+```
+
+## 18) Quick Verification
 
 ```bash
 docker exec knowledge-postgres pg_isready -U ronin4life -d memory

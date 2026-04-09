@@ -23,8 +23,24 @@
 | Oracle | Consultant | `@oracle` | Read-only architecture review |
 | Librarian | Toolsmith | `@librarian` | Documentation search, external libs |
 | Explore | Searcher | `@explore` | Codebase patterns, test coverage |
+| **Scout** | **Brain Searcher** | **`@scout`** | **Memory retrieval (Neo4j + Postgres)** |
 | Prometheus | Planner | `@prometheus` | Strategic planning, interview-mode |
 | UX | Designer | `@ux` | Accessibility-first design, user flows |
+
+**Scout Query Patterns:**
+```bash
+# Search for ADRs related to authentication
+/scout "What ADRs exist for authentication?"
+
+# Find past decisions about database schema
+/scout "Show me all database schema decisions"
+
+# Check for recurring failure patterns
+/scout "What patterns keep failing?"
+
+# Trace who made a specific decision
+/scout "Who decided on the group_id enforcement?"
+```
 
 ---
 

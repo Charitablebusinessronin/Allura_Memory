@@ -1,0 +1,8 @@
+{
+  "name": "cerf",
+  "persona": "Vint Cerf",
+  "role": "Context Manager / State Coordinator",
+  "model": "opencode/glm-5",
+  "instructions": ".opencode/agent/subagents/cerf.md",
+  "description": "Maintains session state, cross-agent context, protocol handoffs. Father of the Internet."
+}

@@ -47,6 +47,169 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
+// WhatsApp webhook verification token
+const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || "test_verify_token";
+
+// Store received messages for testing
+const receivedMessages: Array<{
+  id: string;
+  from: string;
+  text: string;
+  timestamp: string;
+  processed: boolean;
+}> = [];
+
+// WhatsApp webhook verification (Meta requires this)
+async function verifyWhatsAppWebhook(query: Record<string, unknown>): Promise<Response> {
+  const mode = query["hub.mode"] as string;
+  const token = query["hub.verify_token"] as string;
+  const challenge = query["hub.challenge"] as string;
+
+  if (mode === "subscribe" && token === WHATSAPP_VERIFY_TOKEN) {
+    console.log(`✅ WhatsApp webhook verified`);
+    return {
+      status: 200,
+      headers: { "Content-Type": "text/plain", ...corsHeaders },
+      body: challenge,
+    };
+  }
+
+  console.warn(`❌ WhatsApp webhook verification failed`);
+  return {
+    status: 403,
+    headers: { "Content-Type": "application/json", ...corsHeaders },
+    body: JSON.stringify({ error: "Verification failed" }),
+  };
+}
+
+// Process incoming WhatsApp message
+async function processWhatsAppMessage(body: unknown): Promise<Response> {
+  try {
+    const data = body as {
+      object?: string;
+      entry?: Array<{
+        id: string;
+        changes: Array<{
+          value: {
+            messaging_product: string;
+            metadata: { display_phone_number: string; phone_number_id: string };
+            contacts?: Array<{ wa_id: string; profile: { name: string } }>;
+            messages?: Array<{
+              id: string;
+              from: string;
+              timestamp: string;
+              type: string;
+              text?: { body: string };
+            }>;
+          };
+        }>;
+      }>;
+    };
+
+    if (data.object !== "whatsapp_business_api") {
+      return {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+        body: JSON.stringify({ error: "Invalid object type" }),
+      };
+    }
+
+    // Process each entry
+    for (const entry of data.entry || []) {
+      for (const change of entry.changes || []) {
+        const value = change.value;
+        
+        if (value.messages) {
+          for (const message of value.messages) {
+            if (message.type === "text" && message.text) {
+              const msg = {
+                id: message.id,
+                from: message.from,
+                text: message.text.body,
+                timestamp: message.timestamp,
+                processed: false,
+              };
+              
+              receivedMessages.push(msg);
+              console.log(`📱 WhatsApp message received from ${message.from}: ${message.text.body}`);
+              
+              // TODO: Route to agent system
+              // For now, just acknowledge receipt
+              msg.processed = true;
+            }
+          }
+        }
+      }
+    }
+
+    return {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+      body: JSON.stringify({ status: "received" }),
+    };
+  } catch (error) {
+    console.error("Error processing WhatsApp message:", error);
+    return {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+      body: JSON.stringify({ error: "Internal server error" }),
+    };
+  }
+}
+
+// Get received messages (for testing)
+async function getReceivedMessages(): Promise<Response> {
+  return {
+    status: 200,
+    headers: { "Content-Type": "application/json", ...corsHeaders },
+    body: JSON.stringify({
+      messages: receivedMessages,
+      count: receivedMessages.length,
+    }),
+  };
+}
+
+// Send test message (simulates receiving a message)
+async function sendTestMessage(body: unknown): Promise<Response> {
+  try {
+    const { from, text } = body as { from?: string; text?: string };
+    
+    if (!from || !text) {
+      return {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+        body: JSON.stringify({ error: "Missing 'from' or 'text' field" }),
+      };
+    }
+
+    const msg = {
+      id: `test_${Date.now()}`,
+      from,
+      text,
+      timestamp: Date.now().toString(),
+      processed: true,
+    };
+    
+    receivedMessages.push(msg);
+    console.log(`🧪 Test message received from ${from}: ${text}`);
+
+    return {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+      body: JSON.stringify({ 
+        status: "test message received",
+        message: msg,
+      }),
+    };
+  } catch (error) {
+    return {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+      body: JSON.stringify({ error: "Failed to process test message" }),
+    };
+  }
+}
+
 // Health check endpoint
 async function healthCheck(): Promise<Response> {
   return {
@@ -147,6 +310,26 @@ async function handleRequest(req: Request): Promise<Response> {
     return executeTool(tool, args);
   }
 
+  // WhatsApp webhook verification (GET)
+  if (path === "/webhook/whatsapp" && req.method === "GET") {
+    return verifyWhatsAppWebhook(url.query as Record<string, unknown>);
+  }
+
+  // WhatsApp webhook message receiver (POST)
+  if (path === "/webhook/whatsapp" && req.method === "POST") {
+    return processWhatsAppMessage(req.body);
+  }
+
+  // Get received messages (for testing)
+  if (path === "/webhook/whatsapp/messages" && req.method === "GET") {
+    return getReceivedMessages();
+  }
+
+  // Send test message (simulates receiving a message)
+  if (path === "/webhook/whatsapp/test" && req.method === "POST") {
+    return sendTestMessage(req.body);
+  }
+
   // 404
   return {
     status: 404,
@@ -193,6 +376,9 @@ server.listen(PORT, () => {
   console.log(`🚀 OpenClaw Gateway running on http://localhost:${PORT}`);
   console.log(`📡 Health check: http://localhost:${PORT}/health`);
   console.log(`🔧 Tools endpoint: http://localhost:${PORT}/tools`);
+  console.log(`📱 WhatsApp webhook: http://localhost:${PORT}/webhook/whatsapp`);
+  console.log(`🧪 WhatsApp test: POST http://localhost:${PORT}/webhook/whatsapp/test`);
+  console.log(`📨 WhatsApp messages: GET http://localhost:${PORT}/webhook/whatsapp/messages`);
   console.log(`\nAvailable tools:`);
   Object.keys(tools).forEach((name) => {
     console.log(`  - ${name}`);

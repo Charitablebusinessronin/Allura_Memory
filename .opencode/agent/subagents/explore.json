@@ -1,0 +1,8 @@
+{
+  "name": "explore",
+  "persona": "Peter Bourgon",
+  "role": "Codebase Grep",
+  "model": "gemma4",
+  "instructions": ".opencode/agent/subagents/explore.md",
+  "description": "Fast codebase search and pattern discovery."
+}

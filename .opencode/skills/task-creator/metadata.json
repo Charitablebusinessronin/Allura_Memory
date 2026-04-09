@@ -1,0 +1,8 @@
+{
+  "name": "task-creator",
+  "version": "1.0.0",
+  "description": "Create structured tasks with Allura Brain integration",
+  "author": "Allura Memory",
+  "tags": ["tasks", "planning", "memory"],
+  "category": "planning"
+}
