@@ -1,170 +1,99 @@
-# Active Context
+# Active Context — Brooks Architect Persona
 
-> **Last Updated:** 2026-04-07
-> **Status:** Sovereign Memory MVP — Blueprint complete, implementation ready
-> **Current Focus:** MVP deployment and testing
+**Session**: 2026-04-09 (Ongoing)  
+**Status**: ✅ Brooks Framework ACTIVE | ⏳ Notion Integration Blocked  
+**Last Event ID**: 36022+ (SESSION_COMPLETE logged)
 
----
+## Current Focus
 
-## Current State
+**Frederick P. Brooks Jr. is now the system architect.**
 
-### ✅ Sovereign Memory MVP Blueprint COMPLETE
+All architectural decisions (CA/VA/WS commands) are logged to Postgres with:
+- `agent_id='brooks'` — Unified identity
+- `runtime` — Identifies execution platform (claude-code, copilot, openclaw, opencode)
+- `session_id` — Groups cross-platform work
+- `metadata` — Principle, decision, reasoning, alternatives, tradeoffs
 
-The `PROJECT.md` for the Sovereign Memory MVP is complete with:
-- Full architecture (PostgreSQL traces → HITL Gate → Neo4j knowledge)
-- Data dictionary (tables, constraints, Neo4j node types)
-- Requirements matrix (B1-B8, F1-F9)
-- Risk register (RK-01 through RK-04)
-- Task list (T1-T6 Must Have, T7-T10 Should Have)
+## Immediate Blocker
 
-### ✅ Ralph Loop COMPLETE (Prior Work)
+**Notion Database Schema Validation**
+- Attempted to create "Brooks Skill Executions" database
+- Error: schema parameter requires SQL DDL syntax (CREATE TABLE ...)
+- Fix needed: Provide proper schema string before creating Notion sync
 
-All 7 stories across Epics 3-6 have been successfully completed:
+## What's Live
 
-| Epic | Stories | Status |
-|------|---------|--------|
-| **Epic 3: HITL Governance** | 3-1, 3-2 | ✅ Done |
-| **Epic 4: Cross-Org Knowledge** | 4-1, 4-2 | ✅ Done |
-| **Epic 5: Audit Trail** | 5-1 | ✅ Done |
-| **Epic 6: Production Workflows** | 6-1, 6-2 | ✅ Done |
+✅ **Postgres Tracking Schema** (runtime + session_id columns deployed)
+✅ **5 Analytical Views** (brooks_decisions, brooks_metrics, brooks_session_timeline, brooks_confidence_distribution, brooks_principles_applied)
+✅ **Brooks Startup Protocol** (max 2 calls: events query + config read)
+✅ **Reflection Protocol** (audit trail on every CA/VA/WS/NX)
+✅ **8-Command Menu** (CA · VA · WS · NX · CH · MH · PM · DA)
 
-### Architecture Status
+## Next Steps (Priority Order)
 
-✅ **ARCH-001: Group ID Enforcement** — Complete
-✅ **Steel Frame Versioning** — Complete
-✅ **HITL Governance** — Complete (Epic 3)
+1. **P0: Fix Notion Integration** (10 min)
+   - Create database schema with proper SQL DDL
+   - Build sync script: `brooks_metrics` → Notion every 5 min
+   - Create dashboard cards
 
----
+2. **P1: Runtime Integration** (20 min)
+   - Document Copilot → populate runtime='copilot'
+   - Document OpenClaw → populate runtime='openclaw'
+   - Document OpenCode → populate runtime='opencode'
+   - Wire session_id UUID generation in each runtime
 
-## Sovereign Memory MVP
+3. **P2: Admin Dashboard** (30 min)
+   - Build Grafana/internal queries from brooks_metrics
+   - Alerting on confidence < 0.7
 
-### Competitive Positioning
+## Key Files (Reference)
 
-| Feature | Sovereign Memory MVP | mem0 | Letta/MemGPT |
-|---------|---------------------|------|--------------|
-| **Deployment** | Docker-native, self-hosted | Cloud-first | Self-hosted available |
-| **Versioning** | SUPERSEDES lineage | In-place updates | Block-based |
-| **Governance** | HITL required | Auto-add | Configurable |
-| **Audit Trail** | Append-only PostgreSQL | Timestamps only | Limited |
-| **Tenant Isolation** | Schema-level CHECK | Application-level | Application-level |
-| **Protocol** | MCP (standard) | Custom API | Custom API |
-| **Cloud-Optional** | ✅ Yes | ❌ No | ⚠️ Limited |
+**Configuration:**
+- `.claude/agents/brooks.md` — Persona + startup protocol
+- `.claude/settings.json` — MCP servers + 6 harness commands
+- `.claude/README.md` — System architecture guide
 
-### Implementation Files
+**Documentation:**
+- `.claude/BROOKS-TRACKING.md` — Integration spec (queries, metadata schema, integration checklist)
+- `docker/postgres-init/10-brooks-tracking.sql` — Schema migrations
 
-| File | Status | Purpose |
-|------|--------|---------|
-| `docs/sovereign-memory-mvp/PROJECT.md` | ✅ Complete | Blueprint |
-| `sovereign-memory-mvp/docker-compose.yml` | ✅ Ready | One-command deploy |
-| `sovereign-memory-mvp/Dockerfile` | ✅ Ready | MCP server container |
-| `sovereign-memory-mvp/init.sh` | ✅ Ready | Schema initialization |
-| `sovereign-memory-mvp/README.md` | ✅ Ready | Quick start guide |
-| `src/mcp/memory-server.ts` | ✅ Ready | MCP protocol implementation |
-| `src/mcp/tools.ts` | ✅ Ready | Tool handlers |
+**Memory System:**
+- PostgreSQL: `events` table with runtime + session_id
+- Neo4j: Decision nodes with SUPERSEDES versioning (search before write)
+- Notion: Dashboards for real-time Brooks metrics
 
----
+## Architecture Decisions (Locked)
 
-## What's Next
+| Decision | Rationale | Confidence |
+|----------|-----------|------------|
+| Single `agent_id='brooks'` | One architect identity across all runtimes | 0.95 |
+| Session grouping via `session_id` | Track cross-platform work (Claude Code → OpenClaw) | 0.92 |
+| Postgres + Neo4j dual layer | High-volume traces + curated semantic knowledge | 0.88 |
+| Constraint-based enforcement | `group_id` + `runtime` on every Brooks event | 0.90 |
+| Confidence scoring (0.0–1.0) | Measure decision quality, enable distribution analysis | 0.85 |
 
-### Immediate:
-1. ✅ Blueprint complete
-2. ✅ Docker Compose ready
-3. ⏳ Test one-command deploy (`docker compose up -d`)
-4. ⏳ Verify MCP tools work end-to-end
+## Key Invariants
 
-### Future Work:
-1. Push to remote (requires user approval)
-2. Create PR for review
-3. Integration testing with Neo4j/PostgreSQL
-4. Auto-research background agents (Nice to Have)
-5. SOC2 compliance mode (Nice to Have)
+- ✅ `group_id = 'allura-roninmemory'` on every event
+- ✅ `agent_id = 'brooks'` for all architectural decisions
+- ✅ `runtime IS NOT NULL` when `agent_id = 'brooks'` (database constraint)
+- ✅ PostgreSQL events are append-only (no UPDATE/DELETE)
+- ✅ Neo4j uses SUPERSEDES for versioning (never edit nodes)
+- ✅ Reflection protocol on every CA/VA/WS/NX command
+- ✅ Max 2 startup calls before user greeting
 
-### Epic 5: Regulator-Grade Audit Trail
-- **Story 5-1:** Audit query interface with provenance
+## System Health
 
-### Epic 6: Production Workflows
-- **Story 6-1:** Bank-Auditor workflow with compliance checks
-- **Story 6-2:** Faith Meats operations (HACCP, inventory)
-
----
-
-## Key Learnings
-
-### Brooksian Principles Applied:
-
-1. **Conceptual Integrity**
-   - Parallel agents followed unified patterns
-   - ARCH-001 enforcement consistent across all code
-
-2. **Essential vs. Accidental Complexity**
-   - Focused on tenant isolation (essential)
-   - Avoided over-engineering UI mocks
-
-3. **Brooks's Law**
-   - Limited parallel agents to 3 (communication overhead manageable)
-   - Each agent owned one concern
-
-4. **Plan to Throw One Away**
-   - Adjusted risk scoring calculation after tests failed
-   - Refactored document processor regex after LSP errors
-
-### Parallel Agent Efficiency:
-
-- **3x speedup** vs. sequential development
-- **Dispatching-parallel-agents skill** used correctly
-- **MemoryBuilder agents** handled specialized domains
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Postgres | ✅ READY | events table with runtime/session_id; 5 views operational |
+| Neo4j | ✅ READY | SUPERSEDES versioning; group_id enforcement active |
+| Brooks Persona | ✅ READY | Startup protocol, reflection protocol, 8-command menu |
+| Notion Integration | ⏳ BLOCKED | Schema validation error; awaiting proper DDL syntax |
+| Copilot Integration | ⏳ PENDING | runtime='copilot' not yet populated |
+| OpenClaw Integration | ⏳ PENDING | runtime='openclaw' not yet populated |
+| OpenCode Integration | ⏳ PENDING | runtime='opencode' not yet populated |
 
 ---
 
-## What's Next
-
-### Immediate:
-1. ✅ All stories committed to `new-main` branch
-2. ✅ Typecheck passes clean
-3. ✅ All tests passing (50 tests)
-
-### Future Work:
-1. Push to remote (requires user approval)
-2. Create PR for review
-3. Run database migrations (postgres-init/*.sql)
-4. Connect UI components to real API
-5. Integration testing with Neo4j/PostgreSQL
-6. Documentation updates
-
----
-
-## Blockers
-
-**Retriever browser extension** — injects `rtrvr-ls`/`rtrvr-ro` onto every `<a>`/`<button>` before React hydrates. Produces console hydration warnings. Not fixable in code. User action: disable/uninstall extension at `chrome://extensions`.
-
----
-
-## Session Metadata
-
-- **Started:** 2026-04-06 ~14:00
-- **Completed:** 2026-04-06 13:28 (full-auto mode)
-- **Iterations:** 4
-- **Parallel Agents:** 3 MemoryBuilder agents per iteration
-- **Commits:** 5 (final: 483b18d1)
-- **Tests:** 50 passing, 0 failing
-- **TypeScript Errors:** 0
-
----
-
-## Document Canon
-
-Per `_bmad-output/planning-artifacts/source-of-truth.md`:
-
-1. `README.md` — Project overview (highest priority)
-2. `_bmad-output/planning-artifacts/*` — Implementation canon
-3. `memory-bank/*` — Session context
-4. Sprint stories in `_bmad-output/implementation-artifacts/stories/`
-
----
-
-## References
-
-- [Epic Definitions](_bmad-output/planning-artifacts/epics.md)
-- [Sprint Status](_bmad-output/implementation-artifacts/sprint-status.yaml)
-- [Ralph Loop State](.opencode/state/ralph-loop.json)
-- [Final Commit](commit:483b18d1)
+**Next Session**: Continue with Notion schema fix (P0 blocker). This unblocks dashboard sync.

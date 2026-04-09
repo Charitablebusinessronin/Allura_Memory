@@ -1,0 +1,58 @@
+name: Allura Agent Hooks — Brooksian Surgical Team
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issues:
+    types: [opened, edited]
+  push:
+    branches: [main, new-main]
+
+jobs:
+  route-to-agents:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+      
+      - name: Install dependencies
+        run: bun install
+      
+      - name: Route to Surgical Team
+        env:
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          NEO4J_URI: ${{ secrets.NEO4J_URI }}
+          NEO4J_USER: ${{ secrets.NEO4J_USER }}
+          NEO4J_PASSWORD: ${{ secrets.NEO4J_PASSWORD }}
+        run: |
+          echo "Event: ${{ github.event_name }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Repository: ${{ github.repository }}"
+          
+          # Route events to appropriate agents (Brooksian Surgical Team)
+          case "${{ github.event_name }}" in
+            pull_request)
+              echo "→ Routing to Oracle (Rob Pike) for read-only architecture consultation"
+              bun scripts/agents/oracle-consult.ts "${{ github.event.pull_request.number }}"
+              ;;
+            push)
+              echo "→ Routing to Hephaestus (Fabrice Bellard) for deep implementation analysis"
+              bun scripts/agents/hephaestus-analyze.ts "${{ github.sha }}"
+              ;;
+            issues)
+              echo "→ Routing to Sisyphus (Rich Hickey) for issue triage and delegation"
+              bun scripts/agents/sisyphus-triage.ts "${{ github.event.issue.number }}"
+              ;;
+          esac
+      
+      - name: Log to Allura Memory
+        run: |
+          bun scripts/log-github-event.ts \
+            --event="${{ github.event_name }}" \
+            --actor="${{ github.actor }}" \
+            --repo="${{ github.repository }}" \
+            --sha="${{ github.sha }}"

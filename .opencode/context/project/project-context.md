@@ -1,104 +1,41 @@
-<!-- Context: project/project-context | Priority: low | Version: 1.0 | Updated: 2026-02-15 -->
+# Project Context — Allura Memory (allura memory)
 
-<!-- DEPRECATED: 2026-01-12 - Replaced by project-intelligence/technical-domain.md -->
-<!-- REPLACED BY: ../project-intelligence/technical-domain.md -->
+## Stack
+- **Runtime**: Bun | **Framework**: Next.js 16 + React 19 | **Language**: TypeScript 5.9 (strict)
+- **DB**: PostgreSQL 16 (append-only traces) + Neo4j 5.26 (curated knowledge)
+- **UI**: Zustand + shadcn/ui + Tailwind v4
+- **Agent Framework**: OpenCode
+- **MCP**: `allura-memory` server at `src/mcp/memory-server.ts`
 
-# ⚠️ DEPRECATED: OpenCode Agent System Project Context
+## File Conventions
+| Type | Convention |
+|------|-----------|
+| Files | `kebab-case` |
+| Components | `PascalCase` |
+| Hooks | `use` prefix |
+| Constants | `SCREAMING_SNAKE_CASE` |
+| DB | `snake_case` |
+| Tests | `should ... when ...` |
 
-> ⛔ This file is deprecated. See `project-intelligence/technical-domain.md` for the current technical domain documentation.
-
-## Technology Stack
-
-**Primary Language:** TypeScript
-**Runtime:** Node.js/Bun
-**Package Manager:** npm/pnpm/yarn
-**Build Tools:** TypeScript Compiler (tsc)
-**Testing:** Jest/Vitest (if configured)
-**Linting:** ESLint (if configured)
-
-## Project Structure
-
+## Architecture Layers
 ```
-.opencode/
-├── agent/           # AI agents for specific tasks
-│   ├── subagents/   # Specialized subagents
-│   └── *.md         # Primary agents
-├── command/         # Slash commands
-├── context/         # Knowledge base for agents
-└── plugin/          # Extensions and integrations
-
-tasks/               # Task management files
+L5: Paperclip + OpenClaw (Human interfaces)
+L4: Workflow / DAGs / A2A Bus
+L3: Agent Runtime (OpenCode)
+L2: PostgreSQL + Neo4j
+L1: RuVix Kernel (proof-gated mutation)
 ```
 
-## Core Patterns
+## Key Entry Points
+- API: `src/app/api/`
+- MCP Server: `src/mcp/memory-server.ts`
+- Traces: `src/lib/postgres/`
+- Knowledge: `src/lib/neo4j/`
 
-### Agent Structure Pattern
-```markdown
----
-description: "What this agent does"
-mode: primary|subagent
-tools: [read, edit, bash, etc.]
-permissions: [security restrictions]
----
-
-# Agent Name
-
-[Direct instructions for behavior]
-
-**EXECUTE** this [process type] for every [task type]:
-
-**1. [ACTION]** the [subject]:
-- [Specific instruction 1]
-- [Specific instruction 2]
-
-**RULES:**
-- **ALWAYS** [critical requirement]
-- **NEVER** [forbidden action]
+## Test Commands
+```bash
+bun vitest run              # all unit tests
+bun vitest run -t "..."     # single test by name
+npm run typecheck           # TS validation
+npm run lint                # ESLint
 ```
-
-### Command Structure Pattern
-```markdown
----
-name: command-name
-agent: target-agent
----
-
-You are [doing specific task].
-
-**Request:** $ARGUMENTS
-
-**Context Loaded:**
-@.opencode/context/core/essential-patterns.md
-@[additional context files]
-
-Execute [task] now.
-```
-
-### Context Loading Rules
-- Commands load context immediately using @ references
-- Agents can look up additional context deterministically
-- Maximum 4 context files per command (250-450 lines total)
-- Keep context files focused (50-150 lines each)
-
-## Security Guidelines
-
-- Agents have restricted permissions by default
-- Sensitive operations require explicit approval
-- No direct file system modifications without validation
-- Build commands limited to safe operations
-
-## Development Workflow
-
-1. **Planning:** Create detailed task plans for complex work
-2. **Implementation:** Execute one step at a time with validation
-3. **Review:** Code review and security checks
-4. **Testing:** Automated testing and build validation
-5. **Documentation:** Update docs and context files
-
-## Quality Gates
-
-- TypeScript compilation passes
-- Code review completed
-- Build process succeeds
-- Tests pass (if available)
-- Documentation updated

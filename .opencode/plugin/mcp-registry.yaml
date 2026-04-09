@@ -1,103 +1,71 @@
-# MCP Registry — Manually Curated
-# Explicit approval required before loading. No auto-discovery.
+# Approved MCP Servers — Governance Layer
+# Use MCP Docker Toolkit for discovery (mcp_find) and loading (mcp_add)
+# This file tracks which servers Brooks has approved
 # Version: 2026-04-09
 
-registry_version: "1.0"
 governance: "brooks-approved"
 group_id: "allura-system"
 
-mcp_servers:
-  # Core Memory
-  - id: "allura-memory"
-    name: "Allura Memory Server"
-    description: "Local Neo4j + PostgreSQL memory engine via MCP"
-    source: "local"
+# APPROVED SERVERS (ready to load via mcp_add)
+approved:
+  - name: "allura-memory"
+    description: "Local Neo4j + PostgreSQL memory engine"
     command: ["bun", "run", "src/mcp/memory-server.ts"]
-    env_vars: []
-    approved: true
     approved_by: "brooks"
     approved_date: "2026-04-09"
 
-  # Database Tools
-  - id: "postgresql-mcp"
-    name: "PostgreSQL MCP"
-    description: "Direct PostgreSQL client — execute_sql, insert_data, etc."
-    source: "docker://mcp/postgresql"
-    env_vars: ["DATABASE_URL"]
-    approved: false
-    approved_by: null
-    approved_date: null
-    notes: "Requires DATABASE_URL env var. Approve before adding."
+  - name: "tavily"
+    description: "Web search, crawl, extract, research"
+    env: ["TAVILY_API_TOKEN"]
+    approved_by: "brooks"
+    approved_date: "2026-04-09"
 
-  - id: "neo4j-cypher"
-    name: "Neo4j Cypher MCP"
-    description: "Neo4j Cypher query executor"
-    source: "docker://mcp/neo4j"
-    env_vars: ["NEO4J_URI", "NEO4J_USER", "NEO4J_PASSWORD"]
-    approved: false
-    approved_by: null
-    approved_date: null
+  - name: "exa"
+    description: "Neural/semantic web search"
+    env: ["EXA_API_KEY"]
+    approved_by: "brooks"
+    approved_date: "2026-04-09"
+
+  - name: "hyperbrowser"
+    description: "Browser automation, scraping"
+    env: ["HYPERBROWSER_API_KEY"]
+    approved_by: "brooks"
+    approved_date: "2026-04-09"
+
+  - name: "context7"
+    description: "Live library documentation"
+    approved_by: "brooks"
+    approved_date: "2026-04-09"
+
+  - name: "notion"
+    description: "Notion databases and pages"
+    env: ["NOTION_TOKEN"]
+    approved_by: "brooks"
+    approved_date: "2026-04-09"
+
+# PENDING APPROVAL (Brooks must approve before mcp_add)
+pending:
+  - name: "postgresql"
+    description: "Direct PostgreSQL client"
+    env: ["DATABASE_URL"]
+    notes: "Requires DATABASE_URL. Approve for direct DB access."
+
+  - name: "neo4j"
+    description: "Neo4j Cypher executor"
+    env: ["NEO4J_URI", "NEO4J_USER", "NEO4J_PASSWORD"]
     notes: "HITL approval required. Cypher writes must audit SUPERSEDES versioning."
 
-  # Web & Research
-  - id: "tavily-search"
-    name: "Tavily Search + Research"
-    description: "Deep web search, crawl, extract, research"
-    source: "docker://mcp/tavily"
-    env_vars: ["TAVILY_API_KEY"]
-    approved: true
-    approved_by: "brooks"
-    approved_date: "2026-04-09"
-
-  - id: "hyperbrowser"
-    name: "HyperBrowser (Browser Automation)"
-    description: "Scrape, crawl, extract structured data, take screenshots"
-    source: "docker://mcp/hyperbrowser"
-    env_vars: ["HYPERBROWSER_API_KEY"]
-    approved: false
-    approved_by: null
-    approved_date: null
-    notes: "For complex interactions. Browser-use-agent cheaper for explicit tasks."
-
-  # Notion (Optional)
-  - id: "notion-mcp"
-    name: "Notion MCP"
-    description: "Read/write Notion databases and pages"
-    source: "docker://mcp/notion"
-    env_vars: ["NOTION_TOKEN"]
-    approved: false
-    approved_by: null
-    approved_date: null
-    notes: "Memory promotion target. HITL only."
-
-  # GitHub (Optional)
-  - id: "github-mcp"
-    name: "GitHub MCP"
-    description: "Read/write issues, PRs, commits"
-    source: "docker://mcp/github"
-    env_vars: ["GITHUB_TOKEN"]
-    approved: false
-    approved_by: null
-    approved_date: null
+  - name: "github"
+    description: "GitHub issues, PRs, commits"
+    env: ["GITHUB_TOKEN"]
     notes: "Audit all writes. Never force-push."
 
-# Command Routing
-command_routing:
-  mcp-discover:
-    description: "List available MCP servers (approved + unapproved)"
-    handler: "harness/mcp-plugin-loader.ts"
-
-  mcp-add:
-    description: "Approve + load a single MCP server"
-    handler: "harness/mcp-plugin-loader.ts"
-    requires_approval: "brooks"
-
-  skill-load:
-    description: "Load a skill from AGENT-SKILLS-REGISTRY.md"
-    handler: "harness/skill-loader.ts"
-    router: "brooks"  # Brooks decides which agent
-
-# Constraints
+# GOVERNANCE RULES
+rules:
+  - "Use mcp_find(keyword) to discover available servers"
+  - "Use mcp_add(server_name) to load approved servers"
+  - "Brooks approval required before adding pending servers"
+  - "All MCP operations logged via mcp__MCP_DOCKER__insert_data"
 constraints:
   max_concurrent_mcp_servers: 10
   max_env_vars_per_server: 5

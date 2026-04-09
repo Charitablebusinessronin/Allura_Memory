@@ -1,6 +1,16 @@
 {
   "permissions": {
     "allow": [
+      "mcp__MCP_DOCKER__insert_data",
+      "mcp__MCP_DOCKER__read_neo4j_cypher",
+      "mcp__MCP_DOCKER__write_neo4j_cypher",
+      "mcp__MCP_DOCKER__tavily_search",
+      "mcp__MCP_DOCKER__tavily_research",
+      "mcp__MCP_DOCKER__tavily_crawl",
+      "mcp__MCP_DOCKER__tavily_extract",
+      "mcp__MCP_DOCKER__get-library-docs",
+      "mcp__MCP_DOCKER__scrape_webpage",
+      "mcp__MCP_DOCKER__browser_use_agent",
       "mcp__MCP_DOCKER__mcp-exec",
       "mcp__MCP_DOCKER__mcp-add",
       "mcp__MCP_DOCKER__mcp-config-set",
@@ -22,7 +32,9 @@
       "Bash(docker exec:*)",
       "Bash(rm:*)",
       "mcp__claude_ai_Notion__notion-update-page",
-      "mcp__claude_ai_Notion__notion-update-data-source"
+      "mcp__claude_ai_Notion__notion-update-data-source",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   },
   "enabledPlugins": {

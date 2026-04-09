@@ -1,11 +1,11 @@
 /**
- * MCP Plugin Loader — Explicit Approval Flow
+ * MCP Plugin Loader — MCP Docker Integration
  *
- * Handles:
- * - mcp-discover <keyword> → list servers matching keyword
- * - mcp-add <server-id> → approve + load a single server
+ * Uses MCP Docker Toolkit for discovery and loading:
+ * - mcp_find(keyword) → discover available servers
+ * - mcp_add(server_name) → load approved servers
  *
- * Key: No automatic loading. Human/Brooks approves before adding.
+ * Registry tracks approval status only. Discovery via MCP Docker.
  */
 
 import * as fs from "fs";
@@ -13,24 +13,21 @@ import * as path from "path";
 import * as yaml from "yaml";
 
 export interface MCPServer {
-  id: string;
   name: string;
   description: string;
-  source: string;
-  env_vars: string[];
-  approved: boolean;
-  approved_by?: string | null;
-  approved_date?: string | null;
+  env?: string[];
+  approved_by?: string;
+  approved_date?: string;
   notes?: string;
+  command?: string[];
 }
 
 export interface MCPRegistry {
-  registry_version: string;
   governance: string;
   group_id: string;
-  mcp_servers: MCPServer[];
-  command_routing: Record<string, unknown>;
-  constraints: Record<string, unknown>;
+  approved: MCPServer[];
+  pending: MCPServer[];
+  rules: string[];
 }
 
 class MCPPluginLoader {
@@ -44,7 +41,7 @@ class MCPPluginLoader {
   }
 
   /**
-   * Load the MCP registry from YAML
+   * Load the approval registry from YAML
    */
   private loadRegistry(): MCPRegistry {
     if (this.registry) return this.registry;
@@ -61,174 +58,166 @@ class MCPPluginLoader {
   }
 
   /**
-   * Discover MCP servers by keyword
+   * List approved servers (ready to load)
    */
-  discover(keyword?: string): {
-    approved: MCPServer[];
-    unapproved: MCPServer[];
-  } {
+  listApproved(): MCPServer[] {
     const registry = this.loadRegistry();
-
-    const results = registry.mcp_servers.filter((server) =>
-      keyword
-        ? server.name.toLowerCase().includes(keyword.toLowerCase()) ||
-          server.description.toLowerCase().includes(keyword.toLowerCase())
-        : true
-    );
-
-    return {
-      approved: results.filter((s) => s.approved),
-      unapproved: results.filter((s) => !s.approved),
-    };
+    return registry.approved;
   }
 
   /**
-   * Request approval to load a server
-   * Returns a prompt for Brooks/user to approve
+   * List pending servers (require Brooks approval)
    */
-  requestApproval(serverId: string): {
-    approved: boolean;
+  listPending(): MCPServer[] {
+    const registry = this.loadRegistry();
+    return registry.pending;
+  }
+
+  /**
+   * Discover servers via MCP Docker Toolkit
+   * Note: This is a wrapper around mcp_find(keyword)
+   * The actual discovery happens via MCP Docker tools
+   */
+  discover(keyword?: string): {
+    approved: MCPServer[];
+    pending: MCPServer[];
+    prompt: string;
+  } {
+    const registry = this.loadRegistry();
+
+    const approved = keyword
+      ? registry.approved.filter(
+          (s) =>
+            s.name.toLowerCase().includes(keyword.toLowerCase()) ||
+            s.description.toLowerCase().includes(keyword.toLowerCase())
+        )
+      : registry.approved;
+
+    const pending = keyword
+      ? registry.pending.filter(
+          (s) =>
+            s.name.toLowerCase().includes(keyword.toLowerCase()) ||
+            s.description.toLowerCase().includes(keyword.toLowerCase())
+        )
+      : registry.pending;
+
+    const prompt = `
+🔍 MCP Discovery Results
+
+Approved (Ready to Load via mcp_add):
+${approved.map((s) => `  ✅ ${s.name}: ${s.description}`).join("\n")}
+
+Pending Approval (Brooks must approve):
+${pending.map((s) => `  ⏳ ${s.name}: ${s.description}${s.notes ? ` — ${s.notes}` : ""}`).join("\n")}
+
+To load approved: mcp_add("<server_name>")
+To request approval: Ask Brooks to approve in mcp-registry.yaml
+`;
+
+    return { approved, pending, prompt };
+  }
+
+  /**
+   * Request approval for a pending server
+   * Returns instructions for Brooks to approve
+   */
+  requestApproval(serverName: string): {
+    found: boolean;
     server: MCPServer | null;
     prompt: string;
   } {
     const registry = this.loadRegistry();
-    const server = registry.mcp_servers.find((s) => s.id === serverId);
+    const server = registry.pending.find((s) => s.name === serverName);
 
     if (!server) {
       return {
-        approved: false,
+        found: false,
         server: null,
-        prompt: `Server not found: ${serverId}`,
+        prompt: `Server "${serverName}" not found in pending list. Check mcp-registry.yaml.`,
       };
     }
 
-    if (server.approved) {
-      return {
-        approved: true,
-        server,
-        prompt: `✅ Server ${server.name} is already approved. Ready to load.`,
-      };
-    }
-
-    const prompt = `
+    return {
+      found: true,
+      server,
+      prompt: `
 📋 MCP Server Approval Request
 
 Server: ${server.name}
-ID: ${server.id}
 Description: ${server.description}
+${server.env ? `Required Environment Variables: ${server.env.join(", ")}` : ""}
+${server.notes ? `Notes: ${server.notes}` : ""}
 
-Source: ${server.source}
-Required Environment Variables: ${server.env_vars.length > 0 ? server.env_vars.join(", ") : "None"}
-
-${server.notes ? `⚠️  Notes: ${server.notes}` : ""}
-
-Brooks, approve this server? (yes/no)
-→ mcp-add ${server.id} --approve
-`;
-
-    return {
-      approved: false,
-      server,
-      prompt,
+Brooks, approve this server?
+→ Edit .opencode/plugin/mcp-registry.yaml
+→ Move "${server.name}" from pending to approved
+→ Add approved_by and approved_date
+`,
     };
   }
 
   /**
-   * Approve a server (internal — called by Brooks after approval)
+   * Load an approved server via MCP Docker
+   * Note: Actual loading happens via mcp_add(server_name)
+   * This method validates approval status and returns instructions
    */
-  approveServer(
-    serverId: string,
-    approvedBy: string = "brooks"
-  ): { success: boolean; message: string } {
+  loadServer(serverName: string): {
+    success: boolean;
+    message: string;
+    instruction: string;
+  } {
     const registry = this.loadRegistry();
-    const server = registry.mcp_servers.find((s) => s.id === serverId);
+    const server = registry.approved.find((s) => s.name === serverName);
 
     if (!server) {
-      return { success: false, message: `Server not found: ${serverId}` };
-    }
-
-    if (server.approved) {
-      return {
-        success: true,
-        message: `Server ${server.name} already approved.`,
-      };
-    }
-
-    // Mark as approved
-    server.approved = true;
-    server.approved_by = approvedBy;
-    server.approved_date = new Date().toISOString().split("T")[0];
-
-    // Write back to registry
-    this.writeRegistry(registry);
-
-    return {
-      success: true,
-      message: `✅ Server ${server.name} approved by ${approvedBy}. Ready to load.`,
-    };
-  }
-
-  /**
-   * Load an approved server (call mcp_add internally)
-   */
-  loadServer(serverId: string): { success: boolean; message: string } {
-    const registry = this.loadRegistry();
-    const server = registry.mcp_servers.find((s) => s.id === serverId);
-
-    if (!server) {
-      return { success: false, message: `Server not found: ${serverId}` };
-    }
-
-    if (!server.approved) {
+      const pending = registry.pending.find((s) => s.name === serverName);
+      if (pending) {
+        return {
+          success: false,
+          message: `Server "${serverName}" is pending approval. Brooks must approve first.`,
+          instruction: `Request approval: Ask Brooks to approve in mcp-registry.yaml`,
+        };
+      }
       return {
         success: false,
-        message: `Server ${server.name} is not approved. Request approval first with: mcp-discover ${serverId}`,
+        message: `Server "${serverName}" not found in registry.`,
+        instruction: `Use mcp_find("${serverName}") to discover available servers.`,
       };
     }
 
-    // TODO: Call actual mcp_add tool here
-    // For now, return the command that should be executed
     return {
       success: true,
-      message: `Ready to load ${server.name}. Call: mcp_add("${server.id}")`,
+      message: `Server "${serverName}" is approved and ready to load.`,
+      instruction: `Load with: mcp_add("${serverName}")`,
     };
   }
 
   /**
-   * Write registry back to YAML
-   */
-  private writeRegistry(registry: MCPRegistry): void {
-    const yamlString = yaml.stringify(registry);
-    fs.writeFileSync(this.registryPath, yamlString, "utf-8");
-  }
-
-  /**
-   * List all servers (for CLI inspection)
+   * List all servers (CLI)
    */
   listAll(): string {
     const registry = this.loadRegistry();
-    let output = "# MCP Registry\n\n";
 
-    output += "## Approved Servers (Ready to Load)\n";
-    registry.mcp_servers
-      .filter((s) => s.approved)
-      .forEach((s) => {
-        output += `- **${s.name}** (\`${s.id}\`): ${s.description}\n`;
-      });
+    const approvedLines = registry.approved.map(
+      (s) => `  ✅ ${s.name}: ${s.description}`
+    );
+    const pendingLines = registry.pending.map(
+      (s) => `  ⏳ ${s.name}: ${s.description}`
+    );
 
-    output += "\n## Pending Approval\n";
-    registry.mcp_servers
-      .filter((s) => !s.approved)
-      .forEach((s) => {
-        output += `- **${s.name}** (\`${s.id}\`): ${s.description}\n`;
-        if (s.notes) output += `  ⚠️  ${s.notes}\n`;
-      });
+    return `
+# Approved MCP Servers
+${approvedLines.join("\n")}
 
-    return output;
+# Pending Approval
+${pendingLines.join("\n")}
+
+# Governance Rules
+${registry.rules.map((r) => `  • ${r}`).join("\n")}
+`;
   }
 }
 
-// Export singleton
 export const mcpLoader = new MCPPluginLoader();
 
 // CLI entry point (for testing)

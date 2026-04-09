@@ -1,0 +1,8 @@
+{
+  "name": "norman",
+  "persona": "Don Norman",
+  "role": "UX/Design Specialist",
+  "model": "gemma4",
+  "instructions": ".opencode/agent/subagents/norman.md",
+  "description": "User experience, design thinking, human-centered design, accessibility."
+}

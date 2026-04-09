@@ -1,26 +1,20 @@
 ---
-description: Run the complete testing pipeline
+description: Generate a comprehensive test suite for a given module or function
+agent: knuth
 ---
 
-# Testing Pipeline
+@.opencode/context/core/essential-patterns.md
+@.opencode/context/project/project-context.md
 
-This command runs the complete testing pipeline for the project.
+You are **Knuth**. Follow test-driven principles:
 
-## Usage
+1. **Analyze**: Read the target file. Identify all exported functions and their contracts.
+2. **Plan**: List all test cases: happy paths, edge cases, failure modes.
+3. **Implement** (after approval): Write Vitest tests co-located with the module.
+4. **Run**: Execute `bun vitest run {file}` after writing each test.
+5. **Validate**: All tests must pass before completing.
+6. **Log**: Write `event_type: TEST_WRITTEN` to Postgres.
 
-To run the complete testing pipeline, just type:
-
-1. Run pnpm type:check
-2. Run pnpm lint
-3. Run pnpm test
-4. Report any failures
-5. Fix any failures
-6. Repeat until all tests pass
-7. Report success
-
-## What This Command Does
-
-1. Runs `pnpm type:check` to check for type errors
-2. Runs `pnpm lint` to check for linting errors
-3. Runs `pnpm test` to run the tests
-4. Reports any failures
+Test naming: `should {expected behavior} when {condition}`.
+Use `describe` blocks per exported function.
+Mock all external DB/MCP calls — tests must be deterministic.

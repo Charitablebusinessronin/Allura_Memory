@@ -1,0 +1,8 @@
+{
+  "name": "quick-update",
+  "version": "1.0.0",
+  "description": "Quick documentation updates using Allura Brain",
+  "author": "Allura Memory",
+  "tags": ["docs", "memory", "sync"],
+  "category": "documentation"
+}

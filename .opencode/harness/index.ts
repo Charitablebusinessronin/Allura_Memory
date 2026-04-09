@@ -79,27 +79,27 @@ class AlluraHarness {
    */
   async discoverMCP(keyword?: string): Promise<{
     approved: MCPServer[];
-    unapproved: MCPServer[];
+    pending: MCPServer[];
     prompt: string;
   }> {
     const results = mcpLoader.discover(keyword);
 
     // Log discovery event
     await this.logEvent(() =>
-      logMCPDiscovered(keyword, results.approved.length, results.unapproved.length)
+      logMCPDiscovered(keyword, results.approved.length, results.pending.length)
     );
 
     const prompt = `
 🔍 MCP Discovery Results
 
 Approved (Ready to Load):
-${results.approved.map((s) => `  ✅ ${s.id}: ${s.name}`).join("\n")}
+${results.approved.map((s) => `  ✅ ${s.name}: ${s.description}`).join("\n")}
 
 Pending Approval:
-${results.unapproved.map((s) => `  ⏳ ${s.id}: ${s.name}${s.notes ? ` — ${s.notes}` : ""}`).join("\n")}
+${results.pending.map((s) => `  ⏳ ${s.name}: ${s.description}${s.notes ? ` — ${s.notes}` : ""}`).join("\n")}
 
-To request approval: mcp-approve <server-id>
-To load: mcp-load <server-id>
+To load approved: mcp_add("<server_name>")
+To request approval: Ask Brooks to approve in mcp-registry.yaml
 `;
 
     return { ...results, prompt };
@@ -263,7 +263,7 @@ Allura Harness Status
 MCP Servers
 ───────────
 Approved: ${mcp.approved.length}
-Pending:  ${mcp.unapproved.length}
+Pending:  ${mcp.pending.length}
 
 Skills
 ──────

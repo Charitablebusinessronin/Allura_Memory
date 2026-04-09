@@ -1,0 +1,16 @@
+{
+  "id": "next-best-practices",
+  "name": "Next.js Best Practices",
+  "description": "Framework standards for Next.js 16",
+  "agents": [
+    "knuth",
+    "hopper",
+    "torvalds"
+  ],
+  "platforms": [
+    "claude",
+    "opencode"
+  ],
+  "tier": 1,
+  "installed": "2026-04-08T21:24:52.313Z"
+}

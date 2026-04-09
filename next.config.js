@@ -11,6 +11,10 @@ const nextConfig = {
     instrumentationHook: true,
   },
   
+  // Enable standalone output for Docker deployment
+  // Based on: https://github.com/blazity/next-enterprise
+  output: 'standalone',
+  
   // Other Next.js config
   reactStrictMode: true,
   
