@@ -1,14 +1,104 @@
 {
+  "$schema": "https://claude.ai/schemas/settings.json",
+  "experimentalAgentTeams": true,
+  "terminals": "tmux",
   "permissions": {
     "allow": [
-      "Read(.opencode/**)",
-      "Edit(.opencode/**)",
-      "Write(.opencode/**)",
+      "Read(.claude/**)",
+      "Edit(.claude/**)",
+      "Write(.claude/**)",
       "Bash(bun*)",
-      "Bash(bash .opencode/*)"
+      "Bash(bun run *)",
+      "Bash(bun test)",
+      "Bash(bun install)",
+      "Bash(git *)",
+      "Bash(docker *)",
+      "Bash(gh *)",
+      "Bash(npm run *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(mkdir *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "Bash(rm -rf .tmp/*)",
+      "Bash(rm -rf node_modules/.cache/*)"
     ],
-    "additionalDirectories": [
-      "/home/ronin704/Projects/allura memory/.opencode"
-    ]
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(rm -rf ~)",
+      "Bash(rm -rf .env*)",
+      "Bash(cat .env*)",
+      "Bash(*secrets*)",
+      "Bash(*password*)",
+      "Bash(*token*)",
+      "Bash(curl *localhost*)",
+      "Bash(wget *localhost*)"
+    ],
+    "additionalDirectories": []
+  },
+  "mcpServers": {
+    "allura-memory": {
+      "command": "bun",
+      "args": ["run", "src/mcp/memory-server.ts"],
+      "cwd": "/home/ronin704/Projects/allura memory"
+    },
+    "exa": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "mcp/exa"],
+      "env": {
+        "EXA_API_KEY": "${EXA_API_KEY}"
+      }
+    },
+    "tavily": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "mcp/tavily"],
+      "env": {
+        "TAVILY_API_TOKEN": "${TAVILY_API_TOKEN}"
+      }
+    },
+    "hyperbrowser": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "mcp/hyperbrowser"],
+      "env": {
+        "HYPERBROWSER_API_KEY": "${HYPERBROWSER_API_KEY}"
+      }
+    },
+    "context7": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "mcp/context7"]
+    },
+    "notion": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "mcp/notion"],
+      "env": {
+        "NOTION_INTERNAL_INTEGRATION_TOKEN": "${NOTION_TOKEN}"
+      }
+    }
+  },
+  "commands": {
+    "mcp-discover": {
+      "source": ".claude/commands/mcp-discover.md",
+      "description": "Discover available MCP servers"
+    },
+    "mcp-approve": {
+      "source": ".claude/commands/mcp-approve.md",
+      "description": "Request MCP server approval"
+    },
+    "mcp-load": {
+      "source": ".claude/commands/mcp-load.md",
+      "description": "Load an approved MCP server"
+    },
+    "skill-propose": {
+      "source": ".claude/commands/skill-propose.md",
+      "description": "Propose a skill and show executor"
+    },
+    "skill-load": {
+      "source": ".claude/commands/skill-load.md",
+      "description": "Execute a skill with routing"
+    },
+    "harness-status": {
+      "source": ".claude/commands/harness-status.md",
+      "description": "Show harness health and loaded servers"
+    }
   }
 }
