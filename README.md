@@ -42,6 +42,8 @@ The consumer memory interface: search, expand for provenance, swipe-to-forget.
 - **Compliance-ready:** SOC 2, CSV audit export, 30-day soft-delete recovery
 - **MCP-native:** Connect any agent (Claude, Cursor, OpenCode, etc.) via Model Context Protocol
 - **Zero vendor lock-in:** All data is yours; deploy anywhere
+- **Plugin Harness:** Explicit MCP discovery + approval flow; surgical team delegation (agents execute skills via curator gate)
+- **Event Logging:** All operations logged to PostgreSQL (append-only); full audit trail for compliance
 
 ## Vs. mem0
 
@@ -190,6 +192,56 @@ Agent: memory_add("Borrower has 5-year stable employment", userId, {confidence: 
 
 ---
 
+## Plugin Harness
+
+The orchestrator for MCP servers and agent skills. Explicit approval flow. No auto-loading. Surgical team delegation.
+
+### How It Works
+
+1. **MCP Discovery**: Find available servers
+   ```bash
+   /mcp-discover database
+   # → Lists approved + pending servers
+   ```
+
+2. **Request Approval**: Brooks approves before loading
+   ```bash
+   /mcp-approve postgresql-mcp
+   # → Logs MCP_APPROVED event to PostgreSQL
+   ```
+
+3. **Load Server**: Activate tools
+   ```bash
+   /mcp-load postgresql-mcp
+   # → Logs MCP_LOADED event; tools now available
+   ```
+
+4. **Propose Skill**: Show skill details
+   ```bash
+   /skill-propose code-review
+   # → Logs SKILL_PROPOSED event; show preferred executor
+   ```
+
+5. **Load + Route**: Brooks decides who executes
+   ```bash
+   /skill-load code-review --executor oracle
+   # → Logs SKILL_LOADED event; @oracle executes
+   ```
+
+### Principles
+
+- **Explicit Approval**: No auto-discovery. Brooks approves before tools load.
+- **Surgical Team Delegation**: Skills routed to specialists (@oracle, @atlas, @hephaestus, etc.)
+- **Manual Curation**: Registry is YAML; no auto-fetch from external sources.
+- **Append-Only Audit**: All operations logged to PostgreSQL (immutable event trail)
+- **Graceful Error Handling**: No crashes if systems unavailable; automatic degradation.
+
+**[Full plugin architecture docs](.opencode/PLUGIN-ARCHITECTURE.md)**  
+**[Integration roadmap](.opencode/HARNESS-TO-CLAUDE-CODE.md)**  
+**[Testing guide](.opencode/HARNESS-TEST-COMMAND.txt)**
+
+---
+
 ## Use Cases
 
 ### Enterprise: Bank Lending
@@ -291,6 +343,8 @@ Curated knowledge. Versioned via SUPERSEDES relationships. Agents query here to 
 
 ## Testing
 
+### Memory Engine
+
 ```bash
 # Unit tests
 bun test
@@ -304,6 +358,23 @@ bun run typecheck
 # Lint
 bun run lint
 ```
+
+### Plugin Harness
+
+```bash
+# Integration test (no Postgres required) ✅ PASSING
+bun .opencode/harness/test-logging-integration.ts
+
+# Manual tests (no Postgres required)
+bun .opencode/harness/index.ts status
+bun .opencode/harness/index.ts mcp-discover database
+bun .opencode/harness/index.ts list-skills
+
+# E2E test (requires Postgres running)
+bun .opencode/harness/test-e2e.ts
+```
+
+**[Full testing guide](.opencode/HARNESS-TEST-COMMAND.txt)**
 
 ---
 
@@ -332,12 +403,37 @@ See [CLAUDE.md](CLAUDE.md) for code conventions.
 
 ## Learn More
 
+### Memory Engine
+
 - **[docs/allura/COMPETITIVE-ANALYSIS.md](docs/allura/COMPETITIVE-ANALYSIS.md)** — Why Allura vs mem0 (97.8% junk rate data)
 - **[.github/ARCHITECTURE.md](.github/ARCHITECTURE.md)** — Complete system design
 - **[.github/API-REFERENCE.md](.github/API-REFERENCE.md)** — All endpoints + examples
 - **[.github/DEPLOYMENT.md](.github/DEPLOYMENT.md)** — Deploy anywhere
 - **[docs/allura/BLUEPRINT.md](docs/allura/BLUEPRINT.md)** — Core concepts
 - **[docs/allura/WIREFRAMES.md](docs/allura/WIREFRAMES.md)** — UI designs
+
+### Plugin Harness (New)
+
+- **[.opencode/PLUGIN-ARCHITECTURE.md](.opencode/PLUGIN-ARCHITECTURE.md)** — Harness design + Brooksian principles
+- **[.opencode/HARNESS-LOGGING-INTEGRATION.md](.opencode/HARNESS-LOGGING-INTEGRATION.md)** — Postgres event logging
+- **[.opencode/HARNESS-TO-CLAUDE-CODE.md](.opencode/HARNESS-TO-CLAUDE-CODE.md)** — Claude Code integration roadmap
+- **[.opencode/HARNESS-COMPLETION-SUMMARY.md](.opencode/HARNESS-COMPLETION-SUMMARY.md)** — Phase 1 summary + metrics
+- **[.opencode/HARNESS-QUICKSTART.md](.opencode/HARNESS-QUICKSTART.md)** — Quick reference guide
+
+---
+
+## Design Principles
+
+Allura is built on **Brooksian principles** from *The Mythical Man-Month*:
+
+1. **Conceptual Integrity** — One consistent design for memory, logging, governance
+2. **Explicit Approval** — No auto-discovery, auto-loading, or auto-promotion
+3. **Surgical Team** — Specialists routed by orchestrator; clear roles
+4. **Separation of Concerns** — Harness (orchestrator) separate from loggers, routers, agents
+5. **Append-Only Audit** — All writes immutable; full compliance trail by design
+6. **No Silver Bullet** — Curator gate required for sensitive decisions; humans review edge cases
+
+**Governance**: "Allura governs. Runtimes execute. Curators promote."
 
 ---
 
