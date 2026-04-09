@@ -20,6 +20,7 @@
  */
 
 import { execSync } from "child_process";
+import { canonicalizeAgentId } from "../src/lib/agents/canonical-identity";
 
 interface LogEventInput {
   group_id: string;
@@ -85,9 +86,9 @@ Actions:
 Examples:
   # Log session start event
   bunx tsx scripts/memory-logger.ts --action log-event --data '{
-    "group_id": "roninmemory",
+    "group_id": "allura-roninmemory",
     "event_type": "skill:brainstorming:start",
-    "agent_id": "roninmemory-agent",
+    "agent_id": "openagent",
     "workflow_id": "feature-123",
     "status": "pending"
   }'
@@ -146,11 +147,13 @@ function callMcpDocker(toolName: string, args: Record<string, unknown>): unknown
 
 async function logEvent(data: LogEventInput): Promise<{ eventId?: number; success: boolean; error?: string }> {
   try {
+    const canonicalAgentId = canonicalizeAgentId(data.agent_id);
+
     // Use MCP_DOCKER_insert_data for events table
     const result = callMcpDocker("MCP_DOCKER_insert_data", {
       table_name: "events",
       columns: "group_id, event_type, agent_id, workflow_id, status, metadata",
-      values: `'${data.group_id}', '${data.event_type}', '${data.agent_id}', '${data.workflow_id ?? "default"}', '${data.status}', '${JSON.stringify(data.metadata ?? {})}'`,
+      values: `'${data.group_id}', '${data.event_type}', '${canonicalAgentId}', '${data.workflow_id ?? "default"}', '${data.status}', '${JSON.stringify(data.metadata ?? {})}'`,
     });
     
     return { eventId: (result as any).id, success: true };

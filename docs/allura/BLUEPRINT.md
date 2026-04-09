@@ -97,6 +97,13 @@ The hard isolation boundary. Every read and write MUST include a valid `group_id
 | B13 | Audit log exportable as CSV for compliance |
 | B14 | TypeScript SDK (`@allura/sdk`) |
 | B15 | BYOK encryption |
+| B16 | Curator dashboard: three-tab approval workflow (Traces, Approved, Pending) |
+| B17 | Curator sees confidence scores (60-100%) with one-sentence reasoning for uncertain proposals |
+| B18 | Approve/reject decisions logged to audit trail with curator ID and timestamp |
+| B19 | Auto-promote proposals >85% confidence without curator review (configurable) |
+| B20 | Dashboard deployable on Vercel with backend engine in user's VPC/cloud |
+| B21 | Curator authentication via Clerk (SSO, RBAC) |
+| B22 | Error tracking via Sentry; curator alerted on engine failures |
 
 ---
 
@@ -121,13 +128,31 @@ The hard isolation boundary. Every read and write MUST include a valid `group_id
 | F8 | `group_id` CHECK constraint blocks writes with invalid tenant namespaces |
 | F9 | `SUPERSEDES` relationship created on every Neo4j node update |
 
+#### Curator Dashboard
+
+| # | Requirement |
+|---|-------------|
+| F10 | `POST /api/curator/score` — scores proposal, returns {confidence, reasoning, tier} |
+| F11 | `POST /api/curator/approve` — moves proposal to approved knowledge, promotes to Neo4j if tier ≥ 85% |
+| F12 | `POST /api/curator/reject` — archives proposal to 7-day undo, logs to audit trail |
+| F13 | `GET /api/curator/proposals` — returns pending proposals (emerging + adoption tiers only) |
+| F14 | Curator dashboard shows three tabs: Traces (raw), Approved (knowledge), Pending (decisions) |
+| F15 | Pending tab sorts by confidence (descending); shows confidence badge + reasoning + buttons |
+| F16 | Approved tab shows all approved knowledge (human + auto-promoted); sortable by date/confidence |
+| F17 | Tab 1 restricted to authenticated users with `admin` role (engineers only) |
+| F18 | Audit log endpoint: `GET /api/audit/events` — returns curator decisions with timestamps |
+| F19 | Dashboard integrates Clerk for authentication and RBAC (curator, admin, viewer roles) |
+
 #### Infrastructure
 
 | # | Requirement |
 |---|-------------|
-| F10 | MCP server exposes all 5 memory tools over stdio transport |
-| F11 | `docker compose up` starts Postgres, Neo4j, and MCP server |
-| F12 | Memory viewer UI at `/memory` lists, searches, and deletes memories |
+| F20 | MCP server exposes all 5 memory tools over stdio transport |
+| F21 | `docker compose up` starts Postgres, Neo4j, and MCP server |
+| F22 | Memory viewer UI at `/memory` lists, searches, and deletes memories |
+| F23 | Curator dashboard deployed on Vercel; calls backend engine via `CURATOR_ENGINE_URL` env var |
+| F24 | Vercel Functions (`/api/curator/*`) call Docker engine in VPC/cloud via HTTPS |
+| F25 | Error tracking: unhandled exceptions sent to Sentry; curator notified via email/Slack |
 
 ---
 
@@ -138,13 +163,17 @@ The hard isolation boundary. Every read and write MUST include a valid `group_id
 | Component | Responsibility | Notes |
 |-----------|---------------|-------|
 | MCP Server | Exposes 5 memory tools to AI agents | `src/mcp/memory-server.ts` |
-| Next.js API | REST endpoints for dashboard UI | `src/app/api/memory/` |
+| Next.js API | REST endpoints for dashboard + curator APIs | `src/app/api/memory/`, `src/app/api/curator/` |
 | Memory Engine | Core read/write/score/route logic | `src/lib/memory/` |
+| Curator Scorer | Computes confidence (60-100%) + reasoning | `src/lib/curator/score.ts` (rule-based or Claude) |
 | Dedup Engine | Prevents duplicate Neo4j promotions | `src/lib/dedup/` |
 | Budget + Circuit Breaker | Prevents runaway agent writes | `src/lib/budget/`, `src/lib/circuit-breaker/` |
-| PostgreSQL 16 | Episodic memory — append-only event log | Docker service |
+| PostgreSQL 16 | Episodic memory + audit trail + proposals | Docker service |
 | Neo4j 5.26 | Semantic memory — versioned knowledge graph | Docker service |
 | Memory Viewer | `/memory` page — list, search, delete | `src/app/memory/page.tsx` |
+| Curator Dashboard | `/curator` page — three-tab HITL governance UI | `src/app/curator/page.tsx` |
+| Clerk Auth | Multi-tenant authentication + RBAC | SaaS (vercel.com) |
+| Sentry Monitor | Error tracking + alerts | SaaS (sentry.io) |
 
 ---
 
@@ -157,17 +186,20 @@ graph TB
     subgraph Clients
         A[AI Agent]
         B[Memory Viewer UI]
+        C[Curator Dashboard]
     end
 
     subgraph Protocol
-        C[MCP Server<br/>memory-server.ts]
-        D[Next.js API<br/>api/memory/]
+        D[MCP Server<br/>memory-server.ts]
+        E[Next.js API<br/>api/memory/]
+        F[Curator API<br/>api/curator/]
     end
 
     subgraph Core
-        E[Memory Engine]
-        F[Dedup Engine]
-        G[Budget + Circuit Breaker]
+        G[Memory Engine]
+        H[Curator Scorer]
+        I[Dedup Engine]
+        J[Budget + Circuit Breaker]
     end
 
     subgraph Storage
@@ -401,8 +433,92 @@ Before any Neo4j write, search for an existing node with matching `content` + `g
 - [SOLUTION-ARCHITECTURE.md](./SOLUTION-ARCHITECTURE.md)
 - [DATA-DICTIONARY.md](./DATA-DICTIONARY.md)
 - [RISKS-AND-DECISIONS.md](./RISKS-AND-DECISIONS.md)
+- [DESIGN-ALLURA.md](./DESIGN-ALLURA.md) — UI/UX wireframes and design rules
+- [REQUIREMENTS-MATRIX.md](./REQUIREMENTS-MATRIX.md) — Competitive analysis and use case fit
 - `src/mcp/memory-server.ts` — MCP tool implementations
 - `src/lib/memory/` — memory engine
 - `postgres-init/` — PostgreSQL schema SQL
 - [MCP Protocol](https://modelcontextprotocol.io)
 - [mem0.ai](https://mem0.ai) — primary competitor benchmark
+
+---
+
+## Appendix A: Personal AI OS Vision
+
+Allura is the memory layer of a larger Personal AI Operating System:
+
+```
+┌──────────────────────────────────┐
+│ Claude Code / OpenClaw / Cursor  │
+│ (Agent Layer)                    │
+└────────────┬─────────────────────┘
+             │ MCP Protocol
+             ↓
+┌──────────────────────────────────┐
+│ Allura MCP Server                │
+│ - memory_retrieve()              │
+│ - memory_write()                 │
+│ - memory_propose_insight()       │
+└────────────┬─────────────────────┘
+             │
+    ┌────────┴────────┐
+    ↓                 ↓
+PostgreSQL        Neo4j
+(Episodic)        (Semantic)
+Raw events        Approved facts
+    ↓                 ↓
+    └────────┬────────┘
+             │
+    ┌────────┴────────┐
+    ↓                 ↓
+Paperclip UI    Memory Dashboard
+(Approval)      (Browse + Search)
+(Optional)      (Always)
+```
+
+**Three Layers:**
+1. **Agent Layer:** OpenClaw, Claude Code, Cursor — any MCP-compatible agent
+2. **Memory Layer:** PostgreSQL (episodic) + Neo4j (semantic)
+3. **Governance Layer:** Optional curator dashboard for human approval
+
+**Core Workflows:**
+- Agent Task → Automatic Logging → PostgreSQL
+- Claude Code Memory Commands → MCP retrieval → Merged results
+- Manual Insight Proposal → Pending queue → Neo4j (if approved)
+
+---
+
+## Appendix B: MCP Tool Reference
+
+For Claude Code integration, Allura exposes three core tools via MCP:
+
+### `memory_retrieve(query: string)`
+
+**Purpose:** Search for memories
+
+**Returns:**
+```typescript
+{
+  episodic: string[],  // Raw traces from PostgreSQL
+  semantic: string[],  // Approved facts from Neo4j
+  count: number
+}
+```
+
+**Use case:** Ask Claude Code "What's my coding style?" and get remembered patterns.
+
+### `memory_write(event: string, metadata?: object)`
+
+**Purpose:** Log an event to PostgreSQL
+
+**Use case:** Claude Code auto-logs all tool calls. You can manually add context.
+
+### `memory_propose_insight(title: string, statement: string)`
+
+**Purpose:** Propose an insight for approval
+
+**Use case:** You notice a pattern in your work, propose it explicitly for curator approval.
+
+---
+
+*See [SOLUTION-ARCHITECTURE.md](./SOLUTION-ARCHITECTURE.md) for implementation phases and deployment scenarios.*

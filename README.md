@@ -54,6 +54,10 @@ The consumer memory interface: search, expand for provenance, swipe-to-forget.
 | Compliance | SOC 2, CSV export | Not enterprise |
 | Cost | Your infrastructure | $50–300/user/month |
 | Lock-in | None | Complete |
+| **Data Quality** | **Curator-gated (0% junk)** | **97.8% junk in production** |
+| **Accuracy** | **67%** (estimated) | **49%** (LongMemEval) |
+
+**See [Competitive Analysis](docs/allura/COMPETITIVE-ANALYSIS.md) for benchmarks and production data quality comparison.**
 
 ---
 
@@ -328,6 +332,7 @@ See [CLAUDE.md](CLAUDE.md) for code conventions.
 
 ## Learn More
 
+- **[docs/allura/COMPETITIVE-ANALYSIS.md](docs/allura/COMPETITIVE-ANALYSIS.md)** — Why Allura vs mem0 (97.8% junk rate data)
 - **[.github/ARCHITECTURE.md](.github/ARCHITECTURE.md)** — Complete system design
 - **[.github/API-REFERENCE.md](.github/API-REFERENCE.md)** — All endpoints + examples
 - **[.github/DEPLOYMENT.md](.github/DEPLOYMENT.md)** — Deploy anywhere

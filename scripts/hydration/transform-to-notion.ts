@@ -2,8 +2,8 @@
 // Property transformation layer for Notion schemas
 
 import { Story } from './parse-epic-stories';
-import { ParsedAgent } from './parse-agent-files';
-import { ParsedSkill } from './parse-skill-files';
+
+import { DEFAULT_NOTION_GROUP_ID } from './agent-identity';
 
 /**
  * Transform date to Notion date format
@@ -107,7 +107,7 @@ export function transformAgentToNotion(
     Type: toNotionSelect(agent.type),
     Status: toNotionSelect(agent.status),
     Role: toNotionText(agent.role),
-    'Group ID': toNotionText(agent.groupId || 'roninmemory'),
+    'Group ID': toNotionText(agent.groupId || DEFAULT_NOTION_GROUP_ID),
     Skills: agent.skills ? toNotionMultiSelect(agent.skills) : { multi_select: [] },
     'Token Budget': { number: agent.tokenBudget || 100000 },
     'USD Budget': { number: agent.usdBudget || 0 },

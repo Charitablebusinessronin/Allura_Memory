@@ -1,8 +1,9 @@
 // scripts/hydration/create-agents.ts
 // Hydrate Agents database from .opencode/agent files
 
-import { parseAgentFile, findAgentFiles, categorizeAgent, ParsedAgent } from './parse-agent-files';
-import { createNotionPage, DATABASE_IDS, AgentSchema } from './notion-client';
+import { findAgentFiles, categorizeAgent, parseAgentFile } from './parse-agent-files';
+import { loadAgentMetadataLookup, DEFAULT_NOTION_GROUP_ID } from './agent-identity';
+import { createNotionPage, DATABASE_IDS } from './notion-client';
 import { transformAgentToNotion } from './transform-to-notion';
 
 interface HydrationResult {
@@ -18,6 +19,7 @@ interface HydrationResult {
 export async function hydrateAgents(baseDir: string): Promise<HydrationResult> {
   console.log('📥 Finding agent files...');
   const agentFiles = findAgentFiles(baseDir);
+  const agentMetadataLookup = loadAgentMetadataLookup(baseDir);
 
   if (agentFiles.length === 0) {
     console.log('⚠️  No agent files found');
@@ -37,9 +39,10 @@ export async function hydrateAgents(baseDir: string): Promise<HydrationResult> {
     try {
       console.log(`\n📖 Processing ${agentFile}...`);
 
-      const parsed = parseAgentFile(agentFile);
+      const parsed = parseAgentFile(baseDir, agentFile, agentMetadataLookup);
       const category = categorizeAgent(agentFile);
 
+      console.log(`   ID: ${parsed.agentId}`);
       console.log(`   Name: ${parsed.name}`);
       console.log(`   Mode: ${parsed.mode}`);
       console.log(`   Category: ${category.category}${category.subcategory ? `/${category.subcategory}` : ''}`);
@@ -50,7 +53,7 @@ export async function hydrateAgents(baseDir: string): Promise<HydrationResult> {
         type: parsed.mode === 'primary' ? 'OpenAgent' : 'Specialist',
         status: 'active',
         role: parsed.description.substring(0, 100),
-        groupId: 'roninmemory',
+        groupId: DEFAULT_NOTION_GROUP_ID,
         skills: parsed.permissions.task
           ? Object.keys(parsed.permissions.task).filter(k => parsed.permissions.task![k] === 'allow')
           : [],

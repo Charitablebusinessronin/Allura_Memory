@@ -20,7 +20,12 @@
       "mcp__MCP_DOCKER__execute_sql",
       "mcp__MCP_DOCKER__describe_table",
       "Bash(docker exec:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "mcp__claude_ai_Notion__notion-update-page",
+      "mcp__claude_ai_Notion__notion-update-data-source"
     ]
+  },
+  "enabledPlugins": {
+    "vercel@claude-plugins-official": true
   }
 }

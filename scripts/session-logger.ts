@@ -8,6 +8,7 @@
  */
 
 import { getPool, closePool } from "../src/lib/postgres/connection";
+import { canonicalizeAgentId } from "../src/lib/agents/canonical-identity";
 
 type Phase = "start" | "end";
 type EventStatus = "pending" | "completed" | "failed" | "cancelled";
@@ -88,7 +89,7 @@ Options:
   --task <id>              Task/story identifier
   --files a,b,c            Comma-separated list of touched files
   --verify cmd1,cmd2       Comma-separated list of verification commands
-  --agent <id>             Agent identifier override (default: roninmemory-agent)
+  --agent <id>             Agent identifier override (default: openagent)
   --notes <text>           Additional notes for metadata
   --dry-run                Print payload without writing to database
   --help                   Show this help message
@@ -172,7 +173,7 @@ async function main(): Promise<void> {
   if (args.verify?.length) metadata.verification_commands = args.verify;
   if (args.notes) metadata.notes = args.notes;
 
-  const agentId = args.agentId ?? process.env.MEMORY_AGENT ?? "roninmemory-agent";
+  const agentId = canonicalizeAgentId(args.agentId ?? process.env.MEMORY_AGENT ?? "openagent");
   const workflowId = args.workflowId ?? "session";
 
   if (args.dryRun) {
