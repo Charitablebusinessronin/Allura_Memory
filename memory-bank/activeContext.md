@@ -14,12 +14,15 @@ All architectural decisions (CA/VA/WS commands) are logged to Postgres with:
 - `session_id` — Groups cross-platform work
 - `metadata` — Principle, decision, reasoning, alternatives, tradeoffs
 
-## Immediate Blocker
+## Immediate Blocker — RESOLVED (Degraded)
 
-**Notion Database Schema Validation**
-- Attempted to create "Brooks Skill Executions" database
-- Error: schema parameter requires SQL DDL syntax (CREATE TABLE ...)
-- Fix needed: Provide proper schema string before creating Notion sync
+**Notion Integration Status: DEGRADED**
+- **Reason**: No `NOTION_TOKEN` in environment; requires manual Notion integration setup
+- **Decision**: Remove P0 designation; dashboard visibility deferred to P2
+- **Alternative**: Use Postgres queries directly (`brooks_metrics` view) for metrics
+- **Documentation**: See `docs/degraded-services.md` for rationale
+
+**Previous attempt**: "Brooks Skill Executions" database creation failed due to missing auth token and schema parameter issues.
 
 ## What's Live
 
@@ -31,20 +34,25 @@ All architectural decisions (CA/VA/WS commands) are logged to Postgres with:
 
 ## Next Steps (Priority Order)
 
-1. **P0: Fix Notion Integration** (10 min)
-   - Create database schema with proper SQL DDL
-   - Build sync script: `brooks_metrics` → Notion every 5 min
-   - Create dashboard cards
+1. **P0: Surgical Team Activation** (1 day) — See `docs/recovery-plan-2026-04-09.md`
+   - Audit why 7 of 8 agents are silent
+   - Decide: accept/fix/assign/retire per evidence
+   - Document in `memory-bank/systemPatterns.md`
 
-2. **P1: Runtime Integration** (20 min)
+2. **P1: Neo4j Promotion** (2 hours)
+   - Mine last 30 Brooks events for promotion-worthy decisions
+   - Run curator approval flow
+   - Verify SUPERSEDES usage
+
+3. **P2: Notion Integration** (Deferred)
+   - Requires: Manual Notion integration token setup
+   - Alternative: Use Postgres `brooks_metrics` view for dashboard
+   - See `docs/degraded-services.md` for full rationale
+
+4. **P2: Runtime Integration** (20 min)
    - Document Copilot → populate runtime='copilot'
    - Document OpenClaw → populate runtime='openclaw'
    - Document OpenCode → populate runtime='opencode'
-   - Wire session_id UUID generation in each runtime
-
-3. **P2: Admin Dashboard** (30 min)
-   - Build Grafana/internal queries from brooks_metrics
-   - Alerting on confidence < 0.7
 
 ## Key Files (Reference)
 
