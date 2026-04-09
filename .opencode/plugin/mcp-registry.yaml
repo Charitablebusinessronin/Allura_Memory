@@ -1,0 +1,106 @@
+# MCP Registry — Manually Curated
+# Explicit approval required before loading. No auto-discovery.
+# Version: 2026-04-09
+
+registry_version: "1.0"
+governance: "brooks-approved"
+group_id: "allura-system"
+
+mcp_servers:
+  # Core Memory
+  - id: "allura-memory"
+    name: "Allura Memory Server"
+    description: "Local Neo4j + PostgreSQL memory engine via MCP"
+    source: "local"
+    command: ["bun", "run", "src/mcp/memory-server.ts"]
+    env_vars: []
+    approved: true
+    approved_by: "brooks"
+    approved_date: "2026-04-09"
+
+  # Database Tools
+  - id: "postgresql-mcp"
+    name: "PostgreSQL MCP"
+    description: "Direct PostgreSQL client — execute_sql, insert_data, etc."
+    source: "docker://mcp/postgresql"
+    env_vars: ["DATABASE_URL"]
+    approved: false
+    approved_by: null
+    approved_date: null
+    notes: "Requires DATABASE_URL env var. Approve before adding."
+
+  - id: "neo4j-cypher"
+    name: "Neo4j Cypher MCP"
+    description: "Neo4j Cypher query executor"
+    source: "docker://mcp/neo4j"
+    env_vars: ["NEO4J_URI", "NEO4J_USER", "NEO4J_PASSWORD"]
+    approved: false
+    approved_by: null
+    approved_date: null
+    notes: "HITL approval required. Cypher writes must audit SUPERSEDES versioning."
+
+  # Web & Research
+  - id: "tavily-search"
+    name: "Tavily Search + Research"
+    description: "Deep web search, crawl, extract, research"
+    source: "docker://mcp/tavily"
+    env_vars: ["TAVILY_API_KEY"]
+    approved: true
+    approved_by: "brooks"
+    approved_date: "2026-04-09"
+
+  - id: "hyperbrowser"
+    name: "HyperBrowser (Browser Automation)"
+    description: "Scrape, crawl, extract structured data, take screenshots"
+    source: "docker://mcp/hyperbrowser"
+    env_vars: ["HYPERBROWSER_API_KEY"]
+    approved: false
+    approved_by: null
+    approved_date: null
+    notes: "For complex interactions. Browser-use-agent cheaper for explicit tasks."
+
+  # Notion (Optional)
+  - id: "notion-mcp"
+    name: "Notion MCP"
+    description: "Read/write Notion databases and pages"
+    source: "docker://mcp/notion"
+    env_vars: ["NOTION_TOKEN"]
+    approved: false
+    approved_by: null
+    approved_date: null
+    notes: "Memory promotion target. HITL only."
+
+  # GitHub (Optional)
+  - id: "github-mcp"
+    name: "GitHub MCP"
+    description: "Read/write issues, PRs, commits"
+    source: "docker://mcp/github"
+    env_vars: ["GITHUB_TOKEN"]
+    approved: false
+    approved_by: null
+    approved_date: null
+    notes: "Audit all writes. Never force-push."
+
+# Command Routing
+command_routing:
+  mcp-discover:
+    description: "List available MCP servers (approved + unapproved)"
+    handler: "harness/mcp-plugin-loader.ts"
+
+  mcp-add:
+    description: "Approve + load a single MCP server"
+    handler: "harness/mcp-plugin-loader.ts"
+    requires_approval: "brooks"
+
+  skill-load:
+    description: "Load a skill from AGENT-SKILLS-REGISTRY.md"
+    handler: "harness/skill-loader.ts"
+    router: "brooks"  # Brooks decides which agent
+
+# Constraints
+constraints:
+  max_concurrent_mcp_servers: 10
+  max_env_vars_per_server: 5
+  rate_limit_mcp_calls: "100 per minute"
+  hitl_required_for: ["neo4j-cypher", "notion-mcp", "github-mcp"]
+  audit_required_for: ["neo4j-cypher"]
