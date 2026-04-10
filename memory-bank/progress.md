@@ -30,7 +30,7 @@
    - P2: Explicit Save Point Commands (1 day)
    - P2: Groundedness Metrics (1 day)
 
-5. **Docker Environment Remediation** ✅ (This Session)
+5. **Docker Environment Remediation** ✅ (2026-04-10)
    - Performed full environment audit against final-state policy
    - Identified drift: `memory-legacy-postgres`, `client-hvac-*`, `ruvector`, orphan networks/volumes
    - Executed fresh start: `docker system prune -a --volumes -f`
@@ -41,6 +41,14 @@
    - Memory caps enforced: Neo4j 612MiB/2GiB, Postgres 26MiB/512MiB
    - Logged session to PostgreSQL (events table) and Neo4j (Decision node: dec_0402386c-edab-41a4-a88a-acadb9cd4e53)
    - Committed and pushed to GitHub: `dc9f3ffa` on `new-main`
+
+6. **Notion Dashboard Data Collection** ✅ (This Session)
+   - Fetched "Ronin Vibe coding Dashboard" from Notion via MCP
+   - Collected Projects Database schema (Claude Projects Dashboard)
+   - Collected Tasks Database schema (EDOS: Tasks Database)
+   - Stored dashboard structure in PostgreSQL (`notion_dashboard_data` table)
+   - Created Neo4j knowledge graph: Dashboard node with CONTAINS relationships to Projects and Tasks databases
+   - Data sources now queryable via Allura Brain (Postgres + Neo4j)
 
 ### ⏳ Next Priorities
 
