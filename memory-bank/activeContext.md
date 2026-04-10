@@ -1,8 +1,8 @@
 # Active Context — Brooks Architect Persona
 
-**Session**: 2026-04-09 (Ongoing)  
-**Status**: ✅ Brooks Framework ACTIVE | ⏳ Notion Integration Blocked  
-**Last Event ID**: 36022+ (SESSION_COMPLETE logged)
+**Session**: 2026-04-10 (Docker Remediation + Commit)
+**Status**: ✅ Brooks Framework ACTIVE | 📋 Docs Updated
+**Last Event ID**: 5 (SESSION_COMPLETE logged)
 
 ## Current Focus
 
@@ -14,15 +14,20 @@ All architectural decisions (CA/VA/WS commands) are logged to Postgres with:
 - `session_id` — Groups cross-platform work
 - `metadata` — Principle, decision, reasoning, alternatives, tradeoffs
 
-## Immediate Blocker — RESOLVED (Degraded)
+## Strategic Positioning (Updated from Notion)
 
-**Notion Integration Status: DEGRADED**
-- **Reason**: No `NOTION_TOKEN` in environment; requires manual Notion integration setup
-- **Decision**: Remove P0 designation; dashboard visibility deferred to P2
-- **Alternative**: Use Postgres queries directly (`brooks_metrics` view) for metrics
-- **Documentation**: See `docs/degraded-services.md` for rationale
+**Allura Memory is a developer-focused memory layer for AI agents** that emphasizes **traceability, governance, and multi-tenant isolation** — positioned as a more controlled, enterprise-grade alternative to mem0.
 
-**Previous attempt**: "Brooks Skill Executions" database creation failed due to missing auth token and schema parameter issues.
+### How it differs from mem0
+
+- **Governance-first:** Human-in-the-loop gates (Curator → Auditor) before promoting knowledge
+- **Auditability:** Decisions and memory updates are reconstructable over time
+- **Multi-tenant isolation:** Strict `group_id` boundaries to prevent cross-tenant leakage
+- **Layered architecture:** Designed as part of an Agent-OS (storage + runtime + orchestration + UI)
+
+### One-line pitch
+
+**"mem0, but with provable governance, tenant isolation, and an auditable promotion pipeline."**
 
 ## What's Live
 
@@ -31,28 +36,58 @@ All architectural decisions (CA/VA/WS commands) are logged to Postgres with:
 ✅ **Brooks Startup Protocol** (max 2 calls: events query + config read)
 ✅ **Reflection Protocol** (audit trail on every CA/VA/WS/NX)
 ✅ **8-Command Menu** (CA · VA · WS · NX · CH · MH · PM · DA)
+✅ **Enterprise Docker Setup** (observability stack parked, ready to merge)
+
+## Curator Plan (What We're Building Next)
+
+### 1) Queue (Proposals)
+- When a memory score is high and `PROMOTION_MODE=soc2`, it goes into a queue
+- Queue item includes: `group_id`, content, score, evidence links, and status
+
+### 2) Distinguish Checks (Before Approval)
+- **Duplicate:** Do we already have this fact?
+- **Conflict:** Does it fight an older fact?
+- **Age:** Is this a long-term rule or a short-term detail?
+
+### 3) Human Approval
+- Human reviews the queue in the admin screen (Next.js dashboard)
+- Only humans can approve
+
+### 4) Promotion (Write to Neo4j)
+- After approval, write the fact into Neo4j
+- If it replaces an old fact, add a `SUPERSEDES` link
+- Do not overwrite old facts — keep history
+
+## Recommended Build Order (Updated)
+
+1. **Living README + Immediate Orientation** — Project context panel, decision log, open loops
+2. **Explicit Save Point commands** — `@memory add:`, `@memory decision:`, `@memory constraint:`
+3. **Groundedness + Provenance** — Score + evidence list
+4. **TTL tiers + warm/cold** — Memory hygiene
+5. **Mixed-initiative editing + supersedes UX** — HITL refinement
+6. **Role-based lenses** — Dashboard views by role
 
 ## Next Steps (Priority Order)
 
-1. **P0: Surgical Team Activation** (1 day) — See `docs/recovery-plan-2026-04-09.md`
-   - Audit why 7 of 8 agents are silent
-   - Decide: accept/fix/assign/retire per evidence
-   - Document in `memory-bank/systemPatterns.md`
+1. **P0: Curator Queue Implementation** (2-3 days)
+   - Build proposal queue for high-score memories
+   - Implement duplicate/conflict/age checks
+   - Create admin screen for human review
 
-2. **P1: Neo4j Promotion** (2 hours)
-   - Mine last 30 Brooks events for promotion-worthy decisions
-   - Run curator approval flow
-   - Verify SUPERSEDES usage
+2. **P1: Living README + Orientation** (1 day)
+   - Project orientation panel (`{group_id} / {project}`)
+   - Immediate orientation view at session start
+   - Decision log with SUPERSEDES links
 
-3. **P2: Notion Integration** (Deferred)
-   - Requires: Manual Notion integration token setup
-   - Alternative: Use Postgres `brooks_metrics` view for dashboard
-   - See `docs/degraded-services.md` for full rationale
+3. **P2: Explicit Save Point Commands** (1 day)
+   - Parse `@memory add:`, `@memory decision:`, `@memory constraint:`
+   - Create queue items with `source=explicit_user`
+   - Route through curator approval
 
-4. **P2: Runtime Integration** (20 min)
-   - Document Copilot → populate runtime='copilot'
-   - Document OpenClaw → populate runtime='openclaw'
-   - Document OpenCode → populate runtime='opencode'
+4. **P2: Groundedness Metrics** (1 day)
+   - Evidence coverage metric
+   - Evidence list per response
+   - Click-through to lineage
 
 ## Key Files (Reference)
 
