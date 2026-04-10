@@ -1,6 +1,63 @@
 # Progress Log
 
-**Last Updated**: 2026-04-09 (Brooks architect persona deployed)
+**Last Updated**: 2026-04-10 (Planning sync from Notion)
+
+## Session Work (2026-04-10)
+
+### ✅ Completed
+
+1. **Planning Docs Sync from Notion**
+   - Updated `activeContext.md` with strategic positioning vs mem0
+   - Updated `progress.md` with build order and UX enhancements
+   - Updated `projectbrief.md` with refined positioning
+   - Created `_bmad-output/planning-artifacts/` directory structure
+
+2. **Strategic Positioning Clarified**
+   - Allura = "mem0, but with provable governance, tenant isolation, and auditable promotion pipeline"
+   - Governance-first: Human-in-the-loop gates before promoting knowledge
+   - Auditability: Decisions reconstructable over time
+   - Multi-tenant isolation: Strict `group_id` boundaries
+
+3. **Curator Plan Defined**
+   - Queue (Proposals): High-score memories → queue with evidence
+   - Distinguish checks: Duplicate, Conflict, Age analysis
+   - Human approval: Admin screen review
+   - Promotion: Write to Neo4j with SUPERSEDES links
+
+4. **Build Order Prioritized**
+   - P0: Curator Queue Implementation (2-3 days)
+   - P1: Living README + Orientation (1 day)
+   - P2: Explicit Save Point Commands (1 day)
+   - P2: Groundedness Metrics (1 day)
+
+5. **Docker Environment Remediation** ✅ (This Session)
+   - Performed full environment audit against final-state policy
+   - Identified drift: `memory-legacy-postgres`, `client-hvac-*`, `ruvector`, orphan networks/volumes
+   - Executed fresh start: `docker system prune -a --volumes -f`
+   - Rewrote `docker-compose.yml` to enforce 4-container limit + memory caps
+   - Fixed Dockerfile.prod build pipeline (context path, Bun installation)
+   - Generated `package-lock.json` for npm ci compatibility
+   - Deployed and validated: 4 containers running (knowledge-postgres, knowledge-neo4j, allura-memory-mcp, knowledge-dozzle)
+   - Memory caps enforced: Neo4j 612MiB/2GiB, Postgres 26MiB/512MiB
+   - Logged session to PostgreSQL (events table) and Neo4j (Decision node: dec_0402386c-edab-41a4-a88a-acadb9cd4e53)
+   - Committed and pushed to GitHub: `dc9f3ffa` on `new-main`
+
+### ⏳ Next Priorities
+
+1. **P0: Curator Queue Implementation** (2-3 days)
+   - Build proposal queue for high-score memories
+   - Implement duplicate/conflict/age checks
+   - Create admin screen for human review
+
+2. **P1: Living README + Orientation** (1 day)
+   - Project orientation panel (`{group_id} / {project}`)
+   - Immediate orientation view at session start
+   - Decision log with SUPERSEDES links
+
+3. **P2: Explicit Save Point Commands** (1 day)
+   - Parse `@memory add:`, `@memory decision:`, `@memory constraint:`
+   - Create queue items with `source=explicit_user`
+   - Route through curator approval
 
 ## Session Work (2026-04-09)
 
@@ -36,11 +93,43 @@
    - Standardized metadata across platforms (principle, decision, reasoning, alternatives, tradeoffs)
    - Non-overload rules: high-volume Postgres, curated Neo4j, batch dedup
 
+5. **Enterprise Docker Setup** (Parked Infrastructure)
+   - `Dockerfile.enterprise` — Multi-stage Next.js standalone build
+   - `docker-compose.enterprise.yml` — Observability + infra services
+   - OpenTelemetry collector, Prometheus, Grafana dashboards
+   - Status: Safe to merge, parked, does not move Curator forward
+
 ### ⏳ Next Priorities
 
-1. **P0: Notion Dashboard Integration** — Fix schema validation, sync Postgres views to Notion every 5 min
-2. **P1: Runtime Integration** — Document Copilot, OpenClaw, OpenCode flows (populate runtime column)
-3. **P2: Admin Dashboard** — Build Grafana/internal dashboard for Brooks metrics
+1. **P0: Curator Queue Implementation** (2-3 days)
+   - Build proposal queue for high-score memories
+   - Implement duplicate/conflict/age checks
+   - Create admin screen for human review
+
+2. **P1: Living README + Orientation** (1 day)
+   - Project orientation panel (`{group_id} / {project}`)
+   - Immediate orientation view at session start
+   - Decision log with SUPERSEDES links
+
+3. **P2: Explicit Save Point Commands** (1 day)
+   - Parse `@memory add:`, `@memory decision:`, `@memory constraint:`
+   - Create queue items with `source=explicit_user`
+   - Route through curator approval
+
+### Validation Report Recovery (2026-04-09)
+
+**Status**: 2 of 5 actions complete, 3 in progress
+
+**Completed**:
+- ✅ Fixed TypeScript errors in `brooks-session-start.ts` (COMPLETED→RETROSPECTIVE, Record type)
+- ✅ Committed 50+ uncommitted files (restored conceptual integrity)
+
+**In Progress**:
+- ⏸️ **Notion Integration** — DEFERRED to P2 (no token available, using Postgres views instead)
+- 📋 **Surgical Team Activation** — Plan created, ready to document logging pattern
+- 📋 **Neo4j Promotion** — 5 candidate decisions identified, ready for curator approval
+
+**Execution Plan**: See `docs/execution-plan-2026-04-09.md` for detailed steps, decision criteria, and verification commands.
 
 ### Key Metrics
 
