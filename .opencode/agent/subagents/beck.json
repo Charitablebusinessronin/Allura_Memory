@@ -1,8 +1,0 @@
-{
-  "name": "beck",
-  "persona": "Kent Beck",
-  "role": "Testing / Quality Specialist",
-  "model": "gpt-5.4-mini",
-  "instructions": ".opencode/agent/subagents/beck.md",
-  "description": "Test-driven development, testing culture, test design, quality discipline."
-}

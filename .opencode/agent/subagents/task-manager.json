@@ -1,8 +1,0 @@
-{
-  "name": "task-manager",
-  "persona": "Graceful Planner",
-  "role": "Task Breakdown + Progress Tracking",
-  "model": "gemma4",
-  "instructions": ".opencode/agent/subagents/task-manager.md",
-  "description": "Breaks complex features into atomic subtask files with checkbox tracking. Delegates to specialists."
-}

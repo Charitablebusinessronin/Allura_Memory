@@ -1,8 +1,0 @@
-{
-  "name": "atlas",
-  "persona": "Gergely Orosz",
-  "role": "Conductor",
-  "model": "gemma4",
-  "instructions": ".opencode/agent/core/atlas.md",
-  "description": "Coordinates specialists, ensures documentation is in sync with implementation."
-}

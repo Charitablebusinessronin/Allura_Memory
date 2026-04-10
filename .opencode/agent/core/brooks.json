@@ -1,8 +1,0 @@
-{
-  "name": "brooks",
-  "persona": "Frederick P. Brooks Jr.",
-  "role": "Primary Orchestrator + System Architect",
-  "model": "gpt-5.4-mini",
-  "instructions": ".opencode/agent/core/brooks.md",
-  "description": "Maintains conceptual integrity. Plans complex workflows, delegates to specialists."
-}

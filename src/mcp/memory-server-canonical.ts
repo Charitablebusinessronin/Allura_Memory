@@ -1,0 +1,301 @@
+#!/usr/bin/env node
+/**
+ * Allura Memory MCP Server - Canonical Interface
+ * 
+ * Exposes the 5 canonical memory operations via MCP:
+ * 1. memory_add - Add a memory (episodic → score → promote/queue)
+ * 2. memory_search - Search memories (federated: Postgres + Neo4j)
+ * 3. memory_get - Get a single memory by ID
+ * 4. memory_list - List all memories for a user
+ * 5. memory_delete - Soft-delete a memory
+ * 
+ * Reference: docs/allura/BLUEPRINT.md
+ * 
+ * Usage: bun run src/mcp/memory-server-canonical.ts
+ */
+
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
+
+import {
+  memory_add,
+  memory_search,
+  memory_get,
+  memory_list,
+  memory_delete,
+} from "./canonical-tools.js";
+
+// Server setup
+const server = new Server(
+  {
+    name: "allura-memory-canonical",
+    version: "1.0.0",
+  },
+  {
+    capabilities: {
+      tools: {},
+    },
+  }
+);
+
+// List available tools
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+  return {
+    tools: [
+      {
+        name: "memory_add",
+        description: "Add a memory for a user. Writes to PostgreSQL (episodic), scores content, and conditionally promotes to Neo4j (semantic) based on PROMOTION_MODE.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            group_id: {
+              type: "string",
+              description: "Required: Tenant namespace (format: allura-*)",
+            },
+            user_id: {
+              type: "string",
+              description: "Required: User identifier within tenant",
+            },
+            content: {
+              type: "string",
+              description: "Required: Memory content text",
+            },
+            metadata: {
+              type: "object",
+              description: "Optional: Metadata (source, conversation_id, agent_id)",
+              properties: {
+                source: {
+                  type: "string",
+                  enum: ["conversation", "manual"],
+                },
+                conversation_id: {
+                  type: "string",
+                },
+                agent_id: {
+                  type: "string",
+                },
+              },
+            },
+            threshold: {
+              type: "number",
+              description: "Optional: Override promotion threshold (default: 0.85)",
+            },
+          },
+          required: ["group_id", "user_id", "content"],
+        },
+      },
+      {
+        name: "memory_search",
+        description: "Search memories across both stores (PostgreSQL + Neo4j). Federated search with results merged by relevance.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            query: {
+              type: "string",
+              description: "Required: Search query",
+            },
+            group_id: {
+              type: "string",
+              description: "Required: Tenant namespace (format: allura-*)",
+            },
+            user_id: {
+              type: "string",
+              description: "Optional: User identifier (scope to user)",
+            },
+            limit: {
+              type: "number",
+              description: "Optional: Maximum results (default: 10)",
+            },
+            min_score: {
+              type: "number",
+              description: "Optional: Minimum confidence filter",
+            },
+            include_global: {
+              type: "boolean",
+              description: "Optional: Include global memories (default: true)",
+            },
+          },
+          required: ["query", "group_id"],
+        },
+      },
+      {
+        name: "memory_get",
+        description: "Retrieve a single memory by ID. Returns from either store (episodic or semantic).",
+        inputSchema: {
+          type: "object",
+          properties: {
+            id: {
+              type: "string",
+              description: "Required: Memory identifier",
+            },
+            group_id: {
+              type: "string",
+              description: "Required: Tenant namespace (format: allura-*)",
+            },
+          },
+          required: ["id", "group_id"],
+        },
+      },
+      {
+        name: "memory_list",
+        description: "List all memories for a user within a tenant. Returns from both stores, merged and sorted.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            group_id: {
+              type: "string",
+              description: "Required: Tenant namespace (format: allura-*)",
+            },
+            user_id: {
+              type: "string",
+              description: "Required: User identifier",
+            },
+            limit: {
+              type: "number",
+              description: "Optional: Maximum results (default: 50)",
+            },
+            offset: {
+              type: "number",
+              description: "Optional: Pagination offset",
+            },
+            sort: {
+              type: "string",
+              enum: ["created_at_desc", "created_at_asc", "score_desc", "score_asc"],
+              description: "Optional: Sort order (default: created_at_desc)",
+            },
+          },
+          required: ["group_id", "user_id"],
+        },
+      },
+      {
+        name: "memory_delete",
+        description: "Soft-delete a memory. Appends deletion event to PostgreSQL and marks Neo4j node as deprecated.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            id: {
+              type: "string",
+              description: "Required: Memory identifier",
+            },
+            group_id: {
+              type: "string",
+              description: "Required: Tenant namespace (format: allura-*)",
+            },
+            user_id: {
+              type: "string",
+              description: "Required: User identifier (for authorization)",
+            },
+          },
+          required: ["id", "group_id", "user_id"],
+        },
+      },
+    ],
+  };
+});
+
+// Tool execution
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const { name, arguments: args } = request.params;
+
+  try {
+    switch (name) {
+      case "memory_add": {
+        const result = await memory_add(args as any);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "memory_search": {
+        const result = await memory_search(args as any);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "memory_get": {
+        const result = await memory_get(args as any);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "memory_list": {
+        const result = await memory_list(args as any);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "memory_delete": {
+        const result = await memory_delete(args as any);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      default:
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({ error: `Unknown tool: ${name}` }, null, 2),
+            },
+          ],
+          isError: true,
+        };
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({ error: errorMessage }, null, 2),
+        },
+      ],
+      isError: true,
+    };
+  }
+});
+
+// Start server
+async function main() {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error("Allura Memory MCP Server (Canonical) running on stdio");
+}
+
+main().catch((error) => {
+  console.error("Fatal error:", error);
+  process.exit(1);
+});
