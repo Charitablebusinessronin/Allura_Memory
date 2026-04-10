@@ -90,9 +90,15 @@ export interface TraceRecord {
   /** Event status (pending/completed/failed) */
   status: string;
   
+  /** Confidence score (0-1) */
+  confidence: number | null;
+
+  /** Evidence reference for HITL */
+  evidence_ref: string | null;
+
   /** When the event was created */
   created_at: Date;
-  
+
   /** When the event was inserted into database */
   inserted_at: Date;
 }

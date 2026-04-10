@@ -91,11 +91,6 @@ function validateTraceLog(trace: TraceLog): void {
   // Group ID validation (Allura tenant naming convention)
   if (!trace.group_id || trace.group_id.trim().length === 0) {
     errors.push("group_id is required and cannot be empty");
-  } else if (!trace.group_id.startsWith("allura-")) {
-    // Warn but allow - some legacy groups may not follow convention
-    console.warn(
-      `[TraceLogger] group_id '${trace.group_id}' does not follow 'allura-*' naming convention`
-    );
   }
 
   // Agent ID validation
@@ -279,6 +274,8 @@ export async function getTracesByAgent(
       metadata,
       outcome,
       status,
+      confidence,
+      evidence_ref,
       created_at,
       inserted_at
     FROM events
@@ -334,6 +331,8 @@ export async function getTracesByType(
       metadata,
       outcome,
       status,
+      confidence,
+      evidence_ref,
       created_at,
       inserted_at
     FROM events
@@ -514,6 +513,8 @@ export async function queryTraces(options: QueryTracesOptions): Promise<QueryTra
       metadata,
       outcome,
       status,
+      confidence,
+      evidence_ref,
       created_at,
       inserted_at
     FROM events
