@@ -1,9 +1,0 @@
-{
-  "name": "party-mode",
-  "version": "1.0.0",
-  "description": "Launch multiple agents in parallel for maximum throughput",
-  "author": "Allura Memory",
-  "tags": ["orchestration", "parallel", "agents"],
-  "agents": ["sisyphus", "hephaestus", "oracle", "librarian", "explore", "ux"],
-  "category": "orchestration"
-}

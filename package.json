@@ -18,6 +18,7 @@
     "docs": "bun scripts/generate-docs.js",
     "lint": "bun next lint",
     "mcp": "bun src/mcp/memory-server.ts",
+    "mcp:canonical": "bun src/mcp/memory-server-canonical.ts",
     "mcp:dev": "bun --watch src/mcp/memory-server.ts",
     "mcp:http": "PORT=${OPENCLAW_PORT:-3200} bun src/mcp/openclaw-gateway-http.ts",
     "curator:run": "bun src/curator/index.ts run",

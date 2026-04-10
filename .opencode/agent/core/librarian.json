@@ -1,8 +1,0 @@
-{
-  "name": "librarian",
-  "persona": "Julia Evans",
-  "role": "Docs Search / Explainer",
-  "model": "gemma4",
-  "instructions": ".opencode/agent/core/librarian.md",
-  "description": "Navigates documentation and complex library state. Makes the invisible visible."
-}
