@@ -30,8 +30,13 @@ export type AgentCategory =
 /** GitHub event types that can trigger agent scripts. */
 export type CiEventName = "pull_request" | "push" | "issues";
 
-/** Model backend for autonomous agents (ralph). */
-export type ModelBackend = "github-models" | "local-ollama" | "none";
+/**
+ * Model backend for autonomous agents (ralph only).
+ * "opencode"      = OpenCode terminal agent runtime (default — uses OPENCODE_CONFIG).
+ * "local-ollama"  = self-hosted Ollama, zero-cost, fully private.
+ * "none"          = no model needed (static analysis agents).
+ */
+export type ModelBackend = "opencode" | "local-ollama" | "none";
 
 /** A single CI route: which event + action triggers which agent. */
 export interface CiRoute {
@@ -70,14 +75,17 @@ export interface AgentManifestEntry {
   description: string;
   /**
    * Model backend for autonomous agents (ralph only).
-   * "github-models" = free-tier GitHub Models API with GITHUB_TOKEN auth.
-   * "local-ollama" = self-hosted Ollama (not currently available).
-   * "none" = no model needed (static analysis agents).
+   * "opencode"     = OpenCode terminal agent runtime with OPENCODE_CONFIG auth.
+   * "local-ollama" = self-hosted Ollama (zero-cost, fully private).
+   * "none"         = no model needed (static analysis agents).
+   *
+   * NOTE: GitHub Models ("github-models") is NOT used in this stack.
+   * Ralph runs through OpenCode, not the GitHub Models API.
    */
   modelBackend?: ModelBackend;
   /**
    * Authentication method for model backend.
-   * "GITHUB_TOKEN" = uses existing CI token (zero new credentials).
+   * "OPENCODE_CONFIG" = uses OpenCode configuration (~/.config/opencode/).
    */
   auth?: string;
 }
@@ -117,10 +125,10 @@ const manifestEntries: Array<AgentManifestEntry> = [
     category: "core",
     scriptPath: "scripts/agents/ralph-loop.ts",
     ciRoutes: [],
-    modelBackend: "github-models",
-    auth: "GITHUB_TOKEN",
+    modelBackend: "opencode",
+    auth: "OPENCODE_CONFIG",
     description:
-      "Autonomous agentic loop for iterative task completion. Uses GitHub Models free-tier inference (GITHUB_TOKEN auth). NOT open-ralph-wiggum. Full build is Phase 3.",
+      "Autonomous agentic loop for iterative task completion. Drives OpenCode through bounded iterations (max 5) with verifyCompletion gate and HITL slices. NOT a full autonomous builder — bounded validation loop only. Full open-ralph-wiggum build is Phase 3.",
   },
   {
     id: "pike",
