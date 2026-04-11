@@ -3,8 +3,8 @@
  * Tests the complete Unified Knowledge System with live services
  * 
  * Prerequisites:
- * - PostgreSQL running on localhost:5432
- * - Neo4j running on localhost:7687
+ * - PostgreSQL accessible via DATABASE_URL or POSTGRES_* env vars
+ * - Neo4j accessible via NEO4J_URI or NEO4J_* env vars
  * - Environment variables set (see .env.production.example)
  * 
  * Run with: npm run test:e2e
@@ -37,20 +37,28 @@ describe.skipIf(!shouldRunE2E)("E2E Integration Tests", () => {
     }
 
     // Initialize PostgreSQL connection
-    pgPool = new Pool({
-      host: process.env.POSTGRES_HOST || "localhost",
-      port: parseInt(process.env.POSTGRES_PORT || "5432"),
-      database: process.env.POSTGRES_DB || "memory",
-      user: process.env.POSTGRES_USER || "ronin4life",
-      password: process.env.POSTGRES_PASSWORD,
-      connectionTimeoutMillis: 10000,
-      idleTimeoutMillis: 30000,
-      max: 10,
-    });
+    // Prefer DATABASE_URL (full connection string) over individual host/port vars
+    const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+    if (databaseUrl) {
+      pgPool = new Pool({ connectionString: databaseUrl });
+    } else {
+      pgPool = new Pool({
+        host: process.env.POSTGRES_HOST || "localhost",
+        port: parseInt(process.env.POSTGRES_PORT || "5432", 10),
+        database: process.env.POSTGRES_DB || "memory",
+        user: process.env.POSTGRES_USER || "ronin4life",
+        password: process.env.POSTGRES_PASSWORD,
+        connectionTimeoutMillis: 10000,
+        idleTimeoutMillis: 30000,
+        max: 10,
+      });
+    }
 
     // Initialize Neo4j connection
+    // NEO4J_URI is canonical; fallback to individual vars only if unset
+    const neo4jUri = process.env.NEO4J_URI || "bolt://localhost:7687";
     neo4jDriver = neo4j.driver(
-      process.env.NEO4J_URI || "bolt://localhost:7687",
+      neo4jUri,
       neo4j.auth.basic(
         process.env.NEO4J_USER || "neo4j",
         process.env.NEO4J_PASSWORD
