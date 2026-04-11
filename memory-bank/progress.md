@@ -1,6 +1,6 @@
 # Progress Log
 
-**Last Updated**: 2026-04-11 (P0-1 Schema Repair Validation Complete)
+**Last Updated**: 2026-04-11 (Unified Agent Taxonomy + Scout Activation)
 
 ## Session Work (2026-04-11)
 
@@ -46,12 +46,33 @@
    - Returns proper response: `{"id":"...","stored":"episodic","score":0.5}`
    - Events logged: 2 `memory_add`, 1 `proposal_created`
 
-3. **Next Steps Identified**
-   - P0-2: MCP isolation from REST API
-   - P0-3: Neo4j indexes for `group_id`, `created_at`, `agent_id`
-   - P0-4: Promotion pipeline (Postgres → Neo4j)
-   - P1-1: Behavioral tests for canonical interface
-   - P1-2: Documentation updates
+3. **MCP Hardening — PR #1 Merged** ✅
+   - Normalized to `ALLURA_MCP_HTTP_PORT`, process-based container healthchecks
+   - Added explicit `meta.degraded` metadata to all canonical memory responses
+   - Made tests use per-run tenant isolation, added anti-flake regression
+   - Tag: `v1.0-hardened`, PR #1 merged, Issues #2-#5 closed
+
+4. **CI Pipeline Fix** ✅
+   - Fixed broken `agent-hooks.yml` — mapped to existing agent scripts
+   - Made all agent scripts graceful for CI (no DB required)
+   - Opted into Node.js 24, PR #6 merged — green baseline confirmed
+
+5. **Unified Agent Taxonomy (AD-15)** ✅
+   - Reconciled three conflicting taxonomies into `AGENT_MANIFEST` single source of truth
+   - 10 agents: brooks, jobs, ralph, pike, fowler, scout, woz, bellard, dijkstra, knuth
+   - Created `agent-manifest.ts`, `dynamic-router.ts`, `dispatch.ts`
+   - New scripts: pike-interface-review.ts, fowler-refactor-gate.ts, scout-recon.ts
+   - New persona definitions: dijkstra-review.md, knuth-analyze.md
+
+6. **Scout Activation (Phase 2, First Real Agent)** ✅
+   - Replaced stub with operational implementation (889 lines)
+   - Sub-commands: scan, grep, paths, risks, report
+   - Real filesystem operations — no mock data
+   - Risk detection: config drift, hardcoded ports, coverage gaps
+
+### ⏳ Next Priorities
+
+1. **P2-2**: Activate fowler (refactor gate) and pike (interface review) with real analysis
 
 ## Session Work (2026-04-10)
 
