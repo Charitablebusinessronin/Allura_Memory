@@ -30,6 +30,9 @@ export type AgentCategory =
 /** GitHub event types that can trigger agent scripts. */
 export type CiEventName = "pull_request" | "push" | "issues";
 
+/** Model backend for autonomous agents (ralph). */
+export type ModelBackend = "github-models" | "local-ollama" | "none";
+
 /** A single CI route: which event + action triggers which agent. */
 export interface CiRoute {
   /** GitHub webhook event name. */
@@ -65,6 +68,18 @@ export interface AgentManifestEntry {
   ciRoutes: CiRoute[];
   /** Brief description of what the agent does. */
   description: string;
+  /**
+   * Model backend for autonomous agents (ralph only).
+   * "github-models" = free-tier GitHub Models API with GITHUB_TOKEN auth.
+   * "local-ollama" = self-hosted Ollama (not currently available).
+   * "none" = no model needed (static analysis agents).
+   */
+  modelBackend?: ModelBackend;
+  /**
+   * Authentication method for model backend.
+   * "GITHUB_TOKEN" = uses existing CI token (zero new credentials).
+   */
+  auth?: string;
 }
 
 // ── Manifest Data ────────────────────────────────────────────────────────
@@ -100,9 +115,12 @@ const manifestEntries: Array<AgentManifestEntry> = [
     persona: "Ralph",
     role: "Loop Runner",
     category: "core",
+    scriptPath: "scripts/agents/ralph-loop.ts",
     ciRoutes: [],
+    modelBackend: "github-models",
+    auth: "GITHUB_TOKEN",
     description:
-      "Autonomous agentic loop for iterative task completion. Wraps any AI coding agent in a self-correcting loop until completion promise is detected.",
+      "Autonomous agentic loop for iterative task completion. Uses GitHub Models free-tier inference (GITHUB_TOKEN auth). NOT open-ralph-wiggum. Full build is Phase 3.",
   },
   {
     id: "pike",

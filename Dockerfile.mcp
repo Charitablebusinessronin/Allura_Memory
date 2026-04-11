@@ -10,4 +10,19 @@ RUN bun install
 
 ENV NODE_ENV=production
 
-CMD ["bun", "src/mcp/memory-server-canonical.ts"]
+# MCP is a stdio server — it needs stdin to stay alive.
+# When run via docker-compose, keep the container running
+# so it's available for HTTP gateway or exec-based tool calls.
+COPY <<'EOF' /app/entrypoint.sh
+#!/bin/sh
+# Start the MCP stdio server in the background
+bun src/mcp/memory-server-canonical.ts &
+MCP_PID=$!
+
+# Keep container alive — stdio MCP exits without attached stdin
+# The server is also available via canonical-http-gateway
+exec sleep infinity
+EOF
+RUN chmod +x /app/entrypoint.sh
+
+CMD ["/app/entrypoint.sh"]

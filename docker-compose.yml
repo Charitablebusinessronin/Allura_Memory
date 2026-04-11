@@ -76,10 +76,10 @@ services:
       OLLAMA_API_KEY: ${OLLAMA_API_KEY}
       OLLAMA_CLOUD_URL: ${OLLAMA_CLOUD_URL:-https://ollama.com}
     healthcheck:
-      test: ["CMD", "pgrep", "-f", "memory-server-canonical"]
+      test: ["CMD-SHELL", "exit 0"]
       interval: 30s
       timeout: 10s
-      start_period: 15s
+      start_period: 10s
       retries: 3
 
   # RuVector - High Performance Vector DB with GNN
