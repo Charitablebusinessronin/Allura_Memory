@@ -63,7 +63,7 @@ services:
   mcp:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.prod
+      dockerfile: Dockerfile.mcp
     container_name: allura-memory-mcp
     restart: unless-stopped
     depends_on:
@@ -84,7 +84,7 @@ services:
       OLLAMA_API_KEY: ${OLLAMA_API_KEY}
       OLLAMA_CLOUD_URL: ${OLLAMA_CLOUD_URL:-https://ollama.com}
     healthcheck:
-      test: ["CMD", "pgrep", "-f", "memory-server"]
+      test: ["CMD", "pgrep", "-f", "memory-server-canonical"]
       interval: 30s
       timeout: 10s
       start_period: 15s

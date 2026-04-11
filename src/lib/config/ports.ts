@@ -11,7 +11,7 @@ import { randomInt } from "crypto";
  * Port ranges for different services
  * 
  * - Paperclip (Next.js): 3100-3199
- * - OpenClaw Gateway (MCP): 3200-3299
+ * - Allura MCP HTTP Gateway: 3200-3299
  * - PostgreSQL: 5432 (standard, configurable)
  * - Neo4j HTTP: 7474 (standard, configurable)
  * - Neo4j Bolt: 7687 (standard, configurable)
@@ -20,6 +20,7 @@ import { randomInt } from "crypto";
 export const PORT_RANGES = {
   paperclip: { min: 3100, max: 3199, default: 3100 },
   openclaw: { min: 3200, max: 3299, default: 3200 },
+  mcp_http: { min: 3200, max: 3299, default: 3201 },
   postgres: { min: 5400, max: 5499, default: 5432 },
   neo4j_http: { min: 7470, max: 7479, default: 7474 },
   neo4j_bolt: { min: 7680, max: 7689, default: 7687 },
@@ -82,6 +83,7 @@ export function getPort(
 export interface PortConfig {
   paperclip: number;
   openclaw: number;
+  mcp_http: number;
   postgres: number;
   neo4j_http: number;
   neo4j_bolt: number;
@@ -99,6 +101,9 @@ export function getPortConfig(randomize: boolean = false): PortConfig {
     openclaw: randomize
       ? getRandomPort(PORT_RANGES.openclaw.min, PORT_RANGES.openclaw.max)
       : getPort("openclaw", "OPENCLAW_PORT"),
+    mcp_http: randomize
+      ? getRandomPort(PORT_RANGES.mcp_http.min, PORT_RANGES.mcp_http.max)
+      : getPort("mcp_http", "ALLURA_MCP_HTTP_PORT"),
     postgres: getPort("postgres", "POSTGRES_PORT"),
     neo4j_http: getPort("neo4j_http", "NEO4J_HTTP_PORT"),
     neo4j_bolt: getPort("neo4j_bolt", "NEO4J_BOLT_PORT"),
@@ -112,6 +117,7 @@ export function getPortConfig(randomize: boolean = false): PortConfig {
 export function getServiceUrls(ports?: Partial<PortConfig>): {
   paperclip: string;
   openclaw: string;
+  mcp_http: string;
   postgres: string;
   neo4j_http: string;
   neo4j_bolt: string;
@@ -122,6 +128,7 @@ export function getServiceUrls(ports?: Partial<PortConfig>): {
   return {
     paperclip: `http://localhost:${config.paperclip}`,
     openclaw: `http://localhost:${config.openclaw}`,
+    mcp_http: `http://localhost:${config.mcp_http}`,
     postgres: `postgresql://${process.env.POSTGRES_USER || "ronin4life"}:${process.env.POSTGRES_PASSWORD || "password"}@localhost:${config.postgres}/${process.env.POSTGRES_DB || "memory"}`,
     neo4j_http: `http://localhost:${config.neo4j_http}`,
     neo4j_bolt: `bolt://localhost:${config.neo4j_bolt}`,
@@ -135,6 +142,7 @@ export function getServiceUrls(ports?: Partial<PortConfig>): {
 export const PORT_ENV_VARS = {
   paperclip: "PAPERCLIP_PORT",
   openclaw: "OPENCLAW_PORT",
+  mcp_http: "ALLURA_MCP_HTTP_PORT",
   postgres: "POSTGRES_PORT",
   neo4j_http: "NEO4J_HTTP_PORT",
   neo4j_bolt: "NEO4J_BOLT_PORT",
@@ -153,6 +161,7 @@ export function generateEnvEntries(randomize: boolean = false): string {
 # =============================================================================
 PAPERCLIP_PORT=${config.paperclip}
 OPENCLAW_PORT=${config.openclaw}
+ALLURA_MCP_HTTP_PORT=${config.mcp_http}
 POSTGRES_PORT=${config.postgres}
 NEO4J_HTTP_PORT=${config.neo4j_http}
 NEO4J_BOLT_PORT=${config.neo4j_bolt}
@@ -161,6 +170,7 @@ DOZZLE_PORT=${config.dozzle}
 # Derived URLs
 NEXT_PUBLIC_APP_URL=http://localhost:${config.paperclip}
 OPENCLAW_GATEWAY_URL=http://localhost:${config.openclaw}
+ALLURA_MCP_HTTP_URL=http://localhost:${config.mcp_http}
 `.trim();
 }
 
