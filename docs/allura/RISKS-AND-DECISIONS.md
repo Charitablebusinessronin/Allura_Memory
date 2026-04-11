@@ -25,6 +25,7 @@
 | AD-11 | Human-in-the-loop gating for validation evidence | Decided | Every RalphLoop slice requires human review before proceeding. Judge reviews all evidence; no automatic progression to next slice without explicit approval. |
 | AD-12 | Slice-by-slice approach (no parallel slice definition) | Decided | Sequential slice execution ensures clear causation and evidence trails. Parallel slices would introduce race conditions and obscure failure attribution. |
 | AD-13 | Canonical API validation uses bounded RalphLoop slices | Decided | Validate `/api/memory` with bounded, repeatable slices to preserve fast feedback, clear causality, and low architectural risk. |
+| AD-14 | PostgreSQL required, Neo4j degradable at runtime | Decided | Canonical memory contract remains available when PostgreSQL is healthy. Neo4j is optional-at-runtime: failures must surface explicit degraded metadata in health and tool responses rather than causing silent partial success or full outage. |
 
 ---
 
