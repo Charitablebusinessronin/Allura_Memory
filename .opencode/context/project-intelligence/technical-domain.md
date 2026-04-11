@@ -1,108 +1,110 @@
-<!-- Context: project-intelligence/technical | Priority: high | Version: 1.0 | Updated: 2025-01-12 -->
+<!-- Context: project-intelligence/technical | Priority: critical | Version: 1.1 | Updated: 2026-04-11 -->
 
 # Technical Domain
 
-> Document the technical foundation, architecture, and key decisions.
+**Purpose**: Tech stack, architecture, development patterns for Allura Memory.
+**Last Updated**: 2026-04-11
 
 ## Quick Reference
-
-- **Purpose**: Understand how the project works technically
-- **Update When**: New features, refactoring, tech stack changes
-- **Audience**: Developers, DevOps, technical stakeholders
+**Update Triggers**: Tech stack changes | New patterns | Architecture decisions
+**Audience**: Developers, AI agents
 
 ## Primary Stack
-
 | Layer | Technology | Version | Rationale |
 |-------|-----------|---------|-----------|
-| Language | [e.g., TypeScript] | [Version] | [Why this language] |
-| Framework | [e.g., Node.js] | [Version] | [Why this framework] |
-| Database | [e.g., PostgreSQL] | [Version] | [Why this database] |
-| Infrastructure | [e.g., AWS, Vercel] | [N/A] | [Why this infra] |
-| Key Libraries | [List important ones] | [Versions] | [Why each matters] |
+| Framework | Next.js | 16 | App Router, Server Components |
+| Language | TypeScript | 5.9 strict | Type safety for memory operations |
+| Runtime | Bun | 1.3.11 | Faster than Node for scripts |
+| Database (Events) | PostgreSQL | 16 | Append-only raw traces |
+| Database (Knowledge) | Neo4j | 5.26 + APOC | Versioned knowledge graph |
+| Database (Vectors) | RuVector | latest | Vector embeddings |
+| Styling | Tailwind | v4 | Utility-first CSS |
+| UI Components | shadcn/ui | latest | Accessible, composable |
+| State | Zustand | latest | Client state management |
+| Validation | Zod | latest | Runtime type validation |
+| Agent Framework | OpenCode | 1.4.3 | AI agent runtime |
 
-## Architecture Pattern
-
+## Architecture: 5-Layer Agent-OS
 ```
-Type: [Monolith | Microservices | Serverless | Agent-based | Hybrid]
-Pattern: [Brief description]
-Diagram: [Link to architecture diagram if exists]
+┌─────────────────────────────────────────────┐
+│ Layer 5: Paperclip + OpenClaw (Human UI)     │
+├─────────────────────────────────────────────┤
+│ Layer 4: Workflow / DAGs / A2A Bus           │
+├─────────────────────────────────────────────┤
+│ Layer 3: Agent Runtime (OpenCode)            │
+├─────────────────────────────────────────────┤
+│ Layer 2: PostgreSQL + Neo4j + RuVector       │
+├─────────────────────────────────────────────┤
+│ Layer 1: RuVix Kernel (Proof-gated mutation)│
+└─────────────────────────────────────────────┘
 ```
-
-### Why This Architecture?
-
-[Explain the business and technical reasons for this architecture choice. What problem does this architecture solve? What were alternatives considered?]
 
 ## Project Structure
-
 ```
-[Project Root]
-├── src/                    # Source code
-├── tests/                  # Test files
-├── docs/                   # Documentation
-├── scripts/                # Build/deploy scripts
-└── [Other key directories]
-```
-
-**Key Directories**:
-- `src/` - Contains all application logic organized by [module/feature/domain]
-- `tests/` - [How tests are organized]
-- `docs/` - [What documentation lives here]
-
-## Key Technical Decisions
-
-| Decision | Rationale | Impact |
-|----------|-----------|--------|
-| [Decision 1] | [Why this choice] | [What it enables] |
-| [Decision 2] | [Why this choice] | [What it enables] |
-
-See `decisions-log.md` for full decision history with alternatives.
-
-## Integration Points
-
-| System | Purpose | Protocol | Direction |
-|--------|---------|----------|-----------|
-| [API 1] | [What it does] | [REST/GraphQL/gRPC] | [Inbound/Outbound] |
-| [Database] | [What it stores] | [PostgreSQL/Mongo/etc] | [Internal] |
-| [Service] | [What it provides] | [HTTP/gRPC] | [Outbound] |
-
-## Technical Constraints
-
-| Constraint | Origin | Impact |
-|------------|--------|--------|
-| [Legacy systems] | [Business/Tech] | [What limitation it creates] |
-| [Compliance] | [Regulation] | [What must be followed] |
-| [Performance] | [SLAs] | [What must be met] |
-
-## Development Environment
-
-```
-Setup: [Quick setup command or link]
-Requirements: [What developers need installed]
-Local Dev: [How to run locally]
-Testing: [How to run tests]
+src/
+├── app/           # Next.js App Router pages
+├── components/    # React components (shadcn/ui)
+├── lib/
+│   ├── memory/    # Embedding providers, config
+│   ├── postgres/  # PostgreSQL connection
+│   ├── neo4j/     # Neo4j connection
+│   ├── ruvector/  # Vector DB connection
+│   └── dedup/     # Duplicate detection
+├── mcp/           # MCP tools and server
+├── kernel/        # RuVix kernel (proof system)
+└── stores/        # Zustand stores
 ```
 
-## Deployment
+## Code Patterns
 
+### Server Action
+```typescript
+"use server";
+import { z } from "zod";
+
+const schema = z.object({
+  group_id: z.string().startsWith("allura-"),
+  content: z.string().min(1),
+});
+
+export async function createMemory(input: unknown) {
+  const validated = schema.parse(input); // Zod validation
+  await db.insert(events).values({...validated, event_type: "memory_add"});
+  return { success: true };
+}
 ```
-Environment: [Production/Staging/Development]
-Platform: [Where it deploys]
-CI/CD: [Pipeline used]
-Monitoring: [Tools for observability]
+
+### React Component
+```typescript
+interface MemoryCardProps { content: string; confidence: number }
+export function MemoryCard({ content, confidence }: MemoryCardProps) {
+  return <div className="rounded-lg border p-4">{content}</div>;
+}
 ```
 
-## Onboarding Checklist
+## Naming Conventions
+| Type | Convention | Example |
+|------|-----------|---------|
+| Files | kebab-case | `memory-card.tsx` |
+| Components | PascalCase | `MemoryCard` |
+| Functions | camelCase | `getMemoryById` |
+| DB Tables | snake_case | `promotion_proposals` |
+| Tenant IDs | allura-{org} | `allura-faith-meats` |
 
-- [ ] Know the primary tech stack
-- [ ] Understand the architecture pattern and why it was chosen
-- [ ] Know the key project directories and their purpose
-- [ ] Understand major technical decisions and rationale
-- [ ] Know integration points and dependencies
-- [ ] Be able to set up local development environment
-- [ ] Know how to run tests and deploy
+## Security Requirements
+- TypeScript `strict: true`
+- Zod validation at all boundaries
+- `group_id` on EVERY database operation
+- PostgreSQL events are append-only
+- Neo4j uses SUPERSEDES (never edit)
+- Server guards on DB modules
+
+## 📂 Codebase References
+**Core**: `src/lib/memory/`, `src/mcp/canonical-tools.ts`
+**Config**: `package.json`, `docker-compose.yml`
+**Tests**: `src/**/*.test.ts`
 
 ## Related Files
-
-- `business-domain.md` - Why this technical foundation exists
-- `business-tech-bridge.md` - How business needs map to technical solutions
-- `decisions-log.md` - Full decision history with context
+- `business-domain.md` - Business context
+- `decisions-log.md` - Decision history
+- `memory-bank/systemPatterns.md` - Architecture patterns

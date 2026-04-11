@@ -1,12 +1,39 @@
 # Active Context — Brooks Architect Persona
 
-**Session**: 2026-04-10 (Docker Remediation + Commit)
-**Status**: ✅ Brooks Framework ACTIVE | 📋 Docs Updated
-**Last Event ID**: 5 (SESSION_COMPLETE logged)
+**Session**: 2026-04-11 (P0-1 Schema Repair Validation Complete)
+**Status**: ✅ P0-1 VALIDATED | 📋 Progress Updated | 🗄️ Event ID: 132
+**Last Event ID**: 132 (VALIDATION_COMPLETE logged)
 
 ## Current Focus
 
-**Frederick P. Brooks Jr. is now the system architect.**
+**P0-1 Schema Repair is complete. The canonical memory interface is operational.**
+
+All architectural decisions (CA/VA/WS commands) are logged to Postgres with:
+- `agent_id='brooks'` — Unified identity
+- `runtime` — Identifies execution platform (claude-code, copilot, openclaw, opencode)
+- `session_id` — Groups cross-platform work
+- `metadata` — Principle, decision, reasoning, alternatives, tradeoffs
+
+## Validation Results (P0-1)
+
+| Test | Status | Evidence |
+|------|--------|----------|
+| Schema Repair | ✅ PASSED | 20 tables created, `group_id` enforcement active |
+| Canonical `memory_add` | ✅ PASSED | REST API returns `{"id":"...","stored":"episodic","score":0.5}` |
+| PostgreSQL Events | ✅ PASSED | 3 events logged: 2 `memory_add`, 1 `proposal_created` |
+| Neo4j Empty | ✅ EXPECTED | 0 nodes (promotion pipeline not yet run) |
+
+## Next Steps (Priority Order)
+
+1. **P0-2: MCP Isolation** — Implement MCP server isolation from REST API
+2. **P0-3: Neo4j Indexes** — Create indexes for `group_id`, `created_at`, `agent_id`
+3. **P0-4: Promotion Pipeline** — Implement curator promotion from Postgres → Neo4j
+4. **P1-1: Behavioral Tests** — Add integration tests for canonical interface
+5. **P1-2: Documentation** — Update BLUEPRINT.md with validation results
+
+## Strategic Positioning (Updated from Notion)
+
+**Allura Memory is a developer-focused memory layer for AI agents** that emphasizes **traceability, governance, and multi-tenant isolation** — positioned as a more controlled, enterprise-grade alternative to mem0.
 
 All architectural decisions (CA/VA/WS commands) are logged to Postgres with:
 - `agent_id='brooks'` — Unified identity

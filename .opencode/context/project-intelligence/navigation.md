@@ -1,65 +1,52 @@
-<!-- Context: project-intelligence/nav | Priority: high | Version: 1.0 | Updated: 2025-01-12 -->
+<!-- Context: project-intelligence/nav | Priority: critical | Version: 1.1 | Updated: 2026-04-11 -->
 
-# Project Intelligence
+# Project Intelligence — Allura Memory
 
-> Start here for quick project understanding. These files bridge business and technical domains.
-
-## Structure
-
-```
-.opencode/context/project-intelligence/
-├── navigation.md              # This file - quick overview
-├── business-domain.md         # Business context and problem statement
-├── technical-domain.md        # Stack, architecture, technical decisions
-├── business-tech-bridge.md    # How business needs map to solutions
-├── decisions-log.md           # Major decisions with rationale
-└── living-notes.md            # Active issues, debt, open questions
-```
+> Memory layer for Allura Agent-OS with provable governance, tenant isolation, and auditable promotion.
 
 ## Quick Routes
 
-| What You Need | File | Description |
+| What You Need | File | Key Content |
 |---------------|------|-------------|
-| Understand the "why" | `business-domain.md` | Problem, users, value proposition |
-| Understand the "how" | `technical-domain.md` | Stack, architecture, integrations |
-| See the connection | `business-tech-bridge.md` | Business → technical mapping |
-| Know the context | `decisions-log.md` | Why decisions were made |
-| Current state | `living-notes.md` | Active issues and open questions |
-| All of the above | Read all files in order | Full project intelligence |
+| **Start here** | `navigation.md` | This file - quick overview |
+| **How to build** | `technical-domain.md` | Stack, patterns, conventions |
+| **Why this exists** | `business-domain.md` | Positioning vs mem0 |
+| **Architecture** | `business-tech-bridge.md` | Business → tech mapping |
+| **Decisions** | `decisions-log.md` | Why decisions were made |
+| **Current state** | `living-notes.md` | Active issues, debt |
+| **Repo truth** | `informant.md` | Maintainer field manual |
 
-## Usage
+## Tech Stack at a Glance
+```
+Next.js 16 + TypeScript 5.9 (strict) + Bun 1.3
+PostgreSQL 16 (events) + Neo4j 5.26 (knowledge) + RuVector (vectors)
+OpenCode 1.4.3 (agent runtime) + MCP (tool protocol)
+```
 
-**New Team Member / Agent**:
-1. Start with `navigation.md` (this file)
-2. Read all files in order for complete understanding
-3. Follow onboarding checklist in each file
+## Key Invariants
+- ✅ `group_id` on every database write (tenant isolation)
+- ✅ PostgreSQL = append-only raw traces
+- ✅ Neo4j = curated knowledge with SUPERSEDES
+- ✅ No agent writes to Neo4j without human approval
 
-**Quick Reference**:
-- Business focus → `business-domain.md`
-- Technical focus → `technical-domain.md`
-- Decision context → `decisions-log.md`
+## Quick Commands
+```bash
+bun install              # Install dependencies
+npm run dev              # Start dev server
+npm test                 # Run tests (85% passing)
+npm run typecheck        # TypeScript check
+docker compose up -d     # Start infrastructure
+```
 
 ## Integration
 
-This folder is referenced from:
-- `.opencode/context/core/standards/project-intelligence.md` (standards and patterns)
-- `.opencode/context/core/system/context-guide.md` (context loading)
-
-See `.opencode/context/core/context-system.md` for the broader context architecture.
+Referenced from:
+- `memory-bank/systemPatterns.md` - Architecture patterns
+- `AGENTS.md` - Agent operating handbook
+- `docs/allura/` - Human documentation canon
 
 ## Maintenance
 
-Keep this folder current:
-- Update when business direction changes
-- Document decisions as they're made
-- Review `living-notes.md` regularly
-- Archive resolved items from decisions-log.md
-
-**Management Guide**: See `.opencode/context/core/standards/project-intelligence-management.md` for complete lifecycle management including:
-- How to update, add, and remove files
-- How to create new subfolders
-- Version tracking and frontmatter standards
-- Quality checklists and anti-patterns
-- Governance and ownership
-
-See `.opencode/context/core/standards/project-intelligence.md` for the standard itself.
+- Update when tech stack changes
+- Document decisions as made
+- Review `living-notes.md` weekly

@@ -39,7 +39,7 @@
   "mcpServers": {
     "allura-memory": {
       "command": "bun",
-      "args": ["run", "src/mcp/memory-server.ts"],
+      "args": ["run", "src/mcp/memory-server-canonical.ts"],
       "cwd": "/home/ronin704/Projects/allura memory"
     },
     "exa": {

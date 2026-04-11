@@ -1,37 +1,42 @@
 -- SQL Migration File: 02_group_id_enforcement.sql
+-- Purpose: Enforce group_id format constraint for tenant isolation
+-- Design: All group_id values must match ^allura- pattern
 
--- Step 1: Altering existing tables to enforce group_id constraints
-ALTER TABLE your_table_name
-ADD COLUMN group_id INT NOT NULL;
+-- ============================================================================
+-- Add CHECK constraint for group_id format
+-- ============================================================================
 
--- Add a foreign key constraint if applicable
-ALTER TABLE your_table_name
-ADD CONSTRAINT fk_group_id
-FOREIGN KEY (group_id)
-REFERENCES groups (id);  -- Assuming you have a groups table
-
--- Step 2: Creating audit table for tracking changes related to group_id
-CREATE TABLE group_id_audit (
-    id SERIAL PRIMARY KEY,
-    your_table_id INT NOT NULL,
-    old_group_id INT,
-    new_group_id INT,
-    changed_at TIMESTAMPTZ DEFAULT NOW(),
-    changed_by VARCHAR(255) NOT NULL  -- You might want to store who made the change
-);
-
--- Step 3: (Optional) Create triggers for automatic auditing (if needed)
-CREATE OR REPLACE FUNCTION audit_group_id_change()
-RETURNS TRIGGER AS $$
+-- Enforce group_id format: must start with 'allura-'
+-- This provides schema-level tenant isolation enforcement
+DO $$
 BEGIN
-    INSERT INTO group_id_audit (your_table_id, old_group_id, new_group_id, changed_at, changed_by)
-    VALUES (OLD.id, OLD.group_id, NEW.group_id, NOW(), current_user);
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_events_group_id_format') THEN
+    ALTER TABLE events ADD CONSTRAINT chk_events_group_id_format
+      CHECK (group_id ~ '^allura-');
+  END IF;
+END $$;
 
-CREATE TRIGGER group_id_update_trigger
-AFTER UPDATE ON your_table_name
-FOR EACH ROW
-WHEN (OLD.group_id IS DISTINCT FROM NEW.group_id)
-EXECUTE FUNCTION audit_group_id_change();
+-- ============================================================================
+-- Add group_id format constraint to design_sync_status if it exists
+-- ============================================================================
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'design_sync_status') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_design_sync_group_format') THEN
+      ALTER TABLE design_sync_status ADD CONSTRAINT chk_design_sync_group_format
+        CHECK (group_id ~ '^allura-');
+    END IF;
+  END IF;
+END $$;
+
+-- ============================================================================
+-- Schema version tracking
+-- ============================================================================
+
+INSERT INTO schema_versions (version, applied_at, description)
+VALUES (
+    '002',
+    NOW(),
+    'Group ID format enforcement - CHECK constraint for ^allura- pattern'
+) ON CONFLICT (version) DO NOTHING;

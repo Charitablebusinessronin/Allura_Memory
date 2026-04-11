@@ -164,10 +164,9 @@ export async function POST(request: NextRequest) {
       // Log approval event
       await pg.query(
         `INSERT INTO events (
-          id, group_id, event_type, agent_id, status, metadata, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          group_id, event_type, agent_id, status, metadata, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6)`,
         [
-          randomUUID(),
           group_id,
           "proposal_approved",
           curator_id,
@@ -203,10 +202,9 @@ export async function POST(request: NextRequest) {
       // Log rejection event
       await pg.query(
         `INSERT INTO events (
-          id, group_id, event_type, agent_id, status, metadata, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          group_id, event_type, agent_id, status, metadata, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6)`,
         [
-          randomUUID(),
           group_id,
           "proposal_rejected",
           curator_id,

@@ -1,11 +1,17 @@
 /**
- * MCP Tools for OpenClaw Gateway
+ * LEGACY — Do not expose to AI agents.
  * 
- * Tool implementations for HTTP access.
+ * These are legacy MCP tools (memorySearch, memoryStore, ADAS tools).
+ * Use src/mcp/canonical-tools.ts for canonical 5-operation memory interface.
+ * 
+ * Kept for: openclaw-gateway HTTP surface, backward compatibility.
+ * Removal target: after consumers are ported to canonical.
+ * 
+ * Original file: src/mcp/tools.ts (moved to legacy/)
  */
 
 import { z } from "zod";
-import { getPool } from "../lib/postgres/connection.js";
+import { getPool } from "../../lib/postgres/connection.js";
 
 // Tool schemas
 const MemorySearchRequest = z.object({

@@ -1,0 +1,60 @@
+{
+  "project": "Allura Memory Engine",
+  "slice": "Validation Slice 1 — Canonical API Proof",
+  "description": "Verify real canonical POST /api/memory works in both auto and soc2 modes, collect DB evidence, return pass/fail.",
+  "features": [
+    {
+      "id": "V1-1",
+      "category": "validation",
+      "description": "Verify canonical POST /api/memory in auto mode",
+      "steps": [
+        "Start Next.js server: bun run dev (in background)",
+        "Wait for server to be ready: curl http://localhost:3000/api/health",
+        "Start with clean state: docker compose down -v && docker compose up -d",
+        "Wait for databases to be ready (PostgreSQL + Neo4j)",
+        "Run: curl -X POST http://localhost:3000/api/memory -H 'Content-Type: application/json' -d '{\"label\": \"TestInsight\", \"props\": {\"test\": true}, \"group_id\": \"allura-validation\"}'",
+        "Capture returned UUID from response",
+        "Query PostgreSQL: SELECT id, metadata->>'memory_id' as memory_id FROM events WHERE group_id = 'allura-validation' ORDER BY created_at DESC LIMIT 1",
+        "Verify: returned UUID == metadata.memory_id",
+        "Verify: events.id is numeric (BIGSERIAL)",
+        "Report: PASS or FAIL with evidence"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "This validates the canonical interface in auto mode (no soc2 kernel routing yet)"
+    },
+    {
+      "id": "V1-2",
+      "category": "validation",
+      "description": "Verify canonical POST /api/memory in soc2 mode",
+      "steps": [
+        "Ensure soc2 mode is enabled (check environment or config)",
+        "Run: curl -X POST http://localhost:3000/api/memory -H 'Content-Type: application/json' -d '{\"label\": \"TestInsight\", \"props\": {\"test\": true}, \"group_id\": \"allura-validation-soc2\"}'",
+        "Capture returned UUID from response",
+        "Query PostgreSQL: SELECT id, metadata->>'memory_id' as memory_id, trace_ref FROM events WHERE group_id = 'allura-validation-soc2' ORDER BY created_at DESC LIMIT 1",
+        "Verify: returned UUID == metadata.memory_id",
+        "Verify: events.id is numeric (BIGSERIAL)",
+        "Verify: trace_ref is numeric (BIGINT, foreign key to canonical_proposals)",
+        "Report: PASS or FAIL with evidence"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "This validates the canonical interface in soc2 mode (with kernel routing and trace_ref)"
+    },
+    {
+      "id": "V1-3",
+      "category": "validation",
+      "description": "Collect and report DB evidence",
+      "steps": [
+        "Query PostgreSQL: SELECT COUNT(*) FROM events WHERE group_id LIKE 'allura-validation%'",
+        "Query PostgreSQL: SELECT id, group_id, event_type, metadata->>'memory_id' as memory_id, trace_ref FROM events WHERE group_id LIKE 'allura-validation%' ORDER BY created_at",
+        "Query Neo4j: MATCH (n) WHERE n.group_id STARTS WITH 'allura-validation' RETURN n",
+        "Generate report: total events, memory_ids, trace_refs, Neo4j nodes",
+        "Output: <promise>COMPLETE</promise> with full evidence"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Final evidence collection and reporting"
+    }
+  ]
+}

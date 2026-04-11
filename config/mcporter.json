@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "allura-memory": {
-      "command": "bun run src/mcp/memory-server.ts"
+      "command": "bun run src/mcp/memory-server-canonical.ts"
     }
   },
   "imports": []

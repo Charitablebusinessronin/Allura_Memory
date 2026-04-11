@@ -486,6 +486,7 @@ ContextScout discovers context files using a **local-first** approach:
 - **Local always wins** — if you installed locally, global is never checked
 - **Global fallback is only for `core/`** (standards, workflows, guides) — universal files that are the same across projects
 - **Project intelligence is always local** — your tech stack, patterns, and naming conventions live in `.opencode/context/project-intelligence/` and are never loaded from global
+- **Repo truth starts at the Informant** — begin with `.opencode/context/project-intelligence/informant.md` for current authority, boundaries, bootstrap, and hazards
 - **One-time check** — ContextScout resolves the core location once at startup (max 2 glob checks), not per-file
 
 **Common setups:**
