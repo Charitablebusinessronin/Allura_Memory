@@ -187,18 +187,97 @@ The skill enforces a 5-phase process:
 - Preserve Steel Frame versioning, `group_id` enforcement, and HITL promotion.
 - Read/update memory bank files as work progresses.
 
-## 14) Required Skills
+## 14) Skill Triggers (Deterministic IF/THEN)
 
-**Run at session start:**
-- **`allura-memory-context`** — Loads all context (documentation hierarchy, architecture, naming conventions)
+Skills are NOT optional suggestions. They are **mandatory routing rules** — the agent MUST invoke the specified skill when the trigger condition is met.
 
-**Run when encountering issues:**
-- **`systematic-debugging-memory`** — Use before ANY bug fix or code change for unexpected behavior
+### Session Lifecycle (ALWAYS)
 
-**Run for specific workflows:**
-- `mcp-docker` for discovering/configuring MCP servers.
-- `opencode-docs` for authoritative OpenCode references.
-- `skill-creator` when editing or creating skills.
+| Trigger | Skill | Action |
+|---------|-------|--------|
+| Session START | `allura-memory-context` | Load all context. Read `memory-bank/activeContext.md` and `memory-bank/progress.md`. |
+| Session END | `memory-client` | Write session reflection to Neo4j knowledge graph. Verify read-back. Log what changed + why. |
+
+### Bugs, Failures, and Unexpected Behavior
+
+| Trigger | Skill | Action |
+|---------|-------|--------|
+| ANY bug, test failure, or unexpected output | `systematic-debugging-memory` | Run BEFORE proposing any fix. Phase 0 (check memory) → Phase 1 (root cause) → Phase 2 (pattern) → Phase 3 (hypothesis) → Phase 4 (implementation). If 3+ fixes fail → Phase 4.5 (question architecture). |
+
+**Iron Law: NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST**
+
+### Security and Proof Gate
+
+| Trigger | Skill | Action |
+|---------|-------|--------|
+| Touching auth, secrets, permissions, proof gate, or anything security-shaped | `bun-security` | Load and follow security audit checklist BEFORE finalizing changes. |
+
+### Research and Documentation
+
+| Trigger | Skill | Action |
+|---------|-------|--------|
+| Need current library docs or API changes | `context7` | Use `resolve-library-id` → `get-library-docs`. Never guess at API signatures. |
+| Complex research requiring multiple sources | `multi-search` | Coordinate Context7 (docs) + Tavily (web) + grep (code). |
+| Creating README or AI memory documentation | `readme-memory` | Use structured templates for memory system docs. |
+| Looking up OpenCode config, agents, plugins | `opencode-docs` | Use https://opencode.ai/docs/ as canonical reference. |
+
+### Tool Discovery and Infrastructure
+
+| Trigger | Skill | Action |
+|---------|-------|--------|
+| Need an MCP tool that's not already active | `mcp-docker` | Find → configure → add. Never write custom MCP wrappers when catalog exists. |
+| Bootstrapping or operating memory system tooling | `mcp-docker-memory-system` | Discover, configure, and operate Neo4j/PostgreSQL/Notion-backed MCP workflows. |
+
+### Skill Creation and Task Management
+
+| Trigger | Skill | Action |
+|---------|-------|--------|
+| Creating or editing a skill | `skill-creator` | Use the structured template. Don't freehand skill files. |
+| Tracking structured subtasks with status and dependencies | `task-management` | CLI-based task tracking with validation gates. |
+| Creating structured tasks linked to Allura Brain | `task-creator` | Generate task files with metadata and memory links. |
+
+### Parallel Execution
+
+| Trigger | Skill | Action |
+|---------|-------|--------|
+| Need maximum throughput on independent subtasks | `party-mode` | Launch multiple agents in parallel. Surgical team works together. |
+
+### Skills NOT Yet Wired (Keep, Don't Invoke Automatically)
+
+These exist but have no deterministic trigger yet:
+
+| Skill | Why It Exists | When to Wire |
+|-------|---------------|--------------|
+| `hitl-governance` | Human-in-the-loop promotion enforcement | When curator pipeline is active |
+| `mcp-builder` | Building custom MCP servers | When we actually build one |
+| `trailofbits-audit` | Security audit workflow | Before production release |
+| `superpowers-memory` | Memory logging for superpowers skills | When superpowers skills are in use |
+
+## 15) Session End Protocol (MANDATORY)
+
+**Every session MUST end with a memory write and verification.**
+
+```
+1. Use MCP_DOCKER create_entities to write a Reflection entity
+   - group_id: roninmemory
+   - agent_id: your persona (e.g. brooks-architect)
+   - event_type: session_complete
+   - status: completed
+   - Timestamp (ISO 8601)
+   - Key insights (what changed and why)
+   - Commits made
+   - Open issues remaining
+
+2. Use MCP_DOCKER search_nodes to verify the write (read-back)
+   - Confirm the Reflection entity appears in search results
+
+3. Use MCP_DOCKER add_observations to append to Memory Master entity
+   - One-line summary with date and key outcomes
+
+4. Link to your agent entity with create_relations if it exists
+```
+
+**No session is complete until the knowledge graph confirms the write.**
 
 ## 15) Skill Workflow
 
