@@ -118,9 +118,12 @@ const manifestEntries: Array<AgentManifestEntry> = [
     persona: "Martin Fowler",
     role: "Refactor Gate",
     category: "core",
-    ciRoutes: [],
+    scriptPath: "scripts/agents/fowler-refactor-gate.ts",
+    ciRoutes: [
+      { event: "push", action: "*" },
+    ],
     description:
-      "Ensures changes are incremental, reversible, and don't add debt. Owns refactor slices and design drift documentation.",
+      "Ensures changes are incremental, reversible, and don't add debt. Static analysis: complexity, duplication, debt scan, gate verdict. Routes push events for refactor review.",
   },
   {
     id: "scout",
