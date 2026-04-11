@@ -10,8 +10,11 @@ import { config } from "dotenv";
 
 config();
 
-const OPENCLAW_PORT = parseInt(process.env.OPENCLAW_PORT || "3200", 10);
-const BASE_URL = `http://localhost:${OPENCLAW_PORT}`;
+const MCP_HTTP_PORT = parseInt(
+  process.env.ALLURA_MCP_HTTP_PORT || process.env.OPENCLAW_PORT || "3201",
+  10
+);
+const BASE_URL = `http://localhost:${MCP_HTTP_PORT}`;
 
 interface TestResult {
   name: string;
