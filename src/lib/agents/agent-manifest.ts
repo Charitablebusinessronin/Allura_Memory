@@ -31,10 +31,12 @@ export type AgentCategory =
 export type CiEventName = "pull_request" | "push" | "issues";
 
 /**
- * Model backend for autonomous agents (ralph only).
- * "opencode"      = OpenCode terminal agent runtime (default — uses OPENCODE_CONFIG).
- * "local-ollama"  = self-hosted Ollama, zero-cost, fully private.
- * "none"          = no model needed (static analysis agents).
+ * How the agent gets its inference. Only relevant for agents that invoke
+ * external tools (ralph). Static-analysis agents don't need a backend.
+ *
+ * "opencode" — agent uses the OpenCode CLI (which manages its own model).
+ * "local-ollama" — self-hosted Ollama (future; not available yet).
+ * "none" — no model backend needed (static analysis, filesystem ops).
  */
 export type ModelBackend = "opencode" | "local-ollama" | "none";
 
@@ -74,8 +76,8 @@ export interface AgentManifestEntry {
   /** Brief description of what the agent does. */
   description: string;
   /**
-   * Model backend for autonomous agents (ralph only).
-   * "opencode"     = OpenCode runtime (manages its own model auth via opencode.json).
+   * Model backend for agents that invoke external AI tools.
+   * "opencode" = agent uses the OpenCode CLI (manages its own model auth).
    * "local-ollama" = self-hosted Ollama (not currently available).
    * "none"         = no model needed (static analysis agents).
    *
@@ -121,14 +123,14 @@ const manifestEntries: Array<AgentManifestEntry> = [
   {
     id: "ralph",
     persona: "Ralph",
-    role: "Loop Runner",
+    role: "Loop Harness",
     category: "core",
     scriptPath: "scripts/agents/ralph-loop.ts",
     ciRoutes: [],
     modelBackend: "opencode",
     auth: "OPENCODE_CONFIG",
     description:
-      "Autonomous agentic loop for iterative task completion. Drives OpenCode through bounded iterations (max 5) with verifyCompletion gate and HITL slices. NOT a full autonomous builder — bounded validation loop only. Full open-ralph-wiggum build is Phase 3.",
+      "Harness wrapper for the `ralph` CLI (@th0rgal/ralph-wiggum). Invokes the installed ralph tool with Allura defaults and audit logging. Ralph is NOT built here — it is an installed plugin that wraps any AI agent in a self-correcting loop.",
   },
   {
     id: "pike",
