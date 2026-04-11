@@ -26,6 +26,7 @@
 | AD-12 | Slice-by-slice approach (no parallel slice definition) | Decided | Sequential slice execution ensures clear causation and evidence trails. Parallel slices would introduce race conditions and obscure failure attribution. |
 | AD-13 | Canonical API validation uses bounded RalphLoop slices | Decided | Validate `/api/memory` with bounded, repeatable slices to preserve fast feedback, clear causality, and low architectural risk. |
 | AD-14 | PostgreSQL required, Neo4j degradable at runtime | Decided | Canonical memory contract remains available when PostgreSQL is healthy. Neo4j is optional-at-runtime: failures must surface explicit degraded metadata in health and tool responses rather than causing silent partial success or full outage. |
+| AD-15 | Unified agent taxonomy (AGENT_MANIFEST as single source of truth) | Decided | Three conflicting agent taxonomies (.opencode/agent/, scripts/agents/, agent-routing.md) unified into AGENT_MANIFEST (src/lib/agents/agent-manifest.ts). Persona names from .opencode/agent/ are canonical. Legacy agents (turing, hopper, etc.) preserved for backward compatibility but not in active manifest. CI routing driven by manifest data via dynamic-router.ts, replacing static bash case statement. |
 
 ---
 
