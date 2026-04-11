@@ -11,6 +11,9 @@ on:
 jobs:
   route-to-agents:
     runs-on: ubuntu-latest
+    # Opt into Node.js 24 to avoid September 2026 deprecation
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
       
@@ -34,18 +37,19 @@ jobs:
           echo "Repository: ${{ github.repository }}"
           
           # Route events to appropriate agents (Brooksian Surgical Team)
+          # Mapping: workflow events → existing agent scripts
           case "${{ github.event_name }}" in
             pull_request)
-              echo "→ Routing to Oracle (Rob Pike) for read-only architecture consultation"
-              bun scripts/agents/oracle-consult.ts "${{ github.event.pull_request.number }}"
+              echo "→ Routing to Dijkstra (Edsger Dijkstra) for code review"
+              bun scripts/agents/dijkstra-review.ts "${{ github.event.pull_request.number }}"
               ;;
             push)
-              echo "→ Routing to Hephaestus (Fabrice Bellard) for deep implementation analysis"
-              bun scripts/agents/hephaestus-analyze.ts "${{ github.sha }}"
+              echo "→ Routing to Knuth (Donald Knuth) for deep implementation analysis"
+              bun scripts/agents/knuth-analyze.ts "${{ github.sha }}"
               ;;
             issues)
-              echo "→ Routing to Sisyphus (Rich Hickey) for issue triage and delegation"
-              bun scripts/agents/sisyphus-triage.ts "${{ github.event.issue.number }}"
+              echo "→ Routing to Brooks (Frederick Brooks) for issue triage"
+              bun scripts/agents/brooks-triage.ts "${{ github.event.issue.number }}"
               ;;
           esac
       
