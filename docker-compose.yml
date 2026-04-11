@@ -76,7 +76,7 @@ services:
       OLLAMA_API_KEY: ${OLLAMA_API_KEY}
       OLLAMA_CLOUD_URL: ${OLLAMA_CLOUD_URL:-https://ollama.com}
     healthcheck:
-      test: ["CMD-SHELL", "bun -e 'fetch(\"http://localhost:3100/api/health\").then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))'"]
+      test: ["CMD", "pgrep", "-f", "memory-server-canonical"]
       interval: 30s
       timeout: 10s
       start_period: 15s

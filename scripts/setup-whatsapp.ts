@@ -10,7 +10,10 @@ import { getPool } from "../src/lib/postgres/connection";
 
 config();
 
-const OPENCLAW_PORT = parseInt(process.env.OPENCLAW_PORT || "3200", 10);
+const MCP_HTTP_PORT = parseInt(
+  process.env.ALLURA_MCP_HTTP_PORT || process.env.OPENCLAW_PORT || "3201",
+  10
+);
 
 interface WhatsAppConfig {
   phoneNumberId: string;
@@ -77,8 +80,8 @@ async function testWhatsAppConnection(config: WhatsAppConfig): Promise<boolean> 
 }
 
 async function getWebhookUrl(): Promise<string> {
-  // Use OPENCLAW_PORT or default
-  const port = OPENCLAW_PORT;
+  // Use canonical MCP HTTP port, then legacy fallback
+  const port = MCP_HTTP_PORT;
   const host = process.env.OPENCLAW_HOST || 'localhost';
   
   // For local development, use ngrok or similar tunnel
@@ -88,7 +91,7 @@ async function getWebhookUrl(): Promise<string> {
     console.log('\n📡 WhatsApp requires a public webhook URL for local development.');
     console.log('   Use ngrok or similar tunnel:\n');
     console.log('   1. Install: npm install -g ngrok');
-    console.log('   2. Run: ngrok http 3200');
+    console.log('   2. Run: ngrok http 3201');
     console.log('   3. Copy the HTTPS URL (e.g., https://abc123.ngrok.io)');
     console.log('   4. Set WHATSAPP_WEBHOOK_URL in .env.local\n');
     return process.env.WHATSAPP_WEBHOOK_URL || '';
@@ -132,7 +135,7 @@ function printSetupInstructions(): void {
   console.log('STEP 6: Test Webhook (Local Development)\n');
   console.log('   For local testing, use ngrok:');
   console.log('   npm install -g ngrok');
-  console.log('   ngrok http 3200');
+  console.log('   ngrok http 3201');
   console.log('   # Copy HTTPS URL to WHATSAPP_WEBHOOK_URL\n');
   
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
@@ -143,7 +146,7 @@ async function main(): Promise<void> {
   
   console.log("\n📱 WhatsApp Channel Setup for OpenClaw\n");
   console.log(`   Group: ${groupId}`);
-  console.log(`   Gateway: http://localhost:${OPENCLAW_PORT}\n`);
+  console.log(`   Gateway: http://localhost:${MCP_HTTP_PORT}\n`);
 
   // Check for environment variables
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;

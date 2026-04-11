@@ -72,6 +72,15 @@ export type MemoryProvenance = 'conversation' | 'manual';
  */
 export type MemoryStatus = 'active' | 'deprecated';
 
+export interface MemoryResponseMeta {
+  contract_version: 'v1';
+  degraded: boolean;
+  degraded_reason?: 'neo4j_unavailable';
+  stores_used: Array<'postgres' | 'neo4j'>;
+  stores_attempted: Array<'postgres' | 'neo4j'>;
+  warnings?: string[];
+}
+
 // ── Request/Response Contracts ───────────────────────────────────────────
 
 /**
@@ -125,6 +134,9 @@ export interface MemoryAddResponse {
   
   /** Timestamp */
   created_at: string;
+
+  /** Execution metadata */
+  meta?: MemoryResponseMeta;
 }
 
 /**
@@ -186,6 +198,9 @@ export interface MemorySearchResponse {
   
   /** Query execution time (ms) */
   latency_ms: number;
+
+  /** Execution metadata */
+  meta?: MemoryResponseMeta;
 }
 
 /**
@@ -232,6 +247,9 @@ export interface MemoryGetResponse {
   
   /** Usage count */
   usage_count?: number;
+
+  /** Execution metadata */
+  meta?: MemoryResponseMeta;
 }
 
 /**
@@ -266,6 +284,9 @@ export interface MemoryListResponse {
   
   /** Has more results */
   has_more: boolean;
+
+  /** Execution metadata */
+  meta?: MemoryResponseMeta;
 }
 
 /**
@@ -299,6 +320,9 @@ export interface MemoryDeleteResponse {
   
   /** Recovery window (days) */
   recovery_days: number;
+
+  /** Execution metadata */
+  meta?: MemoryResponseMeta;
 }
 
 // ── Governance Contracts (Curator Workflow) ───────────────────────────────

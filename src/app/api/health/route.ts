@@ -10,6 +10,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { Pool } from 'pg';
+import neo4j from 'neo4j-driver';
 
 /**
  * Health status for a component
@@ -30,6 +32,17 @@ export interface HealthResponse {
   timestamp: string;
   uptime: number;
   version: string;
+  mode?: 'http';
+  interface?: 'rest';
+  dependencies?: {
+    postgres: { status: 'up' | 'down'; required: true; latency_ms?: number };
+    neo4j: { status: 'up' | 'down'; required: false; latency_ms?: number };
+  };
+  degraded?: {
+    enabled: boolean;
+    reason?: 'neo4j_unavailable';
+    capabilities_lost?: string[];
+  };
   components?: ComponentHealth[];
 }
 
@@ -40,11 +53,17 @@ async function checkPostgreSQL(): Promise<ComponentHealth> {
   const start = Date.now();
   
   try {
-    // In production, this would check actual PostgreSQL connection
-    // For now, return a mock healthy status
-    
-    // TODO: Implement actual PostgreSQL connection check
-    // const result = await postgresClient.query('SELECT 1');
+    const pool = new Pool({
+      host: process.env.POSTGRES_HOST || 'localhost',
+      port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
+      database: process.env.POSTGRES_DB || 'memory',
+      user: process.env.POSTGRES_USER || 'ronin4life',
+      password: process.env.POSTGRES_PASSWORD,
+      connectionTimeoutMillis: 5000,
+      max: 1,
+    });
+    await pool.query('SELECT 1');
+    await pool.end();
     
     return {
       name: 'postgresql',
@@ -52,7 +71,6 @@ async function checkPostgreSQL(): Promise<ComponentHealth> {
       message: 'Database connection verified',
       latency: Date.now() - start,
       details: {
-        // In production: actual connection pool stats
         connected: true,
       },
     };
@@ -78,11 +96,17 @@ async function checkNeo4j(): Promise<ComponentHealth> {
   const start = Date.now();
   
   try {
-    // In production, this would check actual Neo4j connection
-    // For now, return a mock healthy status
-    
-    // TODO: Implement actual Neo4j connection check
-    // const result = await neo4jClient.run('RETURN 1 AS test');
+    const driver = neo4j.driver(
+      process.env.NEO4J_URI || 'bolt://localhost:7687',
+      neo4j.auth.basic(
+        process.env.NEO4J_USER || 'neo4j',
+        process.env.NEO4J_PASSWORD || 'password'
+      )
+    );
+    const session = driver.session();
+    await session.run('RETURN 1 AS test');
+    await session.close();
+    await driver.close();
     
     return {
       name: 'neo4j',
@@ -90,7 +114,6 @@ async function checkNeo4j(): Promise<ComponentHealth> {
       message: 'Graph database connection verified',
       latency: Date.now() - start,
       details: {
-        // In production: actual connection stats
         connected: true,
       },
     };
@@ -263,14 +286,18 @@ async function checkDiskSpace(): Promise<ComponentHealth> {
  * Get overall health status from component healths
  */
 function getOverallStatus(components: ComponentHealth[]): 'healthy' | 'degraded' | 'unhealthy' {
-  const unhealthyCount = components.filter(c => c.status === 'unhealthy').length;
-  const degradedCount = components.filter(c => c.status === 'degraded').length;
-  
-  if (unhealthyCount > 0) {
+  const postgres = components.find(c => c.name === 'postgresql');
+  const neo4j = components.find(c => c.name === 'neo4j');
+
+  if (postgres?.status === 'unhealthy') {
     return 'unhealthy';
   }
-  
-  if (degradedCount > 0) {
+
+  if (neo4j?.status === 'unhealthy') {
+    return 'degraded';
+  }
+
+  if (components.some(c => c.status === 'degraded')) {
     return 'degraded';
   }
   
@@ -324,7 +351,35 @@ export async function GET(request: NextRequest): Promise<NextResponse<HealthResp
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     version: process.env.npm_package_version || '0.1.0',
+    mode: 'http',
+    interface: 'rest',
   };
+
+  const postgres = componentResults.find(c => c.name === 'postgresql');
+  const neo4jComponent = componentResults.find(c => c.name === 'neo4j');
+
+  if (postgres && neo4jComponent) {
+    healthResponse.dependencies = {
+      postgres: {
+        status: postgres.status === 'healthy' ? 'up' : 'down',
+        required: true,
+        latency_ms: postgres.latency,
+      },
+      neo4j: {
+        status: neo4jComponent.status === 'healthy' ? 'up' : 'down',
+        required: false,
+        latency_ms: neo4jComponent.latency,
+      },
+    };
+
+    if (healthResponse.status === 'degraded' && neo4jComponent.status === 'unhealthy') {
+      healthResponse.degraded = {
+        enabled: true,
+        reason: 'neo4j_unavailable',
+        capabilities_lost: ['semantic_search', 'semantic_read', 'semantic_deprecate'],
+      };
+    }
+  }
   
   // Include components in detailed mode or always for unhealthy status
   if (detailed || healthResponse.status !== 'healthy') {

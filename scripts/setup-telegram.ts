@@ -8,7 +8,10 @@ import { getPool } from "../src/lib/postgres/connection";
 
 config();
 
-const OPENCLAW_PORT = parseInt(process.env.OPENCLAW_PORT || "3200", 10);
+const MCP_HTTP_PORT = parseInt(
+  process.env.ALLURA_MCP_HTTP_PORT || process.env.OPENCLAW_PORT || "3201",
+  10
+);
 
 interface TelegramConfig {
   botToken: string;
@@ -83,7 +86,7 @@ async function main(): Promise<void> {
   
   console.log("\n🤖 Telegram Channel Setup for OpenClaw\n");
   console.log(`   Group: ${groupId}`);
-  console.log(`   Gateway: http://localhost:${OPENCLAW_PORT}\n`);
+  console.log(`   Gateway: http://localhost:${MCP_HTTP_PORT}\n`);
 
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
 
@@ -101,7 +104,7 @@ async function main(): Promise<void> {
 
   const config: TelegramConfig = {
     botToken,
-    webhookUrl: process.env.TELEGRAM_WEBHOOK_URL || `http://localhost:${OPENCLAW_PORT}/webhook/telegram`,
+    webhookUrl: process.env.TELEGRAM_WEBHOOK_URL || `http://localhost:${MCP_HTTP_PORT}/webhook/telegram`,
   };
 
   console.log("\n💾 Saving Telegram channel configuration...");
