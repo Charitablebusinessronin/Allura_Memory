@@ -505,11 +505,20 @@ export function wouldMcpCallBeAllowed(
       proofValid: verification.valid,
     };
   } catch (error) {
-    return {
-      allowed: false,
-      reason: `Verification error: ${error instanceof Error ? error.message : String(error)}`,
-      proofValid: false,
-    };
+    const message = error instanceof Error ? error.message : String(error);
+    throw new McpProofRejectedError(
+      `Verification error: ${message}`,
+      {
+        timestamp: Date.now(),
+        toolName: "verifyMcpProof",
+        caller: "system",
+        args: {},
+        proof,
+        allowed: false,
+        callStack: new Error().stack || "",
+        rejectionReason: `Verification error: ${message}`,
+      }
+    );
   }
 }
 
@@ -542,10 +551,19 @@ export async function wrapMcpCallWithProof<T>(
       proofValid: true,
     };
   } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : String(error),
-      proofValid: false,
-    };
+    const message = error instanceof Error ? error.message : String(error);
+    throw new McpProofRejectedError(
+      message,
+      {
+        timestamp: Date.now(),
+        toolName,
+        caller,
+        args,
+        proof,
+        allowed: false,
+        callStack: new Error().stack || "",
+        rejectionReason: message,
+      }
+    );
   }
 }
