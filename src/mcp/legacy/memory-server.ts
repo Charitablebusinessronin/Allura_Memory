@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 /**
- * Allura Memory MCP Server
- *
- * Exposes the dual-database memory engine to AI agents via MCP:
- * - PostgreSQL: Raw execution traces (episodic memory)
- * - Neo4j: Knowledge graph (semantic memory)
- *
- * Usage: bun run src/mcp/memory-server.ts
+ * LEGACY — Do not expose to AI agents.
+ * 
+ * This is the legacy MCP server that exposes mixed tools (memory + ADAS).
+ * Use src/mcp/memory-server-canonical.ts for all memory operations.
+ * 
+ * Kept for: openclaw-gateway HTTP surface, WhatsApp/Telegram scripts.
+ * Removal target: after openclaw integrations are ported to canonical.
+ * 
+ * Original file: src/mcp/memory-server.ts (moved to legacy/)
  */
+
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";

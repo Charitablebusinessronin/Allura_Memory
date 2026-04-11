@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS witness_logs (
     witness_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    event_id VARCHAR(255) REFERENCES events(event_id) ON DELETE CASCADE,
+    event_id BIGINT REFERENCES events(id) ON DELETE CASCADE,
     group_id VARCHAR(255) NOT NULL,
     
     -- Proof metadata
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS checkpoints (
     
     -- State snapshot
     event_count BIGINT NOT NULL,
-    last_event_id VARCHAR(255),
+    last_event_id BIGINT,
     
     -- Metadata
     created_at TIMESTAMPTZ DEFAULT NOW(),

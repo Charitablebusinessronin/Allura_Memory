@@ -1,0 +1,101 @@
+{
+  "project": "Allura Memory Engine",
+  "branch": "ralph/epic-1-complete",
+  "description": "Epic 1 — Persistent Knowledge Capture and Tenant-Aware Memory. Complete all 6 remaining stories to a passing state with zero TypeScript errors and all tests green.",
+  "qualityChecks": "bun run typecheck && bun test",
+  "features": [
+    {
+      "id": "1.1",
+      "category": "functional",
+      "description": "Record Raw Execution Traces — Schema + Kernel Routing",
+      "steps": [
+        "Add evidence_ref (text, nullable) and confidence (float, default 1.0) columns to events table via migration",
+        "All trace writes route through RuVixKernel.syscall('trace') — not direct MCP inserts",
+        "Wire TraceMiddleware into agent execution paths",
+        "Run bun run typecheck — zero new errors",
+        "Run bun test — existing 42 tests in trace-middleware.test.ts all green"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "trace-logger.ts already imports RuVixKernel. Events table exists but is missing evidence_ref and confidence columns. TraceMiddleware is implemented but unwired."
+    },
+    {
+      "id": "1.7",
+      "category": "functional",
+      "description": "memory() TypeScript Wrapper — Correct Interface",
+      "steps": [
+        "Implement memory().createEntity({ label, props }) — wraps write(), auto-injects group_id",
+        "Implement memory().createRelationship({ from, to, type, props }) — wraps relate()",
+        "Implement memory().query(cypher, params) — wraps read()",
+        "Implement memory().search(term, group_id) — new: full-text search across Neo4j nodes",
+        "group_id is injected automatically from a required constructor param: memory(groupId)",
+        "Update all 24 existing writer tests to use new interface",
+        "Run bun run typecheck — zero errors"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "writer.ts exists with write/relate/read interface. Tests exist in writer.test.ts. Need to rename methods and add group_id injection + search method."
+    },
+    {
+      "id": "1.2",
+      "category": "integration",
+      "description": "Notion Sync Workflow",
+      "steps": [
+        "Approved events sync to Notion database (use mcp__MCP_DOCKER__notion tools)",
+        "Human review queue visible in Notion",
+        "Sync status (synced_at, notion_page_id) tracked in PostgreSQL events table or separate sync_log table",
+        "Run bun run typecheck — zero errors"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Notion MCP tools available via mcp__MCP_DOCKER__notion. Use existing knowledge-promotion.ts patterns for the promotion flow."
+    },
+    {
+      "id": "1.5",
+      "category": "functional",
+      "description": "CONTRIBUTED Relationship",
+      "steps": [
+        "CONTRIBUTED relationship created automatically when memory().createEntity() is called with an agent_id",
+        "Properties: timestamp (ISO8601), confidence (0.0-1.0), action (string)",
+        "Queryable by agent_id and time range via memory().query()",
+        "Unit tests cover relationship creation",
+        "Run bun run typecheck — zero errors"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "Depends on Story 1.7 being complete first. Relationship schema documented in Story 1.4."
+    },
+    {
+      "id": "1.6",
+      "category": "functional",
+      "description": "LEARNED Relationship",
+      "steps": [
+        "LEARNED relationship created on session end (when event_type = 'session_end' logged)",
+        "Properties: timestamp (ISO8601), relevance_score (0.0-1.0)",
+        "Queryable by session_id and agent_id via memory().query()",
+        "Unit tests cover relationship creation",
+        "Run bun run typecheck — zero errors"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "Depends on Story 1.7. Pairs with CONTRIBUTED — both are write-back relationship patterns."
+    },
+    {
+      "id": "SYNC",
+      "category": "housekeeping",
+      "description": "Update sprint-status.yaml to reflect truth",
+      "steps": [
+        "Mark story 1-1 as done",
+        "Mark story 1-2 as done",
+        "Mark story 1-5 as done",
+        "Mark story 1-6 as done",
+        "Mark story 1-7 as done",
+        "Mark epic-1 as done",
+        "Update last_updated date to today"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": "Final housekeeping story. Only run after all other stories pass."
+    }
+  ]
+}

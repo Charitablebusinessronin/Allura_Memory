@@ -11,7 +11,7 @@
  * Reference: docs/allura/BLUEPRINT.md
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import {
   memory_add,
   memory_search,
@@ -62,32 +62,34 @@ describe("Canonical Memory Operations", () => {
       expect(response.created_at).toBeDefined();
     });
 
-    it("should add a memory and promote to Neo4j when score >= threshold in auto mode", async () => {
-      // This test requires PROMOTION_MODE=auto
-      const originalMode = process.env.PROMOTION_MODE;
-      process.env.PROMOTION_MODE = "auto";
+     it("should add a memory and promote to Neo4j when score >= threshold in auto mode", async () => {
+       // This test requires PROMOTION_MODE=auto
+       // Use UNIQUE content that won't be a duplicate from previous test runs
+       const originalMode = process.env.PROMOTION_MODE;
+       process.env.PROMOTION_MODE = "auto";
 
-      try {
-        const request: MemoryAddRequest = {
-          group_id: TEST_GROUP_ID,
-          user_id: TEST_USER_ID,
-          content: "User prefers dark mode in VS Code", // High confidence content
-          metadata: { source: "conversation" },
-        };
+       try {
+         const request: MemoryAddRequest = {
+           group_id: TEST_GROUP_ID,
+           user_id: TEST_USER_ID,
+           content: "User prefers dark theme in VS Code editor settings", // Unique content
+           metadata: { source: "conversation" },
+         };
 
-        const response = await memory_add(request);
+         const response = await memory_add(request);
 
-        expect(response.id).toBeDefined();
-        expect(response.stored).toBe("both");
-        expect(response.score).toBeGreaterThanOrEqual(0.85);
-        expect(response.created_at).toBeDefined();
-      } finally {
-        process.env.PROMOTION_MODE = originalMode;
-      }
-    });
+         expect(response.id).toBeDefined();
+         expect(response.stored).toBe("both");
+         expect(response.score).toBeGreaterThanOrEqual(0.85);
+         expect(response.created_at).toBeDefined();
+       } finally {
+         process.env.PROMOTION_MODE = originalMode;
+       }
+     });
 
     it("should queue memory for review when score >= threshold in soc2 mode", async () => {
       // This test requires PROMOTION_MODE=soc2
+      // Use UNIQUE content that won't be a duplicate from previous test runs
       const originalMode = process.env.PROMOTION_MODE;
       process.env.PROMOTION_MODE = "soc2";
 
@@ -95,7 +97,7 @@ describe("Canonical Memory Operations", () => {
         const request: MemoryAddRequest = {
           group_id: TEST_GROUP_ID,
           user_id: TEST_USER_ID,
-          content: "User works in TypeScript with strict mode enabled", // High confidence
+          content: "User works with TypeScript strict mode enabled in their IDE", // Unique content
           metadata: { source: "conversation" },
         };
 
@@ -148,18 +150,21 @@ describe("Canonical Memory Operations", () => {
       });
     });
 
-    it("should search memories across both stores", async () => {
-      const request: MemorySearchRequest = {
-        query: "dark mode",
-        group_id: TEST_GROUP_ID,
-      };
+     it("should search memories across both stores", async () => {
+       const request: MemorySearchRequest = {
+         query: "dark mode",
+         group_id: TEST_GROUP_ID,
+       };
 
-      const response = await memory_search(request);
+       // Debug: Check the request
+       console.log(`[DEBUG] Search request:`, request);
+       
+       const response = await memory_search(request);
 
-      expect(response.results).toBeDefined();
-      expect(response.count).toBeGreaterThanOrEqual(0);
-      expect(response.latency_ms).toBeDefined();
-    });
+       expect(response.results).toBeDefined();
+       expect(response.count).toBeGreaterThanOrEqual(0);
+       expect(response.latency_ms).toBeDefined();
+     });
 
     it("should scope search to user when user_id provided", async () => {
       const request: MemorySearchRequest = {
@@ -179,17 +184,17 @@ describe("Canonical Memory Operations", () => {
       });
     });
 
-    it("should respect limit parameter", async () => {
-      const request: MemorySearchRequest = {
-        query: "user",
-        group_id: TEST_GROUP_ID,
-        limit: 2,
-      };
+     it("should respect limit parameter", async () => {
+       const request: MemorySearchRequest = {
+         query: "user",
+         group_id: TEST_GROUP_ID,
+         limit: 2, // Already an integer, but let's be explicit
+       };
 
-      const response = await memory_search(request);
+       const response = await memory_search(request);
 
-      expect(response.results.length).toBeLessThanOrEqual(2);
-    });
+       expect(response.results.length).toBeLessThanOrEqual(2);
+     });
 
     it("should reject invalid group_id", async () => {
       const request: MemorySearchRequest = {
@@ -462,7 +467,7 @@ describe("Canonical Memory Operations", () => {
         const response = await memory_add({
           group_id: TEST_GROUP_ID,
           user_id: TEST_USER_ID,
-          content: "User prefers dark mode in VS Code editor",
+          content: "User prefers dark mode in VS Code editor and terminal window", // Unique content
           metadata: { source: "conversation" },
         });
 
@@ -481,7 +486,7 @@ describe("Canonical Memory Operations", () => {
         const response = await memory_add({
           group_id: TEST_GROUP_ID,
           user_id: TEST_USER_ID,
-          content: "User works in TypeScript with strict mode",
+          content: "User works in TypeScript with strict mode and很喜欢 TypeScript", // Unique content
           metadata: { source: "conversation" },
         });
 

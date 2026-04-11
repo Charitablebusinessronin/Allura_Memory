@@ -1,14 +1,20 @@
 /**
- * OpenClaw Gateway - HTTP Server
+ * LEGACY — Do not expose to AI agents.
  * 
- * Exposes Ronin Memory tools via HTTP for integration with external systems.
- * Runs on configurable port (default: 3200) to avoid conflicts.
+ * This is the legacy OpenClaw HTTP gateway that exposes mixed tools.
+ * Use src/mcp/canonical-http-gateway.ts for canonical memory operations.
+ * 
+ * Kept for: openclaw-gateway HTTP surface, external integrations.
+ * Removal target: after integrations are ported to canonical.
+ * 
+ * Original file: src/mcp/openclaw-gateway-http.ts (moved to legacy/)
  */
+
 
 import { createServer } from "http";
 import { parse } from "url";
 import { config } from "dotenv";
-import { getPort } from "../lib/config/ports";
+import { getPort } from "../../lib/config/ports";
 
 // Load environment variables
 config();
@@ -16,7 +22,7 @@ config();
 const PORT = getPort("openclaw", "OPENCLAW_PORT");
 
 // Import MCP tools
-import { memorySearch, memoryStore, adasRunSearch, adasGetProposals, adasApproveDesign } from "./tools";
+import { memorySearch, memoryStore, adasRunSearch, adasGetProposals, adasApproveDesign } from "./tools.js";
 
 interface Request {
   method: string;

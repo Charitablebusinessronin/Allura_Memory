@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS canonical_proposals (
     CHECK (status IN ('pending', 'approved', 'rejected')),
   
   -- Reference to PostgreSQL event (traceability)
-  trace_ref UUID REFERENCES events(id) ON DELETE SET NULL,
+  trace_ref BIGINT REFERENCES events(id) ON DELETE SET NULL,
   
   -- Timestamps
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -84,9 +84,8 @@ CREATE OR REPLACE FUNCTION log_proposal_created()
 RETURNS TRIGGER AS $$
 BEGIN
   INSERT INTO events (
-    id, group_id, event_type, agent_id, status, metadata, created_at
+    group_id, event_type, agent_id, status, metadata, created_at
   ) VALUES (
-    gen_random_uuid(),
     NEW.group_id,
     'proposal_created',
     'system',
@@ -114,10 +113,9 @@ RETURNS TRIGGER AS $$
 BEGIN
   -- Only log when status changes to approved or rejected
   IF OLD.status = 'pending' AND NEW.status IN ('approved', 'rejected') THEN
-    INSERT INTO events (
-      id, group_id, event_type, agent_id, status, metadata, created_at
-    ) VALUES (
-      gen_random_uuid(),
+  INSERT INTO events (
+    group_id, event_type, agent_id, status, metadata, created_at
+  ) VALUES (
       NEW.group_id,
       CASE NEW.status 
         WHEN 'approved' THEN 'proposal_approved'

@@ -206,6 +206,19 @@
       "tags": ["context", "retrieval", "search"],
       "dependencies": []
     },
+    "ralph-loop": {
+      "id": "ralph-loop",
+      "name": "RalphLoop",
+      "category": "subagents/core",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["autonomous", "iteration", "loop", "execution"],
+      "dependencies": [
+        "context:task-delegation-basics",
+        "contract:ralph-integration"
+      ]
+    },
     "coder-agent": {
       "id": "coder-agent",
       "name": "CoderAgent",

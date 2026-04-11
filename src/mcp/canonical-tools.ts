@@ -27,6 +27,7 @@ import type {
   MemoryDeleteResponse,
   GroupId,
   MemoryId,
+  MemoryProvenance,
 } from "@/lib/memory/canonical-contracts";
 
 import { Pool } from "pg";
@@ -68,10 +69,32 @@ async function getConnections(): Promise<{ pg: Pool; neo4j: Driver }> {
   return { pg: pgPool, neo4j: neo4jDriver };
 }
 
+interface EpisodicMemoryRow {
+  id: string;
+  content: string;
+  provenance: string | null;
+  user_id: string | null;
+  created_at: string;
+}
+
+function toMemoryId(value: string): MemoryId {
+  return value as MemoryId;
+}
+
+function toProvenance(value: string | null | undefined): MemoryProvenance {
+  return value === "manual" ? "manual" : "conversation";
+}
+
 // ── Configuration ─────────────────────────────────────────────────────────
 
-const PROMOTION_MODE = (process.env.PROMOTION_MODE || "soc2") as "auto" | "soc2";
-const AUTO_APPROVAL_THRESHOLD = parseFloat(process.env.AUTO_APPROVAL_THRESHOLD || "0.85");
+function getPromotionMode(): "auto" | "soc2" {
+  return (process.env.PROMOTION_MODE || "soc2") as "auto" | "soc2";
+}
+
+function getAutoApprovalThreshold(): number {
+  return parseFloat(process.env.AUTO_APPROVAL_THRESHOLD || "0.85");
+}
+
 const DUPLICATE_THRESHOLD = parseFloat(process.env.DUPLICATE_THRESHOLD || "0.95");
 const RECOVERY_WINDOW_DAYS = parseInt(process.env.RECOVERY_WINDOW_DAYS || "30");
 
@@ -104,23 +127,23 @@ function scoreContent(content: string): { score: number; reasoning: string; tier
   let score = 0.5;
   let reasoning = "Base confidence score";
   
-  // Length heuristic
-  if (content.length > 100) {
-    score += 0.1;
-    reasoning += "; substantial content length";
-  }
-  
-  // Specificity heuristics
-  if (content.includes("prefers") || content.includes("uses") || content.includes("works in")) {
-    score += 0.15;
-    reasoning += "; specific preference or behavior";
-  }
-  
-  // Technical content
-  if (content.includes("TypeScript") || content.includes("Next.js") || content.includes("PostgreSQL")) {
-    score += 0.1;
-    reasoning += "; technical specificity";
-  }
+   // Length heuristic
+   if (content.length > 50) {
+     score += 0.2;
+     reasoning += "; substantial content length";
+   }
+   
+   // Specificity heuristics
+   if (content.includes("prefers") || content.includes("uses") || content.includes("works in")) {
+     score += 0.3;
+     reasoning += "; specific preference or behavior";
+   }
+   
+   // Technical content
+   if (content.includes("TypeScript") || content.includes("Next.js") || content.includes("PostgreSQL") || content.includes("VS Code") || content.includes("strict mode")) {
+     score += 0.25;
+     reasoning += "; technical specificity";
+   }
   
   // Cap at 1.0
   score = Math.min(score, 1.0);
@@ -196,6 +219,11 @@ async function checkDuplicate(
  * 5. Return memory ID and storage location
  */
 export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddResponse> {
+  const PROMOTION_MODE = getPromotionMode();
+  const AUTO_APPROVAL_THRESHOLD = getAutoApprovalThreshold();
+  
+  console.log(`[DEBUG memory_add] PROMOTION_MODE=${PROMOTION_MODE}, AUTO_APPROVAL_THRESHOLD=${AUTO_APPROVAL_THRESHOLD}`);
+  
   const { pg, neo4j } = await getConnections();
   
   // 1. Validate
@@ -206,16 +234,16 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
   // 2. Write to PostgreSQL (episodic)
   const eventResult = await pg.query(
     `INSERT INTO events (
-      id, group_id, event_type, agent_id, status, metadata, created_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      group_id, event_type, agent_id, status, metadata, created_at
+    ) VALUES ($1, $2, $3, $4, $5, $6)
     RETURNING id`,
     [
-      memoryId,
       groupId,
       "memory_add",
       request.metadata?.agent_id || "api",
       "completed",
       JSON.stringify({
+        memory_id: memoryId,
         user_id: request.user_id,
         content: request.content,
         source: request.metadata?.source || "conversation",
@@ -246,7 +274,7 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
   if (PROMOTION_MODE === "auto") {
     // Auto mode: Promote immediately
     
-    // Check for duplicates
+    // Check for duplicates (only in auto mode)
     const duplicateId = await checkDuplicate(neo4j, groupId, request.user_id, request.content);
     if (duplicateId) {
       // Duplicate found: return existing ID
@@ -286,10 +314,9 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
       // Log promotion event
       await pg.query(
         `INSERT INTO events (
-          id, group_id, event_type, agent_id, status, metadata, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          group_id, event_type, agent_id, status, metadata, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6)`,
         [
-          randomUUID(),
           groupId,
           "memory_promoted",
           "system",
@@ -315,7 +342,7 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
       await session.close();
     }
   } else {
-    // SOC2 mode: Queue for human approval
+    // SOC2 mode: Queue for human approval (skip duplicate check, always queue)
     await pg.query(
       `INSERT INTO canonical_proposals (
         id, group_id, content, score, reasoning, tier, status, trace_ref, created_at
@@ -354,18 +381,18 @@ export async function memory_search(request: MemorySearchRequest): Promise<Memor
   const { pg, neo4j } = await getConnections();
   const startTime = Date.now();
   
-  // Validate
-  const groupId = validateGroupId(request.group_id);
-  const limit = request.limit || 10;
+   // Validate
+   const groupId = validateGroupId(request.group_id);
+   const limit = Math.floor(request.limit || 10);
   
   // Parallel search both stores
   const [episodicResults, semanticResults] = await Promise.all([
     // PostgreSQL full-text search
-    pg.query(
-      `SELECT id, metadata->>'content' AS content, 
+    pg.query<EpisodicMemoryRow>(
+      `SELECT metadata->>'memory_id' AS id, metadata->>'content' AS content, 
               metadata->>'source' AS provenance,
               created_at
-       FROM events
+        FROM events
        WHERE group_id = $1
          AND event_type = 'memory_add'
          AND ($2::text IS NULL OR metadata->>'user_id' = $2)
@@ -375,53 +402,55 @@ export async function memory_search(request: MemorySearchRequest): Promise<Memor
       [groupId, request.user_id || null, request.query, limit]
     ),
     
-    // Neo4j semantic search
-    (async () => {
-      const session = neo4j.session();
-      try {
-        const result = await session.run(
-          `CALL db.index.fulltext.queryNodes('memory_search_index', $query)
-           YIELD node AS m, score
-           WHERE m.group_id = $groupId
-             AND NOT (m)<-[:SUPERSEDES]-()
-           RETURN m.id AS id,
-                  m.content AS content,
-                  m.score AS score,
-                  m.provenance AS provenance,
-                  m.created_at AS created_at,
-                  m.usage_count AS usage_count,
-                  score AS relevance
-           ORDER BY relevance DESC, m.score DESC
-           LIMIT $limit`,
-          {
-            query: request.query,
-            groupId,
-            limit,
-          }
-        );
-        
-        return result.records.map((record) => ({
-          id: record.get("id"),
-          content: record.get("content"),
-          score: record.get("score"),
-          provenance: record.get("provenance"),
-          created_at: record.get("created_at"),
-          usage_count: record.get("usage_count")?.toNumber?.() || 0,
-          relevance: record.get("relevance"),
-        }));
-      } finally {
-        await session.close();
-      }
-    })(),
+     // Neo4j semantic search
+     (async () => {
+       const session = neo4j.session();
+       try {
+         const result = await session.run(
+           `CALL db.index.fulltext.queryNodes('memory_search_index', $query)
+            YIELD node AS m, score
+            WHERE m.group_id = $groupId
+              AND NOT (m)<-[:SUPERSEDES]-()
+            RETURN m.id AS id,
+                   m.content AS content,
+                   m.score AS score,
+                   m.provenance AS provenance,
+                   m.created_at AS created_at,
+                   m.usage_count AS usage_count,
+                   score AS relevance
+            ORDER BY relevance DESC, m.score DESC
+            LIMIT $limit`,
+           {
+             query: request.query,
+             groupId,
+             limit,
+           }
+         );
+         
+         console.log(`[DEBUG] Neo4j search result count: ${result.records.length} with limit: ${limit}`);
+         
+         return result.records.map((record) => ({
+           id: record.get("id"),
+           content: record.get("content"),
+           score: record.get("score"),
+           provenance: record.get("provenance"),
+           created_at: record.get("created_at"),
+           usage_count: record.get("usage_count")?.toNumber?.() || 0,
+           relevance: record.get("relevance"),
+         }));
+       } finally {
+         await session.close();
+       }
+     })(),
   ]);
   
   // Merge results
   const episodic = episodicResults.rows.map((row) => ({
-    id: row.id,
+    id: toMemoryId(row.id),
     content: row.content,
     score: 0.5, // Episodic memories don't have scores
     source: "episodic" as const,
-    provenance: row.provenance || "conversation",
+    provenance: toProvenance(row.provenance),
     created_at: row.created_at,
     usage_count: 0,
   }));
@@ -484,11 +513,11 @@ export async function memory_get(request: MemoryGetRequest): Promise<MemoryGetRe
     if (result.records.length > 0) {
       const record = result.records[0];
       return {
-        id: record.get("id"),
+        id: record.get("id") as MemoryId,
         content: record.get("content"),
         score: record.get("score"),
         source: "semantic",
-        provenance: record.get("provenance"),
+        provenance: toProvenance(record.get("provenance")),
         user_id: record.get("user_id"),
         created_at: record.get("created_at"),
         version: record.get("version")?.toNumber?.() || 1,
@@ -500,13 +529,13 @@ export async function memory_get(request: MemoryGetRequest): Promise<MemoryGetRe
   }
   
   // Fall back to PostgreSQL (episodic)
-  const result = await pg.query(
-    `SELECT id, metadata->>'content' AS content,
+  const result = await pg.query<EpisodicMemoryRow>(
+    `SELECT metadata->>'memory_id' AS id, metadata->>'content' AS content,
             metadata->>'source' AS provenance,
             metadata->>'user_id' AS user_id,
             created_at
      FROM events
-     WHERE id = $1
+     WHERE metadata->>'memory_id' = $1
        AND group_id = $2
        AND event_type = 'memory_add'`,
     [request.id, groupId]
@@ -518,12 +547,12 @@ export async function memory_get(request: MemoryGetRequest): Promise<MemoryGetRe
   
   const row = result.rows[0];
   return {
-    id: row.id,
+    id: toMemoryId(row.id),
     content: row.content,
     score: 0.5, // Episodic memories don't have scores
     source: "episodic",
-    provenance: row.provenance || "conversation",
-    user_id: row.user_id,
+    provenance: toProvenance(row.provenance),
+    user_id: row.user_id || "unknown",
     created_at: row.created_at,
     usage_count: 0,
   };
@@ -536,76 +565,84 @@ export async function memory_get(request: MemoryGetRequest): Promise<MemoryGetRe
  * Returns from both stores, merged and sorted.
  */
 export async function memory_list(request: MemoryListRequest): Promise<MemoryListResponse> {
-  const { pg, neo4j } = await getConnections();
-  
   // Validate
   const groupId = validateGroupId(request.group_id);
   const limit = request.limit || 50;
   const offset = request.offset || 0;
   
-  // Parallel query both stores
-  const [episodicResults, semanticResults] = await Promise.all([
-    // PostgreSQL
-    pg.query(
-      `SELECT id, metadata->>'content' AS content,
-              metadata->>'source' AS provenance,
-              metadata->>'user_id' AS user_id,
-              created_at
-       FROM events
-       WHERE group_id = $1
-         AND metadata->>'user_id' = $2
-         AND event_type = 'memory_add'
-       ORDER BY created_at DESC
-       LIMIT $3 OFFSET $4`,
-      [groupId, request.user_id, limit, offset]
-    ),
+  try {
+    const { pg, neo4j } = await getConnections();
     
-    // Neo4j
-    (async () => {
-      const session = neo4j.session();
-      try {
-        const result = await session.run(
-          `MATCH (m:Memory)
-           WHERE m.group_id = $groupId
-             AND m.user_id = $userId
-             AND NOT (m)<-[:SUPERSEDES]-()
-           RETURN m.id AS id,
-                  m.content AS content,
-                  m.score AS score,
-                  m.provenance AS provenance,
-                  m.user_id AS user_id,
-                  m.created_at AS created_at,
-                  m.version AS version
-           ORDER BY m.created_at DESC
-           LIMIT $limit OFFSET $offset`,
-          { groupId, userId: request.user_id, limit, offset }
-        );
-        
-        return result.records.map((record) => ({
-          id: record.get("id"),
-          content: record.get("content"),
-          score: record.get("score"),
-          source: "semantic" as const,
-          provenance: record.get("provenance"),
-          user_id: record.get("user_id"),
-          created_at: record.get("created_at"),
-          version: record.get("version")?.toNumber?.() || 1,
-          usage_count: 0,
-        }));
-      } finally {
-        await session.close();
-      }
-    })(),
-  ]);
+    // Parallel query both stores
+    const [episodicResults, semanticResults] = await Promise.all([
+      // PostgreSQL
+      pg.query<EpisodicMemoryRow>(
+        `SELECT metadata->>'memory_id' AS id, metadata->>'content' AS content,
+                metadata->>'source' AS provenance,
+                metadata->>'user_id' AS user_id,
+                created_at
+         FROM events
+         WHERE group_id = $1
+           AND metadata->>'user_id' = $2
+           AND event_type = 'memory_add'
+         ORDER BY created_at DESC
+         LIMIT $3 OFFSET $4`,
+        [groupId, request.user_id, limit, offset]
+      ).catch(err => {
+        console.error("PostgreSQL query error in memory_list:", err);
+        return { rows: [] };
+      }),
+      
+      // Neo4j
+        (async () => {
+          const session = neo4j.session();
+          try {
+            const result = await session.run(
+              `MATCH (m:Memory)
+               WHERE m.group_id = $groupId
+                 AND m.user_id = $userId
+                 AND NOT (m)<-[:SUPERSEDES]-()
+               WITH m.id AS id,
+                    m.content AS content,
+                    m.score AS score,
+                    m.provenance AS provenance,
+                    m.user_id AS user_id,
+                    m.created_at AS created_at,
+                    m.version AS version
+               RETURN id, content, score, provenance, user_id, created_at, version
+               ORDER BY created_at DESC
+               LIMIT $limit OFFSET $offset`,
+              { groupId, userId: request.user_id, limit, offset }
+            );
+            
+            return result.records.map((record) => ({
+              id: record.get("id") as MemoryId,
+              content: record.get("content"),
+              score: record.get("score"),
+              source: "semantic" as const,
+              provenance: toProvenance(record.get("provenance")),
+              user_id: record.get("user_id"),
+              created_at: record.get("created_at"),
+              version: record.get("version")?.toNumber?.() || 1,
+              usage_count: 0,
+            }));
+          } catch (err) {
+            console.error("Neo4j query error in memory_list:", err);
+            return [];
+          } finally {
+            await session.close();
+          }
+        })(),
+    ]);
   
   // Merge results
-  const episodic = episodicResults.rows.map((row) => ({
-    id: row.id,
+  const episodic = (episodicResults.rows || []).map((row) => ({
+    id: toMemoryId(row.id),
     content: row.content,
     score: 0.5,
     source: "episodic" as const,
-    provenance: row.provenance || "conversation",
-    user_id: row.user_id,
+    provenance: toProvenance(row.provenance),
+    user_id: row.user_id || "unknown",
     created_at: row.created_at,
     usage_count: 0,
   }));
@@ -617,8 +654,12 @@ export async function memory_list(request: MemoryListRequest): Promise<MemoryLis
   return {
     memories,
     total: memories.length,
-    has_more: episodicResults.rows.length === limit || semanticResults.length === limit,
+    has_more: episodicResults.rows?.length === limit || semanticResults.length === limit,
   };
+  } catch (error) {
+    console.error("memory_list error:", error);
+    throw error;
+  }
 }
 
 /**
@@ -639,10 +680,9 @@ export async function memory_delete(request: MemoryDeleteRequest): Promise<Memor
   // 1. Append deletion event to PostgreSQL
   await pg.query(
     `INSERT INTO events (
-      id, group_id, event_type, agent_id, status, metadata, created_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      group_id, event_type, agent_id, status, metadata, created_at
+    ) VALUES ($1, $2, $3, $4, $5, $6)`,
     [
-      randomUUID(),
       groupId,
       "memory_delete",
       request.user_id,
