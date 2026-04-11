@@ -199,7 +199,7 @@ Schema: [[lock_table].schema.json](../json-schema/[lock_table].schema.json)
 
 <!-- === INSTRUCTIONS FOR USE ===
 
-1. Copy this file to DATA-DICTIONARY.md at the repository root.
+1. Copy this file to `docs/allura/DATA-DICTIONARY.md`.
 2. Add one top-level section (##) per database table or entity in the system.
 3. For every field in each JSON schema, add a row to that entity's field table.
 4. For every enum field, add a sub-table listing each allowed value and its meaning.

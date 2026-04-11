@@ -39,11 +39,16 @@ All code and documentation generated with AI assistance (GitHub Copilot, Claude,
 
 ## Required Artifacts (Before Coding)
 
+Canonical location: `docs/allura/`
+
 - **BLUEPRINT.md** — Service purpose, concepts, requirements
 - **SOLUTION-ARCHITECTURE.md** — Design decisions, trade-offs
-- **DESIGN-*.md** — Component-level designs
+- **DESIGN-ALLURA.md** (or approved **DESIGN-*.md**) — Component-level designs
 - **REQUIREMENTS-MATRIX.md** — B# → code mapping
+- **RISKS-AND-DECISIONS.md** — Architectural decisions and tradeoffs
 - **DATA-DICTIONARY.md** — All entities and fields
+
+Canonical surface rule: Do not create net-new files in `docs/allura/` beyond the canonical six. Route reports, deliverables, prompts, validation snapshots, and benchmarks to `docs/archive/allura/`, `memory-bank`, or Allura Brain.
 
 See `AI-GUIDELINES.md` for complete guidance.
 

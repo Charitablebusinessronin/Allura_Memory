@@ -1,6 +1,57 @@
 # Progress Log
 
-**Last Updated**: 2026-04-10 (Planning sync from Notion)
+**Last Updated**: 2026-04-11 (P0-1 Schema Repair Validation Complete)
+
+## Session Work (2026-04-11)
+
+### ✅ Completed
+
+0. **docs/allura Canonical Surface Enforcement** ✅
+   - Enforced six-doc canonical surface in `docs/allura/`:
+     - `BLUEPRINT.md`
+     - `SOLUTION-ARCHITECTURE.md`
+     - `DESIGN-ALLURA.md`
+     - `REQUIREMENTS-MATRIX.md`
+     - `RISKS-AND-DECISIONS.md`
+     - `DATA-DICTIONARY.md`
+   - Added Canonical Surface Rule to:
+     - `docs/AI-GUIDELINES.md`
+     - `.opencode/AI-GUIDELINES.md`
+   - Updated location contract from "Repository root" to `docs/allura/`
+   - Merged reusable temp-doc content:
+     - ADR-001 content merged into `RISKS-AND-DECISIONS.md`
+     - interface contracts merged into `DESIGN-ALLURA.md`
+     - validation topology merged into `SOLUTION-ARCHITECTURE.md`
+   - Moved residue artifacts to `docs/archive/allura/`:
+     - `ARCHITECTURE-DELIVERABLES-2026-04-11.md`
+     - `BENCHMARKS.md`
+     - `DONE-PROMPT.md`
+     - `V1-UNIFICATION-REPORT.md`
+     - `V1-UNIFICATION-FINAL-REPORT.md`
+   - Removed merged standalone temp docs from `docs/allura/`
+   - Updated command/template surfaces to avoid canonical drift defaults.
+
+1. **P0-1 Schema Repair Validation** ✅
+   - Validated PostgreSQL schema with 20 tables created
+   - Confirmed canonical `memory_add` interface works via REST API
+   - Verified append-only storage in PostgreSQL events table
+   - Confirmed tenant isolation with `group_id` enforcement
+   - Neo4j empty (expected - promotion pipeline not yet implemented)
+   - Logged validation completion to PostgreSQL (event ID: 132)
+   - All 4 tests passed: schema_repair, canonical_memory_add, postgres_events, neo4j_empty
+
+2. **Canonical Interface Validation**
+   - REST API `/api/memory` correctly implements `memory_add`
+   - Required `user_id` field enforced
+   - Returns proper response: `{"id":"...","stored":"episodic","score":0.5}`
+   - Events logged: 2 `memory_add`, 1 `proposal_created`
+
+3. **Next Steps Identified**
+   - P0-2: MCP isolation from REST API
+   - P0-3: Neo4j indexes for `group_id`, `created_at`, `agent_id`
+   - P0-4: Promotion pipeline (Postgres → Neo4j)
+   - P1-1: Behavioral tests for canonical interface
+   - P1-2: Documentation updates
 
 ## Session Work (2026-04-10)
 
@@ -149,4 +200,3 @@
 | Postgres Views Created | 5 |
 | Tracking Columns Added | 2 |
 | Brooksian Principles Tracked | 8 |
-

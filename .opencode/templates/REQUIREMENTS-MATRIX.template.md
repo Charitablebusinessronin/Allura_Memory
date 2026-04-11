@@ -95,7 +95,7 @@
 
 <!-- === INSTRUCTIONS FOR USE ===
 
-1. Copy this file to REQUIREMENTS-MATRIX.md at the repository root.
+1. Copy this file to `docs/allura/REQUIREMENTS-MATRIX.md`.
 2. Fill in the [placeholder] tokens with actual content.
 3. Populate Section 1 by reviewing BLUEPRINT.md §2 (Business Requirements).
 4. Populate Section 2 by reviewing BLUEPRINT.md §2 (Functional Requirements) and each DESIGN-*.md.

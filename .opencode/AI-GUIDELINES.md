@@ -328,15 +328,32 @@ erDiagram
 
 | Artifact | File Name Pattern | Location |
 |---|---|---|
-| Blueprint | `BLUEPRINT.md` | Repository root |
-| Solution Architecture | `SOLUTION-ARCHITECTURE.md` | Repository root |
-| Design document | `DESIGN-<AREA>.md` (uppercase, hyphenated) | Repository root |
-| Requirements Matrix | `REQUIREMENTS-MATRIX.md` | Repository root |
-| Risks & Decisions Matrix | `RISKS-AND-DECISIONS.md` | Repository root |
-| Data Dictionary | `DATA-DICTIONARY.md` | Repository root |
+| Blueprint | `BLUEPRINT.md` | `docs/allura/` |
+| Solution Architecture | `SOLUTION-ARCHITECTURE.md` | `docs/allura/` |
+| Design document | `DESIGN-<AREA>.md` (uppercase, hyphenated) | `docs/allura/` |
+| Requirements Matrix | `REQUIREMENTS-MATRIX.md` | `docs/allura/` |
+| Risks & Decisions Matrix | `RISKS-AND-DECISIONS.md` | `docs/allura/` |
+| Data Dictionary | `DATA-DICTIONARY.md` | `docs/allura/` |
 | JSON Schema | `<entity>.schema.json` (lowercase, hyphenated) | `json-schema/` |
 | AI Guidelines | `guidelines/AI-GUIDELINES.md` | `guidelines/` |
 | Document templates | `guidelines/templates/*.template.md` | `guidelines/templates/` |
+
+---
+
+## Canonical Surface Rule
+
+No new file may be added to `docs/allura/` unless it is one of the six canonical document types listed above:
+
+- `BLUEPRINT.md`
+- `SOLUTION-ARCHITECTURE.md`
+- `DESIGN-ALLURA.md` (or another approved `DESIGN-<AREA>.md` canonical design doc)
+- `REQUIREMENTS-MATRIX.md`
+- `RISKS-AND-DECISIONS.md`
+- `DATA-DICTIONARY.md`
+
+All other output — reports, deliverables, ADR standalones, validation snapshots, benchmarks, prompts — goes to `docs/archive/allura/`, `memory-bank`, or Allura Brain.
+
+This rule applies to human contributors and AI agents equally. `docs/allura/` is the only live architecture surface.
 
 ---
 

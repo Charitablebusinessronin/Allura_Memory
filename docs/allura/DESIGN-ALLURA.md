@@ -398,4 +398,48 @@ Every write. Every approval. Every deletion. Exportable.
 
 ---
 
+## Canonical Memory API Contracts (merged)
+
+This section is the canonical interface contract for the 5 memory operations. It replaces the standalone `INTERFACE-CONTRACTS.md` artifact.
+
+### Operations
+
+| Operation | Route | Contract Summary |
+|---|---|---|
+| `memory_add` | `POST /api/memory` | Requires `group_id`, `user_id`, `content`; writes append-only PostgreSQL event; optionally promotes based on mode + threshold |
+| `memory_list` | `GET /api/memory` | Lists memories scoped by tenant and optional user filter; supports pagination |
+| `memory_search` | `GET /api/memory/search` | Federated search with tenant/user scoping and relevance ordering |
+| `memory_get` | `GET /api/memory/[id]` | Fetches one memory by id with tenant scope; may include version history |
+| `memory_delete` | `DELETE /api/memory/[id]` | Soft-delete behavior only; append event + semantic deprecation |
+
+### Required request invariants
+
+1. `group_id` is required and must match `^allura-`
+2. PostgreSQL traces are append-only (no UPDATE/DELETE mutations)
+3. Memory identifiers are UUID values
+4. Score range is constrained to `0.0..1.0`
+5. Default promotion threshold is `0.85` unless explicitly overridden
+
+### Mode-specific behavior
+
+| Mode | Behavior |
+|---|---|
+| `auto` | Score >= threshold promotes immediately to Neo4j (after dedup); response can return `stored: 'both'` |
+| `soc2` | Score >= threshold creates proposal and waits for human approval; response remains episodic with pending review |
+
+### Error contract
+
+| Status | Condition |
+|---|---|
+| 400 | Missing/invalid `group_id`, missing required payload fields |
+| 404 | Memory id not found in tenant scope |
+| 500 | Unexpected server failure |
+
+### Governance contract
+
+- Any interface change must update: contract tables, implementation routes, and validation artifacts in the same PR.
+- No standalone ADR file is created in `docs/allura/`; decision records are captured in `RISKS-AND-DECISIONS.md`.
+
+---
+
 *This document was migrated from WIREFRAMES.md (archived 2026-04-08).*
