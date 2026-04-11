@@ -4,18 +4,29 @@ interface CanonicalAgentIdentity {
   aliases: string[];
 }
 
-// Agent registry derived from .opencode/agent/core/*.json
+// Agent registry aligned with AGENT_MANIFEST (src/lib/agents/agent-manifest.ts)
+// The manifest is the single source of truth. This registry adds aliases for
+// backward compatibility with older group_id conventions.
+// Manifest-only agents (jobs, ralph, fowler, bellard, woz) have no legacy aliases.
 const agentRegistry: Record<string, { name: string; aliases?: string[] }> = {
-  "brooks": { name: "Frederick Brooks", aliases: ["orchestrator", "primary"] },
-  "knuth": { name: "Donald Knuth", aliases: ["algorithm", "deep-worker"] },
-  "turing": { name: "Alan Turing", aliases: ["architect", "curator"] },
-  "berners-lee": { name: "Tim Berners-Lee", aliases: ["librarian", "curator"] },
-  "hopper": { name: "Grace Hopper", aliases: ["scout", "explorer"] },
-  "cerf": { name: "Vint Cerf", aliases: ["coordinator", "state-keeper"] },
-  "torvalds": { name: "Linus Torvalds", aliases: ["builder", "pragmatist"] },
-  "liskov": { name: "Barbara Liskov", aliases: ["abstraction", "curator"] },
+  "brooks": { name: "Frederick Brooks", aliases: ["orchestrator", "primary", "triage"] },
+  "jobs": { name: "Steve Jobs", aliases: ["intent-gate"] },
+  "ralph": { name: "Ralph", aliases: ["loop", "autonomous"] },
+  "pike": { name: "Rob Pike", aliases: ["interface", "simplicity"] },
+  "fowler": { name: "Martin Fowler", aliases: ["refactor", "drift"] },
+  "scout": { name: "Scout", aliases: ["recon", "discovery"] },
+  "woz": { name: "Steve Wozniak", aliases: ["builder"] },
+  "bellard": { name: "Fabrice Bellard", aliases: ["perf", "diagnostics"] },
   "dijkstra": { name: "Edsger Dijkstra", aliases: ["reviewer", "correctness"] },
-  "hinton": { name: "Geoffrey Hinton", aliases: ["vision", "pattern"] }
+  "knuth": { name: "Donald Knuth", aliases: ["deep-worker", "algorithm"] },
+  // Legacy aliases preserved for backward compatibility with older events
+  "turing": { name: "Alan Turing", aliases: ["architect"] },
+  "berners-lee": { name: "Tim Berners-Lee", aliases: ["librarian"] },
+  "hopper": { name: "Grace Hopper", aliases: ["explorer"] },
+  "cerf": { name: "Vint Cerf", aliases: ["coordinator"] },
+  "torvalds": { name: "Linus Torvalds", aliases: ["pragmatist"] },
+  "liskov": { name: "Barbara Liskov", aliases: ["abstraction"] },
+  "hinton": { name: "Geoffrey Hinton", aliases: ["vision", "pattern"] },
 };
 
 const aliasLookup = Object.entries(agentRegistry).reduce<Map<string, CanonicalAgentIdentity>>((lookup, [id, entry]) => {
@@ -33,6 +44,17 @@ const aliasLookup = Object.entries(agentRegistry).reduce<Map<string, CanonicalAg
 
   return lookup;
 }, new Map());
+
+/** Canonical agent IDs from the AGENT_MANIFEST — the first 10 are active. */
+const MANIFEST_AGENT_IDS = [
+  "brooks", "jobs", "ralph", "pike", "fowler",
+  "scout", "woz", "bellard", "dijkstra", "knuth",
+] as const;
+
+/** Legacy agent IDs — still resolvable but not in active manifest. */
+const LEGACY_AGENT_IDS = [
+  "turing", "berners-lee", "hopper", "cerf", "torvalds", "liskov", "hinton",
+] as const;
 
 function titleCaseFromId(agentId: string): string {
   return agentId

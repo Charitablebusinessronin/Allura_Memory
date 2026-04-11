@@ -36,7 +36,8 @@
     },
     "types": [
       "node",
-      "vitest/globals"
+      "vitest/globals",
+      "@types/bun"
     ]
   },
   "include": [

@@ -25,33 +25,29 @@ jobs:
       - name: Install dependencies
         run: bun install
       
+      # Dynamic routing via AGENT_MANIFEST (src/lib/agents/agent-manifest.ts)
+      # To add a new CI-routed agent:
+      #   1. Add scriptPath and ciRoutes to manifest entry
+      #   2. This workflow automatically picks it up
       - name: Route to Surgical Team
         env:
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
           NEO4J_URI: ${{ secrets.NEO4J_URI }}
           NEO4J_USER: ${{ secrets.NEO4J_USER }}
           NEO4J_PASSWORD: ${{ secrets.NEO4J_PASSWORD }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_EVENT_ACTION: ${{ github.event.action }}
+          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
           echo "Event: ${{ github.event_name }}"
           echo "Actor: ${{ github.actor }}"
           echo "Repository: ${{ github.repository }}"
           
-          # Route events to appropriate agents (Brooksian Surgical Team)
-          # Mapping: workflow events → existing agent scripts
-          case "${{ github.event_name }}" in
-            pull_request)
-              echo "→ Routing to Dijkstra (Edsger Dijkstra) for code review"
-              bun scripts/agents/dijkstra-review.ts "${{ github.event.pull_request.number }}"
-              ;;
-            push)
-              echo "→ Routing to Knuth (Donald Knuth) for deep implementation analysis"
-              bun scripts/agents/knuth-analyze.ts "${{ github.sha }}"
-              ;;
-            issues)
-              echo "→ Routing to Brooks (Frederick Brooks) for issue triage"
-              bun scripts/agents/brooks-triage.ts "${{ github.event.issue.number }}"
-              ;;
-          esac
+          # Route events using manifest-driven dispatch
+          # See: src/lib/agents/agent-manifest.ts for the routing table
+          bun scripts/agents/dispatch.ts
       
       - name: Log to Allura Memory
         run: |
