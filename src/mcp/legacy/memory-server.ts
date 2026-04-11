@@ -189,20 +189,27 @@ let pgPool: Pool | null = null;
 let neo4jDriver: Driver | null = null;
 async function initializeConnections() {
   if (!pgPool) {
-    pgPool = new Pool({
-      host: process.env.POSTGRES_HOST || "localhost",
-      port: parseInt(process.env.POSTGRES_PORT || "5432"),
-      database: process.env.POSTGRES_DB || "memory",
-      user: process.env.POSTGRES_USER || "ronin4life",
-      password: process.env.POSTGRES_PASSWORD,
-      connectionTimeoutMillis: 10000,
-      max: 10,
-    });
+    // Prefer DATABASE_URL over individual host/port vars
+    const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+    if (databaseUrl) {
+      pgPool = new Pool({ connectionString: databaseUrl });
+    } else {
+      pgPool = new Pool({
+        host: process.env.POSTGRES_HOST || "localhost",
+        port: parseInt(process.env.POSTGRES_PORT || "5432", 10),
+        database: process.env.POSTGRES_DB || "memory",
+        user: process.env.POSTGRES_USER || "ronin4life",
+        password: process.env.POSTGRES_PASSWORD,
+        connectionTimeoutMillis: 10000,
+        max: 10,
+      });
+    }
   }
 
   if (!neo4jDriver) {
+    const neo4jUri = process.env.NEO4J_URI || "bolt://localhost:7687";
     neo4jDriver = neo4j.driver(
-      process.env.NEO4J_URI || "bolt://localhost:7687",
+      neo4jUri,
       neo4j.auth.basic(
         process.env.NEO4J_USER || "neo4j",
         process.env.NEO4J_PASSWORD || "password"
