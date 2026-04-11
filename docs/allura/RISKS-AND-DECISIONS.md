@@ -21,6 +21,28 @@
 | AD-07 | No ADAS, Paperclip, curator pipeline, domain workflows | Decided | Essential complexity only. All removed 2026-04-07. Allura is a memory engine — nothing else. |
 | AD-08 | Soft-delete only — no hard deletes | Decided | Append-only audit trail. Deletion records are events, not erasures. |
 | AD-09 | Neo4j write failure is non-fatal | Decided | Postgres write is the source of truth. Neo4j is a promotion — its failure should degrade gracefully, not fail the operation. |
+| AD-10 | RalphLoop for bounded validation tasks only | Decided | RalphLoop is designed for slice-by-slice validation, not full project execution. Bounded by `--max-iterations` flag and timeout guards. Prevents runaway validation loops. |
+| AD-11 | Human-in-the-loop gating for validation evidence | Decided | Every RalphLoop slice requires human review before proceeding. Judge reviews all evidence; no automatic progression to next slice without explicit approval. |
+| AD-12 | Slice-by-slice approach (no parallel slice definition) | Decided | Sequential slice execution ensures clear causation and evidence trails. Parallel slices would introduce race conditions and obscure failure attribution. |
+| AD-13 | Canonical API validation uses bounded RalphLoop slices | Decided | Validate `/api/memory` with bounded, repeatable slices to preserve fast feedback, clear causality, and low architectural risk. |
+
+---
+
+## Decision Detail: Canonical API Validation Approach (merged)
+
+**Context:** The Allura API validation strategy needed a scalable, maintainable approach to ensure contract compliance without slowing development velocity.
+
+**Decision:** Adopted RalphLoop validation slices — atomic, bounded validation tasks that run sequentially with human-in-the-loop gating.
+
+**Alternatives Rejected:**
+- **Manual testing**: Too slow, error-prone, doesn't scale with API surface growth
+- **Full test suites**: Overwhelming output, hard to diagnose failures, no incremental progress
+- **Parallel validation**: Race conditions, unclear causation, difficult to attribute failures
+
+**Consequences:**
+- Validation is incremental and observable
+- Human judgment gates each slice progression
+- Clear audit trail of what was validated and by whom
 
 ---
 
@@ -34,3 +56,30 @@
 | RK-04 | No BYOK — hosted cloud exposes memory data | High | Self-hosted deployment recommended. BYOK planned for future release. | Open |
 | RK-05 | MCP server is a single point of failure | Medium | Stateless — restart recovers fully. Postgres + Neo4j are the durable stores. | Accepted |
 | RK-06 | Postgres append-only table grows unbounded | Low | `TRACE_RETENTION_DAYS` env var controls retention. TTL cleanup planned. | Active |
+| RK-07 | Schema drift between Postgres and Neo4j | High | Sync validation in health check endpoint. Schema version field in both stores. Alert on mismatch. | Active |
+| RK-08 | Embedding provider latency spikes | Medium | Circuit breaker pattern + fallback caching. Timeout after 5s. Return cached embeddings on provider failure. | Active |
+| RK-09 | Neo4j promotion conflicts (concurrent writes) | High | Optimistic locking via `version` field. Retry on `SUPERSEDES` conflict. Max 3 retries. | Mitigated |
+| RK-10 | Validation slice false positives | Medium | Human judge reviews all evidence before approving next slice. No automatic progression without explicit sign-off. | Active |
+| RK-11 | RalphLoop runaway (infinite loops) | Medium | `--max-iterations` flag (default: 100) + hard timeout (30 min). Slice counter enforced. Graceful degradation on limit. | Mitigated |
+
+---
+
+## Monitoring & Observability
+
+| Signal | Source | Alert Threshold |
+|--------|--------|-----------------|
+| Neo4j promotion failures | `src/lib/neo4j/promotion.ts` | > 5 failures in 5 min |
+| Embedding latency | Provider response time | p99 > 3s |
+| Schema drift detection | Health check endpoint | Version mismatch |
+| RalphLoop iterations | Slice counter log | > 80 per session |
+| Cross-tenant query attempts | Query middleware | Any occurrence |
+| Postgres trace growth | Table size metric | > 100GB |
+
+---
+
+## References
+
+- **Architecture Canon**: `docs/allura/BLUEPRINT.md`
+- **Validation Guide**: merged into `docs/allura/SOLUTION-ARCHITECTURE.md` §9 (Validation Topology)
+- **Memory System Design**: `memory-bank/systemPatterns.md`
+- **Active Context**: `memory-bank/activeContext.md`

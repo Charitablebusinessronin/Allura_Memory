@@ -190,14 +190,15 @@ psql -d allura -c "SELECT COUNT(*) FROM events WHERE agent_id = 'contextscout';"
 3. Performance logging MUST include documentation adherence signals
 4. Any work that creates/changes behavior MUST update traceability artifacts (requirements + risks/decisions) per AI-GUIDELINES
 
-**Required Artifacts:**
+**Required Artifacts (canonical location: `docs/allura/`):**
 1. `BLUEPRINT.md` — Single source of design intent
 2. `SOLUTION-ARCHITECTURE.md` — Topological view
-3. `DESIGN-ROUTING.md` — Routing policy design
-4. `DESIGN-LOGGING.md` — Performance logging design
-5. `REQUIREMENTS-MATRIX.md` — Requirements traceability
-6. `RISKS-AND-DECISIONS.md` — Architectural decisions and risks
-7. `DATA-DICTIONARY.md` — Field-level reference
+3. `DESIGN-ALLURA.md` (or approved `DESIGN-<AREA>.md`) — Functional design
+4. `REQUIREMENTS-MATRIX.md` — Requirements traceability
+5. `RISKS-AND-DECISIONS.md` — Architectural decisions and risks
+6. `DATA-DICTIONARY.md` — Field-level reference
+
+**Canonical Surface Rule:** No net-new files may be created under `docs/allura/` unless they are one of the six canonical document types above. All other artifacts go to `docs/archive/allura/`, `memory-bank`, or Allura Brain.
 
 **DOC COMPLIANCE GATE (always-on):**
 Before any agent marks a task complete, it must output:
@@ -210,8 +211,8 @@ If any answer is "no", the task is not complete and must continue.
 
 **Validation:**
 ```bash
-# Check if all artifacts exist
-ls -1 BLUEPRINT.md SOLUTION-ARCHITECTURE.md DESIGN-ROUTING.md DESIGN-LOGGING.md REQUIREMENTS-MATRIX.md RISKS-AND-DECISIONS.md DATA-DICTIONARY.md
+# Check if canonical artifacts exist
+ls -1 docs/allura/BLUEPRINT.md docs/allura/SOLUTION-ARCHITECTURE.md docs/allura/DESIGN-ALLURA.md docs/allura/REQUIREMENTS-MATRIX.md docs/allura/RISKS-AND-DECISIONS.md docs/allura/DATA-DICTIONARY.md
 # Expected: All files listed
 
 # Check if AI-GUIDELINES.md exists
@@ -292,11 +293,10 @@ A run is NOT DONE unless:
 
 ## 8. References
 
-- [BLUEPRINT.md](../../BLUEPRINT.md) — Single source of design intent
-- [SOLUTION-ARCHITECTURE.md](../../SOLUTION-ARCHITECTURE.md) — Topological view
-- [DESIGN-ROUTING.md](../../DESIGN-ROUTING.md) — Routing policy design
-- [DESIGN-LOGGING.md](../../DESIGN-LOGGING.md) — Performance logging design
-- [REQUIREMENTS-MATRIX.md](../../REQUIREMENTS-MATRIX.md) — Requirements traceability
-- [RISKS-AND-DECISIONS.md](../../RISKS-AND-DECISIONS.md) — Architectural decisions and risks
-- [DATA-DICTIONARY.md](../../DATA-DICTIONARY.md) — Field-level reference
+- [BLUEPRINT.md](../../docs/allura/BLUEPRINT.md) — Single source of design intent
+- [SOLUTION-ARCHITECTURE.md](../../docs/allura/SOLUTION-ARCHITECTURE.md) — Topological view
+- [DESIGN-ALLURA.md](../../docs/allura/DESIGN-ALLURA.md) — Functional design
+- [REQUIREMENTS-MATRIX.md](../../docs/allura/REQUIREMENTS-MATRIX.md) — Requirements traceability
+- [RISKS-AND-DECISIONS.md](../../docs/allura/RISKS-AND-DECISIONS.md) — Architectural decisions and risks
+- [DATA-DICTIONARY.md](../../docs/allura/DATA-DICTIONARY.md) — Field-level reference
 - [AI-GUIDELINES.md](../AI-GUIDELINES.md) — Documentation standards

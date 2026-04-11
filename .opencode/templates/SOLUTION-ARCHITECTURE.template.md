@@ -149,8 +149,8 @@ sequenceDiagram
 
 ## 7. References
 
-- [BLUEPRINT.md](../BLUEPRINT.md) — Core data model, API surface, execution rules, and event catalogue
-- [RISKS-AND-DECISIONS.md](../RISKS-AND-DECISIONS.md) — Architectural decisions and risk mitigations
-- [REQUIREMENTS-MATRIX.md](../REQUIREMENTS-MATRIX.md) — Business and functional requirement traceability
-- [DATA-DICTIONARY.md](../DATA-DICTIONARY.md) — Canonical field-level definitions and event payloads
+- [BLUEPRINT.md](../../docs/allura/BLUEPRINT.md) — Core data model, API surface, execution rules, and event catalogue
+- [RISKS-AND-DECISIONS.md](../../docs/allura/RISKS-AND-DECISIONS.md) — Architectural decisions and risk mitigations
+- [REQUIREMENTS-MATRIX.md](../../docs/allura/REQUIREMENTS-MATRIX.md) — Business and functional requirement traceability
+- [DATA-DICTIONARY.md](../../docs/allura/DATA-DICTIONARY.md) — Canonical field-level definitions and event payloads
 <!-- Add links to applicable DESIGN-*.md documents -->

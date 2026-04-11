@@ -119,6 +119,6 @@ This document captures key architectural and design decisions made in [Service N
 ---
 
 **See also:**
-- [BLUEPRINT.md](BLUEPRINT.md) — system design this document is based on
-- [REQUIREMENTS-MATRIX.md](REQUIREMENTS-MATRIX.md) — requirement traceability
+- [BLUEPRINT.md](../../docs/allura/BLUEPRINT.md) — system design this document is based on
+- [REQUIREMENTS-MATRIX.md](../../docs/allura/REQUIREMENTS-MATRIX.md) — requirement traceability
 <!-- Add additional cross-references to DESIGN-*.md documents as appropriate -->

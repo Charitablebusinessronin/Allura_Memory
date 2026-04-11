@@ -52,6 +52,8 @@ opencode.json.*
 *.sln
 *.sw*
 *archive
+!docs/archive/
+!docs/archive/**
 
 # OpenCode project config
 .opencode/oh-my-opencode.json

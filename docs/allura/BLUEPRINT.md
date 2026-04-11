@@ -23,6 +23,7 @@ Allura is a sovereign AI memory engine — a self-hosted, governed alternative t
 - [9) Logging & Audit](#9-logging--audit)
 - [10) Admin Workflow](#10-admin-workflow)
 - [11) References](#11-references)
+- [12) Documentation Authority & Sync Contract](#12-documentation-authority--sync-contract)
 
 ---
 
@@ -485,6 +486,39 @@ Paperclip UI    Memory Dashboard
 - Agent Task → Automatic Logging → PostgreSQL
 - Claude Code Memory Commands → MCP retrieval → Merged results
 - Manual Insight Proposal → Pending queue → Neo4j (if approved)
+
+---
+
+## 12) Documentation Authority & Sync Contract
+
+This section defines the single authority map between Notion templates/policy and repo implementation docs so agents never guess which surface owns truth.
+
+### Authority Invariants
+
+1. **Policy and templates are upstream in Notion.**
+2. **Implementation canon is downstream in `docs/allura/` (exactly six files).**
+3. **Agents do not auto-write repo content back to Notion template pages.**
+4. **Residue** (reports, deliverables, ADR standalones, validation snapshots, benchmarks, prompts) goes to `docs/archive/allura/`, `memory-bank`, or Allura Brain.
+
+### Authority Map
+
+| Notion Page | Repo Counterpart | Authority Direction | Who Edits |
+|---|---|---|---|
+| Allura Blueprint | `docs/allura/BLUEPRINT.md` | Notion → repo | Edit Notion, sync to repo |
+| Solution Architecture: Allura | `docs/allura/SOLUTION-ARCHITECTURE.md` | Notion → repo | Edit Notion, sync to repo |
+| ✨ AI Guidelines: Documentation Standards | `docs/AI-GUIDELINES.md` + `.opencode/AI-GUIDELINES.md` | Notion → repo | Edit Notion, patch both repo files |
+| Design | `docs/allura/DESIGN-ALLURA.md` | Repo canonical (no Notion twin) | Edit repo directly |
+| Requirements Matrix | `docs/allura/REQUIREMENTS-MATRIX.md` | Repo canonical (no Notion twin) | Edit repo directly |
+| Risks & Decisions | `docs/allura/RISKS-AND-DECISIONS.md` | Repo canonical (no Notion twin) | Edit repo directly |
+| Data Dictionary | `docs/allura/DATA-DICTIONARY.md` | Repo canonical (no Notion twin) | Edit repo directly |
+| BROOKS_ARCHITECT persona | `.claude/agents/brooks.md` | Notion → repo | Edit Notion persona, sync to agent file |
+
+### Preflight Gate (mandatory before doc writes)
+
+Before creating or updating documentation artifacts, agents must read this authority map and apply this check:
+
+- If target is not one of the canonical six under `docs/allura/` and not an approved archive/memory destination, **abort and reroute**.
+- No net-new file creation is allowed in `docs/allura/` beyond the canonical six.
 
 ---
 

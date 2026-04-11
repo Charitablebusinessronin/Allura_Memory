@@ -255,7 +255,7 @@ sequenceDiagram
 
 - [BLUEPRINT.md](./BLUEPRINT.md) — Core data model, API surface, execution rules
 - [DATA-DICTIONARY.md](./DATA-DICTIONARY.md) — Field-level definitions
-- [RISKS-AND-DECISIONS.md](./RISKS-AND-DISIONS.md) — AD-## and RK-## entries
+- [RISKS-AND-DECISIONS.md](./RISKS-AND-DECISIONS.md) — AD-## and RK-## entries
 - `src/mcp/memory-server.ts` — MCP implementation
 - `src/lib/memory/` — Memory engine
 - `src/lib/dedup/` — Deduplication logic
@@ -359,3 +359,58 @@ Allura MCP Server (src/mcp/allura-server.ts)
 - ✓ Plugin installs in <30 seconds
 - ✓ Auth (JWT/OAuth) works end-to-end
 - ✓ All three tools can retrieve, write, and propose insights
+
+---
+
+## 9. Validation Topology (merged)
+
+This section carries forward the essential validation topology from the retired standalone validation diagrams artifact.
+
+### 9.1 Validation slice architecture
+
+```mermaid
+graph TD
+    subgraph "Validation Slice"
+        A[RalphLoop] --> B[Validation Feature Set]
+        B --> C[Auto Mode Check]
+        B --> D[SOC2 Mode Check]
+        B --> E[Evidence Collection]
+        C --> F[Next.js API]
+        D --> F
+        F --> G[(PostgreSQL)]
+        F --> H[RuVixKernel]
+        H --> G
+        E --> G
+        E --> I[(Neo4j)]
+        E --> J[Validation Report]
+        J --> K[Human Judge]
+    end
+```
+
+### 9.2 Validation state machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> Start
+    Start --> AutoMode
+    AutoMode --> AutoVerify
+    AutoVerify --> SOC2Mode: pass
+    AutoVerify --> Fail: fail
+    SOC2Mode --> SOC2Verify
+    SOC2Verify --> Evidence: pass
+    SOC2Verify --> Fail: fail
+    Evidence --> Report
+    Report --> Complete: all checks pass
+    Report --> Fail: any check fails
+    Complete --> [*]
+    Fail --> [*]
+```
+
+### 9.3 Validation constraints
+
+| Constraint | Enforcement |
+|---|---|
+| `group_id` required | PostgreSQL schema check + request validation |
+| Append-only traces | No UPDATE/DELETE contract on events |
+| `trace_ref` integrity in SOC2 | FK and numeric verification |
+| Human gate per slice | Explicit reviewer sign-off before progression |

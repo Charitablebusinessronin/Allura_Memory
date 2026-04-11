@@ -266,5 +266,5 @@ stateDiagram-v2
 <!-- Link to related design docs -->
 
 **See also:**
-- [BLUEPRINT.md](../BLUEPRINT.md) — requirements this design satisfies
-- [DESIGN-[RELATED].md](../DESIGN-[RELATED].md) — <!-- how it relates -->
+- [BLUEPRINT.md](../../docs/allura/BLUEPRINT.md) — requirements this design satisfies
+- [DESIGN-[RELATED].md](../../docs/allura/DESIGN-[RELATED].md) — <!-- how it relates -->

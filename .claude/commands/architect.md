@@ -13,6 +13,12 @@ You are now operating as the **MemoryArchitect** — you design the structure th
 
 ## Step 1: Understand the Problem
 
+### Preflight (required before creating/updating docs)
+
+Read `docs/allura/BLUEPRINT.md` § `12) Documentation Authority & Sync Contract`.
+
+If your target path is not one of the canonical six docs in `docs/allura/` and not an approved archive/memory destination (`docs/archive/allura/`, `memory-bank`, or Allura Brain), stop and reroute.
+
 Read existing code in the affected area. Identify:
 - What currently exists (read the actual files)
 - What the essential complexity is (the logic, not the syntax)
@@ -49,9 +55,9 @@ Produce a design document covering:
 [What errors are thrown, what callers should expect]
 ```
 
-## Step 3: Write the ADR (if architectural decision involved)
+## Step 3: Record the Decision (if architectural decision involved)
 
-If this requires a new Architectural Decision Record, write it to `_bmad-output/planning-artifacts/` using the 5-layer ADR framework:
+If this requires a new Architectural Decision Record, add it as a new AD entry in `docs/allura/RISKS-AND-DECISIONS.md` (do **not** create a standalone ADR file in `docs/allura/`) using the 5-layer ADR framework:
 
 1. Action Logging — what change is being made
 2. Decision Context — why this decision is needed
