@@ -124,6 +124,30 @@ describe("Canonical Memory Operations", () => {
       }
     });
 
+    it("should return episodic storage with degraded metadata when auto promotion cannot reach Neo4j", async () => {
+      const originalMode = process.env.PROMOTION_MODE;
+      const originalNeo4jUri = process.env.NEO4J_URI;
+      process.env.PROMOTION_MODE = "auto";
+      process.env.NEO4J_URI = "bolt://127.0.0.1:1";
+
+      try {
+        const response = await memory_add({
+          group_id: TEST_GROUP_ID,
+          user_id: TEST_USER_ID,
+          content: uniqueContent("User prefers deterministic degraded auto promotion behavior"),
+          metadata: { source: "conversation" },
+        });
+
+        expect(response.stored).toBe("episodic");
+        expect(response.meta?.degraded).toBe(true);
+        expect(response.meta?.degraded_reason).toBe("neo4j_unavailable");
+        expect(response.meta?.stores_used).toEqual(["postgres"]);
+      } finally {
+        process.env.PROMOTION_MODE = originalMode;
+        process.env.NEO4J_URI = originalNeo4jUri;
+      }
+    });
+
     it("should reject invalid group_id", async () => {
       const request: MemoryAddRequest = {
         group_id: "invalid-group-id" as any, // Missing 'allura-' prefix
