@@ -12,6 +12,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { randomUUID } from "crypto";
 import {
   memory_add,
   memory_search,
@@ -28,11 +29,22 @@ import type {
 } from "../lib/memory/canonical-contracts";
 
 // Test configuration
-const TEST_GROUP_ID = "allura-test-canonical" as any;
+const RUN_ID = randomUUID().slice(0, 8);
+const TEST_GROUP_ID = `allura-test-canonical-${RUN_ID}` as any;
 const TEST_USER_ID = "test-user-1";
 const TEST_USER_ID_2 = "test-user-2";
+const GROUP_A = `allura-tenant-a-${RUN_ID}` as any;
+const GROUP_B = `allura-tenant-b-${RUN_ID}` as any;
+
+function uniqueContent(base: string): string {
+  return `${base} [run:${RUN_ID}] [id:${randomUUID().slice(0, 8)}]`;
+}
 
 describe("Canonical Memory Operations", () => {
+  beforeEach(() => {
+    process.env.PROMOTION_MODE = "soc2";
+  });
+
   beforeAll(async () => {
     // Setup: Ensure databases are running
     // TODO: Add database health check
@@ -72,7 +84,7 @@ describe("Canonical Memory Operations", () => {
          const request: MemoryAddRequest = {
            group_id: TEST_GROUP_ID,
            user_id: TEST_USER_ID,
-           content: "User prefers dark theme in VS Code editor settings", // Unique content
+          content: uniqueContent("User prefers dark theme in VS Code editor settings"),
            metadata: { source: "conversation" },
          };
 
@@ -97,7 +109,7 @@ describe("Canonical Memory Operations", () => {
         const request: MemoryAddRequest = {
           group_id: TEST_GROUP_ID,
           user_id: TEST_USER_ID,
-          content: "User works with TypeScript strict mode enabled in their IDE", // Unique content
+          content: uniqueContent("User works with TypeScript strict mode enabled in their IDE"),
           metadata: { source: "conversation" },
         };
 
@@ -138,14 +150,14 @@ describe("Canonical Memory Operations", () => {
       await memory_add({
         group_id: TEST_GROUP_ID,
         user_id: TEST_USER_ID,
-        content: "User prefers dark mode",
+        content: uniqueContent("User prefers dark mode"),
         metadata: { source: "manual" },
       });
 
       await memory_add({
         group_id: TEST_GROUP_ID,
         user_id: TEST_USER_ID,
-        content: "User uses TypeScript",
+        content: uniqueContent("User uses TypeScript"),
         metadata: { source: "conversation" },
       });
     });
@@ -214,7 +226,7 @@ describe("Canonical Memory Operations", () => {
       const response = await memory_add({
         group_id: TEST_GROUP_ID,
         user_id: TEST_USER_ID,
-        content: "Test memory for get operation",
+        content: uniqueContent("Test memory for get operation"),
         metadata: { source: "manual" },
       });
       testMemoryId = response.id;
@@ -229,7 +241,7 @@ describe("Canonical Memory Operations", () => {
       const response = await memory_get(request);
 
       expect(response.id).toBe(testMemoryId);
-      expect(response.content).toBe("Test memory for get operation");
+      expect(response.content).toContain("Test memory for get operation");
       expect(response.source).toBeDefined();
       expect(response.provenance).toBe("manual");
       expect(response.created_at).toBeDefined();
@@ -260,21 +272,21 @@ describe("Canonical Memory Operations", () => {
       await memory_add({
         group_id: TEST_GROUP_ID,
         user_id: TEST_USER_ID,
-        content: "Memory 1 for user 1",
+        content: uniqueContent("Memory 1 for user 1"),
         metadata: { source: "manual" },
       });
 
       await memory_add({
         group_id: TEST_GROUP_ID,
         user_id: TEST_USER_ID,
-        content: "Memory 2 for user 1",
+        content: uniqueContent("Memory 2 for user 1"),
         metadata: { source: "conversation" },
       });
 
       await memory_add({
         group_id: TEST_GROUP_ID,
         user_id: TEST_USER_ID_2,
-        content: "Memory 1 for user 2",
+        content: uniqueContent("Memory 1 for user 2"),
         metadata: { source: "manual" },
       });
     });
@@ -334,10 +346,10 @@ describe("Canonical Memory Operations", () => {
 
     beforeEach(async () => {
       // Add a test memory
-      const response = await memory_add({
-        group_id: TEST_GROUP_ID,
-        user_id: TEST_USER_ID,
-        content: "Test memory for delete operation",
+        const response = await memory_add({
+          group_id: TEST_GROUP_ID,
+          user_id: TEST_USER_ID,
+          content: uniqueContent("Test memory for delete operation"),
         metadata: { source: "manual" },
       });
       testMemoryId = response.id;
@@ -367,7 +379,7 @@ describe("Canonical Memory Operations", () => {
         const addResponse = await memory_add({
           group_id: TEST_GROUP_ID,
           user_id: TEST_USER_ID,
-          content: "User prefers dark mode for deletion test",
+          content: uniqueContent("User prefers dark mode for deletion test"),
           metadata: { source: "conversation" },
         });
 
@@ -397,25 +409,23 @@ describe("Canonical Memory Operations", () => {
   });
 
   describe("Tenant Isolation", () => {
-    const GROUP_A = "allura-tenant-a" as any;
-    const GROUP_B = "allura-tenant-b" as any;
     const USER_A = "user-a";
     const USER_B = "user-b";
 
     it("should isolate memories by group_id", async () => {
       // Add memory for Group A
-      await memory_add({
-        group_id: GROUP_A,
-        user_id: USER_A,
-        content: "Memory for Group A",
+        await memory_add({
+          group_id: GROUP_A,
+          user_id: USER_A,
+          content: uniqueContent("Memory for Group A"),
         metadata: { source: "manual" },
       });
 
       // Add memory for Group B
-      await memory_add({
-        group_id: GROUP_B,
-        user_id: USER_B,
-        content: "Memory for Group B",
+        await memory_add({
+          group_id: GROUP_B,
+          user_id: USER_B,
+          content: uniqueContent("Memory for Group B"),
         metadata: { source: "manual" },
       });
 
@@ -441,10 +451,10 @@ describe("Canonical Memory Operations", () => {
 
     it("should prevent cross-tenant memory access", async () => {
       // Add memory for Group A
-      const addResponse = await memory_add({
-        group_id: GROUP_A,
-        user_id: USER_A,
-        content: "Private memory for Group A",
+        const addResponse = await memory_add({
+          group_id: GROUP_A,
+          user_id: USER_A,
+          content: uniqueContent("Private memory for Group A"),
         metadata: { source: "manual" },
       });
 
@@ -467,7 +477,7 @@ describe("Canonical Memory Operations", () => {
         const response = await memory_add({
           group_id: TEST_GROUP_ID,
           user_id: TEST_USER_ID,
-          content: "User prefers dark mode in VS Code editor and terminal window", // Unique content
+          content: uniqueContent("User prefers dark mode in VS Code editor and terminal window"),
           metadata: { source: "conversation" },
         });
 
@@ -486,7 +496,7 @@ describe("Canonical Memory Operations", () => {
         const response = await memory_add({
           group_id: TEST_GROUP_ID,
           user_id: TEST_USER_ID,
-          content: "User works in TypeScript with strict mode and很喜欢 TypeScript", // Unique content
+          content: uniqueContent("User works in TypeScript with strict mode and very much enjoys TypeScript"),
           metadata: { source: "conversation" },
         });
 
