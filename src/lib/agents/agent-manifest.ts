@@ -75,8 +75,8 @@ export interface AgentManifestEntry {
   description: string;
   /**
    * Model backend for autonomous agents (ralph only).
-   * "opencode"     = OpenCode terminal agent runtime with OPENCODE_CONFIG auth.
-   * "local-ollama" = self-hosted Ollama (zero-cost, fully private).
+   * "opencode"     = OpenCode runtime (manages its own model auth via opencode.json).
+   * "local-ollama" = self-hosted Ollama (not currently available).
    * "none"         = no model needed (static analysis agents).
    *
    * NOTE: GitHub Models ("github-models") is NOT used in this stack.
@@ -85,7 +85,7 @@ export interface AgentManifestEntry {
   modelBackend?: ModelBackend;
   /**
    * Authentication method for model backend.
-   * "OPENCODE_CONFIG" = uses OpenCode configuration (~/.config/opencode/).
+   * "OPENCODE_CONFIG" = OpenCode manages auth internally via opencode.json.
    */
   auth?: string;
 }

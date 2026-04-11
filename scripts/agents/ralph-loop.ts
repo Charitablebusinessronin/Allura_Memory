@@ -3,18 +3,20 @@
  * Agent: Ralph (Autonomous Loop Runner)
  * Manifest ID: ralph
  * CI Route: none (manual or issue-tagged dispatch only)
- * Model Backend: github-models (free-tier, GITHUB_TOKEN auth)
+ * Model Backend: opencode (OpenCode runtime; model resolution is OpenCode's concern)
  * See: src/lib/agents/agent-manifest.ts
  *
  * Phase 3 — Full implementation pending.
  * This stub validates manifest routing and provides the contract skeleton.
  *
- * Architecture Decision: Ralph uses GitHub Models free-tier API
- * (Meta Llama 3.1, Mistral, Phi-4 available via GITHUB_TOKEN).
- * NOT open-ralph-wiggum. Zero new credentials required.
+ * Architecture Decision (AD-16): Ralph drives the OpenCode CLI.
+ * Ralph does not talk to any model directly. Ralph invokes OpenCode,
+ * checks for <promise>COMPLETE</promise>, and loops. What model
+ * OpenCode uses (Ollama cloud, local, etc.) is OpenCode's concern.
+ * NOT github-models. NOT open-ralph-wiggum.
  *
- * Constraint: No local Ollama available. No paid cloud API budget.
- * GitHub Models is the only viable inference backend.
+ * Configuration: OpenCode reads model config from opencode.json or
+ * ~/.config/opencode/. No separate API token required.
  *
  * Gracefully handles missing DB connections (for CI environments)
  */
@@ -24,14 +26,12 @@ const TASK_DESCRIPTION = process.argv[2];
 async function ralphLoop() {
   console.log(`[ralph] Starting autonomous loop for: ${TASK_DESCRIPTION || "(no task)"}\n`);
 
-  const githubToken = process.env.GITHUB_TOKEN;
+  // OpenCode configuration — the runtime handles model resolution
+  const opencodeConfig = process.env.OPENCODE_CONFIG || "opencode.json";
 
-  if (!githubToken) {
-    console.log("[ralph] ⚠️  GITHUB_TOKEN not set");
-    console.log("[ralph] GitHub Models API requires GITHUB_TOKEN for authentication");
-    console.log("[ralph] Set GITHUB_TOKEN to enable model inference");
-    console.log("");
-  }
+  console.log(`[ralph] OpenCode config: ${opencodeConfig}`);
+  console.log("[ralph] Model resolution via OpenCode");
+  console.log("");
 
   // Check if DB connections are available
   const postgresUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL;
@@ -45,20 +45,20 @@ async function ralphLoop() {
   console.log("[ralph]       RALPH LOOP — STUB (Phase 3)");
   console.log("[ralph] ═══════════════════════════════════════════════════════");
   console.log("");
-  console.log("Model Backend: github-models");
-  console.log("Auth:         GITHUB_TOKEN (already available in CI)");
-  console.log("API Endpoint: https://models.inference.ai.azure.com");
-  console.log("Models:       Meta-Llama-3.1-8B, Mistral-small, Phi-4");
-  console.log("Cost:         Free (rate-limited)");
+  console.log("Model Backend: opencode");
+  console.log("Runtime:       OpenCode CLI (opencode)");
+  console.log("Inference:     Whatever OpenCode is configured to use");
+  console.log("Config:        opencode.json / ~/.config/opencode/");
+  console.log("Auth:          OpenCode manages auth internally");
   console.log("");
   console.log("Contract:");
   console.log("  1. Receive task description");
-  console.log("  2. Query GitHub Models for next action");
-  console.log("  3. Execute action (file read/write, test run, etc.)");
-  console.log("  4. Evaluate result");
+  console.log("  2. Invoke OpenCode with task prompt + fresh context");
+  console.log("  3. Agent reads repo state, executes actions, writes results");
+  console.log("  4. Evaluate result (check for <promise>COMPLETE</promise>)");
   console.log("  5. If <promise>COMPLETE</promise> detected → stop");
   console.log("  6. If max_iterations reached → stop with report");
-  console.log("  7. Otherwise → return to step 2");
+  console.log("  7. Otherwise → return to step 2 with fresh context");
   console.log("");
   console.log("Safety Guards (from AD-10, AD-11):");
   console.log("  --max-iterations: bounded (default: 10)");
@@ -89,8 +89,8 @@ async function ralphLoop() {
       "ralph",
       JSON.stringify({
         task: TASK_DESCRIPTION,
-        model_backend: "github-models",
-        auth: "GITHUB_TOKEN",
+        model_backend: "opencode",
+        auth: "OPENCODE_CONFIG",
         phase: "stub",
       }),
       "completed",
@@ -108,7 +108,7 @@ async function ralphLoop() {
       })
       RETURN i
     `, {
-      summary: `Ralph loop stub: Phase 3 implementation pending. Model backend: github-models.`,
+      summary: `Ralph loop stub: Phase 3 implementation pending. Model backend: opencode.`,
     });
 
     console.log("[ralph] Stub logged to PostgreSQL and Neo4j");
@@ -129,6 +129,6 @@ if (TASK_DESCRIPTION) {
   console.error("       bun scripts/agents/ralph-loop.ts --dry-run <task>");
   console.error("       bun scripts/agents/ralph-loop.ts --max-iterations 5 <task>");
   console.error("");
-  console.error("Model backend: github-models (GITHUB_TOKEN auth)");
+  console.error("Model backend: opencode (OpenCode CLI)");
   process.exit(1);
 }
