@@ -65,3 +65,4 @@ memory-bank/index.meta.json
 # Temporary files
 .tmp/
 memory-bank/ingestion.meta.json
+package-lock.json
