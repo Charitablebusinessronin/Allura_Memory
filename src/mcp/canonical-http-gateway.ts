@@ -13,7 +13,49 @@ import { config } from "dotenv";
 
 config();
 
-const PORT = process.env.CANONICAL_HTTP_PORT || 3201;
+function resolveHttpPort(): { port: number; source: string; warnings: string[] } {
+  const warnings: string[] = [];
+
+  if (process.env.ALLURA_MCP_HTTP_PORT) {
+    return {
+      port: parseInt(process.env.ALLURA_MCP_HTTP_PORT, 10),
+      source: "ALLURA_MCP_HTTP_PORT",
+      warnings,
+    };
+  }
+
+  if (process.env.CANONICAL_HTTP_PORT) {
+    warnings.push("CANONICAL_HTTP_PORT is deprecated; use ALLURA_MCP_HTTP_PORT");
+    return {
+      port: parseInt(process.env.CANONICAL_HTTP_PORT, 10),
+      source: "CANONICAL_HTTP_PORT",
+      warnings,
+    };
+  }
+
+  if (process.env.OPENCLAW_PORT) {
+    warnings.push("OPENCLAW_PORT is deprecated for canonical MCP HTTP; use ALLURA_MCP_HTTP_PORT");
+    return {
+      port: parseInt(process.env.OPENCLAW_PORT, 10),
+      source: "OPENCLAW_PORT",
+      warnings,
+    };
+  }
+
+  if (process.env.PORT) {
+    warnings.push("PORT is deprecated for canonical MCP HTTP; use ALLURA_MCP_HTTP_PORT");
+    return {
+      port: parseInt(process.env.PORT, 10),
+      source: "PORT",
+      warnings,
+    };
+  }
+
+  return { port: 3201, source: "default", warnings };
+}
+
+const HTTP_PORT = resolveHttpPort();
+const PORT = HTTP_PORT.port;
 
 // Import canonical tools
 import {
@@ -231,10 +273,20 @@ const server = createServer(async (req, res) => {
       const result = await toolHandlers[name](args || {});
       res.writeHead(200, { ...corsHeaders, "Content-Type": "application/json" });
       res.end(JSON.stringify(result));
-    } else if (url.pathname === "/health") {
+    } else if (url.pathname === "/health" || url.pathname === "/api/health") {
       // Health check
       res.writeHead(200, { ...corsHeaders, "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "healthy", timestamp: new Date().toISOString() }));
+      res.end(
+        JSON.stringify({
+          status: "healthy",
+          mode: "http",
+          interface: "mcp-http",
+          port: PORT,
+          port_source: HTTP_PORT.source,
+          warnings: HTTP_PORT.warnings,
+          timestamp: new Date().toISOString(),
+        })
+      );
     } else {
       res.writeHead(404, { ...corsHeaders, "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: "Not found" }));
@@ -248,6 +300,10 @@ const server = createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`Canonical HTTP Gateway listening on port ${PORT}`);
+  console.log(`Port source: ${HTTP_PORT.source}`);
+  for (const warning of HTTP_PORT.warnings) {
+    console.warn(`[deprecated-port-contract] ${warning}`);
+  }
   console.log("Available tools: memory_add, memory_search, memory_get, memory_list, memory_delete");
 });
 

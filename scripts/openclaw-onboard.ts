@@ -142,8 +142,8 @@ async function main(): Promise<void> {
 
   // Done
   console.log("✅ Onboarding complete!\n");
-  console.log("🚀 Start OpenClaw gateway:");
-  console.log(`   PORT=${OPENCLAW_PORT} bun run mcp:http\n`);
+  console.log("🚀 Start canonical MCP HTTP gateway:");
+  console.log(`   ALLURA_MCP_HTTP_PORT=${OPENCLAW_PORT} bun run mcp:http\n`);
   console.log("📡 Test the gateway:");
   console.log(`   curl http://localhost:${OPENCLAW_PORT}/health | jq .\n`);
   console.log("🔧 Available tools:");

@@ -20,7 +20,7 @@
     "mcp": "bun src/mcp/memory-server-canonical.ts",
     "mcp:canonical": "bun src/mcp/memory-server-canonical.ts",
     "mcp:dev": "bun --watch src/mcp/memory-server-canonical.ts",
-    "mcp:http": "PORT=${CANONICAL_HTTP_PORT:-3201} bun src/mcp/canonical-http-gateway.ts",
+    "mcp:http": "ALLURA_MCP_HTTP_PORT=${ALLURA_MCP_HTTP_PORT:-${CANONICAL_HTTP_PORT:-${OPENCLAW_PORT:-3201}}} bun src/mcp/canonical-http-gateway.ts",
     "mcp:legacy": "bun src/mcp/legacy/memory-server.ts",
     "mcp:legacy:http": "PORT=${OPENCLAW_PORT:-3200} bun src/mcp/legacy/openclaw-gateway-http.ts",
     "curator:run": "bun src/curator/index.ts run",
