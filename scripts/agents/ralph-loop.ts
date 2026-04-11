@@ -190,15 +190,15 @@ async function ralphLoop() {
 
   const postgresUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL;
   const neo4jUri = process.env.NEO4J_URI;
-  let pgPool: Awaited<ReturnType<typeof import("../../src/lib/postgres/connection").getPool>> | null = null;
-  let neoSession: Awaited<ReturnType<typeof import("../../src/lib/neo4j/connection").getDriver>>["session"] | null = null;
+  let pgPool: InstanceType<typeof import("pg").Pool> | null = null;
+  let neo4jDriver: { session: () => { run: (q: string, p: Record<string, unknown>) => Promise<{ summary: unknown }>; close: () => Promise<void> } } | null = null;
 
   if (postgresUrl && neo4jUri) {
     try {
       const { getPool } = await import("../../src/lib/postgres/connection");
       const { getDriver } = await import("../../src/lib/neo4j/connection");
       pgPool = getPool();
-      neoSession = getDriver().session();
+      neo4jDriver = getDriver();
     } catch (error) {
       console.log("[ralph-harness] DB connections unavailable — proceeding without logging");
     }
@@ -274,7 +274,8 @@ async function ralphLoop() {
     }
   }
 
-  if (neoSession) {
+  if (neo4jDriver) {
+    const neoSession = neo4jDriver.session();
     try {
       await neoSession.run(`
         CREATE (i:Insight {
