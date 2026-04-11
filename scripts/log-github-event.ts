@@ -3,34 +3,41 @@
  * Log GitHub Events to Allura Memory
  * 
  * Logs all GitHub webhook events to PostgreSQL for agent processing.
+ * Gracefully handles missing DB connections (for CI environments)
  */
+
+// Parse CLI args early so we can exit gracefully if no DB
+const args = process.argv.slice(2);
+const event: Record<string, string> = {};
+
+for (let i = 0; i < args.length; i++) {
+  const arg = args[i];
+  if (arg.startsWith('--')) {
+    const key = arg.replace('--', '');
+    const value = args[i + 1];
+    if (value && !value.startsWith('--')) {
+      event[key] = value;
+      i++;
+    }
+  }
+}
+
+console.log('[log-github-event] Logging event:', event);
+
+// Check if DB connections are available
+const postgresUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+
+if (!postgresUrl) {
+  console.log('[log-github-event] ⚠️  Database connection not configured (CI environment)');
+  console.log('[log-github-event] Skipping DB logging - event still captured in workflow');
+  console.log(`[log-github-event] Event: ${event.event} by ${event.actor} on ${event.sha?.substring(0, 8)}`);
+  console.log('\n[log-github-event] Run with POSTGRES_URL for full logging');
+  process.exit(0);
+}
 
 import { getPool, closePool } from "../src/lib/postgres/connection";
 
-interface GitHubEvent {
-  event: string;
-  actor: string;
-  repo: string;
-  sha?: string;
-}
-
 async function logGitHubEvent() {
-  const args = process.argv.slice(2);
-  const event: Partial<GitHubEvent> = {};
-  
-  // Parse CLI args
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    if (arg.startsWith('--')) {
-      const key = arg.replace('--', '');
-      const value = args[i + 1];
-      if (value && !value.startsWith('--')) {
-        (event as any)[key] = value;
-        i++;
-      }
-    }
-  }
-  
   console.log('[log-github-event] Logging event:', event);
   
   const pgPool = getPool();
