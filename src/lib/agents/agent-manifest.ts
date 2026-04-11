@@ -109,9 +109,14 @@ const manifestEntries: Array<AgentManifestEntry> = [
     persona: "Rob Pike",
     role: "Interface Review",
     category: "core",
-    ciRoutes: [],
+    scriptPath: "scripts/agents/pike-interface-review.ts",
+    ciRoutes: [
+      { event: "pull_request", action: "opened" },
+      { event: "pull_request", action: "synchronize" },
+      { event: "pull_request", action: "reopened" },
+    ],
     description:
-      "Reviews surface area, concurrency hazards, and API ergonomics. Vetoes unnecessary complexity.",
+      "Reviews surface area, concurrency hazards, and API ergonomics. Detects breaking changes, naming violations, undocumented params. Routes pull_request events alongside dijkstra.",
   },
   {
     id: "fowler",
