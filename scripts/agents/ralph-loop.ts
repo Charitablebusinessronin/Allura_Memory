@@ -1,134 +1,313 @@
 #!/usr/bin/env bun
 /**
- * Agent: Ralph (Autonomous Loop Runner)
+ * Ralph Loop Harness — Allura integration wrapper for `ralph` CLI.
+ *
+ * This is NOT an implementation of the Ralph loop. The Ralph loop is
+ * an installed tool: `@th0rgal/ralph-wiggum` (https://github.com/Th0rgal/open-ralph-wiggum).
+ *
+ * What Ralph does (the tool): wraps an AI coding agent (OpenCode, Claude Code,
+ * Codex, Copilot) in a persistent loop. Each iteration, the agent receives
+ * the same prompt but sees changed files. It self-corrects until it outputs
+ * <promise>COMPLETE</promise> or max-iterations is reached.
+ *
+ * What this script does (the harness):
+ *   1. Resolves the `ralph` binary (global install or project-local)
+ *   2. Constructs the ralph command with Allura-specific defaults
+ *   3. Logs the loop start/end to PostgreSQL (audit trail)
+ *   4. Passes through to the real `ralph` CLI — no reimplementation
+ *
  * Manifest ID: ralph
  * CI Route: none (manual or issue-tagged dispatch only)
- * Model Backend: opencode (OpenCode runtime; model resolution is OpenCode's concern)
  * See: src/lib/agents/agent-manifest.ts
+ * See: .opencode/agent/subagents/core/ralph-loop.md
  *
- * Phase 3 — Full implementation pending.
- * This stub validates manifest routing and provides the contract skeleton.
+ * Install Ralph:
+ *   npm install -g @th0rgal/ralph-wiggum
+ *   # or: bun add -g @th0rgal/ralph-wiggum
  *
- * Architecture Decision (AD-16): Ralph drives the OpenCode CLI.
- * Ralph does not talk to any model directly. Ralph invokes OpenCode,
- * checks for <promise>COMPLETE</promise>, and loops. What model
- * OpenCode uses (Ollama cloud, local, etc.) is OpenCode's concern.
- * NOT github-models. NOT open-ralph-wiggum.
- *
- * Configuration: OpenCode reads model config from opencode.json or
- * ~/.config/opencode/. No separate API token required.
- *
- * Gracefully handles missing DB connections (for CI environments)
+ * Gracefully handles missing DB connections (for CI environments).
  */
 
 const TASK_DESCRIPTION = process.argv[2];
+const ARGS = process.argv.slice(3);
 
-async function ralphLoop() {
-  console.log(`[ralph] Starting autonomous loop for: ${TASK_DESCRIPTION || "(no task)"}\n`);
+// ── Defaults ──────────────────────────────────────────────────────────────
 
-  // OpenCode configuration — the runtime handles model resolution
-  const opencodeConfig = process.env.OPENCODE_CONFIG || "opencode.json";
+const DEFAULT_AGENT = process.env.RALPH_AGENT || "opencode";
+const DEFAULT_MAX_ITERATIONS = process.env.RALPH_MAX_ITERATIONS || "10";
+const RALPH_BINARY =
+  process.env.RALPH_BINARY ||
+  (process.env.RALPH_OPENCODE_BINARY || "ralph");
 
-  console.log(`[ralph] OpenCode config: ${opencodeConfig}`);
-  console.log("[ralph] Model resolution via OpenCode");
-  console.log("");
+// ── Arg Parsing ───────────────────────────────────────────────────────────
 
-  // Check if DB connections are available
-  const postgresUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL;
-  const neo4jUri = process.env.NEO4J_URI;
+interface RalphConfig {
+  task: string;
+  agent: string;
+  model?: string;
+  maxIterations: number;
+  completionPromise: string;
+  tasks: boolean;
+  dryRun: boolean;
+  rotation?: string;
+  extraArgs: string[];
+}
 
-  if (!postgresUrl || !neo4jUri) {
-    console.log("[ralph] ⚠️  Database connections not configured (CI environment)");
+function parseArgs(task: string, args: string[]): RalphConfig {
+  const config: RalphConfig = {
+    task,
+    agent: DEFAULT_AGENT,
+    maxIterations: parseInt(DEFAULT_MAX_ITERATIONS, 10),
+    completionPromise: "COMPLETE",
+    tasks: false,
+    dryRun: false,
+    extraArgs: [],
+  };
+
+  let i = 0;
+  while (i < args.length) {
+    const arg = args[i];
+    switch (arg) {
+      case "--agent":
+        config.agent = args[++i];
+        break;
+      case "--model":
+        config.model = args[++i];
+        break;
+      case "--max-iterations":
+        config.maxIterations = parseInt(args[++i], 10);
+        break;
+      case "--completion-promise":
+        config.completionPromise = args[++i];
+        break;
+      case "--tasks":
+      case "-t":
+        config.tasks = true;
+        break;
+      case "--rotation":
+        config.rotation = args[++i];
+        break;
+      case "--dry-run":
+        config.dryRun = true;
+        break;
+      default:
+        config.extraArgs.push(arg);
+    }
+    i++;
   }
 
-  console.log("[ralph] ═══════════════════════════════════════════════════════");
-  console.log("[ralph]       RALPH LOOP — STUB (Phase 3)");
-  console.log("[ralph] ═══════════════════════════════════════════════════════");
-  console.log("");
-  console.log("Model Backend: opencode");
-  console.log("Runtime:       OpenCode CLI (opencode)");
-  console.log("Inference:     Whatever OpenCode is configured to use");
-  console.log("Config:        opencode.json / ~/.config/opencode/");
-  console.log("Auth:          OpenCode manages auth internally");
-  console.log("");
-  console.log("Contract:");
-  console.log("  1. Receive task description");
-  console.log("  2. Invoke OpenCode with task prompt + fresh context");
-  console.log("  3. Agent reads repo state, executes actions, writes results");
-  console.log("  4. Evaluate result (check for <promise>COMPLETE</promise>)");
-  console.log("  5. If <promise>COMPLETE</promise> detected → stop");
-  console.log("  6. If max_iterations reached → stop with report");
-  console.log("  7. Otherwise → return to step 2 with fresh context");
-  console.log("");
-  console.log("Safety Guards (from AD-10, AD-11):");
-  console.log("  --max-iterations: bounded (default: 10)");
-  console.log("  --timeout: wall-clock timeout (default: 5m)");
-  console.log("  --slice-review: human review between slices");
-  console.log("  --dry-run: plan only, no execution");
+  return config;
+}
+
+// ── Ralph Invocation ──────────────────────────────────────────────────────
+
+function buildRalphCommand(config: RalphConfig): string[] {
+  const cmd: string[] = [RALPH_BINARY, `"${config.task}"`];
+
+  cmd.push("--agent", config.agent);
+
+  if (config.model) {
+    cmd.push("--model", config.model);
+  }
+
+  cmd.push("--max-iterations", String(config.maxIterations));
+  cmd.push("--completion-promise", config.completionPromise);
+
+  if (config.tasks) {
+    cmd.push("--tasks");
+  }
+
+  if (config.rotation) {
+    cmd.push("--rotation", config.rotation);
+  }
+
+  // Pass through any extra args
+  cmd.push(...config.extraArgs);
+
+  return cmd;
+}
+
+// ── Main ───────────────────────────────────────────────────────────────────
+
+async function ralphLoop() {
+  if (!TASK_DESCRIPTION) {
+    console.error("Usage: bun scripts/agents/ralph-loop.ts <task> [options]");
+    console.error("");
+    console.error("This script wraps the `ralph` CLI (@th0rgal/ralph-wiggum).");
+    console.error("Install: npm install -g @th0rgal/ralph-wiggum");
+    console.error("");
+    console.error("Options:");
+    console.error("  --agent AGENT            opencode (default), claude-code, codex, copilot");
+    console.error("  --model MODEL            Model for the agent (e.g. claude-sonnet-4)");
+    console.error("  --max-iterations N       Max loop iterations (default: 10)");
+    console.error("  --completion-promise T   Completion signal (default: COMPLETE)");
+    console.error("  --tasks, -t              Enable structured task tracking");
+    console.error("  --rotation LIST          Cycle through agent:model pairs");
+    console.error("  --dry-run                Print command, don't execute");
+    console.error("");
+    console.error("Any other flags are passed through to the `ralph` CLI.");
+    console.error("");
+    console.error("Ralph docs: https://github.com/Th0rgal/open-ralph-wiggum");
+    process.exit(1);
+  }
+
+  const config = parseArgs(TASK_DESCRIPTION, ARGS);
+  const ralphCmd = buildRalphCommand(config);
+
+  console.log(`[ralph-harness] Task: ${config.task}`);
+  console.log(`[ralph-harness] Agent: ${config.agent}`);
+  console.log(`[ralph-harness] Max iterations: ${config.maxIterations}`);
+  console.log(`[ralph-harness] Completion promise: ${config.completionPromise}`);
+  if (config.tasks) console.log("[ralph-harness] Tasks mode: ON");
+  if (config.rotation) console.log(`[ralph-harness] Rotation: ${config.rotation}`);
   console.log("");
 
-  if (!postgresUrl || !neo4jUri) {
-    console.log("[ralph] Skipping DB logging — stub mode");
+  // ── Dry Run ────────────────────────────────────────────────────────────
+
+  if (config.dryRun) {
+    console.log("[ralph-harness] DRY RUN — command that would execute:");
+    console.log(`  ${ralphCmd.join(" ")}`);
+    console.log("");
+    console.log("[ralph-harness] No changes made. No DB logging.");
     process.exit(0);
   }
 
-  const { getPool, closePool } = await import("../../src/lib/postgres/connection");
-  const { getDriver, closeDriver } = await import("../../src/lib/neo4j/connection");
+  // ── Check ralph binary ─────────────────────────────────────────────────
 
-  const pgPool = getPool();
-  const neo4jDriver = getDriver();
-  const session = neo4jDriver.session();
+  const { spawnSync } = await import("child_process");
+  const whichResult = spawnSync("which", [RALPH_BINARY], {
+    encoding: "utf-8",
+  });
 
-  try {
-    await pgPool.query(`
-      INSERT INTO events (group_id, event_type, agent_id, metadata, status)
-      VALUES ($1, $2, $3, $4, $5)
-    `, [
-      "allura-memory",
-      "ralph_loop_stub",
-      "ralph",
-      JSON.stringify({
-        task: TASK_DESCRIPTION,
-        model_backend: "opencode",
-        auth: "OPENCODE_CONFIG",
-        phase: "stub",
-      }),
-      "completed",
-    ]);
-
-    await session.run(`
-      CREATE (i:Insight {
-        insight_id: 'ins_ralph_' + randomUUID(),
-        summary: $summary,
-        confidence: 0.50,
-        status: 'active',
-        group_id: 'allura-memory',
-        created_at: datetime(),
-        source_type: 'agent_loop'
-      })
-      RETURN i
-    `, {
-      summary: `Ralph loop stub: Phase 3 implementation pending. Model backend: opencode.`,
-    });
-
-    console.log("[ralph] Stub logged to PostgreSQL and Neo4j");
-  } catch (error) {
-    console.error("[ralph] Logging failed:", error);
+  if (whichResult.status !== 0) {
+    console.error(`[ralph-harness] ERROR: '${RALPH_BINARY}' not found in PATH.`);
+    console.error("[ralph-harness] Install with: npm install -g @th0rgal/ralph-wiggum");
+    console.error("[ralph-harness] Or set RALPH_BINARY to the full path.");
     process.exit(1);
-  } finally {
-    await session.close();
+  }
+
+  // ── Log start to PostgreSQL ────────────────────────────────────────────
+
+  const postgresUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+  const neo4jUri = process.env.NEO4J_URI;
+  let pgPool: Awaited<ReturnType<typeof import("../../src/lib/postgres/connection").getPool>> | null = null;
+  let neoSession: Awaited<ReturnType<typeof import("../../src/lib/neo4j/connection").getDriver>>["session"] | null = null;
+
+  if (postgresUrl && neo4jUri) {
+    try {
+      const { getPool } = await import("../../src/lib/postgres/connection");
+      const { getDriver } = await import("../../src/lib/neo4j/connection");
+      pgPool = getPool();
+      neoSession = getDriver().session();
+    } catch (error) {
+      console.log("[ralph-harness] DB connections unavailable — proceeding without logging");
+    }
+  }
+
+  if (pgPool) {
+    try {
+      await pgPool.query(`
+        INSERT INTO events (group_id, event_type, agent_id, metadata, status)
+        VALUES ($1, $2, $3, $4, $5)
+      `, [
+        "allura-memory",
+        "ralph_loop_start",
+        "ralph",
+        JSON.stringify({
+          task: config.task,
+          agent: config.agent,
+          model: config.model || "default",
+          max_iterations: config.maxIterations,
+          completion_promise: config.completionPromise,
+          tasks_mode: config.tasks,
+          rotation: config.rotation || null,
+          harness_version: "1.0.0",
+        }),
+        "running",
+      ]);
+    } catch (error) {
+      console.error("[ralph-harness] PostgreSQL start-log failed:", error);
+    }
+  }
+
+  // ── Execute Ralph ──────────────────────────────────────────────────────
+
+  console.log("[ralph-harness] ═══════════════════════════════════════════════════════");
+  console.log("[ralph-harness]   Invoking ralph CLI — this is the real loop tool");
+  console.log("[ralph-harness]   (not a reimplementation — we USE ralph-wiggum)");
+  console.log("[ralph-harness] ═══════════════════════════════════════════════════════");
+  console.log("");
+
+  const result = spawnSync(ralphCmd[0], ralphCmd.slice(1), {
+    stdio: "inherit",
+    shell: true,
+    env: {
+      ...process.env,
+      RALPH_AGENT: config.agent,
+    },
+  });
+
+  const exitCode = result.status ?? 1;
+  const completed = exitCode === 0;
+
+  // ── Log end to PostgreSQL ──────────────────────────────────────────────
+
+  if (pgPool) {
+    try {
+      await pgPool.query(`
+        INSERT INTO events (group_id, event_type, agent_id, metadata, status)
+        VALUES ($1, $2, $3, $4, $5)
+      `, [
+        "allura-memory",
+        "ralph_loop_end",
+        "ralph",
+        JSON.stringify({
+          task: config.task,
+          exit_code: exitCode,
+          completed,
+          max_iterations: config.maxIterations,
+        }),
+        completed ? "completed" : "failed",
+      ]);
+    } catch (error) {
+      console.error("[ralph-harness] PostgreSQL end-log failed:", error);
+    }
+  }
+
+  if (neoSession) {
+    try {
+      await neoSession.run(`
+        CREATE (i:Insight {
+          insight_id: 'ins_ralph_' + randomUUID(),
+          summary: $summary,
+          confidence: $confidence,
+          status: 'active',
+          group_id: 'allura-memory',
+          created_at: datetime(),
+          source_type: 'agent_loop'
+        })
+        RETURN i
+      `, {
+        summary: `Ralph loop ${completed ? "completed" : "failed"}: ${config.task}. Agent: ${config.agent}. Iterations: ≤${config.maxIterations}.`,
+        confidence: completed ? 0.80 : 0.30,
+      });
+    } catch (error) {
+      console.error("[ralph-harness] Neo4j log failed:", error);
+    } finally {
+      await neoSession.close();
+    }
+  }
+
+  // ── Cleanup ────────────────────────────────────────────────────────────
+
+  if (pgPool) {
+    const { closePool } = await import("../../src/lib/postgres/connection");
+    const { closeDriver } = await import("../../src/lib/neo4j/connection");
     await closeDriver();
     await closePool();
   }
+
+  process.exit(exitCode);
 }
 
-if (TASK_DESCRIPTION) {
-  ralphLoop();
-} else {
-  console.error("Usage: bun scripts/agents/ralph-loop.ts <task_description>");
-  console.error("       bun scripts/agents/ralph-loop.ts --dry-run <task>");
-  console.error("       bun scripts/agents/ralph-loop.ts --max-iterations 5 <task>");
-  console.error("");
-  console.error("Model backend: opencode (OpenCode CLI)");
-  process.exit(1);
-}
+ralphLoop();
