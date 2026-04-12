@@ -24,8 +24,32 @@ import type { AgentInsert } from "./agent-nodes";
 // Test configuration
 const TEST_GROUP_ID = "allura-test-agents";
 
+// All group_ids used across test fixtures — cleaned before and after
+const ALL_TEST_GROUP_IDS = [
+  "allura-test-agents",
+  "allura-test-group-creation",
+  "allura-duplicate-group",
+  "allura-link-test-group",
+  "allura-default-init-test",
+  "allura-existing-agent-test",
+  "allura-verify-test",
+];
+
 // E2E guard: requires running Neo4j
 const shouldRunE2E = process.env.RUN_E2E_TESTS === "true";
+
+async function cleanupTestNodes(): Promise<void> {
+  const driver = getDriver();
+  const session = driver.session();
+  try {
+    await session.run(
+      "MATCH (n) WHERE n.group_id IN $groupIds DETACH DELETE n",
+      { groupIds: ALL_TEST_GROUP_IDS }
+    );
+  } finally {
+    await session.close();
+  }
+}
 
 // Setup and teardown
 beforeAll(async () => {
@@ -37,9 +61,18 @@ beforeAll(async () => {
   // Verify connectivity
   const driver = getDriver();
   await driver.verifyConnectivity();
+
+  // Clean up any leftover nodes from prior runs
+  if (shouldRunE2E) {
+    await cleanupTestNodes();
+  }
 });
 
 afterAll(async () => {
+  // Clean up test nodes before closing the driver
+  if (shouldRunE2E) {
+    await cleanupTestNodes();
+  }
   await closeDriver();
 });
 

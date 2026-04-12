@@ -41,7 +41,7 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
   describe("insertEvent", () => {
     it("should insert an event with all required fields", async () => {
       const event: EventInsert = {
-        group_id: "test-group-1",
+        group_id: "allura-test-group-1",
         event_type: "workflow_step",
         agent_id: "agent-001",
         workflow_id: "workflow-001",
@@ -55,7 +55,7 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
 
       expect(result.id).toBeDefined();
       expect(Number(result.id)).toBeGreaterThan(0);
-      expect(result.group_id).toBe("test-group-1");
+      expect(result.group_id).toBe("allura-test-group-1");
       expect(result.event_type).toBe("workflow_step");
       expect(result.agent_id).toBe("agent-001");
       expect(result.status).toBe("completed");
@@ -74,7 +74,7 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
 
     it("should reject events without agent_id", async () => {
       const event = {
-        group_id: "test-group-1",
+        group_id: "allura-test-group-1",
         event_type: "test",
         // agent_id is intentionally missing
       } as unknown as EventInsert;
@@ -84,7 +84,7 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
 
     it("should reject events without event_type", async () => {
       const event = {
-        group_id: "test-group-1",
+        group_id: "allura-test-group-1",
         agent_id: "agent-001",
         // event_type is intentionally missing
       } as unknown as EventInsert;
@@ -95,7 +95,7 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
     it("should insert event with parent_event_id for chaining", async () => {
       // First create a parent event
       const parent: EventInsert = {
-        group_id: "test-group-chain",
+        group_id: "allura-test-chain",
         event_type: "parent_event",
         agent_id: "agent-001",
         status: "completed",
@@ -105,7 +105,7 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
 
       // Now create a child event
       const child: EventInsert = {
-        group_id: "test-group-chain",
+        group_id: "allura-test-chain",
         event_type: "child_event",
         agent_id: "agent-002",
         parent_event_id: parentResult.id,
@@ -119,7 +119,7 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
 
     it("should handle events with metadata JSONB", async () => {
       const event: EventInsert = {
-        group_id: "test-group-jsonb",
+        group_id: "allura-test-jsonb",
         event_type: "test_with_metadata",
         agent_id: "agent-001",
         status: "completed",
@@ -159,7 +159,7 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
     it("should insert an outcome linked to an event", async () => {
       // First create an event
       const event: EventInsert = {
-        group_id: "test-group-outcome",
+        group_id: "allura-test-outcome",
         event_type: "test_event",
         agent_id: "agent-001",
         status: "completed",
@@ -169,7 +169,7 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
 
       // Now insert an outcome
       const outcome: OutcomeInsert = {
-        group_id: "test-group-outcome",
+        group_id: "allura-test-outcome",
         event_id: eventResult.id,
         outcome_type: "analysis_result",
         confidence: 0.95,
@@ -179,7 +179,7 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
       const result = await insertOutcome(outcome);
 
       expect(result.id).toBeDefined();
-      expect(result.group_id).toBe("test-group-outcome");
+      expect(result.group_id).toBe("allura-test-outcome");
       expect(result.event_id).toBe(eventResult.id);
       expect(result.outcome_type).toBe("analysis_result");
       expect(Number(result.confidence)).toBeCloseTo(0.95);
@@ -198,7 +198,7 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
     it("should reject outcomes with confidence outside 0-1 range", async () => {
       // First create an event
       const event: EventInsert = {
-        group_id: "test-group-confidence",
+        group_id: "allura-test-confidence",
         event_type: "test_event",
         agent_id: "agent-001",
         status: "completed",
@@ -207,7 +207,7 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
       const eventResult = await insertEvent(event);
 
       const outcome: OutcomeInsert = {
-        group_id: "test-group-confidence",
+        group_id: "allura-test-confidence",
         event_id: eventResult.id,
         outcome_type: "test_outcome",
         confidence: 1.5, // Invalid confidence > 1.0
@@ -219,7 +219,7 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
     it("should require group_id to match parent event's group_id", async () => {
       // Create event with one group
       const event: EventInsert = {
-        group_id: "test-group-a",
+        group_id: "allura-test-group-a",
         event_type: "test_event",
         agent_id: "agent-001",
         status: "completed",
@@ -230,7 +230,7 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
       // Try to insert outcome with different group - should succeed
       // (we rely on application-level validation for group matching if needed)
       const outcome: OutcomeInsert = {
-        group_id: "test-group-b", // Different group
+        group_id: "allura-test-group-b", // Different group
         event_id: eventResult.id,
         outcome_type: "test_outcome",
       };
@@ -245,7 +245,7 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
   describe("Tenant Isolation", () => {
     it("should enforce group_id is present in every insert", async () => {
       const event: EventInsert = {
-        group_id: "tenant-abc",
+        group_id: "allura-tenant-abc",
         event_type: "tenant_event",
         agent_id: "agent-001",
         status: "completed",
@@ -254,21 +254,21 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
       const result = await insertEvent(event);
 
       // Verify group_id is stored and not null
-      expect(result.group_id).toBe("tenant-abc");
+      expect(result.group_id).toBe("allura-tenant-abc");
       expect(result.group_id).not.toBeNull();
     });
 
     it("should allow retrieving events by group_id", async () => {
       // Insert events for different tenants
       await insertEvent({
-        group_id: "tenant-x",
+        group_id: "allura-tenant-x",
         event_type: "test",
         agent_id: "agent-001",
         status: "completed",
       });
 
       await insertEvent({
-        group_id: "tenant-y",
+        group_id: "allura-tenant-y",
         event_type: "test",
         agent_id: "agent-002",
         status: "completed",
@@ -276,11 +276,11 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
 
       // Query for specific tenant
       const pool = getPool();
-      const result = await pool.query("SELECT * FROM events WHERE group_id = $1", ["tenant-x"]);
+      const result = await pool.query("SELECT * FROM events WHERE group_id = $1", ["allura-tenant-x"]);
 
       expect(result.rows.length).toBeGreaterThan(0);
       result.rows.forEach((row) => {
-        expect(row.group_id).toBe("tenant-x");
+        expect(row.group_id).toBe("allura-tenant-x");
       });
     });
   });
@@ -288,14 +288,14 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
   describe("Append-Only Behavior", () => {
     it("should create events with sequential IDs", async () => {
       const event1 = await insertEvent({
-        group_id: "test-seq",
+        group_id: "allura-test-seq",
         event_type: "seq_test",
         agent_id: "agent-001",
         status: "completed",
       });
 
       const event2 = await insertEvent({
-        group_id: "test-seq",
+        group_id: "allura-test-seq",
         event_type: "seq_test",
         agent_id: "agent-001",
         status: "completed",
@@ -309,7 +309,7 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
       const beforeInsert = new Date();
 
       const event = await insertEvent({
-        group_id: "test-timestamp",
+        group_id: "allura-test-timestamp",
         event_type: "timestamp_test",
         agent_id: "agent-001",
         status: "completed",
@@ -327,21 +327,21 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
     it("should insert multiple events in a transaction", async () => {
       const events: EventInsert[] = [
         {
-          group_id: "test-bulk",
+          group_id: "allura-test-bulk",
           event_type: "bulk_event_1",
           agent_id: "agent-001",
           status: "completed",
           metadata: { batch: 1 },
         },
         {
-          group_id: "test-bulk",
+          group_id: "allura-test-bulk",
           event_type: "bulk_event_2",
           agent_id: "agent-002",
           status: "completed",
           metadata: { batch: 2 },
         },
         {
-          group_id: "test-bulk",
+          group_id: "allura-test-bulk",
           event_type: "bulk_event_3",
           agent_id: "agent-003",
           status: "failed",
@@ -359,7 +359,7 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
 
       // Verify all events have correct group_id
       results.forEach((result) => {
-        expect(result.group_id).toBe("test-bulk");
+        expect(result.group_id).toBe("allura-test-bulk");
       });
 
       // Verify metadata was stored
@@ -374,7 +374,7 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
     it("should rollback all events if one fails validation", async () => {
       const events: EventInsert[] = [
         {
-          group_id: "test-bulk-rollback",
+          group_id: "allura-test-bulk-rollback",
           event_type: "valid_event",
           agent_id: "agent-001",
           status: "completed",
@@ -392,7 +392,7 @@ describe.skipIf(!shouldRunE2E)("Insert Trace API", () => {
 
       // Verify no events were inserted (transaction rolled back)
       const pool = getPool();
-      const result = await pool.query("SELECT * FROM events WHERE group_id = $1", ["test-bulk-rollback"]);
+      const result = await pool.query("SELECT * FROM events WHERE group_id = $1", ["allura-test-bulk-rollback"]);
       expect(result.rows).toHaveLength(0);
     });
 

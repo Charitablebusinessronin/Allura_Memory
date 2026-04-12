@@ -29,12 +29,16 @@ export interface WatchdogConfig {
 export async function scanAndPropose(config: WatchdogConfig): Promise<number> {
   const pool = getPool();
 
-  // Find events that don't have a corresponding proposal yet
+  // Find events that don't have a corresponding proposal yet.
+  // Exclude system-generated event types (trigger artifacts) to prevent
+  // the log_proposal_created trigger from creating a re-scan loop.
   const result = await pool.query(`
     SELECT e.id, e.event_type, e.agent_id, e.metadata, e.created_at
     FROM events e
     WHERE e.group_id = $1
       AND e.status != 'promoted'
+      AND e.agent_id != 'system'
+      AND e.event_type NOT IN ('proposal_created', 'proposal_decided', 'session_start', 'session_end')
       AND NOT EXISTS (
         SELECT 1 FROM canonical_proposals cp
         WHERE cp.trace_ref = e.id

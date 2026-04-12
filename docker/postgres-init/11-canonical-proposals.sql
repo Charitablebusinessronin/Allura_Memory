@@ -72,8 +72,13 @@ CREATE INDEX IF NOT EXISTS idx_canonical_proposals_status
   ON canonical_proposals(status, created_at DESC);
 
 -- Query: Get proposals by tier
-CREATE INDEX IF NOT EXISTS idx_canonical_proposals_tier 
+CREATE INDEX IF NOT EXISTS idx_canonical_proposals_tier
   ON canonical_proposals(tier, score DESC);
+
+-- Idempotency: one proposal per source event (trace_ref is unique when set)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_canonical_proposals_trace_ref_unique
+  ON canonical_proposals(trace_ref)
+  WHERE trace_ref IS NOT NULL;
 
 -- ============================================================================
 -- AUDIT TRAIL: Log all curator decisions

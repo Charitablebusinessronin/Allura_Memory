@@ -14,7 +14,7 @@ const shouldRunE2E = process.env.RUN_E2E_TESTS === "true";
 describe.skipIf(!shouldRunE2E)('CheckpointManager', () => {
   let manager: CheckpointManager;
   const testCheckpointDir = '.opencode/state/checkpoints-test';
-  const sessionId = '00000000-0000-0000-0000-000000000001';
+  const sessionId = '00000000-0000-4000-8000-000000000001';
   const groupId = 'allura-test';
 
   beforeEach(async () => {
@@ -160,7 +160,7 @@ describe.skipIf(!shouldRunE2E)('CheckpointManager', () => {
     });
 
     it('should filter checkpoints by session', async () => {
-      const otherSessionId = '00000000-0000-0000-0000-000000000002';
+      const otherSessionId = '00000000-0000-4000-8000-000000000002';
       
       await manager.createCheckpoint(sessionId, groupId, 'DEV');
       await manager.createCheckpoint(otherSessionId, 'allura-other', 'WAITING');
