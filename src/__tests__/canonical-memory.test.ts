@@ -19,6 +19,7 @@ import {
   memory_get,
   memory_list,
   memory_delete,
+  resetConnections,
 } from "../mcp/canonical-tools";
 import type {
   MemoryAddRequest,
@@ -27,6 +28,10 @@ import type {
   MemoryListRequest,
   MemoryDeleteRequest,
 } from "../lib/memory/canonical-contracts";
+import {
+  DatabaseUnavailableError,
+  DatabaseQueryError,
+} from "../lib/errors/database-errors";
 
 // Test configuration
 const RUN_ID = randomUUID().slice(0, 8);
@@ -529,6 +534,245 @@ describe("Canonical Memory Operations", () => {
       } finally {
         process.env.PROMOTION_MODE = originalMode;
       }
+    });
+  });
+
+  describe("Database Error Propagation", () => {
+    describe("DatabaseUnavailableError", () => {
+      it("should be constructable with operation and cause", () => {
+        const cause = new Error("ECONNREFUSED");
+        const err = new DatabaseUnavailableError("memory_list", cause);
+        expect(err.name).toBe("DatabaseUnavailableError");
+        expect(err.operation).toBe("memory_list");
+        expect(err.message).toContain("Database unavailable for operation: memory_list");
+        expect(err.cause).toBe(cause);
+      });
+    });
+
+    describe("DatabaseQueryError", () => {
+      it("should be constructable with operation, query, and cause", () => {
+        const cause = new Error("syntax error at or near SELECTT");
+        const err = new DatabaseQueryError("memory_search", "SELECTT events", cause);
+        expect(err.name).toBe("DatabaseQueryError");
+        expect(err.operation).toBe("memory_search");
+        expect(err.query).toBe("SELECTT events");
+        expect(err.message).toContain("Database query failed for operation: memory_search");
+        expect(err.cause).toBe(cause);
+      });
+    });
+
+    describe("classifyPostgresError", () => {
+      it("should classify ECONNREFUSED as DatabaseUnavailableError", async () => {
+        const { classifyPostgresError } = await import("../lib/errors/database-errors");
+        const connErr = Object.assign(new Error("connect ECONNREFUSED 127.0.0.1:5432"), {
+          code: "ECONNREFUSED",
+        });
+        const result = classifyPostgresError(connErr, "memory_list", "SELECT events");
+        expect(result).toBeInstanceOf(DatabaseUnavailableError);
+        expect(result.operation).toBe("memory_list");
+      });
+
+      it("should classify ENOTFOUND as DatabaseUnavailableError", async () => {
+        const { classifyPostgresError } = await import("../lib/errors/database-errors");
+        const dnsErr = Object.assign(new Error("getaddrinfo ENOTFOUND db.example.com"), {
+          code: "ENOTFOUND",
+        });
+        const result = classifyPostgresError(dnsErr, "memory_add", "INSERT events");
+        expect(result).toBeInstanceOf(DatabaseUnavailableError);
+      });
+
+      it("should classify PG 08001 (connection exception) as DatabaseUnavailableError", async () => {
+        const { classifyPostgresError } = await import("../lib/errors/database-errors");
+        const pgConnErr = Object.assign(new Error("connection refused"), {
+          code: "08001",
+        });
+        const result = classifyPostgresError(pgConnErr, "memory_list", "SELECT events");
+        expect(result).toBeInstanceOf(DatabaseUnavailableError);
+      });
+
+      it("should classify PG 28P01 (invalid password) as DatabaseUnavailableError", async () => {
+        const { classifyPostgresError } = await import("../lib/errors/database-errors");
+        const authErr = Object.assign(new Error("password authentication failed"), {
+          code: "28P01",
+        });
+        const result = classifyPostgresError(authErr, "memory_list", "SELECT events");
+        expect(result).toBeInstanceOf(DatabaseUnavailableError);
+      });
+
+      it("should classify PG 42601 (syntax error) as DatabaseQueryError", async () => {
+        const { classifyPostgresError } = await import("../lib/errors/database-errors");
+        const syntaxErr = Object.assign(new Error("syntax error at or near \"SELECTT\""), {
+          code: "42601",
+        });
+        const result = classifyPostgresError(syntaxErr, "memory_search", "SELECT events ILIKE");
+        expect(result).toBeInstanceOf(DatabaseQueryError);
+        expect(result.operation).toBe("memory_search");
+      });
+
+      it("should classify PG 23505 (unique violation) as DatabaseQueryError", async () => {
+        const { classifyPostgresError } = await import("../lib/errors/database-errors");
+        const constraintErr = Object.assign(new Error("duplicate key value violates unique constraint"), {
+          code: "23505",
+        });
+        const result = classifyPostgresError(constraintErr, "memory_add", "INSERT events");
+        expect(result).toBeInstanceOf(DatabaseQueryError);
+      });
+    });
+
+    describe("memory_list error propagation", () => {
+      it("should return empty result for legitimate no-data case when databases are available", async () => {
+        const request: MemoryListRequest = {
+          group_id: TEST_GROUP_ID,
+          user_id: `nonexistent-user-${RUN_ID}`,
+        };
+
+        const response = await memory_list(request);
+        // Legitimate empty: should return empty, not throw
+        expect(response.memories).toBeDefined();
+        expect(response.total).toBe(0);
+        expect(response.memories).toEqual([]);
+      });
+
+      it("should throw DatabaseUnavailableError when PostgreSQL is unreachable", async () => {
+        const originalHost = process.env.POSTGRES_HOST;
+        const originalPort = process.env.POSTGRES_PORT;
+        // Point to a port that refuses connections
+        process.env.POSTGRES_HOST = "127.0.0.1";
+        process.env.POSTGRES_PORT = "1";
+        resetConnections(); // Force pool re-creation with new env
+
+        try {
+          const request: MemoryListRequest = {
+            group_id: `allura-test-${RUN_ID}` as any,
+            user_id: "test-user-error",
+          };
+
+          await expect(memory_list(request)).rejects.toThrow();
+          try {
+            await memory_list(request);
+          } catch (error) {
+            expect(error).toBeInstanceOf(DatabaseUnavailableError);
+          }
+        } finally {
+          process.env.POSTGRES_HOST = originalHost;
+          process.env.POSTGRES_PORT = originalPort;
+          resetConnections(); // Restore working pool
+        }
+      });
+    });
+
+    describe("memory_search error propagation", () => {
+      it("should throw DatabaseUnavailableError when PostgreSQL is unreachable", async () => {
+        const originalHost = process.env.POSTGRES_HOST;
+        const originalPort = process.env.POSTGRES_PORT;
+        process.env.POSTGRES_HOST = "127.0.0.1";
+        process.env.POSTGRES_PORT = "1";
+        resetConnections();
+
+        try {
+          const request: MemorySearchRequest = {
+            query: "test",
+            group_id: `allura-test-${RUN_ID}` as any,
+          };
+
+          await expect(memory_search(request)).rejects.toThrow();
+          try {
+            await memory_search(request);
+          } catch (error) {
+            expect(error).toBeInstanceOf(DatabaseUnavailableError);
+          }
+        } finally {
+          process.env.POSTGRES_HOST = originalHost;
+          process.env.POSTGRES_PORT = originalPort;
+          resetConnections();
+        }
+      });
+    });
+
+    describe("memory_add error propagation", () => {
+      it("should throw DatabaseUnavailableError when PostgreSQL is unreachable", async () => {
+        const originalHost = process.env.POSTGRES_HOST;
+        const originalPort = process.env.POSTGRES_PORT;
+        process.env.POSTGRES_HOST = "127.0.0.1";
+        process.env.POSTGRES_PORT = "1";
+        resetConnections();
+
+        try {
+          const request: MemoryAddRequest = {
+            group_id: `allura-test-${RUN_ID}` as any,
+            user_id: "test-user-error",
+            content: "Error propagation test",
+          };
+
+          await expect(memory_add(request)).rejects.toThrow();
+          try {
+            await memory_add(request);
+          } catch (error) {
+            expect(error).toBeInstanceOf(DatabaseUnavailableError);
+          }
+        } finally {
+          process.env.POSTGRES_HOST = originalHost;
+          process.env.POSTGRES_PORT = originalPort;
+          resetConnections();
+        }
+      });
+    });
+
+    describe("memory_get error propagation", () => {
+      it("should throw DatabaseUnavailableError when PostgreSQL is unreachable", async () => {
+        const originalHost = process.env.POSTGRES_HOST;
+        const originalPort = process.env.POSTGRES_PORT;
+        process.env.POSTGRES_HOST = "127.0.0.1";
+        process.env.POSTGRES_PORT = "1";
+        resetConnections();
+
+        try {
+          const request: MemoryGetRequest = {
+            id: "some-id" as any,
+            group_id: `allura-test-${RUN_ID}` as any,
+          };
+
+          await expect(memory_get(request)).rejects.toThrow();
+          try {
+            await memory_get(request);
+          } catch (error) {
+            expect(error).toBeInstanceOf(DatabaseUnavailableError);
+          }
+        } finally {
+          process.env.POSTGRES_HOST = originalHost;
+          process.env.POSTGRES_PORT = originalPort;
+          resetConnections();
+        }
+      });
+    });
+
+    describe("memory_delete error propagation", () => {
+      it("should throw DatabaseUnavailableError when PostgreSQL is unreachable", async () => {
+        const originalHost = process.env.POSTGRES_HOST;
+        const originalPort = process.env.POSTGRES_PORT;
+        process.env.POSTGRES_HOST = "127.0.0.1";
+        process.env.POSTGRES_PORT = "1";
+        resetConnections();
+
+        try {
+          const request: MemoryDeleteRequest = {
+            id: "some-id" as any,
+            group_id: `allura-test-${RUN_ID}` as any,
+            user_id: "test-user-error",
+          };
+
+          await expect(memory_delete(request)).rejects.toThrow();
+          try {
+            await memory_delete(request);
+          } catch (error) {
+            expect(error).toBeInstanceOf(DatabaseUnavailableError);
+          }
+        } finally {
+          process.env.POSTGRES_HOST = originalHost;
+          process.env.POSTGRES_PORT = originalPort;
+          resetConnections();
+        }
+      });
     });
   });
 });
