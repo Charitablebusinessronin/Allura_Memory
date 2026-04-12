@@ -1,7 +1,8 @@
 # ADR-002: Autonomous Curator Agent
 
-**Status**: Proposed
+**Status**: Decided
 **Date**: 2026-04-12
+**Decided**: 2026-04-12
 **Decision Maker**: brooks-architect
 
 ## Context
