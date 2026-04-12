@@ -1,0 +1,52 @@
+{
+  "tier": 1,
+  "skills": {
+    "brooks": [
+      "mcp-builder",
+      "github",
+      "skill-creator"
+    ],
+    "knuth": [
+      "mcp-builder",
+      "postgres-best-practices",
+      "next-best-practices",
+      "github"
+    ],
+    "turing": [
+      "mcp-builder",
+      "github"
+    ],
+    "berners-lee": [
+      "mcp-builder",
+      "postgres-best-practices",
+      "github"
+    ],
+    "hopper": [
+      "mcp-builder",
+      "next-best-practices",
+      "github"
+    ],
+    "cerf": [
+      "mcp-builder",
+      "github"
+    ],
+    "torvalds": [
+      "mcp-builder",
+      "next-best-practices",
+      "github"
+    ],
+    "liskov": [
+      "mcp-builder",
+      "github"
+    ],
+    "dijkstra": [
+      "mcp-builder",
+      "github",
+      "code-review"
+    ],
+    "hinton": [
+      "mcp-builder",
+      "github"
+    ]
+  }
+}
