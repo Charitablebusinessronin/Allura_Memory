@@ -127,7 +127,10 @@ function canonicalToDisplay(canonicalTags: string[]): string[] {
  * Validate that a group_id matches canonical tag format
  */
 function validateGroupId(groupId: string): string {
-  return normalizeTag(groupId);
+  if (!groupId || !/^allura-[a-z0-9-]+$/.test(groupId)) {
+    throw new Error(`Invalid group_id: "${groupId}". Must match pattern: allura-* (e.g. allura-myproject)`);
+  }
+  return groupId;
 }
 
 // Insight Lifecycle Statuses
@@ -600,6 +603,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       
       case "log_event": {
         const { group_id, event_type, agent_id, workflow_id, metadata, status } = args as any;
+        validateGroupId(group_id);
         const result = await pgPool!.query(`
           INSERT INTO events (group_id, event_type, agent_id, workflow_id, metadata, status)
           VALUES ($1, $2, $3, $4, $5, $6)
@@ -657,6 +661,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       
       case "create_insight": {
         const { group_id, summary, confidence, entities, trace_ref, tags } = args as any;
+        validateGroupId(group_id);
         const session = neo4jDriver!.session();
         
         try {
