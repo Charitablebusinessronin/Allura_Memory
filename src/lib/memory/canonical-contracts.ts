@@ -325,6 +325,107 @@ export interface MemoryDeleteResponse {
   meta?: MemoryResponseMeta;
 }
 
+/**
+ * 6. memory_update
+ * Append-only versioned update. Creates new version in Neo4j via SUPERSEDES.
+ * Appends audit event to PostgreSQL. Never mutates existing rows/nodes.
+ */
+export interface MemoryUpdateRequest {
+  /** Required: Memory identifier to update */
+  id: MemoryId;
+  /** Required: Tenant namespace */
+  group_id: GroupId;
+  /** Required: User identifier */
+  user_id: UserId;
+  /** Required: New memory content */
+  content: MemoryContent;
+  /** Optional: Reason for update (audit trail) */
+  reason?: string;
+  /** Optional: Additional metadata */
+  metadata?: Record<string, unknown>;
+}
+
+export interface MemoryUpdateResponse {
+  /** New version's memory identifier */
+  id: MemoryId;
+  /** Superseded version's identifier */
+  previous_id: MemoryId;
+  /** Where the updated memory is stored */
+  stored: StorageLocation;
+  /** Version number (incremented) */
+  version: number;
+  /** Update timestamp */
+  updated_at: string;
+  /** Execution metadata */
+  meta?: MemoryResponseMeta;
+}
+
+/**
+ * 7. memory_promote
+ * Request curator promotion for an episodic memory.
+ * Queues a canonical_proposals entry — never auto-promotes.
+ */
+export interface MemoryPromoteRequest {
+  /** Required: Memory identifier to promote */
+  id: MemoryId;
+  /** Required: Tenant namespace */
+  group_id: GroupId;
+  /** Required: User identifier */
+  user_id: UserId;
+  /** Optional: Rationale for promotion request */
+  rationale?: string;
+  /** Optional: Who is requesting promotion */
+  curator_id?: string;
+}
+
+export interface MemoryPromoteResponse {
+  /** Memory identifier */
+  id: MemoryId;
+  /** Created proposal identifier */
+  proposal_id: string;
+  /** 'queued' = new proposal created; 'already_canonical' = already in Neo4j */
+  status: 'queued' | 'already_canonical';
+  /** Timestamp when queued */
+  queued_at: string;
+  /** Execution metadata */
+  meta?: MemoryResponseMeta;
+}
+
+/**
+ * 8. memory_export
+ * Export memory set filtered by group_id and optional canonical status.
+ * Fails loudly on DB errors — no silent fallback when canonical_only=true.
+ */
+export interface MemoryExportRequest {
+  /** Required: Tenant namespace */
+  group_id: GroupId;
+  /** Optional: Filter by user */
+  user_id?: UserId;
+  /** Optional: true = Neo4j canonical only; false/undefined = all stores */
+  canonical_only?: boolean;
+  /** Optional: Output format (json only for now) */
+  format?: 'json';
+  /** Optional: Maximum results (default 1000, max 10000) */
+  limit?: number;
+  /** Optional: Pagination offset */
+  offset?: number;
+}
+
+export interface MemoryExportResponse {
+  /** Exported memories */
+  memories: MemoryGetResponse[];
+  /** Total exported count */
+  count: number;
+  /** Export timestamp */
+  exported_at: string;
+  /** How many are canonical (from Neo4j) */
+  canonical_count: number;
+  /** How many are episodic-only (from PostgreSQL) */
+  episodic_count: number;
+  /** Execution metadata */
+  meta?: MemoryResponseMeta;
+}
+
 // ── Governance Contracts (Curator Workflow) ───────────────────────────────
 
 /**
@@ -457,5 +558,15 @@ export class UnauthorizedError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'UnauthorizedError';
+  }
+}
+
+/**
+ * Thrown when memory_promote is called on a memory already in Neo4j.
+ */
+export class MemoryAlreadyCanonicalError extends Error {
+  constructor(id: string) {
+    super(`Memory is already canonical: ${id}`);
+    this.name = 'MemoryAlreadyCanonicalError';
   }
 }
