@@ -1,19 +1,25 @@
 # Active Context — Brooks Architect Persona
 
-**Session**: 2026-04-12e (Phase 5 Ralph Loop)
-**Status**: ✅ PHASE 5 RALPH LOOP COMPLETE | 0 failures, 1103 passed, 123 skipped | 5 tasks committed
+**Session**: 2026-04-12f (MCP Streamable HTTP Transport)
+**Status**: ✅ MCP STREAMABLE HTTP TRANSPORT SHIPPED | Dual-transport gateway live | ADR ACTIVE
 
 ## Current Focus
 
-**Phase 5 Ralph Loop complete. All 5 tasks committed. Milestone: "Zero test failures, ARCH-001 resolved."**
+**MCP Streamable HTTP transport shipped on `canonical-http-gateway.ts`.** The gateway now serves two transports on port 3201: MCP Streamable HTTP at `/mcp` (primary) and legacy JSON-RPC at `/tools` (backward-compatible). OpenAI Agents SDK can connect natively via `MCPServerStreamableHttp` or `hostedMcpTool()`.
 
 ### What Changed This Session
 
-1. **RUVIX_KERNEL_SECRET fix** — Added env var setup to `trace-logger.test.ts` + changed agent_id to `agent-test-001` for POL-004 compliance. 7 failures resolved.
-2. **Canonical-memory content fix** — Root cause: test content didn't trigger `curatorScore` specificity patterns ("User prefers" vs "I always prefer"). Fixed content to score ≥ 0.85 threshold. 5 failures resolved.
-3. **Pre-existing failures baselined** — All 36 pre-existing failures documented in `docs/deferred/pre-existing-failures.md` with `describe.skipIf`/`it.skip` guards and reason comments. 123 tests properly skipped.
-4. **ARCH-001 groupIdEnforcer fix** — Unified 6 divergent validation paths into single canonical `validateGroupId()` in `group-id.ts`. New pattern `/^allura-[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/`. 13 files updated, all 154 validation tests pass, all 102 invariant sweep tests pass.
-5. **Curator admin UI skeleton** — Server Component at `src/app/admin/approvals/page.tsx` with client action buttons, fetches from existing `/api/curator/proposals` and POSTs to `/api/curator/approve`.
+1. **MCP Streamable HTTP transport** — Added `StreamableHTTPServerTransport` from `@modelcontextprotocol/sdk` to `canonical-http-gateway.ts`. MCP `Server` instance with same 5 canonical tools as STDIO server. `/mcp` route delegates to transport.
+2. **Bearer token auth** — `ALLURA_MCP_AUTH_TOKEN` env var. Timing-safe comparison. Dev mode: no token = no auth.
+3. **Integration tests** — `src/__tests__/mcp-streamable-http.test.ts` covering protocol init, tool discovery, execution, auth, backward compat.
+4. **ADR flipped** — `docs/deferred/chatgpt-integration-plan.md` status DEFERRED → ACTIVE. GPT Actions demoted to FALLBACK.
+5. **`@openai/agents@0.8.3`** installed for integration tests.
+
+### Architecture Decision
+
+- **MCP Streamable HTTP** is the primary integration path (eliminates REST bridge + OpenAPI schema)
+- **GPT Actions** (REST/OpenAPI) is OPTIONAL/FALLBACK for ChatGPT web UI only
+- **Conceptual integrity preserved**: canonical 5-operation interface unchanged
 
 ## Issues on the Board
 

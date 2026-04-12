@@ -4,6 +4,16 @@
  * POST /api/curator/approve - Approve or reject a proposal
  * 
  * Reference: docs/allura/BLUEPRINT.md (Requirements F11-F12, B18-B19)
+ * 
+ * ## Notion Integration (P0 — AD-CURATOR-NOTION)
+ * 
+ * On approve/reject, a Notion page is created in the Curator Proposals
+ * database. This is NON-BLOCKING — if the Notion MCP call fails,
+ * the approval state machine still completes. The Notion page URL
+ * is written back to the proposal's rationale field for traceability.
+ * 
+ * Idempotency: Before creating a new page, we check if one already
+ * exists (via the [notion-page:...] marker in rationale).
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -182,10 +192,37 @@ export async function POST(request: NextRequest) {
         ]
       );
 
+      // Emit notion_sync_pending event for async MCP Docker processing
+      // The notion-sync-worker will pick this up and call MCP_DOCKER_notion-create-pages
+      await pg.query(
+        `INSERT INTO events (
+          group_id, event_type, agent_id, status, metadata, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          validatedGroupId,
+          "notion_sync_pending",
+          "curator-approve",
+          "pending",
+          JSON.stringify({
+            proposal_id,
+            content: proposal.content,
+            score: parseFloat(proposal.score),
+            tier: proposal.tier,
+            status: "approved",
+            curator_id,
+            rationale,
+            decided_at: decidedAt,
+            data_source_id: "42894678-aedb-4c90-9371-6494a9fe5270",
+          }),
+          decidedAt,
+        ]
+      );
+
       return NextResponse.json({
         success: true,
         memory_id: memoryId,
         decided_at: decidedAt,
+        notion_sync: "pending",
       });
     } else {
       // Reject proposal
@@ -219,9 +256,35 @@ export async function POST(request: NextRequest) {
         ]
       );
 
+      // Emit notion_sync_pending event for async MCP Docker processing
+      await pg.query(
+        `INSERT INTO events (
+          group_id, event_type, agent_id, status, metadata, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          validatedGroupId,
+          "notion_sync_pending",
+          "curator-approve",
+          "pending",
+          JSON.stringify({
+            proposal_id,
+            content: proposal.content,
+            score: parseFloat(proposal.score),
+            tier: proposal.tier,
+            status: "rejected",
+            curator_id,
+            rationale,
+            decided_at: decidedAt,
+            data_source_id: "42894678-aedb-4c90-9371-6494a9fe5270",
+          }),
+          decidedAt,
+        ]
+      );
+
       return NextResponse.json({
         success: true,
         decided_at: decidedAt,
+        notion_sync: "pending",
       });
     }
   } catch (error) {
