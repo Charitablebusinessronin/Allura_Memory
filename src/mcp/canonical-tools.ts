@@ -437,6 +437,15 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
       meta: baseMeta(["postgres"]),
     };
   }
+  } catch (error) {
+    if (error instanceof DatabaseUnavailableError || error instanceof DatabaseQueryError) {
+      throw error;
+    }
+    if (error instanceof Error && (error as Error & { code?: string }).code) {
+      throw classifyPostgresError(error, "memory_add", "INSERT events");
+    }
+    throw error;
+  }
 }
 
 /**
@@ -447,12 +456,13 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
  * Results merged by relevance score.
  */
 export async function memory_search(request: MemorySearchRequest): Promise<MemorySearchResponse> {
-  const { pg, neo4j: neo4jDriver } = await getConnections();
-  const startTime = Date.now();
+  // Validate
+  const groupId = validateGroupId(request.group_id);
+  const limit = Math.floor(request.limit || 10);
   
-   // Validate
-   const groupId = validateGroupId(request.group_id);
-   const limit = Math.floor(request.limit || 10);
+  try {
+    const { pg, neo4j: neo4jDriver } = await getConnections();
+    const startTime = Date.now();
   
   // Parallel search both stores
   const episodicResults = await pg.query<EpisodicMemoryRow>(
@@ -555,6 +565,15 @@ export async function memory_search(request: MemorySearchRequest): Promise<Memor
     latency_ms: latency,
     meta: searchMeta,
   };
+  } catch (error) {
+    if (error instanceof DatabaseUnavailableError || error instanceof DatabaseQueryError) {
+      throw error;
+    }
+    if (error instanceof Error && (error as Error & { code?: string }).code) {
+      throw classifyPostgresError(error, "memory_search", "SELECT events ILIKE");
+    }
+    throw error;
+  }
 }
 
 /**
@@ -564,12 +583,13 @@ export async function memory_search(request: MemorySearchRequest): Promise<Memor
  * Returns memory from either store (episodic or semantic).
  */
 export async function memory_get(request: MemoryGetRequest): Promise<MemoryGetResponse> {
-  const { pg, neo4j } = await getConnections();
-  
   // Validate
   const groupId = validateGroupId(request.group_id);
   
-  // Try Neo4j first (semantic)
+  try {
+    const { pg, neo4j } = await getConnections();
+  
+  // Try Neo4j first (semantic) - secondary store, degradation acceptable
   let getMeta = baseMeta(["postgres", "neo4j"]);
   const session = neo4j.session();
   try {
@@ -640,6 +660,15 @@ export async function memory_get(request: MemoryGetRequest): Promise<MemoryGetRe
     usage_count: 0,
     meta: getMeta,
   };
+  } catch (error) {
+    if (error instanceof DatabaseUnavailableError || error instanceof DatabaseQueryError) {
+      throw error;
+    }
+    if (error instanceof Error && (error as Error & { code?: string }).code) {
+      throw classifyPostgresError(error, "memory_get", "SELECT events by memory_id");
+    }
+    throw error;
+  }
 }
 
 /**
@@ -659,10 +688,7 @@ export async function memory_list(request: MemoryListRequest): Promise<MemoryLis
     
     // Parallel query both stores
     let listMeta = baseMeta(["postgres", "neo4j"]);
-    const [episodicResults, semanticResults] = await Promise.all([
-      // PostgreSQL
-      pg.query<EpisodicMemoryRow>(
-        `SELECT metadata->>'memory_id' AS id, metadata->>'content' AS content,
+    const pgQuery = `SELECT metadata->>'memory_id' AS id, metadata->>'content' AS content,
                 metadata->>'source' AS provenance,
                 metadata->>'user_id' AS user_id,
                 created_at
@@ -671,12 +697,10 @@ export async function memory_list(request: MemoryListRequest): Promise<MemoryLis
            AND metadata->>'user_id' = $2
            AND event_type = 'memory_add'
          ORDER BY created_at DESC
-         LIMIT $3 OFFSET $4`,
-        [groupId, request.user_id, limit, offset]
-      ).catch(err => {
-        console.error("PostgreSQL query error in memory_list:", err);
-        return { rows: [] };
-      }),
+         LIMIT $3 OFFSET $4`;
+    const [episodicResults, semanticResults] = await Promise.all([
+      // PostgreSQL — throw on failure, do NOT swallow
+      pg.query<EpisodicMemoryRow>(pgQuery, [groupId, request.user_id, limit, offset]),
       
       // Neo4j
         (async () => {
@@ -722,7 +746,7 @@ export async function memory_list(request: MemoryListRequest): Promise<MemoryLis
     ]);
   
   // Merge results
-  const episodic = (episodicResults.rows || []).map((row) => ({
+  const episodic = episodicResults.rows.map((row) => ({
     id: toMemoryId(row.id),
     content: row.content,
     score: 0.5,
@@ -740,10 +764,19 @@ export async function memory_list(request: MemoryListRequest): Promise<MemoryLis
    return {
      memories,
      total: memories.length,
-     has_more: episodicResults.rows?.length === limit || semanticResults.length === limit,
+     has_more: episodicResults.rows.length === limit || semanticResults.length === limit,
      meta: listMeta,
    };
-  } catch (error) {
+   } catch (error) {
+    // Classify known database errors so callers can distinguish
+    // "DB is down" from "query is broken" from "legitimate empty result"
+    if (error instanceof DatabaseUnavailableError || error instanceof DatabaseQueryError) {
+      throw error;
+    }
+    // If it's a raw pg error from the query, classify it
+    if (error instanceof Error && (error as Error & { code?: string }).code) {
+      throw classifyPostgresError(error, "memory_list", "SELECT events");
+    }
     console.error("memory_list error:", error);
     throw error;
   }
@@ -758,11 +791,12 @@ export async function memory_list(request: MemoryListRequest): Promise<MemoryLis
  * - Original rows remain for audit trail
  */
 export async function memory_delete(request: MemoryDeleteRequest): Promise<MemoryDeleteResponse> {
-  const { pg, neo4j } = await getConnections();
-  
   // Validate
   const groupId = validateGroupId(request.group_id);
   const deletedAt = new Date().toISOString();
+  
+  try {
+    const { pg, neo4j } = await getConnections();
   
   // 1. Append deletion event to PostgreSQL
   await pg.query(
@@ -782,7 +816,7 @@ export async function memory_delete(request: MemoryDeleteRequest): Promise<Memor
     ]
   );
   
-  // 2. Mark Neo4j node as deprecated (if exists)
+  // 2. Mark Neo4j node as deprecated (if exists) — secondary store, degradation acceptable
   let deleteMeta = baseMeta(["postgres", "neo4j"]);
   const session = neo4j.session();
   try {
@@ -809,6 +843,15 @@ export async function memory_delete(request: MemoryDeleteRequest): Promise<Memor
     recovery_days: RECOVERY_WINDOW_DAYS,
     meta: deleteMeta,
   };
+  } catch (error) {
+    if (error instanceof DatabaseUnavailableError || error instanceof DatabaseQueryError) {
+      throw error;
+    }
+    if (error instanceof Error && (error as Error & { code?: string }).code) {
+      throw classifyPostgresError(error, "memory_delete", "INSERT memory_delete event");
+    }
+    throw error;
+  }
 }
 
 // ── Export for MCP Server ─────────────────────────────────────────────────

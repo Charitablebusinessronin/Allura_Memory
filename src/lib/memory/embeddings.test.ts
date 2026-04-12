@@ -10,7 +10,7 @@ import { getConfig } from './config';
 
 // Mock fetch globally
 const mockFetch = vi.fn();
-global.fetch = mockFetch;
+global.fetch = mockFetch as unknown as typeof globalThis.fetch;
 
 // Mock config
 vi.mock('./config.js', () => ({
