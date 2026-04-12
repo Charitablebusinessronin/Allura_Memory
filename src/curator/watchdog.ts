@@ -14,24 +14,19 @@
 import { getPool, closePool } from "../lib/postgres/connection";
 import { curatorScore } from "../lib/curator/score";
 
-// Parse CLI args
-const args = process.argv.slice(2);
-function getArg(name: string, defaultValue: string): string {
-  const idx = args.indexOf(`--${name}`);
-  return idx >= 0 && args[idx + 1] ? args[idx + 1] : defaultValue;
+export interface WatchdogConfig {
+  groupId: string;
+  scoreThreshold: number;
 }
 
-const INTERVAL_MS = parseInt(getArg("interval", "60"), 10) * 1000;
-const GROUP_ID = getArg("group-id", "allura-roninmemory");
-const SCORE_THRESHOLD = parseFloat(getArg("threshold", "0.7"));
-
-// Validate group_id format
-if (!/^allura-[a-z0-9-]+$/.test(GROUP_ID)) {
-  console.error(`[Watchdog] Invalid group_id: ${GROUP_ID}. Must match ^allura-[a-z0-9-]+$`);
-  process.exit(1);
-}
-
-async function scanAndPropose(): Promise<number> {
+/**
+ * Scan for unpromoted events and create proposals for those that pass scoring.
+ * Returns the number of proposals created in this cycle.
+ *
+ * @param config - Watchdog configuration (group_id and score threshold)
+ * @returns Number of proposals created
+ */
+export async function scanAndPropose(config: WatchdogConfig): Promise<number> {
   const pool = getPool();
 
   // Find events that don't have a corresponding proposal yet
@@ -47,7 +42,7 @@ async function scanAndPropose(): Promise<number> {
       AND e.created_at > NOW() - INTERVAL '7 days'
     ORDER BY e.created_at DESC
     LIMIT 50
-  `, [GROUP_ID]);
+  `, [config.groupId]);
 
   let proposalsCreated = 0;
 
@@ -67,13 +62,13 @@ async function scanAndPropose(): Promise<number> {
       source: "conversation",
     });
 
-    if (score.confidence >= SCORE_THRESHOLD) {
+    if (score.confidence >= config.scoreThreshold) {
       await pool.query(
         `INSERT INTO canonical_proposals (id, group_id, content, score, reasoning, tier, status, trace_ref, created_at)
          VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 'pending', $6, NOW())
          ON CONFLICT DO NOTHING`,
         [
-          GROUP_ID,
+          config.groupId,
           content,
           score.confidence,
           score.reasoning,
@@ -89,32 +84,61 @@ async function scanAndPropose(): Promise<number> {
   return proposalsCreated;
 }
 
-async function main() {
-  console.log(`[Watchdog] Starting autonomous curator loop`);
-  console.log(`[Watchdog] group_id=${GROUP_ID}, interval=${INTERVAL_MS / 1000}s, threshold=${SCORE_THRESHOLD}`);
+// ── CLI Mode ────────────────────────────────────────────────────────────────
 
-  // Run first scan immediately
-  const firstCount = await scanAndPropose();
-  console.log(`[Watchdog] Initial scan: ${firstCount} proposals created`);
+// Only run CLI when executed directly (not when imported)
+const isMainModule = process.argv[1]?.includes("watchdog.ts");
 
-  // Then loop
-  setInterval(async () => {
-    try {
-      const count = await scanAndPropose();
-      if (count > 0) {
-        console.log(`[Watchdog] Scan complete: ${count} new proposals`);
+if (isMainModule) {
+  // Parse CLI args
+  const args = process.argv.slice(2);
+  function getArg(name: string, defaultValue: string): string {
+    const idx = args.indexOf(`--${name}`);
+    return idx >= 0 && args[idx + 1] ? args[idx + 1] : defaultValue;
+  }
+
+  const INTERVAL_MS = parseInt(getArg("interval", "60"), 10) * 1000;
+  const GROUP_ID = getArg("group-id", "allura-roninmemory");
+  const SCORE_THRESHOLD = parseFloat(getArg("threshold", "0.7"));
+
+  // Validate group_id format
+  if (!/^allura-[a-z0-9-]+$/.test(GROUP_ID)) {
+    console.error(`[Watchdog] Invalid group_id: ${GROUP_ID}. Must match ^allura-[a-z0-9-]+$`);
+    process.exit(1);
+  }
+
+  const watchdogConfig: WatchdogConfig = {
+    groupId: GROUP_ID,
+    scoreThreshold: SCORE_THRESHOLD,
+  };
+
+  async function main() {
+    console.log(`[Watchdog] Starting autonomous curator loop`);
+    console.log(`[Watchdog] group_id=${GROUP_ID}, interval=${INTERVAL_MS / 1000}s, threshold=${SCORE_THRESHOLD}`);
+
+    // Run first scan immediately
+    const firstCount = await scanAndPropose(watchdogConfig);
+    console.log(`[Watchdog] Initial scan: ${firstCount} proposals created`);
+
+    // Then loop
+    setInterval(async () => {
+      try {
+        const count = await scanAndPropose(watchdogConfig);
+        if (count > 0) {
+          console.log(`[Watchdog] Scan complete: ${count} new proposals`);
+        }
+      } catch (error) {
+        console.error("[Watchdog] Scan failed:", error);
       }
-    } catch (error) {
-      console.error("[Watchdog] Scan failed:", error);
-    }
-  }, INTERVAL_MS);
+    }, INTERVAL_MS);
+  }
+
+  main().catch(console.error);
+
+  // Graceful shutdown
+  process.on("SIGINT", async () => {
+    console.log("\n[Watchdog] Shutting down...");
+    await closePool();
+    process.exit(0);
+  });
 }
-
-main().catch(console.error);
-
-// Graceful shutdown
-process.on("SIGINT", async () => {
-  console.log("\n[Watchdog] Shutting down...");
-  await closePool();
-  process.exit(0);
-});
