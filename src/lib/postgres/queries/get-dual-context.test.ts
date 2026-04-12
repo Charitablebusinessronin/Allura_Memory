@@ -20,8 +20,8 @@ import { insertEvent, type EventInsert } from "./insert-trace";
 const shouldRunE2E = process.env.RUN_E2E_TESTS === "true";
 
 describe.skipIf(!shouldRunE2E)("get-dual-context (PostgreSQL)", () => {
-  const testProjectGroup = "test-project-group";
-  const testOtherProject = "test-other-project";
+  const testProjectGroup = "allura-test-project-group";
+  const testOtherProject = "allura-test-other-project";
   const testAgentId = "test-agent-001";
 
   beforeAll(async () => {
@@ -330,7 +330,7 @@ describe.skipIf(!shouldRunE2E)("get-dual-context (PostgreSQL)", () => {
   describe("tenant isolation", () => {
     it("should identify global context correctly", () => {
       expect(isGlobalContext(GLOBAL_GROUP_ID)).toBe(true);
-      expect(isGlobalContext("any-other-group")).toBe(false);
+      expect(isGlobalContext("allura-any-other-group")).toBe(false);
       expect(isGlobalContext(testProjectGroup)).toBe(false);
     });
 
@@ -361,7 +361,7 @@ describe.skipIf(!shouldRunE2E)("get-dual-context (PostgreSQL)", () => {
   describe("edge cases", () => {
     it("should handle empty project events", async () => {
       const result = await getDualContextEpisodicMemory({
-        project_group_id: "empty-project",
+        project_group_id: "allura-empty-project",
       });
 
       expect(result.project_events.length).toBe(0);

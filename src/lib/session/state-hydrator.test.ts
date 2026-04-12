@@ -16,7 +16,7 @@ describe.skipIf(!shouldRunE2E)('StateHydrator', () => {
   const testStateDir = '.opencode/state/sessions-test';
   const testMemoryBankDir = 'memory-bank-test';
   const testPlanningDir = '_bmad-output/planning-artifacts-test';
-  const sessionId = '00000000-0000-0000-0000-000000000001';
+  const sessionId = '00000000-0000-4000-8000-000000000001';
   const groupId = 'allura-test';
 
   beforeEach(async () => {

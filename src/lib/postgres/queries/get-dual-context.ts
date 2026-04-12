@@ -13,7 +13,7 @@ import type { EventSummary } from "./get-episodic-memory";
 /**
  * Scope identifiers for dual-context queries
  */
-export const GLOBAL_GROUP_ID = "global";
+export const GLOBAL_GROUP_ID = "allura-global";
 
 /**
  * Context scope in results

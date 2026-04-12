@@ -22,8 +22,8 @@ const shouldRunE2E = process.env.RUN_E2E_TESTS === "true";
 
 describe.skipIf(!shouldRunE2E)("get-episodic-memory", () => {
   // Test data
-  const testGroupId = "test-episodic-group";
-  const otherGroupId = "other-group-isolation-test";
+  const testGroupId = "allura-test-episodic-group";
+  const otherGroupId = "allura-other-group-isolation-test";
   const testAgentId = "test-agent-001";
   const testWorkflowId = "test-workflow-001";
 
@@ -171,7 +171,7 @@ describe.skipIf(!shouldRunE2E)("get-episodic-memory", () => {
 
     it("should return empty for non-existent group_id", async () => {
       const result = await getEpisodicMemory({
-        group_id: "non-existent-group",
+        group_id: "allura-non-existent-group",
       });
 
       expect(result.items).toHaveLength(0);
@@ -653,7 +653,7 @@ describe.skipIf(!shouldRunE2E)("get-episodic-memory", () => {
   describe("edge cases", () => {
     it("should handle empty result set", async () => {
       const result = await getEpisodicMemory({
-        group_id: "non-existent-group",
+        group_id: "allura-non-existent-group",
       });
 
       expect(result.items).toHaveLength(0);
