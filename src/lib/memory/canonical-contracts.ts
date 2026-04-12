@@ -352,7 +352,7 @@ export interface CuratorProposal {
   reasoning: string;
   
   /** Tier classification */
-  tier: 'emerging' | 'adoption' | 'established';
+  tier: 'emerging' | 'adoption' | 'mainstream';
   
   /** Status */
   status: ProposalStatus;
