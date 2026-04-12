@@ -84,7 +84,8 @@ describe("Canonical Memory Operations", () => {
 
      itIfE2E("should add a memory and promote to Neo4j when score >= threshold in auto mode", async () => {
        // This test requires PROMOTION_MODE=auto
-       // Use UNIQUE content that won't be a duplicate from previous test runs
+       // Content must start with "I always/never/prefer" to trigger specificity pattern
+       // and be long enough (>20 words) to score >= AUTO_APPROVAL_THRESHOLD (0.85)
        const originalMode = process.env.PROMOTION_MODE;
        process.env.PROMOTION_MODE = "auto";
 
@@ -92,7 +93,7 @@ describe("Canonical Memory Operations", () => {
          const request: MemoryAddRequest = {
            group_id: TEST_GROUP_ID,
            user_id: TEST_USER_ID,
-          content: uniqueContent("User prefers dark theme in VS Code editor settings"),
+          content: uniqueContent("I always prefer using the dark theme in VS Code editor settings for all my development work"),
            metadata: { source: "conversation" },
          };
 
@@ -107,56 +108,59 @@ describe("Canonical Memory Operations", () => {
        }
      });
 
-    itIfE2E("should queue memory for review when score >= threshold in soc2 mode", async () => {
-      // This test requires PROMOTION_MODE=soc2
-      // Use UNIQUE content that won't be a duplicate from previous test runs
-      const originalMode = process.env.PROMOTION_MODE;
-      process.env.PROMOTION_MODE = "soc2";
+     itIfE2E("should queue memory for review when score >= threshold in soc2 mode", async () => {
+       // This test requires PROMOTION_MODE=soc2
+       // Content must start with "I always/never/prefer" to trigger specificity pattern
+       // and be long enough (>20 words) to score >= AUTO_APPROVAL_THRESHOLD (0.85)
+       const originalMode = process.env.PROMOTION_MODE;
+       process.env.PROMOTION_MODE = "soc2";
 
-      try {
-        const request: MemoryAddRequest = {
-          group_id: TEST_GROUP_ID,
-          user_id: TEST_USER_ID,
-          content: uniqueContent("User works with TypeScript strict mode enabled in their IDE"),
-          metadata: { source: "conversation" },
-        };
+       try {
+         const request: MemoryAddRequest = {
+           group_id: TEST_GROUP_ID,
+           user_id: TEST_USER_ID,
+           content: uniqueContent("I always prefer working with TypeScript strict mode enabled in my IDE for all new projects"),
+           metadata: { source: "conversation" },
+         };
 
-        const response = await memory_add(request);
+         const response = await memory_add(request);
 
-        expect(response.id).toBeDefined();
-        expect(response.stored).toBe("episodic");
-        expect(response.pending_review).toBe(true);
-        expect(response.created_at).toBeDefined();
-      } finally {
-        process.env.PROMOTION_MODE = originalMode;
-      }
-    });
+         expect(response.id).toBeDefined();
+         expect(response.stored).toBe("episodic");
+         expect(response.pending_review).toBe(true);
+         expect(response.created_at).toBeDefined();
+       } finally {
+         process.env.PROMOTION_MODE = originalMode;
+       }
+     });
 
-    itIfE2E("should return episodic storage with degraded metadata when auto promotion cannot reach Neo4j", async () => {
-      const originalMode = process.env.PROMOTION_MODE;
-      const originalNeo4jUri = process.env.NEO4J_URI;
-      process.env.PROMOTION_MODE = "auto";
-      process.env.NEO4J_URI = "bolt://127.0.0.1:1";
-      resetConnections(); // Force Neo4j driver to reconnect with bad URI
+     itIfE2E("should return episodic storage with degraded metadata when auto promotion cannot reach Neo4j", async () => {
+       // Content must score >= 0.85 to trigger promotion path
+       // which is the only path that returns degraded metadata when Neo4j is unavailable
+       const originalMode = process.env.PROMOTION_MODE;
+       const originalNeo4jUri = process.env.NEO4J_URI;
+       process.env.PROMOTION_MODE = "auto";
+       process.env.NEO4J_URI = "bolt://127.0.0.1:1";
+       resetConnections(); // Force Neo4j driver to reconnect with bad URI
 
-      try {
-        const response = await memory_add({
-          group_id: TEST_GROUP_ID,
-          user_id: TEST_USER_ID,
-          content: uniqueContent("User prefers deterministic degraded auto promotion behavior"),
-          metadata: { source: "conversation" },
-        });
+       try {
+         const response = await memory_add({
+           group_id: TEST_GROUP_ID,
+           user_id: TEST_USER_ID,
+           content: uniqueContent("I always prefer deterministic testing patterns over flaky integration tests in all codebases"),
+           metadata: { source: "conversation" },
+         });
 
-        expect(response.stored).toBe("episodic");
-        expect(response.meta?.degraded).toBe(true);
-        expect(response.meta?.degraded_reason).toBe("neo4j_unavailable");
-        expect(response.meta?.stores_used).toEqual(["postgres"]);
-      } finally {
-        process.env.PROMOTION_MODE = originalMode;
-        process.env.NEO4J_URI = originalNeo4jUri;
-        resetConnections(); // Restore working connections
-      }
-    });
+         expect(response.stored).toBe("episodic");
+         expect(response.meta?.degraded).toBe(true);
+         expect(response.meta?.degraded_reason).toBe("neo4j_unavailable");
+         expect(response.meta?.stores_used).toEqual(["postgres"]);
+       } finally {
+         process.env.PROMOTION_MODE = originalMode;
+         process.env.NEO4J_URI = originalNeo4jUri;
+         resetConnections(); // Restore working connections
+       }
+     });
 
     it("should reject invalid group_id", async () => {
       const request: MemoryAddRequest = {
@@ -503,43 +507,45 @@ describe("Canonical Memory Operations", () => {
   });
 
   describe("Promotion Mode Behavior", () => {
-    itIfE2E("should auto-promote in auto mode", async () => {
-      const originalMode = process.env.PROMOTION_MODE;
-      process.env.PROMOTION_MODE = "auto";
+     itIfE2E("should auto-promote in auto mode", async () => {
+       const originalMode = process.env.PROMOTION_MODE;
+       process.env.PROMOTION_MODE = "auto";
 
-      try {
-        const response = await memory_add({
-          group_id: TEST_GROUP_ID,
-          user_id: TEST_USER_ID,
-          content: uniqueContent("User prefers dark mode in VS Code editor and terminal window"),
-          metadata: { source: "conversation" },
-        });
+       try {
+         const response = await memory_add({
+           group_id: TEST_GROUP_ID,
+           user_id: TEST_USER_ID,
+           // Content must trigger specificity pattern + be long enough for score >= 0.85
+           content: uniqueContent("I always prefer dark mode in VS Code editor and terminal window for late night coding sessions"),
+           metadata: { source: "conversation" },
+         });
 
-        expect(response.stored).toBe("both");
-        expect(response.pending_review).toBeUndefined();
-      } finally {
-        process.env.PROMOTION_MODE = originalMode;
-      }
-    });
+         expect(response.stored).toBe("both");
+         expect(response.pending_review).toBeUndefined();
+       } finally {
+         process.env.PROMOTION_MODE = originalMode;
+       }
+     });
 
-    itIfE2E("should queue for review in soc2 mode", async () => {
-      const originalMode = process.env.PROMOTION_MODE;
-      process.env.PROMOTION_MODE = "soc2";
+     itIfE2E("should queue for review in soc2 mode", async () => {
+       const originalMode = process.env.PROMOTION_MODE;
+       process.env.PROMOTION_MODE = "soc2";
 
-      try {
-        const response = await memory_add({
-          group_id: TEST_GROUP_ID,
-          user_id: TEST_USER_ID,
-          content: uniqueContent("User works in TypeScript with strict mode and very much enjoys TypeScript"),
-          metadata: { source: "conversation" },
-        });
+       try {
+         const response = await memory_add({
+           group_id: TEST_GROUP_ID,
+           user_id: TEST_USER_ID,
+           // Content must trigger specificity pattern + be long enough for score >= 0.85
+           content: uniqueContent("I always prefer using TypeScript strict mode in all my projects and I never compromise on type safety"),
+           metadata: { source: "conversation" },
+         });
 
-        expect(response.stored).toBe("episodic");
-        expect(response.pending_review).toBe(true);
-      } finally {
-        process.env.PROMOTION_MODE = originalMode;
-      }
-    });
+         expect(response.stored).toBe("episodic");
+         expect(response.pending_review).toBe(true);
+       } finally {
+         process.env.PROMOTION_MODE = originalMode;
+       }
+     });
   });
 
   describe("Database Error Propagation", () => {
