@@ -12,6 +12,11 @@ import {
 } from "./types";
 import { writeTransaction } from "../neo4j/connection";
 import { insertEvent } from "../postgres/queries/insert-trace";
+import {
+  isRuVectorEnabled,
+  getRuVectorPool,
+} from "../ruvector/connection";
+import { Neo4jError } from "../errors/neo4j-errors";
 
 type Neo4jIntegerLike = {
   toNumber?: () => number;
@@ -106,30 +111,80 @@ export async function storeMemory(
     RETURN m.topic_key AS id, m.version AS version, m.created_at AS created_at, m.status AS status
   `;
 
-  const result = await writeTransaction(async (tx) => {
-    const res = await tx.run(createCypher, {
+  let result: { id: string; version: number; created_at: string; status: InsightStatus };
+  let store: "neo4j" | "ruvector" = "neo4j";
+
+  try {
+    result = await writeTransaction(async (tx) => {
+      const res = await tx.run(createCypher, {
+        topic_key,
+        group_id,
+        title: title || null,
+        summary: summary || null,
+        content,
+        confidence,
+        status,
+        version,
+        tags,
+        metadata: JSON.stringify(metadata),
+        trace_ref: trace_ref || null,
+        superseded_id: superseded_id || null,
+      });
+
+      const record = res.records[0];
+      return {
+        id: record.get("id"),
+        version: asNumber(record.get("version"), version),
+        created_at: record.get("created_at").toString(),
+        status: record.get("status") as InsightStatus,
+      };
+    });
+  } catch (neo4jErr) {
+    // Neo4j unavailable — attempt ruvector fallback if enabled
+    if (!isRuVectorEnabled()) {
+      throw neo4jErr instanceof Neo4jError
+        ? neo4jErr
+        : new Neo4jError("Neo4j write failed and ruvector fallback is disabled", neo4jErr instanceof Error ? neo4jErr : undefined);
+    }
+
+    console.warn("[Memory Store] Neo4j unavailable — falling back to ruvector", {
       topic_key,
       group_id,
-      title: title || null,
-      summary: summary || null,
-      content,
-      confidence,
-      status,
-      version,
-      tags,
-      metadata: JSON.stringify(metadata),
-      trace_ref: trace_ref || null,
-      superseded_id: superseded_id || null,
+      error: neo4jErr instanceof Error ? neo4jErr.message : String(neo4jErr),
     });
 
-    const record = res.records[0];
-    return {
-      id: record.get("id"),
-      version: asNumber(record.get("version"), version),
-      created_at: record.get("created_at").toString(),
-      status: record.get("status") as InsightStatus,
+    const pool = getRuVectorPool();
+    const fallbackId = `rv_${topic_key}_${Date.now()}`;
+    const now = new Date().toISOString();
+
+    await pool.query(
+      `INSERT INTO ruvector_memory_fallback
+         (id, group_id, topic_key, content, summary, confidence, status, version, tags, metadata, trace_ref, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11, NOW())
+       ON CONFLICT (topic_key, group_id) DO NOTHING`,
+      [
+        fallbackId,
+        group_id,
+        topic_key,
+        content,
+        summary || null,
+        confidence,
+        status,
+        version,
+        JSON.stringify(tags),
+        JSON.stringify(metadata),
+        trace_ref || null,
+      ]
+    );
+
+    store = "ruvector";
+    result = {
+      id: fallbackId,
+      version,
+      created_at: now,
+      status: status as InsightStatus,
     };
-  });
+  }
 
   // Log trace event for audit (server-side only)
   if (typeof window === "undefined") {
@@ -139,6 +194,10 @@ export async function storeMemory(
       console.error("[Memory Store] Failed to log trace event:", error);
       // Don't fail the operation if trace logging fails
     }
+  }
+
+  if (store === "ruvector") {
+    console.warn(`[Memory Store] Stored ${topic_key} in ruvector fallback (Neo4j degraded)`);
   }
 
   return {
