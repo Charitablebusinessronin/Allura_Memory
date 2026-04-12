@@ -17,6 +17,7 @@ import {
   DatabaseUnavailableError,
   DatabaseQueryError,
 } from "@/lib/errors/database-errors";
+import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
 
 // ── GET /api/memory/[id] (memory_get) ──────────────────────────────────────
 
@@ -28,17 +29,31 @@ export async function GET(
     const { id } = await params;
     const { searchParams } = new URL(request.url);
     
-    const getRequest: MemoryGetRequest = {
-      id: id as MemoryId,
-      group_id: (searchParams.get("group_id") || "") as GroupId,
-    };
-    
-    if (!getRequest.group_id) {
+    const rawGroupId = searchParams.get("group_id");
+    if (!rawGroupId) {
       return NextResponse.json(
         { error: "group_id is required" },
         { status: 400 }
       );
     }
+    
+    let validatedGroupId: string;
+    try {
+      validatedGroupId = validateGroupId(rawGroupId);
+    } catch (error) {
+      if (error instanceof GroupIdValidationError) {
+        return NextResponse.json(
+          { error: `Invalid group_id: ${error.message}` },
+          { status: 400 }
+        );
+      }
+      throw error;
+    }
+    
+    const getRequest: MemoryGetRequest = {
+      id: id as MemoryId,
+      group_id: validatedGroupId as GroupId,
+    };
     
     const response = await memory_get(getRequest);
     
@@ -83,25 +98,39 @@ export async function DELETE(
     const { id } = await params;
     const { searchParams } = new URL(request.url);
     
-    const deleteRequest: MemoryDeleteRequest = {
-      id: id as MemoryId,
-      group_id: (searchParams.get("group_id") || "") as GroupId,
-      user_id: searchParams.get("user_id") || "",
-    };
-    
-    if (!deleteRequest.group_id) {
+    const rawGroupId = searchParams.get("group_id");
+    if (!rawGroupId) {
       return NextResponse.json(
         { error: "group_id is required" },
         { status: 400 }
       );
     }
     
-    if (!deleteRequest.user_id) {
+    let validatedGroupId: string;
+    try {
+      validatedGroupId = validateGroupId(rawGroupId);
+    } catch (error) {
+      if (error instanceof GroupIdValidationError) {
+        return NextResponse.json(
+          { error: `Invalid group_id: ${error.message}` },
+          { status: 400 }
+        );
+      }
+      throw error;
+    }
+    
+    if (!searchParams.get("user_id")) {
       return NextResponse.json(
         { error: "user_id is required" },
         { status: 400 }
       );
     }
+    
+    const deleteRequest: MemoryDeleteRequest = {
+      id: id as MemoryId,
+      group_id: validatedGroupId as GroupId,
+      user_id: searchParams.get("user_id") || "",
+    };
     
     const response = await memory_delete(deleteRequest);
     

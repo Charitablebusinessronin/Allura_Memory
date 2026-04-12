@@ -15,10 +15,10 @@ if (typeof window !== "undefined") {
 import { NextRequest, NextResponse } from "next/server";
 import { scanAndPropose } from "@/curator/watchdog";
 import { getPool } from "@/lib/postgres/connection";
+import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
 
 const DEFAULT_GROUP_ID = process.env.ALLURA_GROUP_ID ?? "allura-roninmemory";
 const DEFAULT_THRESHOLD = parseFloat(process.env.CURATOR_SCORE_THRESHOLD ?? "0.7");
-const GROUP_ID_RE = /^allura-[a-z0-9-]+$/;
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const requestId = crypto.randomUUID().slice(0, 8);
@@ -30,14 +30,18 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const body = await req.json().catch(() => ({}));
     if (body.group_id) {
-      if (!GROUP_ID_RE.test(body.group_id)) {
-        console.warn(`[watchdog:POST] invalid group_id="${body.group_id}" requestId=${requestId}`);
-        return NextResponse.json(
-          { error: "Invalid group_id format — must match ^allura-[a-z0-9-]+$" },
-          { status: 400 }
-        );
+      try {
+        groupId = validateGroupId(body.group_id);
+      } catch (error) {
+        if (error instanceof GroupIdValidationError) {
+          console.warn(`[watchdog:POST] invalid group_id="${body.group_id}" requestId=${requestId}`);
+          return NextResponse.json(
+            { error: `Invalid group_id: ${error.message}` },
+            { status: 400 }
+          );
+        }
+        throw error;
       }
-      groupId = body.group_id;
     }
     if (typeof body.score_threshold === "number") {
       scoreThreshold = body.score_threshold;

@@ -41,6 +41,7 @@ import {
   classifyPostgresError,
 } from "@/lib/errors/database-errors";
 import { curatorScore } from "@/lib/curator/score";
+import { validateGroupId as canonicalValidateGroupId } from "@/lib/validation/group-id";
 
 config();
 
@@ -139,14 +140,12 @@ const RECOVERY_WINDOW_DAYS = parseInt(process.env.RECOVERY_WINDOW_DAYS || "30");
 
 // ── Validation ─────────────────────────────────────────────────────────────
 
+/**
+ * ARCH-001: Validate group_id using canonical module.
+ * All entry points must enforce ^allura-[a-z0-9-]+$ pattern.
+ */
 function validateGroupId(groupId: string): GroupId {
-  const pattern = /^allura-[a-z0-9-]+$/;
-  if (!pattern.test(groupId)) {
-    throw new Error(
-      `Invalid group_id: "${groupId}". Must match pattern: allura-* (e.g., allura-myproject)`
-    );
-  }
-  return groupId as GroupId;
+  return canonicalValidateGroupId(groupId) as GroupId;
 }
 
 function generateMemoryId(): MemoryId {
@@ -216,7 +215,6 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
   
   console.log(`[DEBUG memory_add] PROMOTION_MODE=${PROMOTION_MODE}, AUTO_APPROVAL_THRESHOLD=${AUTO_APPROVAL_THRESHOLD}`);
   
-  // 1. Validate
   const groupId = validateGroupId(request.group_id);
   const memoryId = generateMemoryId();
   const createdAt = new Date().toISOString();
@@ -224,12 +222,7 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
   try {
     const { pg, neo4j } = await getConnections();
   
-  // 2. Write to PostgreSQL (episodic)
-  const groupId = validateGroupId(request.group_id);
-  const memoryId = generateMemoryId();
-  const createdAt = new Date().toISOString();
-  
-  // 2. Write to PostgreSQL (episodic)
+  // Write to PostgreSQL (episodic)
   const eventResult = await pg.query(
     `INSERT INTO events (
       group_id, event_type, agent_id, status, metadata, created_at

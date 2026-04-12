@@ -11,6 +11,7 @@ import { Pool } from "pg";
 import { randomUUID } from "crypto";
 import { Neo4jConnectionError, Neo4jPromotionError } from "@/lib/errors/neo4j-errors";
 import { createInsight, InsightConflictError } from "@/lib/neo4j/queries/insert-insight";
+import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
 
 let pgPool: Pool | null = null;
 
@@ -72,12 +73,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate group_id format
-    if (!group_id.startsWith("allura-")) {
-      return NextResponse.json(
-        { error: "Invalid group_id. Must match pattern: allura-*" },
-        { status: 400 }
-      );
+    // Validate group_id format (ARCH-001: enforces allura-* pattern)
+    let validatedGroupId: string;
+    try {
+      validatedGroupId = validateGroupId(group_id);
+    } catch (error) {
+      if (error instanceof GroupIdValidationError) {
+        return NextResponse.json(
+          { error: `Invalid group_id: ${error.message}` },
+          { status: 400 }
+        );
+      }
+      throw error;
     }
 
     const { pg } = await getConnections();
@@ -87,7 +94,7 @@ export async function POST(request: NextRequest) {
       `SELECT id, group_id, content, score, reasoning, tier, status, trace_ref
        FROM canonical_proposals
        WHERE id = $1 AND group_id = $2`,
-      [proposal_id, group_id]
+      [proposal_id, validatedGroupId]
     );
 
     if (proposalResult.rows.length === 0) {
@@ -115,7 +122,7 @@ export async function POST(request: NextRequest) {
       try {
         await createInsight({
           insight_id: memoryId,
-          group_id: group_id,
+          group_id: validatedGroupId,
           content: proposal.content,
           confidence: parseFloat(proposal.score),
           source_type: "promotion",
@@ -160,7 +167,7 @@ export async function POST(request: NextRequest) {
           group_id, event_type, agent_id, status, metadata, created_at
         ) VALUES ($1, $2, $3, $4, $5, $6)`,
         [
-          group_id,
+          validatedGroupId,
           "proposal_approved",
           curator_id,
           "completed",
@@ -198,7 +205,7 @@ export async function POST(request: NextRequest) {
           group_id, event_type, agent_id, status, metadata, created_at
         ) VALUES ($1, $2, $3, $4, $5, $6)`,
         [
-          group_id,
+          validatedGroupId,
           "proposal_rejected",
           curator_id,
           "completed",

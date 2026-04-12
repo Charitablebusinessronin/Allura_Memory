@@ -34,12 +34,20 @@ import {
   DatabaseUnavailableError,
   DatabaseQueryError,
 } from "@/lib/errors/database-errors";
+import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
 
 // ── Error Handling ────────────────────────────────────────────────────────
 
 function handleError(error: unknown): NextResponse {
   console.error("Memory API error:", error);
   
+  if (error instanceof GroupIdValidationError) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: 400 }
+    );
+  }
+
   if (error instanceof DatabaseUnavailableError) {
     return NextResponse.json(
       { error: `Service temporarily unavailable: ${error.operation}`, operation: error.operation },
@@ -82,12 +90,18 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // Validate required fields
-    if (!body.group_id) {
-      return NextResponse.json(
-        { error: "group_id is required. Provide a valid tenant identifier (format: allura-*)" },
-        { status: 400 }
-      );
+    // Validate group_id format (ARCH-001: enforces allura-* pattern)
+    let validatedGroupId: string;
+    try {
+      validatedGroupId = validateGroupId(body.group_id);
+    } catch (error) {
+      if (error instanceof GroupIdValidationError) {
+        return NextResponse.json(
+          { error: `Invalid group_id: ${error.message}` },
+          { status: 400 }
+        );
+      }
+      throw error;
     }
     
     if (!body.user_id) {
@@ -105,7 +119,7 @@ export async function POST(request: NextRequest) {
     }
     
     const addRequest: MemoryAddRequest = {
-      group_id: body.group_id as GroupId,
+      group_id: validatedGroupId as GroupId,
       user_id: body.user_id,
       content: body.content,
       metadata: body.metadata,
@@ -126,25 +140,40 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     
+    // Validate group_id format (ARCH-001: enforces allura-* pattern)
+    const rawGroupId = searchParams.get("group_id");
+    let validatedGroupId: string;
+    try {
+      validatedGroupId = validateGroupId(rawGroupId);
+    } catch (error) {
+      if (error instanceof GroupIdValidationError) {
+        return NextResponse.json(
+          { error: `Invalid group_id: ${error.message}` },
+          { status: 400 }
+        );
+      }
+      throw error;
+    }
+    
+    if (!rawGroupId) {
+      return NextResponse.json(
+        { error: "group_id is required" },
+        { status: 400 }
+      );
+    }
+    
     // Check if this is a search request
     const query = searchParams.get("query");
     if (query) {
       // Route to memory_search
       const searchRequest: MemorySearchRequest = {
         query,
-        group_id: (searchParams.get("group_id") || "") as GroupId,
+        group_id: validatedGroupId as GroupId,
         user_id: searchParams.get("user_id") || undefined,
         limit: searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : 10,
         min_score: searchParams.get("min_score") ? parseFloat(searchParams.get("min_score")!) : undefined,
         include_global: searchParams.get("include_global") !== "false",
       };
-      
-      if (!searchRequest.group_id) {
-        return NextResponse.json(
-          { error: "group_id is required" },
-          { status: 400 }
-        );
-      }
       
       const response = await memory_search(searchRequest);
       return NextResponse.json(response);
@@ -152,19 +181,12 @@ export async function GET(request: NextRequest) {
     
     // Otherwise, route to memory_list
     const listRequest: MemoryListRequest = {
-      group_id: (searchParams.get("group_id") || "") as GroupId,
+      group_id: validatedGroupId as GroupId,
       user_id: searchParams.get("user_id") || "",
       limit: searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : 50,
       offset: searchParams.get("offset") ? parseInt(searchParams.get("offset")!) : 0,
       sort: (searchParams.get("sort") as "created_at_desc" | "created_at_asc" | "score_desc" | "score_asc") || "created_at_desc",
     };
-    
-    if (!listRequest.group_id) {
-      return NextResponse.json(
-        { error: "group_id is required" },
-        { status: 400 }
-      );
-    }
     
     if (!listRequest.user_id) {
       return NextResponse.json(

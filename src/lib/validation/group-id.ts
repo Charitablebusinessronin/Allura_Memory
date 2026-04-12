@@ -17,26 +17,35 @@ export class GroupIdValidationError extends Error {
 
 /**
  * Reserved group IDs that have special meaning
+ * ARCH-001: These are now prefixed with allura- (e.g., allura-global, allura-system)
  */
-export const RESERVED_GROUP_IDS = ["global", "system", "admin", "public"] as const;
+export const RESERVED_GROUP_IDS = ["allura-global", "allura-system", "allura-admin", "allura-public"] as const;
 export type ReservedGroupId = (typeof RESERVED_GROUP_IDS)[number];
 
 /**
  * Validation rules for group IDs
+ *
+ * ARCH-001: All group_ids MUST match ^allura-[a-z0-9-]+$ for tenant isolation.
  */
 export const GROUP_ID_RULES = {
   /** Minimum length for group_id */
   MIN_LENGTH: 2,
   /** Maximum length for group_id */
   MAX_LENGTH: 64,
-  /** Allowed characters: lowercase letters, numbers, hyphens, underscores */
-  PATTERN: /^[a-z0-9][a-z0-9_-]*[a-z0-9]$/,
+  /**
+   * Required pattern: allura-* naming convention.
+   * ARCH-001: Enforced at all entry points to prevent tenant isolation bypass.
+   */
+  PATTERN: /^allura-[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/,
+  /** Legacy pattern (pre-ARCH-001) — used only by validateGroupIdWithRules */
+  LEGACY_PATTERN: /^[a-z0-9][a-z0-9_-]*[a-z0-9]$/,
 } as const;
 
 /**
  * Validate group_id format
- * NFR11 compliance: lowercase-only
- * 
+ * ARCH-001: Enforces ^allura- prefix for tenant isolation.
+ * NFR11 compliance: lowercase-only.
+ *
  * @param groupId - The group_id to validate
  * @throws GroupIdValidationError if validation fails
  */
@@ -81,11 +90,10 @@ export function validateGroupId(groupId: unknown): string {
     );
   }
 
-  // Check for valid characters (alphanumeric, hyphens, underscores)
+  // ARCH-001: Enforce allura-* naming convention
   if (!GROUP_ID_RULES.PATTERN.test(trimmed)) {
     throw new GroupIdValidationError(
-      `group_id must contain only lowercase letters, numbers, hyphens, and underscores. ` +
-      `Must start and end with alphanumeric. Got: '${trimmed}'`
+      `Invalid group_id: must match pattern allura-* (e.g., allura-myproject). Got: '${trimmed}'`
     );
   }
 
@@ -94,7 +102,7 @@ export function validateGroupId(groupId: unknown): string {
 
 /**
  * Normalize a group_id to lowercase and trim whitespace
- * 
+ *
  * @param groupId - The group_id to normalize
  * @returns Normalized group_id
  */
@@ -104,7 +112,7 @@ export function normalizeGroupId(groupId: string): string {
 
 /**
  * Check if a group_id is valid without throwing
- * 
+ *
  * @param groupId - The group_id to check
  * @returns true if valid, false otherwise
  */
@@ -119,7 +127,8 @@ export function isValidGroupId(groupId: unknown): boolean {
 
 /**
  * Check if a group_id is a reserved ID
- * 
+ * ARCH-001: Reserved IDs are now allura-prefixed (allura-global, allura-system, etc.)
+ *
  * @param groupId - The group_id to check
  * @returns true if reserved, false otherwise
  */
@@ -130,12 +139,13 @@ export function isReservedGroupId(groupId: string): boolean {
 
 /**
  * Check if a group_id is the global context ID
- * 
+ * ARCH-001: Global ID is now allura-global
+ *
  * @param groupId - The group_id to check
  * @returns true if global, false otherwise
  */
 export function isGlobalGroupId(groupId: string): boolean {
-  return normalizeGroupId(groupId) === "global";
+  return normalizeGroupId(groupId) === "allura-global";
 }
 
 /**
@@ -216,7 +226,10 @@ export class ValidGroupId {
 /**
  * Validate group_id with custom rules
  * Useful for specific use cases like internal IDs
- * 
+ *
+ * ARCH-001: Default validation now enforces allura- prefix.
+ * Use customPattern to override (e.g., for legacy compatibility).
+ *
  * @param groupId - The group_id to validate
  * @param options - Custom validation options
  * @returns Validated group_id
@@ -231,15 +244,27 @@ export function validateGroupIdWithRules(
 ): string {
   const { allowUppercase = false, allowReserved = false, customPattern } = options;
 
-  let validated: string;
+  if (groupId === null || groupId === undefined) {
+    throw new GroupIdValidationError("group_id is required and cannot be null or undefined");
+  }
 
-  if (!allowUppercase) {
-    validated = validateGroupId(groupId);
-  } else {
-    if (typeof groupId !== "string" || groupId.trim().length === 0) {
-      throw new GroupIdValidationError("group_id is required and cannot be empty");
-    }
-    validated = groupId.trim();
+  if (typeof groupId !== "string") {
+    throw new GroupIdValidationError(
+      `group_id must be a string, got ${typeof groupId}`
+    );
+  }
+
+  let validated = groupId.trim();
+
+  if (validated.length === 0) {
+    throw new GroupIdValidationError("group_id cannot be empty or whitespace-only");
+  }
+
+  if (!allowUppercase && /[A-Z]/.test(validated)) {
+    throw new GroupIdValidationError(
+      `group_id must be lowercase only (NFR11): '${validated}' contains uppercase characters. ` +
+      `Use '${validated.toLowerCase()}' instead.`
+    );
   }
 
   if (!allowReserved && isReservedGroupId(validated)) {
@@ -248,9 +273,11 @@ export function validateGroupIdWithRules(
     );
   }
 
-  if (customPattern && !customPattern.test(validated)) {
+  const pattern = customPattern || GROUP_ID_RULES.PATTERN;
+  const patternInput = allowUppercase ? validated.toLowerCase() : validated;
+  if (!pattern.test(patternInput)) {
     throw new GroupIdValidationError(
-      `group_id '${validated}' does not match required pattern ${customPattern}`
+      `group_id '${validated}' does not match required pattern ${pattern}`
     );
   }
 
