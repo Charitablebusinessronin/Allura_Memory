@@ -1,6 +1,43 @@
 # Progress Log
 
-**Last Updated**: 2026-04-12 (Phase 2 Cleanup + Phase 3 Foundation — COMPLETE)
+**Last Updated**: 2026-04-12 (Phase 3 Foundation — VALIDATED)
+
+## Session Work (2026-04-12c) — Phase 3 Foundation Validation (Brooks Surgical)
+
+### ✅ Completed
+
+1. **Task 1: Guard canonical-memory.test.ts** ✅
+   - Added `itIfE2E` helper: `const itIfE2E = process.env.RUN_E2E_TESTS === "true" ? it : it.skip;`
+   - Gated 5 live-DB tests: auto-promote, soc2-queue, degraded-metadata, promotion-mode-auto, promotion-mode-soc2
+   - Local: 33 pass + 5 skip (not fail) | CI: `RUN_E2E_TESTS=true` enables all 5
+   - Commit: `e766bdfd`
+
+2. **Task 2: File kernel mutate-events issue** ✅
+   - GitHub Issue [#15](https://github.com/Charitablebusinessronin/Allura_Memory/issues/15)
+   - Title: `fix(kernel): resolve pre-existing mutate-events contract/query failures`
+   - Created 3 new labels: `pre-existing-debt`, `kernel`, `needs-investigation`
+   - Attribution: explicitly NOT caused by ^allura- enforcement (Issue #7 or commit 39c3ab1a)
+
+3. **Task 3: Expand Ralph invariant sweep scope** ✅
+   - Created `.ralph/invariant-sweep.json` with 4 sweep test files + 4 invariants (INV-001 through INV-004)
+   - Updated `.opencode/agents/ralph-loop.md` with sweep section
+   - Key invariant: approvePromotions() must emit runtime warning (INV-001)
+   - Commit: `1dd734e4`
+
+4. **Task 4: Write Neo4j reflection node** ✅
+   - `SessionReflection` node written: sessionId=`allura-phase2-close-arch-walk`
+   - Verified read-back: principle, typecheck, table, approval door all correct
+   - TASK_COMPLETE logged to PostgreSQL (event_id=2235, agent_id=brooks)
+   - No prior node to link (first of its kind)
+
+5. **Task 5: Validate watchdog manually** ✅
+   - Watchdog ran successfully: 3 initial proposals + 3 new scan proposals (threshold=0.3)
+   - `canonical_proposals` has 78 records — no `proposals` alias table
+   - `/api/curator/approve` is the sole operational approval door
+   - **`approvePromotions()` now emits explicit `console.warn("[DEPRECATED]...")`** when called programmatically
+   - Commit: `add5d822`
+
+### Milestone: Phase 3 foundation validated
 
 ## Session Work (2026-04-12b) — Phase 2 Cleanup + Phase 3 Foundation
 
