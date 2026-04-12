@@ -10,6 +10,7 @@ import {
   type TraceLog,
 } from "./trace-logger";
 import { getPool, closePool } from "./connection";
+import { RuVixKernel } from "@/kernel/ruvix";
 
 /**
  * TraceLogger integration tests
@@ -20,11 +21,26 @@ const shouldRunE2E = process.env.RUN_E2E_TESTS === "true";
 
 describe.skipIf(!shouldRunE2E)("TraceLogger", () => {
   const testGroupId = "allura-test";
-  const testAgentId = "memory-builder-test";
+  const testAgentId = "agent-test-001";
+  let originalSecret: string | undefined;
 
   beforeEach(async () => {
+    // Kernel proof engine requires RUVIX_KERNEL_SECRET
+    originalSecret = process.env.RUVIX_KERNEL_SECRET;
+    process.env.RUVIX_KERNEL_SECRET = "test-secret-key-for-ruvix-kernel-proof-engine-32chars";
+    RuVixKernel.initializeKernel();
+
     // Ensure pool is ready
     const pool = getPool();
+  });
+
+  afterEach(() => {
+    // Restore original RUVIX_KERNEL_SECRET
+    if (originalSecret !== undefined) {
+      process.env.RUVIX_KERNEL_SECRET = originalSecret;
+    } else {
+      delete process.env.RUVIX_KERNEL_SECRET;
+    }
   });
 
   afterEach(async () => {
