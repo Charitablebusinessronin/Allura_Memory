@@ -30,11 +30,29 @@ import type {
   MemoryDeleteRequest,
   GroupId,
 } from "@/lib/memory/canonical-contracts";
+import {
+  DatabaseUnavailableError,
+  DatabaseQueryError,
+} from "@/lib/errors/database-errors";
 
 // ── Error Handling ────────────────────────────────────────────────────────
 
 function handleError(error: unknown): NextResponse {
   console.error("Memory API error:", error);
+  
+  if (error instanceof DatabaseUnavailableError) {
+    return NextResponse.json(
+      { error: `Service temporarily unavailable: ${error.operation}`, operation: error.operation },
+      { status: 503 }
+    );
+  }
+
+  if (error instanceof DatabaseQueryError) {
+    return NextResponse.json(
+      { error: `Database query failed: ${error.operation}`, operation: error.operation },
+      { status: 500 }
+    );
+  }
   
   if (error instanceof Error) {
     if (error.message.includes("Invalid group_id")) {

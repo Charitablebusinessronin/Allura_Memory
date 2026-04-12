@@ -13,6 +13,10 @@ import type {
   GroupId,
   MemoryId,
 } from "@/lib/memory/canonical-contracts";
+import {
+  DatabaseUnavailableError,
+  DatabaseQueryError,
+} from "@/lib/errors/database-errors";
 
 // ── GET /api/memory/[id] (memory_get) ──────────────────────────────────────
 
@@ -40,6 +44,20 @@ export async function GET(
     
     return NextResponse.json(response);
   } catch (error) {
+    if (error instanceof DatabaseUnavailableError) {
+      return NextResponse.json(
+        { error: `Service temporarily unavailable: ${error.operation}`, operation: error.operation },
+        { status: 503 }
+      );
+    }
+
+    if (error instanceof DatabaseQueryError) {
+      return NextResponse.json(
+        { error: `Database query failed: ${error.operation}`, operation: error.operation },
+        { status: 500 }
+      );
+    }
+
     if (error instanceof Error && error.message.includes("not found")) {
       return NextResponse.json(
         { error: error.message },
@@ -89,6 +107,20 @@ export async function DELETE(
     
     return NextResponse.json(response);
   } catch (error) {
+    if (error instanceof DatabaseUnavailableError) {
+      return NextResponse.json(
+        { error: `Service temporarily unavailable: ${error.operation}`, operation: error.operation },
+        { status: 503 }
+      );
+    }
+
+    if (error instanceof DatabaseQueryError) {
+      return NextResponse.json(
+        { error: `Database query failed: ${error.operation}`, operation: error.operation },
+        { status: 500 }
+      );
+    }
+
     console.error("Memory DELETE error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
