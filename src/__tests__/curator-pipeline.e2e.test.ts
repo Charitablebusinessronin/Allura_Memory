@@ -1,0 +1,326 @@
+/**
+ * Curator Pipeline E2E Tests
+ * Proves the full curator pipeline: memory_add → score → canonical_proposals → approve → Neo4j Insight
+ *
+ * Prerequisites:
+ * - PostgreSQL accessible via DATABASE_URL or POSTGRES_* env vars
+ * - Neo4j accessible via NEO4J_URI or NEO4J_* env vars
+ * - Environment variables set (see .env.production.example)
+ *
+ * Run with: RUN_E2E_TESTS=true bun vitest run src/__tests__/curator-pipeline.e2e.test.ts
+ */
+
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { Pool } from "pg";
+import neo4j, { Driver } from "neo4j-driver";
+import { randomUUID } from "crypto";
+import { config } from "dotenv";
+import { memory_add, resetConnections } from "../mcp/canonical-tools";
+import { curatorScore } from "../lib/curator/score";
+import {
+  createInsight,
+  createInsightVersion,
+  InsightConflictError,
+} from "../lib/neo4j/queries/insert-insight";
+
+// Load environment variables from .env file
+config();
+
+// Skip E2E tests unless explicitly enabled
+const shouldRunE2E = process.env.RUN_E2E_TESTS === "true";
+
+const E2E_TIMEOUT = 30000; // 30 seconds for integration tests
+
+// Per-run isolation: unique group_id so parallel runs never collide
+const RUN_ID = randomUUID().slice(0, 8);
+const GROUP_ID = `allura-curator-e2e-${RUN_ID}` as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+describe.skipIf(!shouldRunE2E)("Curator Pipeline E2E", () => {
+  let pgPool: Pool;
+  let neo4jDriver: Driver;
+
+  beforeAll(async () => {
+    // Verify required environment variables
+    if (!process.env.POSTGRES_PASSWORD) {
+      throw new Error("POSTGRES_PASSWORD environment variable is required");
+    }
+    if (!process.env.NEO4J_PASSWORD) {
+      throw new Error("NEO4J_PASSWORD environment variable is required");
+    }
+
+    // Initialize PostgreSQL connection
+    const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+    if (databaseUrl) {
+      pgPool = new Pool({ connectionString: databaseUrl });
+    } else {
+      pgPool = new Pool({
+        host: process.env.POSTGRES_HOST || "localhost",
+        port: parseInt(process.env.POSTGRES_PORT || "5432", 10),
+        database: process.env.POSTGRES_DB || "memory",
+        user: process.env.POSTGRES_USER || "ronin4life",
+        password: process.env.POSTGRES_PASSWORD,
+        connectionTimeoutMillis: 10000,
+        idleTimeoutMillis: 30000,
+        max: 10,
+      });
+    }
+
+    // Initialize Neo4j connection
+    const neo4jUri = process.env.NEO4J_URI || "bolt://localhost:7687";
+    neo4jDriver = neo4j.driver(
+      neo4jUri,
+      neo4j.auth.basic(
+        process.env.NEO4J_USER || "neo4j",
+        process.env.NEO4J_PASSWORD
+      ),
+      { maxConnectionPoolSize: 50 }
+    );
+
+    // Verify connections are live
+    await pgPool.query("SELECT 1");
+    await neo4jDriver.verifyConnectivity();
+
+    // Reset canonical-tools internal connection cache so it picks up the
+    // current env vars (important when running after other test suites)
+    resetConnections();
+  }, E2E_TIMEOUT);
+
+  afterAll(async () => {
+    // 1. Clean up PostgreSQL test data keyed by GROUP_ID
+    await pgPool?.query("DELETE FROM canonical_proposals WHERE group_id = $1", [GROUP_ID]);
+    await pgPool?.query("DELETE FROM events WHERE group_id = $1", [GROUP_ID]);
+
+    // 2. Clean up Neo4j test data keyed by GROUP_ID
+    const session = neo4jDriver?.session();
+    if (session) {
+      try {
+        await session.run("MATCH (n) WHERE n.group_id = $groupId DETACH DELETE n", {
+          groupId: GROUP_ID,
+        });
+      } finally {
+        await session.close();
+      }
+    }
+
+    // 3. Close connections
+    await pgPool?.end();
+    await neo4jDriver?.close();
+    resetConnections();
+  }, E2E_TIMEOUT);
+
+  // ── Test 1 ────────────────────────────────────────────────────────────────
+
+  it(
+    "memory_add (SOC2 mode) queues proposal in canonical_proposals",
+    async () => {
+      process.env.PROMOTION_MODE = "soc2";
+      // Threshold low enough that this content always qualifies
+      process.env.AUTO_APPROVAL_THRESHOLD = "0.5";
+      resetConnections();
+
+      const response = await memory_add({
+        group_id: GROUP_ID,
+        user_id: "test-user",
+        content: `I always prefer TypeScript with strict mode and explicit return types [run:${RUN_ID}]`,
+        metadata: { source: "conversation" },
+      });
+
+      expect(response.stored).toBe("episodic");
+      expect(response.pending_review).toBe(true);
+
+      // Row should exist in canonical_proposals
+      const result = await pgPool.query(
+        "SELECT * FROM canonical_proposals WHERE group_id = $1 ORDER BY created_at DESC LIMIT 1",
+        [GROUP_ID]
+      );
+
+      expect(result.rows.length).toBeGreaterThan(0);
+      const row = result.rows[0];
+      expect(row.status).toBe("pending");
+      expect(row.score).toBeGreaterThan(0);
+    },
+    E2E_TIMEOUT
+  );
+
+  // ── Test 2 ────────────────────────────────────────────────────────────────
+
+  it(
+    "curatorScore scores content correctly",
+    async () => {
+      const score = await curatorScore({
+        content: "I always use TypeScript with strict mode",
+        source: "conversation",
+        usageCount: 3,
+        daysSinceCreated: 1,
+      });
+
+      // Should be well above the emerging threshold (0.6)
+      expect(score.confidence).toBeGreaterThanOrEqual(0.6);
+
+      // Tier must be one of the three canonical values
+      const validTiers = ["emerging", "adoption", "mainstream"] as const;
+      expect(validTiers).toContain(score.tier);
+
+      // Reasoning must be a meaningful string
+      expect(typeof score.reasoning).toBe("string");
+      expect(score.reasoning.length).toBeGreaterThan(0);
+    },
+    E2E_TIMEOUT
+  );
+
+  // ── Test 3 ────────────────────────────────────────────────────────────────
+
+  it(
+    "createInsight writes InsightHead and Insight node to Neo4j",
+    async () => {
+      const insightId = `ins-e2e-${RUN_ID}`;
+
+      const record = await createInsight({
+        insight_id: insightId,
+        group_id: GROUP_ID,
+        content: "Test insight for E2E pipeline",
+        confidence: 0.85,
+        source_type: "promotion",
+        created_by: "brooks",
+        metadata: { test_run: RUN_ID },
+      });
+
+      // Returned record must have the expected shape
+      expect(record.id).toBeDefined();
+      expect(record.insight_id).toBe(insightId);
+      expect(record.version).toBe(1);
+      expect(record.status).toBe("active");
+      expect(record.group_id).toBe(GROUP_ID);
+
+      // Verify InsightHead node exists in Neo4j
+      const session = neo4jDriver.session();
+      try {
+        const result = await session.run(
+          "MATCH (h:InsightHead {insight_id: $id, group_id: $groupId}) RETURN h",
+          { id: insightId, groupId: GROUP_ID }
+        );
+        expect(result.records.length).toBe(1);
+      } finally {
+        await session.close();
+      }
+    },
+    E2E_TIMEOUT
+  );
+
+  // ── Test 4 ────────────────────────────────────────────────────────────────
+
+  it(
+    "createInsight second call SUPERSEDES first version",
+    async () => {
+      const insightId = `ins-v2-${RUN_ID}`;
+
+      // Version 1
+      await createInsight({
+        insight_id: insightId,
+        group_id: GROUP_ID,
+        content: "Original content v1",
+        confidence: 0.75,
+        source_type: "promotion",
+        created_by: "brooks",
+        metadata: { test_run: RUN_ID },
+      });
+
+      // Version 2 — supersedes version 1
+      await createInsightVersion(insightId, "Updated content v2", 0.9, GROUP_ID);
+
+      // Verify the SUPERSEDES relationship and that the old node is superseded
+      const session = neo4jDriver.session();
+      try {
+        const result = await session.run(
+          `MATCH (new:Insight)-[:SUPERSEDES]->(old:Insight {insight_id: $id})
+           WHERE old.group_id = $groupId
+           RETURN new, old`,
+          { id: insightId, groupId: GROUP_ID }
+        );
+
+        expect(result.records.length).toBeGreaterThan(0);
+
+        const oldNode = result.records[0].get("old");
+        expect(oldNode.properties.status).toBe("superseded");
+      } finally {
+        await session.close();
+      }
+    },
+    E2E_TIMEOUT
+  );
+
+  // ── Test 5 ────────────────────────────────────────────────────────────────
+
+  it(
+    "full pipeline — memory_add → proposal → createInsight → Neo4j",
+    async () => {
+      process.env.PROMOTION_MODE = "soc2";
+      process.env.AUTO_APPROVAL_THRESHOLD = "0.5";
+      resetConnections();
+
+      // Step 1: Add a high-confidence memory — should queue a proposal
+      await memory_add({
+        group_id: GROUP_ID,
+        user_id: "pipeline-user",
+        content: `I always prefer explicit return types and strict null checks in TypeScript [pipeline:${RUN_ID}]`,
+        metadata: { source: "conversation" },
+      });
+
+      // Step 2: Fetch the proposal from canonical_proposals
+      const proposalResult = await pgPool.query(
+        `SELECT * FROM canonical_proposals WHERE group_id = $1 ORDER BY created_at DESC LIMIT 1`,
+        [GROUP_ID]
+      );
+
+      expect(proposalResult.rows.length).toBeGreaterThan(0);
+      const proposal = proposalResult.rows[0];
+      expect(proposal.status).toBe("pending");
+
+      // Step 3: Promote proposal to Neo4j as an Insight
+      const insightId = `ins-pipeline-${RUN_ID}`;
+      const record = await createInsight({
+        insight_id: insightId,
+        group_id: GROUP_ID,
+        content: proposal.content as string,
+        confidence: parseFloat(proposal.score as string),
+        source_type: "promotion",
+        source_ref: proposal.id as string,
+        created_by: "test-curator",
+        metadata: { test_run: RUN_ID, proposal_id: proposal.id },
+      });
+
+      expect(record.insight_id).toBe(insightId);
+      expect(record.status).toBe("active");
+
+      // Step 4: Verify InsightHead exists in Neo4j
+      const session = neo4jDriver.session();
+      try {
+        const neo4jResult = await session.run(
+          "MATCH (h:InsightHead {insight_id: $id, group_id: $groupId}) RETURN h",
+          { id: insightId, groupId: GROUP_ID }
+        );
+        expect(neo4jResult.records.length).toBe(1);
+      } finally {
+        await session.close();
+      }
+
+      // Step 5: Approve the proposal in PG (curator sign-off)
+      await pgPool.query(
+        `UPDATE canonical_proposals
+            SET status = 'approved',
+                decided_at = NOW(),
+                decided_by = 'test-curator'
+          WHERE id = $1`,
+        [proposal.id]
+      );
+
+      // Step 6: Verify the proposal is now approved
+      const approved = await pgPool.query(
+        "SELECT * FROM canonical_proposals WHERE id = $1",
+        [proposal.id]
+      );
+      expect(approved.rows[0].status).toBe("approved");
+    },
+    E2E_TIMEOUT
+  );
+});
