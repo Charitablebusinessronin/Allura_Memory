@@ -33,6 +33,9 @@ import {
   DatabaseQueryError,
 } from "../lib/errors/database-errors";
 
+// Live-DB gating: skip tests requiring live PostgreSQL/Neo4j unless RUN_E2E_TESTS=true
+const itIfE2E = process.env.RUN_E2E_TESTS === "true" ? it : it.skip;
+
 // Test configuration
 const RUN_ID = randomUUID().slice(0, 8);
 const TEST_GROUP_ID = `allura-test-canonical-${RUN_ID}` as any;
@@ -79,7 +82,7 @@ describe("Canonical Memory Operations", () => {
       expect(response.created_at).toBeDefined();
     });
 
-     it("should add a memory and promote to Neo4j when score >= threshold in auto mode", async () => {
+     itIfE2E("should add a memory and promote to Neo4j when score >= threshold in auto mode", async () => {
        // This test requires PROMOTION_MODE=auto
        // Use UNIQUE content that won't be a duplicate from previous test runs
        const originalMode = process.env.PROMOTION_MODE;
@@ -104,7 +107,7 @@ describe("Canonical Memory Operations", () => {
        }
      });
 
-    it("should queue memory for review when score >= threshold in soc2 mode", async () => {
+    itIfE2E("should queue memory for review when score >= threshold in soc2 mode", async () => {
       // This test requires PROMOTION_MODE=soc2
       // Use UNIQUE content that won't be a duplicate from previous test runs
       const originalMode = process.env.PROMOTION_MODE;
@@ -129,7 +132,7 @@ describe("Canonical Memory Operations", () => {
       }
     });
 
-    it("should return episodic storage with degraded metadata when auto promotion cannot reach Neo4j", async () => {
+    itIfE2E("should return episodic storage with degraded metadata when auto promotion cannot reach Neo4j", async () => {
       const originalMode = process.env.PROMOTION_MODE;
       const originalNeo4jUri = process.env.NEO4J_URI;
       process.env.PROMOTION_MODE = "auto";
@@ -500,7 +503,7 @@ describe("Canonical Memory Operations", () => {
   });
 
   describe("Promotion Mode Behavior", () => {
-    it("should auto-promote in auto mode", async () => {
+    itIfE2E("should auto-promote in auto mode", async () => {
       const originalMode = process.env.PROMOTION_MODE;
       process.env.PROMOTION_MODE = "auto";
 
@@ -519,7 +522,7 @@ describe("Canonical Memory Operations", () => {
       }
     });
 
-    it("should queue for review in soc2 mode", async () => {
+    itIfE2E("should queue for review in soc2 mode", async () => {
       const originalMode = process.env.PROMOTION_MODE;
       process.env.PROMOTION_MODE = "soc2";
 
