@@ -12,10 +12,10 @@ import { insertEvent, type EventInsert } from "../postgres/queries/insert-trace"
 import { createInsight, type InsightInsert } from "../neo4j/queries/insert-insight";
 
 describe("group-governance", () => {
-  const testProject1 = "governance-test-1";
-  const testProject2 = "governance-test-2";
-  const testProject3 = "governance-similar"; // Similar to governance-test-*
-  const testOrphan = "governance-orphan";
+  const testProject1 = "allura-governance-test-1";
+  const testProject2 = "allura-governance-test-2";
+  const testProject3 = "allura-governance-similar"; // Similar to allura-governance-test-*
+  const testOrphan = "allura-governance-orphan";
   const testAgentId = "governance-agent";
 
   beforeAll(async () => {
@@ -36,7 +36,7 @@ describe("group-governance", () => {
     const pool = getPool();
     await pool.query(
       "DELETE FROM events WHERE group_id LIKE $1",
-      ["governance-%"]
+      ["allura-governance-%"]
     );
 
     const driver = getDriver();
@@ -44,11 +44,11 @@ describe("group-governance", () => {
     try {
       await session.run(
         "MATCH (i:Insight) WHERE i.group_id STARTS WITH $prefix DETACH DELETE i",
-        { prefix: "governance-" }
+        { prefix: "allura-governance-" }
       );
       await session.run(
         "MATCH (h:InsightHead) WHERE h.group_id STARTS WITH $prefix DETACH DELETE h",
-        { prefix: "governance-" }
+        { prefix: "allura-governance-" }
       );
     } finally {
       await session.close();
@@ -60,7 +60,7 @@ describe("group-governance", () => {
     const pool = getPool();
     await pool.query(
       "DELETE FROM events WHERE group_id LIKE $1",
-      ["governance-%"]
+      ["allura-governance-%"]
     );
 
     const driver = getDriver();
@@ -68,11 +68,11 @@ describe("group-governance", () => {
     try {
       await session.run(
         "MATCH (i:Insight) WHERE i.group_id STARTS WITH $prefix DETACH DELETE i",
-        { prefix: "governance-" }
+        { prefix: "allura-governance-" }
       );
       await session.run(
         "MATCH (h:InsightHead) WHERE h.group_id STARTS WITH $prefix DETACH DELETE h",
-        { prefix: "governance-" }
+        { prefix: "allura-governance-" }
       );
     } finally {
       await session.close();
@@ -87,7 +87,7 @@ describe("group-governance", () => {
     const pool = getPool();
     await pool.query(
       "DELETE FROM events WHERE group_id LIKE $1",
-      ["governance-%"]
+      ["allura-governance-%"]
     );
 
     const driver = getDriver();
@@ -95,11 +95,11 @@ describe("group-governance", () => {
     try {
       await session.run(
         "MATCH (i:Insight) WHERE i.group_id STARTS WITH $prefix DETACH DELETE i",
-        { prefix: "governance-" }
+        { prefix: "allura-governance-" }
       );
       await session.run(
         "MATCH (h:InsightHead) WHERE h.group_id STARTS WITH $prefix DETACH DELETE h",
-        { prefix: "governance-" }
+        { prefix: "allura-governance-" }
       );
     } finally {
       await session.close();
@@ -370,14 +370,14 @@ describe("group-governance", () => {
       // Create similar group names in both databases with unique insight IDs
       const timestamp = Date.now();
       await insertEvent({
-        group_id: "test-similar-1",
+        group_id: "allura-governance-similar-1",
         event_type: "test",
         agent_id: testAgentId,
       });
 
       await createInsight({
         insight_id: `test-similar-insight-${timestamp}`,
-        group_id: "test-similar-2",
+        group_id: "allura-governance-similar-2",
         content: "Test",
         confidence: 0.9,
       });
@@ -390,8 +390,8 @@ describe("group-governance", () => {
         ...report.neo4j.groups.map((g) => g.group_id),
       ];
 
-      expect(allGroups).toContain("test-similar-1");
-      expect(allGroups).toContain("test-similar-2");
+      expect(allGroups).toContain("allura-governance-similar-1");
+      expect(allGroups).toContain("allura-governance-similar-2");
     });
 
     it("should identify valid vs invalid groups", async () => {

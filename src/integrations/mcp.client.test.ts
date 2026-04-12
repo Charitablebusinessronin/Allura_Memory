@@ -41,6 +41,10 @@ class EnforcedMcpClient implements McpToolCaller {
       throw new Error(`GroupIdValidationError: group_id must contain only lowercase letters, numbers, hyphens, and underscores. Must start and end with alphanumeric. Got: '${trimmed}'`);
     }
 
+    if (!/^allura-/.test(trimmed)) {
+      throw new Error(`GroupIdValidationError: group_id must start with 'allura-' (Issue #7). Got: '${trimmed}'`);
+    }
+
     this.groupId = trimmed;
     this.inner = inner;
   }
@@ -99,7 +103,7 @@ describe("MCP Client Integration", () => {
       );
 
       expect(() => new EnforcedMcpClient("", mockMcpClient)).toThrow(
-        "cannot be empty"
+        "is required"
       );
     });
 
@@ -262,13 +266,15 @@ describe("MCP Client Integration", () => {
     it("should validate group_id format before calling MCP", () => {
       // Test the validation layer independently
       expect(() => new EnforcedMcpClient("allura-faith-meats", mockMcpClient)).not.toThrow();
-      expect(() => new EnforcedMcpClient("allura_creative", mockMcpClient)).not.toThrow();
-      expect(() => new EnforcedMcpClient("allura_audits", mockMcpClient)).not.toThrow();
+      expect(() => new EnforcedMcpClient("allura-creative", mockMcpClient)).not.toThrow();
+      expect(() => new EnforcedMcpClient("allura-audits", mockMcpClient)).not.toThrow();
 
       // Invalid cases
       expect(() => new EnforcedMcpClient("Allura-Default", mockMcpClient)).toThrow();
       expect(() => new EnforcedMcpClient("allura default", mockMcpClient)).toThrow();
       expect(() => new EnforcedMcpClient("allura.default", mockMcpClient)).toThrow();
+      // Issue #7: group_id must use hyphen after allura (not underscore)
+      expect(() => new EnforcedMcpClient("allura_creative", mockMcpClient)).toThrow();
     });
 
     it("should ensure group_id cannot be bypassed by args", async () => {
@@ -350,7 +356,8 @@ describe("MCP Client Integration", () => {
         expect.fail("Should have thrown");
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
-        expect((error as Error).message).toContain("empty");
+        // Empty string is falsy, so it hits the "is required" check first
+        expect((error as Error).message).toContain("required");
       }
     });
 

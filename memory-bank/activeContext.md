@@ -1,12 +1,12 @@
 # Active Context — Brooks Architect Persona
 
-**Session**: 2026-04-12 (Phase 2 Cleanup + Phase 3 Foundation — COMPLETE)
-**Status**: ✅ ALL 8 TASKS DONE | Phase 3 foundation laid
+**Session**: 2026-04-12 (Phase 2 Complete → Phase 3 Foundation)
+**Status**: ✅ PHASE 2 CLEAN + PHASE 3 FOUNDATION LAID | Typecheck clean | 1035/1206 tests passing
 **Session Close**: 2026-04-12
 
 ## Current Focus
 
-**Phase 2 cleanup COMPLETE. Phase 3 foundation laid (ADR, watchdog, notion-sync). E2E group_ids fixed, tier drift eliminated, approvePromotions() deprecated. Full typecheck clean.**
+**Phase 2 cleanup COMPLETE (ratchet tightened). Phase 3 foundation laid (ADR, watchdog, notion-sync). ^allura- enforcement cascaded through test suite — 34 net new passing tests. Remaining 147 failures are pre-existing (kernel, browser, integration).**
 
 ## Issues on the Board
 

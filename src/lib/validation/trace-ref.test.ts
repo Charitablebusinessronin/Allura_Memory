@@ -140,7 +140,7 @@ describe("trace-ref validation", () => {
   // =========================================================================
 
   describe("verifyTraceRefExists", () => {
-    const testGroupId = "trace-ref-test-group";
+    const testGroupId = "allura-trace-ref-test";
 
     beforeAll(async () => {
       const pool = getPool();
@@ -196,7 +196,7 @@ describe("trace-ref validation", () => {
   // =========================================================================
 
   describe("validateTraceRefs", () => {
-    const testGroupId = "batch-trace-ref-test";
+    const testGroupId = "allura-batch-trace-ref-test";
 
     beforeAll(async () => {
       const pool = getPool();

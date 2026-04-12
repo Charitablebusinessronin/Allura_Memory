@@ -254,9 +254,12 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
   const eventId = eventResult.rows[0].id;
   
   // 3. Score content
+  // Map MemoryProvenance ('conversation'|'manual') to curatorScore source ('conversation'|'manually_added')
+  const scoreSource: "conversation" | "manually_added" =
+    request.metadata?.source === "manual" ? "manually_added" : "conversation";
   const scoreResult = await curatorScore({
     content: request.content,
-    source: (request.metadata?.source as "conversation" | "manually_added") || "conversation",
+    source: scoreSource,
     usageCount: 0,
     daysSinceCreated: 0,
   });
