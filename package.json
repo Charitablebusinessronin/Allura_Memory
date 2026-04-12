@@ -55,6 +55,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@hookform/resolvers": "^3.10.0",
     "@modelcontextprotocol/sdk": "^1.27.1",
+    "@openai/agents": "^0.8.3",
     "@tailwindcss/postcss": "^4.2.2",
     "@tanstack/react-table": "^8.20.5",
     "class-variance-authority": "^0.7.1",

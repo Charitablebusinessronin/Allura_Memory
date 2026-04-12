@@ -1,6 +1,35 @@
 # Progress Log
 
-**Last Updated**: 2026-04-12e (Phase 5 Ralph Loop — COMPLETE)
+**Last Updated**: 2026-04-12f (MCP Streamable HTTP Transport — SHIPPED)
+
+## Session Work (2026-04-12f) — MCP Streamable HTTP Transport (Brooks Architect)
+
+### ✅ Completed
+
+1. **MCP Streamable HTTP Transport on canonical-http-gateway.ts** ✅
+   - Added `StreamableHTTPServerTransport` from `@modelcontextprotocol/sdk` alongside legacy JSON-RPC
+   - `/mcp` endpoint serves MCP Streamable HTTP protocol (primary path)
+   - `/tools`, `/tools/call` preserved for backward compatibility
+   - Bearer token auth (`ALLURA_MCP_AUTH_TOKEN`) at transport layer with timing-safe comparison
+   - Health endpoint now reports `transports: ["streamable-http", "legacy-json-rpc"]`
+
+2. **Integration test file created** ✅
+   - `src/__tests__/mcp-streamable-http.test.ts`
+   - Tests: protocol init, tool discovery, tool execution, auth, backward compat
+
+3. **ADR updated** ✅
+   - `docs/deferred/chatgpt-integration-plan.md` — status DEFERRED → ACTIVE
+   - `docs/allura/external-agent-integration.md` — canonical ADR document
+   - GPT Actions path demoted to OPTIONAL/FALLBACK
+
+4. **Dependencies** ✅
+   - `@openai/agents@0.8.3` installed
+   - `@modelcontextprotocol/sdk@^1.27.1` (already present)
+
+### Key Decision
+- MCP Streamable HTTP eliminates accidental complexity (REST bridge, OpenAPI schema)
+- OpenAI Agents SDK connects natively via `MCPServerStreamableHttp` or `hostedMcpTool()`
+- Zero OpenAPI YAML/JSON files needed
 
 ## Session Work (2026-04-12e) — Phase 5 Ralph Loop (Brooks Surgical)
 
