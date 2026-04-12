@@ -8,6 +8,9 @@
  * - Token usage tracked
  * - Permissions persisted
  * - Concurrent session isolation
+ *
+ * Requires filesystem access.
+ * Run with: RUN_E2E_TESTS=true bun vitest run src/lib/session/persistence.test.ts
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -19,7 +22,9 @@ import {
   generateSessionId,
 } from './persistence';
 
-describe('SessionPersistence', () => {
+const shouldRunE2E = process.env.RUN_E2E_TESTS === "true";
+
+describe.skipIf(!shouldRunE2E)('SessionPersistence', () => {
   let persistence: SessionPersistence;
   const testDir = '.opencode/state/persistence-test';
   const agentId = 'memory-builder';

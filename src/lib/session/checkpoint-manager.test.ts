@@ -1,5 +1,7 @@
 /**
  * Tests for Checkpoint Manager
+ * Requires filesystem access for checkpoint storage.
+ * Run with: RUN_E2E_TESTS=true bun vitest run src/lib/session/checkpoint-manager.test.ts
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -7,7 +9,9 @@ import fs from 'fs/promises';
 import path from 'path';
 import { CheckpointManager, createCheckpointManager } from './checkpoint-manager';
 
-describe('CheckpointManager', () => {
+const shouldRunE2E = process.env.RUN_E2E_TESTS === "true";
+
+describe.skipIf(!shouldRunE2E)('CheckpointManager', () => {
   let manager: CheckpointManager;
   const testCheckpointDir = '.opencode/state/checkpoints-test';
   const sessionId = '00000000-0000-0000-0000-000000000001';

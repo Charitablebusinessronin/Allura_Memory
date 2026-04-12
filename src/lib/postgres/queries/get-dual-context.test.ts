@@ -14,8 +14,12 @@ import { insertEvent, type EventInsert } from "./insert-trace";
 
 /**
  * Test suite for dual-context episodic memory queries
+ * Requires a running PostgreSQL instance.
+ * Run with: RUN_E2E_TESTS=true bun vitest run src/lib/postgres/queries/get-dual-context.test.ts
  */
-describe("get-dual-context (PostgreSQL)", () => {
+const shouldRunE2E = process.env.RUN_E2E_TESTS === "true";
+
+describe.skipIf(!shouldRunE2E)("get-dual-context (PostgreSQL)", () => {
   const testProjectGroup = "test-project-group";
   const testOtherProject = "test-other-project";
   const testAgentId = "test-agent-001";

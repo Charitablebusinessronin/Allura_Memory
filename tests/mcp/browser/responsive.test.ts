@@ -11,9 +11,13 @@ import { getPort } from "../../../src/lib/config/ports";
  * 
  * Tests the dashboard at various viewport sizes to ensure
  * proper responsive behavior across devices.
+ * 
+ * Run with: RUN_BROWSER_TESTS=true bun vitest run tests/mcp/browser/responsive.test.ts
  */
 
-describe("Responsive Design Tests", () => {
+const shouldRunBrowser = process.env.RUN_BROWSER_TESTS === "true";
+
+describe.skipIf(!shouldRunBrowser)("Responsive Design Tests", () => {
   const PAPERCLIP_PORT = getPort("paperclip", "PAPERCLIP_PORT");
   const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || `http://localhost:${PAPERCLIP_PORT}`;
   const DASHBOARD_URL = `${BASE_URL}/dashboard/paperclip`;

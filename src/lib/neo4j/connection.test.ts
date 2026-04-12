@@ -8,6 +8,13 @@ import {
   verifyConnectivity,
 } from "./connection";
 
+/**
+ * Neo4j Connection Layer tests
+ * Unit tests (getConnectionConfig) run without Neo4j.
+ * Integration tests (getDriver, getSession, isDriverHealthy, verifyConnectivity) require running Neo4j.
+ */
+const shouldRunE2E = process.env.RUN_E2E_TESTS === "true";
+
 describe("Neo4j Connection Layer", () => {
   beforeAll(async () => {
     // Ensure environment is configured for tests
@@ -19,7 +26,11 @@ describe("Neo4j Connection Layer", () => {
 
   afterAll(async () => {
     // Clean up driver after all tests
-    await closeDriver();
+    try {
+      await closeDriver();
+    } catch {
+      // Driver may not be initialized if tests were skipped
+    }
   });
 
   describe("getConnectionConfig", () => {
@@ -71,7 +82,7 @@ describe("Neo4j Connection Layer", () => {
     });
   });
 
-  describe("getDriver", () => {
+  describe.skipIf(!shouldRunE2E)("getDriver", () => {
     it("should return a singleton Driver instance", () => {
       const driver1 = getDriver();
       const driver2 = getDriver();
@@ -80,7 +91,7 @@ describe("Neo4j Connection Layer", () => {
     });
   });
 
-  describe("getSession", () => {
+  describe.skipIf(!shouldRunE2E)("getSession", () => {
     it("should return a session from the driver", () => {
       const session = getSession();
 
@@ -99,7 +110,7 @@ describe("Neo4j Connection Layer", () => {
     });
   });
 
-  describe("isDriverHealthy", () => {
+  describe.skipIf(!shouldRunE2E)("isDriverHealthy", () => {
     it("should return true when connected to Neo4j", async () => {
       const healthy = await isDriverHealthy();
 
@@ -107,14 +118,14 @@ describe("Neo4j Connection Layer", () => {
     });
   });
 
-  describe("verifyConnectivity", () => {
+  describe.skipIf(!shouldRunE2E)("verifyConnectivity", () => {
     it("should not throw when connected to Neo4j", async () => {
       // This should not throw
       await expect(verifyConnectivity()).resolves.not.toThrow();
     });
   });
 
-  describe("closeDriver", () => {
+  describe.skipIf(!shouldRunE2E)("closeDriver", () => {
     it("should close the driver and allow reconnection", async () => {
       const driver1 = getDriver();
 

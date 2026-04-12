@@ -1,5 +1,7 @@
 /**
  * Tests for Agent Memory Nodes
+ * Requires a running Neo4j instance.
+ * Run with: RUN_E2E_TESTS=true bun vitest run src/lib/neo4j/agent-nodes.test.ts
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
@@ -22,6 +24,9 @@ import type { AgentInsert } from "./agent-nodes";
 // Test configuration
 const TEST_GROUP_ID = "allura-test-agents";
 
+// E2E guard: requires running Neo4j
+const shouldRunE2E = process.env.RUN_E2E_TESTS === "true";
+
 // Setup and teardown
 beforeAll(async () => {
   // Ensure environment variables are set
@@ -38,7 +43,7 @@ afterAll(async () => {
   await closeDriver();
 });
 
-describe("Agent Nodes Validation", () => {
+describe.skipIf(!shouldRunE2E)("Agent Nodes Validation", () => {
   it("should throw if agent_id is missing", async () => {
     const agent = {
       agent_id: "",
@@ -97,7 +102,7 @@ describe("Agent Nodes Validation", () => {
   });
 });
 
-describe("Agent Nodes CRUD", () => {
+describe.skipIf(!shouldRunE2E)("Agent Nodes CRUD", () => {
   it("should create an agent node with defaults", async () => {
     const agent: AgentInsert = {
       agent_id: "create-test",
@@ -284,7 +289,7 @@ describe("Agent Nodes CRUD", () => {
   });
 });
 
-describe("Agent Groups", () => {
+describe.skipIf(!shouldRunE2E)("Agent Groups", () => {
   it("should create an agent group", async () => {
     const groupId = "allura-test-group-creation";
 
@@ -338,7 +343,7 @@ describe("Agent Groups", () => {
   });
 });
 
-describe("Initialize Default Agents", () => {
+describe.skipIf(!shouldRunE2E)("Initialize Default Agents", () => {
   it("should initialize all 7 default agents", async () => {
     const groupId = "allura-default-init-test";
 
@@ -383,7 +388,7 @@ describe("Initialize Default Agents", () => {
   });
 });
 
-describe("Verify Agent Nodes", () => {
+describe.skipIf(!shouldRunE2E)("Verify Agent Nodes", () => {
   it("should verify agents exist for a group", async () => {
     const groupId = "allura-verify-test";
 

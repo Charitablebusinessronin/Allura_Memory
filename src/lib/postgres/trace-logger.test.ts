@@ -11,7 +11,14 @@ import {
 } from "./trace-logger";
 import { getPool, closePool } from "./connection";
 
-describe("TraceLogger", () => {
+/**
+ * TraceLogger integration tests
+ * Requires a running PostgreSQL instance.
+ * Run with: RUN_E2E_TESTS=true bun vitest run src/lib/postgres/trace-logger.test.ts
+ */
+const shouldRunE2E = process.env.RUN_E2E_TESTS === "true";
+
+describe.skipIf(!shouldRunE2E)("TraceLogger", () => {
   const testGroupId = "allura-test";
   const testAgentId = "memory-builder-test";
 
