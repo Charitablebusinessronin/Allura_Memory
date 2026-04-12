@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS canonical_proposals (
   reasoning TEXT,
   
   -- Tier classification
-  tier VARCHAR(20) NOT NULL CHECK (tier IN ('emerging', 'adoption', 'established')),
+  tier VARCHAR(20) NOT NULL CHECK (tier IN ('emerging', 'adoption', 'mainstream')),
   
   -- Status
   status VARCHAR(20) NOT NULL DEFAULT 'pending' 
@@ -148,6 +148,6 @@ CREATE TRIGGER trigger_proposal_decided
 COMMENT ON TABLE canonical_proposals IS 'Memory promotion queue for SOC2 governance. High-confidence memories await human approval before promotion to Neo4j.';
 COMMENT ON COLUMN canonical_proposals.group_id IS 'Tenant namespace (format: allura-*)';
 COMMENT ON COLUMN canonical_proposals.score IS 'Confidence score (0.00 to 1.00). Threshold: 0.85 for promotion.';
-COMMENT ON COLUMN canonical_proposals.tier IS 'Classification: emerging (<70%), adoption (70-84%), established (85%+)';
+COMMENT ON COLUMN canonical_proposals.tier IS 'Classification: emerging (<70%), adoption (70-84%), mainstream (85%+)';
 COMMENT ON COLUMN canonical_proposals.trace_ref IS 'Reference to PostgreSQL event for traceability';
 COMMENT ON COLUMN canonical_proposals.status IS 'pending: awaiting review, approved: promoted to Neo4j, rejected: archived';

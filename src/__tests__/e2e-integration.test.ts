@@ -164,7 +164,7 @@ describe.skipIf(!shouldRunE2E)("E2E Integration Tests", () => {
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING id
       `, [
-        "test_group",
+        "allura-e2e-insert",
         "test_event",
         "test_agent",
         "test_workflow",
@@ -180,7 +180,7 @@ describe.skipIf(!shouldRunE2E)("E2E Integration Tests", () => {
         RETURNING id
       `, [
         eventResult.rows[0].id,
-        "test_group",
+        "allura-e2e-insert",
         "test_outcome",
         JSON.stringify({ key: "value" }),
         0.95
@@ -195,7 +195,7 @@ describe.skipIf(!shouldRunE2E)("E2E Integration Tests", () => {
         INSERT INTO events (group_id, event_type, agent_id, workflow_id, metadata, status)
         VALUES ($1, $2, $3, $4, $5, $6)
       `, [
-        "test_group_e2e",
+        "allura-e2e-query",
         "test_query",
         "test_agent",
         "test_workflow",
@@ -206,10 +206,10 @@ describe.skipIf(!shouldRunE2E)("E2E Integration Tests", () => {
       // Query by group_id
       const result = await pgPool.query(`
         SELECT * FROM events WHERE group_id = $1
-      `, ["test_group_e2e"]);
+      `, ["allura-e2e-query"]);
 
       expect(result.rows.length).toBeGreaterThan(0);
-      expect(result.rows[0].group_id).toBe("test_group_e2e");
+      expect(result.rows[0].group_id).toBe("allura-e2e-query");
     });
   });
 
@@ -314,7 +314,7 @@ describe.skipIf(!shouldRunE2E)("E2E Integration Tests", () => {
         INSERT INTO events (group_id, event_type, agent_id, workflow_id, metadata, status)
         VALUES ($1, $2, $3, $4, $5, $6)
       `, [
-        "test_extract_group",
+        "allura-e2e-extract",
         "test_extract",
         "test_agent",
         "test_workflow",
@@ -325,7 +325,7 @@ describe.skipIf(!shouldRunE2E)("E2E Integration Tests", () => {
       // For E2E, we verify the database is queryable
       const result = await pgPool.query(`
         SELECT * FROM events WHERE group_id = $1
-      `, ["test_extract_group"]);
+      `, ["allura-e2e-extract"]);
 
       expect(result.rows.length).toBeGreaterThan(0);
     });
@@ -341,7 +341,7 @@ describe.skipIf(!shouldRunE2E)("E2E Integration Tests", () => {
         )
       `, [
         "test_drift_design",
-        "test_group",
+        "allura-e2e-drift",
         "test_page_id",
         "https://notion.so/test",
         "test_neo4j_id",
@@ -386,7 +386,7 @@ describe.skipIf(!shouldRunE2E)("E2E Integration Tests", () => {
           INSERT INTO events (group_id, event_type, agent_id, workflow_id, metadata, status)
           VALUES ($1, $2, $3, $4, $5, $6)
         `, [
-          `test_perf_${i}`,
+          `allura-e2e-perf-${i}`,
           "perf_test",
           "test_agent",
           "test_workflow",

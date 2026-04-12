@@ -6,6 +6,8 @@
  * Usage: bun src/curator/index.ts run
  */
 
+// TODO: Remove approvePromotions() after all integrations use POST /api/curator/approve
+
 import { getPool, closePool } from "../lib/postgres/connection";
 import { getDriver, closeDriver } from "../lib/neo4j/connection";
 import { curatorScore } from "../lib/curator/score";
@@ -89,6 +91,11 @@ async function runCurator() {
   }
 }
 
+/**
+ * @deprecated Use POST /api/curator/approve instead.
+ * This function reads from legacy PromotionProposal Neo4j nodes
+ * which will be removed in a future version.
+ */
 async function approvePromotions() {
   console.log("[Curator] Approving promotions...\n");
   
@@ -160,6 +167,7 @@ async function approvePromotions() {
 if (COMMAND === "run") {
   runCurator();
 } else if (COMMAND === "approve") {
+  console.warn("[DEPRECATED] curator approve is deprecated. Use POST /api/curator/approve instead.");
   approvePromotions();
 } else {
   console.log("Usage: bun src/curator/index.ts [run|approve]");

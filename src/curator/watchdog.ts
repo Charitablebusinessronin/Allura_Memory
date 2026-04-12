@@ -1,0 +1,120 @@
+#!/usr/bin/env bun
+/**
+ * Curator Watchdog — Autonomous Scoring Loop
+ *
+ * Polls PostgreSQL for unpromoted events, scores them,
+ * and creates proposals in canonical_proposals for human review.
+ *
+ * Brooks principle: The architecture is the curator queue;
+ * the watchdog is merely the implementation that feeds it.
+ *
+ * Usage: bun src/curator/watchdog.ts [--interval 60] [--group-id allura-roninmemory]
+ */
+
+import { getPool, closePool } from "../lib/postgres/connection";
+import { curatorScore } from "../lib/curator/score";
+
+// Parse CLI args
+const args = process.argv.slice(2);
+function getArg(name: string, defaultValue: string): string {
+  const idx = args.indexOf(`--${name}`);
+  return idx >= 0 && args[idx + 1] ? args[idx + 1] : defaultValue;
+}
+
+const INTERVAL_MS = parseInt(getArg("interval", "60"), 10) * 1000;
+const GROUP_ID = getArg("group-id", "allura-roninmemory");
+const SCORE_THRESHOLD = parseFloat(getArg("threshold", "0.7"));
+
+// Validate group_id format
+if (!/^allura-[a-z0-9-]+$/.test(GROUP_ID)) {
+  console.error(`[Watchdog] Invalid group_id: ${GROUP_ID}. Must match ^allura-[a-z0-9-]+$`);
+  process.exit(1);
+}
+
+async function scanAndPropose(): Promise<number> {
+  const pool = getPool();
+
+  // Find events that don't have a corresponding proposal yet
+  const result = await pool.query(`
+    SELECT e.id, e.event_type, e.agent_id, e.metadata, e.created_at
+    FROM events e
+    WHERE e.group_id = $1
+      AND e.status != 'promoted'
+      AND NOT EXISTS (
+        SELECT 1 FROM canonical_proposals cp
+        WHERE cp.trace_ref = e.id
+      )
+      AND e.created_at > NOW() - INTERVAL '7 days'
+    ORDER BY e.created_at DESC
+    LIMIT 50
+  `, [GROUP_ID]);
+
+  let proposalsCreated = 0;
+
+  for (const row of result.rows) {
+    const content = JSON.stringify({
+      type: row.event_type,
+      agent: row.agent_id,
+      ...row.metadata,
+    });
+
+    const score = await curatorScore({
+      content,
+      usageCount: 0,
+      daysSinceCreated: Math.floor(
+        (Date.now() - new Date(row.created_at).getTime()) / (1000 * 60 * 60 * 24)
+      ),
+      source: "conversation",
+    });
+
+    if (score.confidence >= SCORE_THRESHOLD) {
+      await pool.query(
+        `INSERT INTO canonical_proposals (id, group_id, content, score, reasoning, tier, status, trace_ref, created_at)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 'pending', $6, NOW())
+         ON CONFLICT DO NOTHING`,
+        [
+          GROUP_ID,
+          content,
+          score.confidence,
+          score.reasoning,
+          score.tier,
+          row.id,
+        ]
+      );
+      proposalsCreated++;
+      console.log(`[Watchdog] Queued proposal for event ${row.id}: ${score.confidence.toFixed(2)} (${score.tier})`);
+    }
+  }
+
+  return proposalsCreated;
+}
+
+async function main() {
+  console.log(`[Watchdog] Starting autonomous curator loop`);
+  console.log(`[Watchdog] group_id=${GROUP_ID}, interval=${INTERVAL_MS / 1000}s, threshold=${SCORE_THRESHOLD}`);
+
+  // Run first scan immediately
+  const firstCount = await scanAndPropose();
+  console.log(`[Watchdog] Initial scan: ${firstCount} proposals created`);
+
+  // Then loop
+  setInterval(async () => {
+    try {
+      const count = await scanAndPropose();
+      if (count > 0) {
+        console.log(`[Watchdog] Scan complete: ${count} new proposals`);
+      }
+    } catch (error) {
+      console.error("[Watchdog] Scan failed:", error);
+    }
+  }, INTERVAL_MS);
+}
+
+main().catch(console.error);
+
+// Graceful shutdown
+process.on("SIGINT", async () => {
+  console.log("\n[Watchdog] Shutting down...");
+  await closePool();
+  process.exit(0);
+});
