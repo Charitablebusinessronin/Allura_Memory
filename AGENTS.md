@@ -416,7 +416,105 @@ Need DB?
   knowledge graph     → read/write_neo4j_cypher
 ```
 
-## 18) Quick Verification
+## 18) Agent Directory Structure
+
+### Canonical Location (OpenCode)
+
+OpenCode discovers agents by **scanning flat `.md` files** in `.opencode/agents/` (plural). The filename (minus `.md`) becomes the agent name. The `mode` field in YAML frontmatter (`primary` or `subagent`) determines the agent type.
+
+**Do NOT use subdirectories** — OpenCode does not discover agents in subdirectories for project-local configs (confirmed in [Issue #2369](https://github.com/anomalyco/opencode/issues/2369)).
+
+```
+.opencode/agents/                    ← CANONICAL (plural, flat, auto-discovered)
+├── brooks-architect.md              ← mode: primary
+├── jobs-intent-gate.md              ← mode: primary
+├── scout-recon.md                    ← mode: subagent
+├── fowler-refactor-gate.md          ← mode: subagent
+├── pike-interface-review.md          ← mode: subagent
+├── ralph-loop.md                     ← mode: subagent
+├── bellard-diagnostics-perf.md       ← mode: subagent
+├── dijkstra-review.md                ← mode: subagent
+├── knuth-analyze.md                  ← mode: subagent
+└── woz-builder.md                    ← mode: subagent
+```
+
+### Registration
+
+Agents are registered explicitly in `opencode.json` at project root with permissions, model overrides, and task routing.
+
+### Claude Code (`.claude/agents/`)
+
+The `.claude/agents/` directory uses a **flat** structure with simplified filenames:
+```
+.claude/agents/
+├── brooks.md          ← mirrors brooks-architect.md
+├── jobs.md            ← mirrors jobs-intent-gate.md
+├── fowler.md          ← mirrors fowler-refactor-gate.md
+├── pike.md            ← mirrors pike-interface-review.md
+├── ralph.md           ← mirrors ralph-loop.md
+├── scout.md           ← mirrors scout-recon.md
+├── bellard.md         ← mirrors bellard-diagnostics-perf.md
+├── dijkstra.md         ← mirrors dijkstra-review.md
+├── knuth.md           ← mirrors knuth-analyze.md
+└── woz.md             ← mirrors woz-builder.md
+```
+
+### DEPRECATED: `.opencode/agent/` (singular, nested)
+
+The old `.opencode/agent/` directory with nested subdirectories (`core/`, `subagents/core/`, `subagents/code/`) is **deprecated**. It remains for reference only. Do not edit files there — edit the canonical copies in `.opencode/agents/` instead.
+
+### Key OpenCode Agent Rules
+
+1. **Flat files only** in `.opencode/agents/` — no subdirectories
+2. **YAML frontmatter** must include `description` (required) and `mode` (`primary` or `subagent`)
+3. **Filename = agent name** — `brooks-architect.md` creates agent `brooks-architect`
+4. **`opencode.json`** at project root provides explicit registration, permissions, and model overrides
+5. **`mode: subagent`** agents can be invoked by primary agents via the Task tool or `@mention`
+6. **`mode: primary`** agents can be switched to via Tab key during sessions
+
+## 19) Web Research Tools — Exa Usage Guide
+
+### `web_search_exa` — Neural/Semantic Search
+
+The `MCP_DOCKER_web_search_exa` tool provides **neural/semantic search** powered by Exa AI. Use it when you need real-time, relevance-ranked web results rather than keyword matching.
+
+**When to use Exa vs other search tools:**
+
+| Need | Best Tool | Why |
+|------|-----------|-----|
+| Quick fact, current event | `tavily_search` | Fast, keyword-based |
+| Deep multi-source research | `tavily_research` | Comprehensive, multi-step |
+| Specific URL content | `tavily_extract` | Extract from known URL |
+| **Library/framework docs** | `context7` → `get-library-docs` | Canonical, versioned docs |
+| **Neural/semantic search** | `web_search_exa` | Embedding-based relevance ranking |
+| **Official tool configs** | `web_search_exa` | Finds actual API docs, config schemas |
+| **Architecture patterns** | `web_search_exa` | Finds design docs, best practices |
+
+**Exa parameters:**
+
+```javascript
+MCP_DOCKER_web_search_exa({
+  query: "opencode agents subagent configuration",  // Natural language query
+  numResults: 5      // Number of results (default: 5)
+})
+```
+
+**Exa excels at:**
+- Finding official documentation for tools and frameworks (e.g., OpenCode agent config, Next.js patterns)
+- Semantic matching — "how to configure subagents" finds the right docs even without exact keywords
+- Discovering canonical config schemas and examples
+- Locating GitHub issues and discussions about specific features
+
+**Example: Verifying OpenCode agent discovery**
+
+When we needed to confirm whether OpenCode discovers agents in subdirectories, Exa found:
+- The official OpenCode agents documentation (opencode.ai/docs/agents/)
+- The opencodeguide.com agent configuration reference
+- GitHub issue #2369 confirming subdirectory discovery is broken
+
+This is exactly the kind of research where keyword search fails and neural search shines.
+
+## 20) Quick Verification
 
 ```bash
 docker exec knowledge-postgres pg_isready -U ronin4life -d memory
