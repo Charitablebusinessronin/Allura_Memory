@@ -39,7 +39,47 @@
 
 ### Milestone: Phase 3 foundation validated
 
-## Session Work (2026-04-12b) — Phase 2 Cleanup + Phase 3 Foundation
+## Session Work (2026-04-12d) — Phase 3 Controlled Activation (Brooks Surgical)
+
+### ✅ Completed
+
+1. **Task 1: Sustained Watchdog Validation** ✅ (commit c8df8be4)
+   - Refactored watchdog.ts: exported `scanAndPropose()` + `WatchdogConfig` for testability
+   - CLI mode preserved via `isMainModule` guard
+   - Added watchdog-sustained.test.ts: 3-cycle validation, idempotency check, alias table denial
+   - Fixed canonical_proposals tier CHECK constraint (`established` → `mainstream`) on running DB (72 rows)
+   - All proposals verified as `status=pending`, no `proposals` alias table exists
+
+2. **Task 2: Wire Notion Review Surface** ✅ (commit a5f2dfb5)
+   - Refactored notion-sync.ts: exported `getPendingProposals(groupId)`, `syncToNotion(config)`, `markSynced()`
+   - Added `NotionSyncConfig` + `NotionSyncResult` types for structured integration
+   - CLI mode guarded by `isMainModule` — no side effects on import
+   - Documents required env vars: `NOTION_API_KEY`, `NOTION_CURATOR_DB_ID`
+   - Graceful degradation when Notion not configured (reports count, returns errors)
+   - Added notion-sync.test.ts: 5 tests for query, ordering, validation, sync, and mark
+
+3. **Task 3: E2E Approve/Reject Validation** ✅ (commit 78b2f6a0)
+   - Created curator-approve.test.ts with 7 tests (4 E2E gated, 3 unit)
+   - E2E: approve flow, reject flow, double-approve prevention, group_id validation
+   - Unit: approvePromotions() guard logic tests (env flag check)
+   - Validates canonical_proposals status transitions: pending→approved, pending→rejected
+
+4. **Task 4: Hard-Block approvePromotions()** ✅ (commit 16bcc046)
+   - Created `DeprecatedApprovalPathError` with canonical error message
+   - `approvePromotions()` throws unless `MIGRATION_MODE=true` or `DEBUG_LEGACY=true`
+   - CLI `curator approve` also hard-blocked (exit 1 without env flags)
+   - Updated curator-approve.test.ts: 4 real tests calling approvePromotions()
+   - Updated INV-001 invariant: 'must throw' instead of 'must emit warning'
+
+5. **Task 5: Browser/Runtime Test Separation** ✅ (commit 71a83338)
+   - Added `describe.skipIf` guards to 14 test files across browser, integration, E2E, and session tests
+   - Created `src/lib/test-guards.ts` with shared `shouldRunE2E`, `shouldRunBrowser`, `shouldRunIntegration`
+   - Browser tests (dashboard, responsive): gated on `RUN_BROWSER_TESTS=true`
+   - Integration tests (nextjs-runtime): gated on `RUN_INTEGRATION_TESTS=true`
+   - PostgreSQL/Neo4j E2E tests: gated on `RUN_E2E_TESTS=true`
+   - Session tests: gated on `RUN_E2E_TESTS=true`
+   - Result: 922 pass, 36 fail (pre-existing), 264 skip (correctly gated)
+   - Typecheck: clean
 
 ### ✅ Completed
 
