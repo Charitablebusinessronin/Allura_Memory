@@ -35,6 +35,11 @@ import { Pool } from "pg";
 import neo4j, { Driver } from "neo4j-driver";
 import { randomUUID } from "crypto";
 import { config } from "dotenv";
+import {
+  DatabaseUnavailableError,
+  DatabaseQueryError,
+  classifyPostgresError,
+} from "@/lib/errors/database-errors";
 
 config();
 
@@ -68,6 +73,21 @@ async function getConnections(): Promise<{ pg: Pool; neo4j: Driver }> {
   }
 
   return { pg: pgPool, neo4j: neo4jDriver };
+}
+
+/**
+ * Reset cached connections. Used in tests to force reconnection
+ * after changing environment variables.
+ */
+export function resetConnections(): void {
+  if (pgPool) {
+    pgPool.end().catch(() => {});
+    pgPool = null;
+  }
+  if (neo4jDriver) {
+    neo4jDriver.close().catch(() => {});
+    neo4jDriver = null;
+  }
 }
 
 interface EpisodicMemoryRow {
@@ -242,9 +262,15 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
   
   console.log(`[DEBUG memory_add] PROMOTION_MODE=${PROMOTION_MODE}, AUTO_APPROVAL_THRESHOLD=${AUTO_APPROVAL_THRESHOLD}`);
   
-  const { pg, neo4j } = await getConnections();
-  
   // 1. Validate
+  const groupId = validateGroupId(request.group_id);
+  const memoryId = generateMemoryId();
+  const createdAt = new Date().toISOString();
+  
+  try {
+    const { pg, neo4j } = await getConnections();
+  
+  // 2. Write to PostgreSQL (episodic)
   const groupId = validateGroupId(request.group_id);
   const memoryId = generateMemoryId();
   const createdAt = new Date().toISOString();
