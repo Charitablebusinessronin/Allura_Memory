@@ -97,6 +97,10 @@ async function runCurator() {
  * which will be removed in a future version.
  */
 async function approvePromotions() {
+  // EXPLICIT RUNTIME WARNING — deprecation without a warning is not deprecation.
+  // Callers must be alerted at runtime, not just via IDE hints or CLI wrappers.
+  console.warn("[DEPRECATED] approvePromotions() is deprecated. Use POST /api/curator/approve instead. This function will be removed in a future version.");
+
   console.log("[Curator] Approving promotions...\n");
   
   const neo4jDriver = getDriver();
