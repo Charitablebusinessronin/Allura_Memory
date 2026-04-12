@@ -8,14 +8,13 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { Pool } from "pg";
-import neo4j, { Driver } from "neo4j-driver";
 import { randomUUID } from "crypto";
-import { Neo4jConnectionError, Neo4jQueryError } from "@/lib/errors/neo4j-errors";
+import { Neo4jConnectionError, Neo4jPromotionError } from "@/lib/errors/neo4j-errors";
+import { createInsight, InsightConflictError } from "@/lib/neo4j/queries/insert-insight";
 
 let pgPool: Pool | null = null;
-let neo4jDriver: Driver | null = null;
 
-async function getConnections(): Promise<{ pg: Pool; neo4j: Driver }> {
+async function getConnections(): Promise<{ pg: Pool }> {
   if (!pgPool) {
     pgPool = new Pool({
       host: process.env.POSTGRES_HOST || "localhost",
@@ -26,17 +25,7 @@ async function getConnections(): Promise<{ pg: Pool; neo4j: Driver }> {
     });
   }
 
-  if (!neo4jDriver) {
-    neo4jDriver = neo4j.driver(
-      process.env.NEO4J_URI || "bolt://localhost:7687",
-      neo4j.auth.basic(
-        process.env.NEO4J_USER || "neo4j",
-        process.env.NEO4J_PASSWORD || "password"
-      )
-    );
-  }
-
-  return { pg: pgPool, neo4j: neo4jDriver };
+  return { pg: pgPool };
 }
 
 /**
@@ -91,7 +80,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { pg, neo4j } = await getConnections();
+    const { pg } = await getConnections();
 
     // Fetch proposal
     const proposalResult = await pg.query(
@@ -120,39 +109,38 @@ export async function POST(request: NextRequest) {
     const decidedAt = new Date().toISOString();
 
     if (decision === "approve") {
-      // Promote to Neo4j
+      // Promote to Neo4j via versioned InsightHead + SUPERSEDES system
       const memoryId = randomUUID();
-      const session = neo4j.session();
 
       try {
-        try {
-          await session.run(
-            `CREATE (m:Memory {
-              id: $id,
-              group_id: $groupId,
-              content: $content,
-              score: $score,
-              provenance: 'conversation',
-              created_at: datetime($createdAt),
-              promoted_at: datetime($promotedAt),
-              promoted_by: $curator_id,
-              deprecated: false
-            })`,
-            {
-              id: memoryId,
-              groupId: group_id,
-              content: proposal.content,
-              score: proposal.score,
-              createdAt: proposal.created_at,
-              promotedAt: decidedAt,
-              curator_id,
-            }
+        await createInsight({
+          insight_id: memoryId,
+          group_id: group_id,
+          content: proposal.content,
+          confidence: parseFloat(proposal.score),
+          source_type: "promotion",
+          created_by: curator_id,
+          metadata: {
+            trace_ref: proposal.trace_ref,
+            tier: proposal.tier,
+            rationale: rationale || null,
+            proposal_id: proposal_id,
+          },
+        });
+      } catch (err) {
+        if (err instanceof InsightConflictError) {
+          return NextResponse.json(
+            { error: "Insight already promoted" },
+            { status: 409 }
           );
-        } catch (err) {
-          throw new Neo4jQueryError('CREATE Memory', err instanceof Error ? err : new Error(String(err)));
         }
-      } finally {
-        await session.close();
+        if (err instanceof Neo4jConnectionError || err instanceof Neo4jPromotionError) {
+          return NextResponse.json(
+            { error: "Neo4j unavailable — proposal queued but not promoted" },
+            { status: 503 }
+          );
+        }
+        throw err;
       }
 
       // Update proposal status
@@ -230,7 +218,7 @@ export async function POST(request: NextRequest) {
       });
     }
   } catch (error) {
-    if (error instanceof Neo4jConnectionError) {
+    if (error instanceof Neo4jConnectionError || error instanceof Neo4jPromotionError) {
       return NextResponse.json({ error: "Neo4j unavailable" }, { status: 503 });
     }
     console.error("Failed to process curator decision:", error);

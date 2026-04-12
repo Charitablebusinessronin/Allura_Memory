@@ -40,6 +40,7 @@ import {
   DatabaseQueryError,
   classifyPostgresError,
 } from "@/lib/errors/database-errors";
+import { curatorScore } from "@/lib/curator/score";
 
 config();
 
@@ -152,53 +153,6 @@ function generateMemoryId(): MemoryId {
   return randomUUID() as MemoryId;
 }
 
-// ── Scoring Engine ─────────────────────────────────────────────────────────
-
-/**
- * Score memory content for promotion eligibility.
- * 
- * Current implementation: Rule-based scoring.
- * Future: LLM-based scoring with evidence extraction.
- */
-function scoreContent(content: string): { score: number; reasoning: string; tier: "emerging" | "adoption" | "established" } {
-  // Rule-based scoring (placeholder for LLM-based scoring)
-  let score = 0.5;
-  let reasoning = "Base confidence score";
-  
-   // Length heuristic
-   if (content.length > 50) {
-     score += 0.2;
-     reasoning += "; substantial content length";
-   }
-   
-   // Specificity heuristics
-   if (content.includes("prefers") || content.includes("uses") || content.includes("works in")) {
-     score += 0.3;
-     reasoning += "; specific preference or behavior";
-   }
-   
-   // Technical content
-   if (content.includes("TypeScript") || content.includes("Next.js") || content.includes("PostgreSQL") || content.includes("VS Code") || content.includes("strict mode")) {
-     score += 0.25;
-     reasoning += "; technical specificity";
-   }
-  
-  // Cap at 1.0
-  score = Math.min(score, 1.0);
-  
-  // Determine tier
-  let tier: "emerging" | "adoption" | "established";
-  if (score >= 0.85) {
-    tier = "established";
-  } else if (score >= 0.70) {
-    tier = "adoption";
-  } else {
-    tier = "emerging";
-  }
-  
-  return { score, reasoning, tier };
-}
-
 // ── Deduplication ─────────────────────────────────────────────────────────
 
 /**
@@ -300,7 +254,13 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
   const eventId = eventResult.rows[0].id;
   
   // 3. Score content
-  const { score, reasoning, tier } = scoreContent(request.content);
+  const scoreResult = await curatorScore({
+    content: request.content,
+    source: (request.metadata?.source as "conversation" | "manually_added") || "conversation",
+    usageCount: 0,
+    daysSinceCreated: 0,
+  });
+  const { confidence: score, reasoning, tier } = scoreResult;
   const threshold = request.threshold || AUTO_APPROVAL_THRESHOLD;
   
   // 4. Check promotion eligibility
