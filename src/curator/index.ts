@@ -15,10 +15,8 @@ const COMMAND = process.argv[2] || "run";
 
 async function runCurator() {
   console.log("[Curator] Starting workflow...\n");
-  
+
   const pgPool = getPool();
-  const neo4jDriver = getDriver();
-  const session = neo4jDriver.session();
   
   try {
     // Step 1: Query PostgreSQL for unpromoted events
@@ -62,45 +60,31 @@ async function runCurator() {
     const highConfidence = scoredEvents.filter(e => e.score.confidence >= 0.7);
     console.log(`\n[Curator] ${highConfidence.length} events qualify for promotion\n`);
     
-    // Step 4: Create promotion proposals in Neo4j
+    // Step 4: Create promotion proposals in PostgreSQL canonical_proposals
     for (const event of highConfidence) {
-      try {
-        await session.run(`
-          MERGE (p:PromotionProposal {event_id: $eventId})
-          SET p.confidence = $confidence,
-              p.reasoning = $reasoning,
-              p.tier = $tier,
-              p.status = 'pending',
-              p.created_at = datetime(),
-              p.group_id = $groupId
-          RETURN p
-        `, {
-          eventId: event.id,
-          confidence: event.score.confidence,
-          reasoning: event.score.reasoning,
-          tier: event.score.tier,
-          groupId: 'allura-roninmemory'
-        });
-      } catch (err) {
-        throw new Neo4jQueryError('MERGE PromotionProposal', err instanceof Error ? err : new Error(String(err)));
-      }
-
-      console.log(`[Curator] Created proposal for event ${event.id}`);
+      await pgPool.query(
+        `INSERT INTO canonical_proposals (id, group_id, content, score, reasoning, tier, status, trace_ref, created_at)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 'pending', $6, NOW())
+         ON CONFLICT DO NOTHING`,
+        [
+          'allura-roninmemory',
+          JSON.stringify({ event_type: event.event_type, agent_id: event.agent_id, ...event.metadata }),
+          event.score.confidence,
+          event.score.reasoning,
+          event.score.tier,
+          event.id,
+        ]
+      );
+      console.log(`[Curator] Queued proposal for event ${event.id} in canonical_proposals`);
     }
     
     console.log("\n[Curator] Workflow complete!");
-    console.log("[Curator] Run 'bun src/curator/index.ts approve' to approve promotions");
+    console.log("[Curator] Run POST /api/curator/approve to approve promotions");
     
   } catch (error) {
-    if (error instanceof Neo4jConnectionError) {
-      console.error("[Curator] Neo4j connection failed:", error.message);
-    } else {
-      console.error("[Curator] Error:", error);
-    }
+    console.error("[Curator] Error:", error);
     process.exit(1);
   } finally {
-    await session.close();
-    await closeDriver();
     await closePool();
   }
 }
