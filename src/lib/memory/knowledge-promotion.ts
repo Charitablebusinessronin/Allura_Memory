@@ -15,6 +15,7 @@
 import type { Pool } from 'pg';
 import { getPool } from '../postgres/connection';
 import { createInsight, createInsightVersion, type InsightRecord } from '../neo4j/queries/insert-insight';
+import { Neo4jPromotionError } from '../errors/neo4j-errors';
 import { insertEvent, type EventRecord } from '../postgres/queries/insert-trace';
 
 // ============================================================================
@@ -181,20 +182,25 @@ export async function promoteToNeo4j(insight: KnowledgeInsight): Promise<string>
 
   let record: InsightRecord;
 
-  if (insight.supersedes_id) {
-    // Create new version (supersedes existing)
-    console.log('[knowledge-promotion] Creating new version superseding:', insight.supersedes_id);
-    record = await createInsightVersion(
-      insight.id,
-      insight.content,
-      insight.confidence,
-      insight.group_id,
-      insightPayload.metadata
-    );
-  } else {
-    // Create new insight (version 1)
-    console.log('[knowledge-promotion] Creating new insight:', insight.id);
-    record = await createInsight(insightPayload);
+  try {
+    if (insight.supersedes_id) {
+      // Create new version (supersedes existing)
+      console.log('[knowledge-promotion] Creating new version superseding:', insight.supersedes_id);
+      record = await createInsightVersion(
+        insight.id,
+        insight.content,
+        insight.confidence,
+        insight.group_id,
+        insightPayload.metadata
+      );
+    } else {
+      // Create new insight (version 1)
+      console.log('[knowledge-promotion] Creating new insight:', insight.id);
+      record = await createInsight(insightPayload);
+    }
+  } catch (err) {
+    if (err instanceof Neo4jPromotionError) throw err;
+    throw new Neo4jPromotionError(insight.id, err instanceof Error ? err : new Error(String(err)));
   }
 
   console.log('[knowledge-promotion] Neo4j promotion complete:', {
