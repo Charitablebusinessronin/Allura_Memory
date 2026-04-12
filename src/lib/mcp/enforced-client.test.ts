@@ -42,11 +42,11 @@ describe("EnforcedMcpClient", () => {
       expect(() => new EnforcedMcpClient("allura-default", mockClient)).not.toThrow();
     });
 
-    it("should accept valid lowercase group_id without allura prefix", () => {
+    it("should reject group_id without allura prefix (Issue #7)", () => {
       const mockClient = { callTool: vi.fn().mockResolvedValue({}) } as McpToolCaller;
-      expect(() => new EnforcedMcpClient("my-project", mockClient)).not.toThrow();
-      expect(() => new EnforcedMcpClient("project123", mockClient)).not.toThrow();
-      expect(() => new EnforcedMcpClient("test_workspace", mockClient)).not.toThrow();
+      expect(() => new EnforcedMcpClient("my-project", mockClient)).toThrow(GroupIdValidationError);
+      expect(() => new EnforcedMcpClient("project123", mockClient)).toThrow(GroupIdValidationError);
+      expect(() => new EnforcedMcpClient("test_workspace", mockClient)).toThrow(GroupIdValidationError);
     });
 
     it("should reject null group_id", () => {
@@ -102,9 +102,9 @@ describe("EnforcedMcpClient", () => {
       expect(client.getGroupId()).toBe("allura-default");
     });
 
-    it("should accept two-character minimum group_id", () => {
+    it("should reject group_id shorter than allura-X (Issue #7)", () => {
       mockInner.callTool = vi.fn().mockResolvedValue({});
-      expect(() => new EnforcedMcpClient("ab", mockInner)).not.toThrow();
+      expect(() => new EnforcedMcpClient("ab", mockInner)).toThrow(GroupIdValidationError);
     });
   });
 
@@ -355,13 +355,13 @@ describe("EnforcedMcpClient", () => {
       ).rejects.toThrow("Inner client error during call");
     });
 
-    it("should allow reserved IDs (global, system, admin, public)", () => {
-      // Note: This tests whether EnforcedMcpClient allows reserved IDs
-      // The groupIdEnforcer may have different behavior for reserved IDs
-      expect(() => new EnforcedMcpClient("global", mockInner)).not.toThrow();
-      expect(() => new EnforcedMcpClient("system", mockInner)).not.toThrow();
-      expect(() => new EnforcedMcpClient("admin", mockInner)).not.toThrow();
-      expect(() => new EnforcedMcpClient("public", mockInner)).not.toThrow();
+    it("should reject reserved IDs without allura prefix (Issue #7)", () => {
+      // After Issue #7, all group_ids must match ^allura-
+      // Reserved IDs like "global", "system" are no longer accepted as bare strings
+      expect(() => new EnforcedMcpClient("global", mockInner)).toThrow(GroupIdValidationError);
+      expect(() => new EnforcedMcpClient("system", mockInner)).toThrow(GroupIdValidationError);
+      expect(() => new EnforcedMcpClient("admin", mockInner)).toThrow(GroupIdValidationError);
+      expect(() => new EnforcedMcpClient("public", mockInner)).toThrow(GroupIdValidationError);
     });
   });
 
@@ -372,16 +372,20 @@ describe("EnforcedMcpClient", () => {
   describe("reserved vs tenant ID handling", () => {
     it("should distinguish between reserved IDs and tenant IDs", () => {
       const tenantClient = new EnforcedMcpClient("allura-faith-meats", mockInner);
-      const reservedClient = new EnforcedMcpClient("global", mockInner);
+      // Reserved IDs must now use allura- prefix (Issue #7)
+      expect(() => new EnforcedMcpClient("global", mockInner)).toThrow(GroupIdValidationError);
+      // allura-prefixed reserved IDs are valid
+      const reservedClient = new EnforcedMcpClient("allura-global", mockInner);
 
       expect(tenantClient.getGroupId()).toBe("allura-faith-meats");
-      expect(reservedClient.getGroupId()).toBe("global");
+      expect(reservedClient.getGroupId()).toBe("allura-global");
     });
 
-    it("should allow tenant ID with 'global' substring", () => {
-      // This should be allowed - 'global' is a reserved word, but 'global-project' is not
-      // However, this may depend on implementation - adjust based on actual requirements
-      expect(() => new EnforcedMcpClient("global-project", mockInner)).not.toThrow();
+    it("should reject tenant ID with 'global' substring but without allura prefix (Issue #7)", () => {
+      // After Issue #7, all group_ids must match ^allura-
+      expect(() => new EnforcedMcpClient("global-project", mockInner)).toThrow(GroupIdValidationError);
+      // But allura-prefixed is fine
+      expect(() => new EnforcedMcpClient("allura-global-project", mockInner)).not.toThrow();
     });
 
     it("should enforce allura-* prefix for production workspaces", () => {
