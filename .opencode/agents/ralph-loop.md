@@ -165,6 +165,26 @@ Before marking complete:
 - `bun run typecheck` passes
 - `bun test` passes
 - All acceptance criteria verified
+- Invariant sweep passes (see `.ralph/invariant-sweep.json`)
+
+### Invariant Sweep (Post-Change)
+
+Any change touching `group_id`, `canonical_proposals`, or approval paths must
+pass the sweep defined in `.ralph/invariant-sweep.json` before the loop marks
+complete. The sweep runs these test files:
+
+| File | What it guards |
+|------|---------------|
+| `src/lib/mcp/enforced-client.test.ts` | groupIdEnforcer wiring in MCP ops |
+| `src/integrations/mcp.client.test.ts` | MCP client group_id propagation |
+| `src/lib/validation/trace-ref.test.ts` | canonical_proposals trace_ref integrity |
+| `src/lib/validation/group-governance.test.ts` | ^allura- enforcement + tenant isolation |
+
+Key invariants checked:
+- **INV-001**: `approvePromotions()` must emit explicit runtime warning when called
+- **INV-002**: `canonical_proposals` used exactly — no `proposals` alias
+- **INV-003**: `^allura-` group_id prefix enforced on all DB operations
+- **INV-004**: `/api/curator/approve` is the sole operational approval door
 
 ## Troubleshooting
 
