@@ -6,7 +6,12 @@ import { execSync } from 'child_process';
 const BASE_PATH = '/home/ronin704/.openclaw/workspace/projects/sabir-ai-os/_bmad';
 const TEST_AGENT = 'test-agent-story-6-1';
 
-describe('Agent Generator (Story 6.1)', () => {
+// Pre-Phase-4 baseline — tracked in docs/deferred/pre-existing-failures.md
+// Reason: uses hardcoded filesystem paths (/home/ronin704/.openclaw/...) and execSync
+// to call npm scripts on a different project; paths don't exist in CI/test environments
+const shouldRunGenerator = process.env.RUN_GENERATOR_INTEGRATION === "true";
+
+describe.skipIf(!shouldRunGenerator)('Agent Generator (Story 6.1)', () => {
   beforeEach(() => {
     // Clean up any test agent before each test
     cleanupTestAgent();
