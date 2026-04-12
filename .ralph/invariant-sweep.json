@@ -24,11 +24,11 @@
   "invariants": [
     {
       "id": "INV-001",
-      "description": "approvePromotions() must emit an explicit runtime warning when called",
-      "checkCommand": "grep -c 'console.warn.*deprecated\\|console.warn.*DEPRECATED' src/curator/index.ts",
-      "expectedResult": ">=1",
+      "description": "approvePromotions() must throw DeprecatedApprovalPathError in operational context (no env flags)",
+      "checkCommand": "grep -c 'DeprecatedApprovalPathError' src/curator/index.ts",
+      "expectedResult": ">=2",
       "enforcedSince": "2026-04-12",
-      "rationale": "Deprecation without a runtime warning is not deprecation. Callers must be alerted at runtime, not just IDE hints."
+      "rationale": "The legacy approval path must be hard-blocked. Only POST /api/curator/approve may approve proposals. MIGRATION_MODE or DEBUG_LEGACY bypass for explicit migration/debug only."
     },
     {
       "id": "INV-002",
