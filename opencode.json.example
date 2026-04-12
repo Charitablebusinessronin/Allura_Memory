@@ -1,0 +1,108 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "anthropic/claude-sonnet-4-20250514",
+  "autoupdate": true,
+  "agent": {
+    "brooks-architect": {
+      "description": "PRIMARY — System Architect + Technical Design Leader. Preserves conceptual integrity at scale.",
+      "mode": "primary",
+      "permission": {
+        "edit": "allow",
+        "bash": "allow",
+        "webfetch": "allow",
+        "skill": { "*": "allow" },
+        "task": {
+          "brooks-architect": "allow",
+          "jobs-intent-gate": "allow",
+          "fowler-refactor-gate": "allow",
+          "pike-interface-review": "allow",
+          "scout-recon": "allow",
+          "bellard-diagnostics-perf": "allow",
+          "dijkstra-review": "allow",
+          "knuth-analyze": "allow",
+          "woz-builder": "allow",
+          "explore": "allow",
+          "general": "allow"
+        }
+      }
+    },
+    "jobs-intent-gate": {
+      "description": "PRIMARY — Intent Gate + scope owner. Converts requests into crisp objectives.",
+      "mode": "primary",
+      "permission": {
+        "edit": "ask",
+        "bash": "ask",
+        "webfetch": "allow",
+        "skill": { "*": "allow" },
+        "task": {
+          "brooks-architect": "allow",
+          "scout-recon": "allow",
+          "explore": "allow",
+          "general": "allow"
+        }
+      }
+    },
+    "scout-recon": {
+      "description": "UTILITY — Recon + discovery. Fast repo scanning, pattern grep, config discovery.",
+      "mode": "subagent",
+      "hidden": true,
+      "permission": {
+        "edit": "deny",
+        "bash": { "git *": "allow", "grep*": "allow", "find*": "allow", "rg*": "allow", "cat*": "allow", "ls*": "allow", "*": "deny" },
+        "webfetch": "allow",
+        "skill": { "*": "allow" }
+      }
+    },
+    "fowler-refactor-gate": {
+      "description": "SPECIALIST — Maintainability gate. Ensures changes are incremental, reversible, and don't add debt.",
+      "mode": "subagent",
+      "permission": { "edit": "allow", "bash": { "git diff*": "allow", "git log*": "allow", "bun vitest*": "allow", "npm run lint*": "allow", "npm run typecheck*": "allow", "*": "ask" }, "webfetch": "deny", "skill": { "*": "allow" } }
+    },
+    "pike-interface-review": {
+      "description": "SPECIALIST — Interface + simplicity gate. Reviews surface area, concurrency hazards, and API ergonomics.",
+      "mode": "subagent",
+      "permission": { "edit": "deny", "bash": { "git diff*": "allow", "git log*": "allow", "grep*": "allow", "*": "deny" }, "webfetch": "deny", "skill": { "*": "allow" } }
+    },
+    "ralph-loop": {
+      "description": "Harness wrapper for ralph CLI. Wraps any AI coding agent in a self-correcting loop.",
+      "mode": "subagent",
+      "model": "ollama-cloud/glm-5.1",
+      "permission": { "edit": "allow", "bash": "allow", "webfetch": "allow", "skill": { "*": "allow" } }
+    },
+    "bellard-diagnostics-perf": {
+      "description": "SPECIALIST — Performance + deep diagnostics. Measurement-first.",
+      "mode": "subagent",
+      "permission": { "edit": "deny", "bash": { "bun vitest*": "allow", "node --prof*": "allow", "npm run benchmark*": "allow", "*": "ask" }, "webfetch": "deny", "skill": { "*": "allow" } }
+    },
+    "dijkstra-review": {
+      "description": "SPECIALIST — Code review. Structural correctness, simplicity, elegant solutions.",
+      "mode": "subagent",
+      "permission": { "edit": "deny", "bash": { "git diff*": "allow", "git log*": "allow", "grep*": "allow", "*": "deny" }, "webfetch": "deny", "skill": { "*": "allow" } }
+    },
+    "knuth-analyze": {
+      "description": "SPECIALIST — Deep analysis. Algorithmic complexity, literate programming.",
+      "mode": "subagent",
+      "permission": { "edit": "deny", "bash": { "git diff*": "allow", "git log*": "allow", "grep*": "allow", "*": "deny" }, "webfetch": "deny", "skill": { "*": "allow" } }
+    },
+    "woz-builder": {
+      "description": "SUBAGENT — Primary builder. Implements the Brooks plan with minimal ceremony.",
+      "mode": "subagent",
+      "permission": { "edit": "allow", "bash": "allow", "webfetch": "allow", "skill": { "*": "allow" } }
+    }
+  },
+  "mcp": {
+    "notion-remote": {
+      "type": "remote",
+      "url": "https://mcp.notion.com/mcp",
+      "required_secrets": ["notion.internal_integration_token"],
+      "env": {
+        "NOTION_INTERNAL_INTEGRATION_TOKEN": "{env:NOTION_INTERNAL_INTEGRATION_TOKEN}"
+      }
+    },
+    "database-server": {
+      "type": "streamable-http",
+      "url": "http://allura-memory-mcp:3000/mcp",
+      "description": "Allura Brain — PostgreSQL + Neo4j via MCP Docker database-server"
+    }
+  }
+}
