@@ -1,5 +1,7 @@
 /**
  * Tests for State Hydrator
+ * Requires filesystem access.
+ * Run with: RUN_E2E_TESTS=true bun vitest run src/lib/session/state-hydrator.test.ts
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -7,7 +9,9 @@ import fs from 'fs/promises';
 import path from 'path';
 import { StateHydrator, createStateHydrator, type SessionState } from './state-hydrator';
 
-describe('StateHydrator', () => {
+const shouldRunE2E = process.env.RUN_E2E_TESTS === "true";
+
+describe.skipIf(!shouldRunE2E)('StateHydrator', () => {
   let hydrator: StateHydrator;
   const testStateDir = '.opencode/state/sessions-test';
   const testMemoryBankDir = 'memory-bank-test';

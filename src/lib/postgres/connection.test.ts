@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { getPool, getConnectionConfig, closePool } from "./connection";
 
+/**
+ * PostgreSQL Connection Layer tests
+ * Unit tests (getConnectionConfig) run without PostgreSQL.
+ * Integration tests (getPool, closePool, Pool Error Handling) require running PostgreSQL.
+ */
+
+const shouldRunE2E = process.env.RUN_E2E_TESTS === "true";
+
 describe("PostgreSQL Connection Layer", () => {
   beforeAll(async () => {
     // Ensure environment is configured for tests
@@ -13,7 +21,11 @@ describe("PostgreSQL Connection Layer", () => {
 
   afterAll(async () => {
     // Clean up pool after all tests
-    await closePool();
+    try {
+      await closePool();
+    } catch {
+      // Pool may not be initialized if tests were skipped
+    }
   });
 
   describe("getConnectionConfig", () => {
@@ -54,7 +66,7 @@ describe("PostgreSQL Connection Layer", () => {
     });
   });
 
-  describe("getPool", () => {
+  describe.skipIf(!shouldRunE2E)("getPool", () => {
     it("should return a singleton Pool instance", () => {
       const pool1 = getPool();
       const pool2 = getPool();
@@ -73,7 +85,7 @@ describe("PostgreSQL Connection Layer", () => {
     });
   });
 
-  describe("closePool", () => {
+  describe.skipIf(!shouldRunE2E)("closePool", () => {
     it("should close the pool and allow reconnection", async () => {
       const pool1 = getPool();
 

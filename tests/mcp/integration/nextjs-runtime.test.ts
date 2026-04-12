@@ -6,9 +6,13 @@ import { nextjs_runtime } from "@mcp-docker/next-devtools";
  * 
  * These tests verify Next.js runtime behavior and build configuration
  * using the Next DevTools MCP server.
+ * 
+ * Run with: RUN_INTEGRATION_TESTS=true bun vitest run tests/mcp/integration/nextjs-runtime.test.ts
  */
 
-describe("Next.js Integration", () => {
+const shouldRunIntegration = process.env.RUN_INTEGRATION_TESTS === "true";
+
+describe.skipIf(!shouldRunIntegration)("Next.js Integration", () => {
   describe("Runtime Information", () => {
     it("should return valid runtime info", async () => {
       const runtime = await nextjs_runtime({});
@@ -39,8 +43,10 @@ describe("Next.js Integration", () => {
  * Health Check Tests
  * 
  * Verify the application health endpoints are responding correctly.
+ * Requires a running Next.js server.
+ * Run with: RUN_INTEGRATION_TESTS=true bun vitest run tests/mcp/integration/nextjs-runtime.test.ts
  */
-describe("Health Check Integration", () => {
+describe.skipIf(!shouldRunIntegration)("Health Check Integration", () => {
   const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   it("should respond to health check endpoint", async () => {

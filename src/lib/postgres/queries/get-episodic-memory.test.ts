@@ -15,8 +15,12 @@ import { insertEvent, type EventInsert } from "./insert-trace";
 /**
  * Test suite for episodic memory retrieval
  * Tests tenant isolation, time windows, pagination, and summary formatting
+ * Requires a running PostgreSQL instance.
+ * Run with: RUN_E2E_TESTS=true bun vitest run src/lib/postgres/queries/get-episodic-memory.test.ts
  */
-describe("get-episodic-memory", () => {
+const shouldRunE2E = process.env.RUN_E2E_TESTS === "true";
+
+describe.skipIf(!shouldRunE2E)("get-episodic-memory", () => {
   // Test data
   const testGroupId = "test-episodic-group";
   const otherGroupId = "other-group-isolation-test";
