@@ -134,6 +134,7 @@ describe("Canonical Memory Operations", () => {
       const originalNeo4jUri = process.env.NEO4J_URI;
       process.env.PROMOTION_MODE = "auto";
       process.env.NEO4J_URI = "bolt://127.0.0.1:1";
+      resetConnections(); // Force Neo4j driver to reconnect with bad URI
 
       try {
         const response = await memory_add({
@@ -150,6 +151,7 @@ describe("Canonical Memory Operations", () => {
       } finally {
         process.env.PROMOTION_MODE = originalMode;
         process.env.NEO4J_URI = originalNeo4jUri;
+        resetConnections(); // Restore working connections
       }
     });
 
