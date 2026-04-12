@@ -1,12 +1,20 @@
 # Active Context — Brooks Architect Persona
 
-**Session**: 2026-04-12 (Phase 2 Complete → Phase 3 Foundation)
-**Status**: ✅ PHASE 2 CLEAN + PHASE 3 FOUNDATION LAID | Typecheck clean | 1035/1206 tests passing
-**Session Close**: 2026-04-12
+**Session**: 2026-04-12c (Phase 3 Foundation Validation)
+**Status**: ✅ PHASE 3 FOUNDATION VALIDATED | Typecheck clean | 5 fewer false failures | milestone reached
 
 ## Current Focus
 
-**Phase 2 cleanup COMPLETE (ratchet tightened). Phase 3 foundation laid (ADR, watchdog, notion-sync). ^allura- enforcement cascaded through test suite — 34 net new passing tests. Remaining 147 failures are pre-existing (kernel, browser, integration).**
+**Phase 3 foundation validated. All 5 surgical tasks complete. Milestone: "Phase 3 foundation validated"**
+
+### What Changed This Session
+
+1. `canonical-memory.test.ts`: 5 live-DB tests gated behind `RUN_E2E_TESTS` (skip locally, run in CI)
+2. GitHub Issue #15 filed: kernel mutate-events pre-existing debt
+3. `.ralph/invariant-sweep.json`: 4 sweep files + 4 invariants (including INV-001: approvePromotions warning)
+4. Neo4j `SessionReflection` node: `allura-phase2-close-arch-walk` (Phase 2 close audit gap closed)
+5. `approvePromotions()` now emits explicit runtime warning when called programmatically
+6. Watchdog validated manually: 78 proposals in `canonical_proposals`, zero in `proposals`
 
 ## Issues on the Board
 
