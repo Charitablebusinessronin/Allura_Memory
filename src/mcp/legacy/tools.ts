@@ -17,7 +17,7 @@ import { getPool } from "../../lib/postgres/connection.js";
 const MemorySearchRequest = z.object({
   query: z.string().describe("Search query for full-text search"),
   type: z.enum(["insight", "entity", "decision", "pattern"]).optional(),
-  group_id: z.string().regex(/^allura-[a-z0-9-]+$/, 'group_id must match pattern: allura-* (e.g. allura-myproject)').describe("Tenant/project identifier"),
+  group_id: z.string().regex(/^allura-[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/, 'group_id must match pattern: allura-* (e.g. allura-myproject)').describe("Tenant/project identifier"),
   limit: z.number().optional().default(50),
 });
 
@@ -26,7 +26,7 @@ const MemoryStoreRequest = z.object({
   title: z.string(),
   content: z.string(),
   type: z.enum(["insight", "entity", "decision", "pattern"]),
-  group_id: z.string().regex(/^allura-[a-z0-9-]+$/, 'group_id must match pattern: allura-* (e.g. allura-myproject)'),
+  group_id: z.string().regex(/^allura-[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/, 'group_id must match pattern: allura-* (e.g. allura-myproject)'),
   confidence: z.number().min(0).max(1).optional().default(0.8),
   evidence: z.array(z.string()).optional(),
 });
@@ -35,11 +35,11 @@ const ADASRunSearchRequest = z.object({
   domain: z.string().describe("Domain to search"),
   objective: z.string().optional().describe("Specific objective"),
   maxIterations: z.number().optional().default(10),
-  group_id: z.string().regex(/^allura-[a-z0-9-]+$/, 'group_id must match pattern: allura-* (e.g. allura-myproject)'),
+  group_id: z.string().regex(/^allura-[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/, 'group_id must match pattern: allura-* (e.g. allura-myproject)'),
 });
 
 const ADASGetProposalsRequest = z.object({
-  group_id: z.string().regex(/^allura-[a-z0-9-]+$/, 'group_id must match pattern: allura-* (e.g. allura-myproject)'),
+  group_id: z.string().regex(/^allura-[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/, 'group_id must match pattern: allura-* (e.g. allura-myproject)'),
   status: z.enum(["pending", "approved", "rejected", "all"]).optional().default("pending"),
   limit: z.number().optional().default(20),
 });
@@ -49,7 +49,7 @@ const ADASApproveDesignRequest = z.object({
   decision: z.enum(["approve", "reject"]),
   rationale: z.string().describe("Reason for decision"),
   approvedBy: z.string().describe("Person or system making decision"),
-  group_id: z.string().regex(/^allura-[a-z0-9-]+$/, 'group_id must match pattern: allura-* (e.g. allura-myproject)'),
+  group_id: z.string().regex(/^allura-[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/, 'group_id must match pattern: allura-* (e.g. allura-myproject)'),
 });
 
 // Tool handlers

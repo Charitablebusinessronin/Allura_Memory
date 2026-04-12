@@ -5,32 +5,14 @@
  * Provides type-safe methods for common MCP operations while ensuring tenant isolation.
  * 
  * Architecture:
- * - Validates group_id at construction time
+ * - Validates group_id at construction time using canonical validateGroupId
+ * - ARCH-001: Enforces ^allura-[a-z0-9-]+$ pattern at all entry points
  * - Wraps McpToolCaller with enforced groupId
  * - Provides type-safe interfaces for common operations
  */
 
 import { validateGroupId, GroupIdValidationError } from '@/lib/validation/group-id';
 import type { McpToolCaller } from '@/integrations/mcp.client';
-
-/**
- * ALLURA_PREFIX - Required for all tenant IDs
- * ARCH-001: Enforce allura-* naming convention for tenant isolation
- */
-const ALLURA_PREFIX = 'allura-';
-
-/**
- * Validate that group_id follows allura-* naming convention
- * ARCH-001 compliance
- */
-function validateAlluraPrefix(groupId: string): void {
-  if (!groupId.startsWith(ALLURA_PREFIX)) {
-    throw new GroupIdValidationError(
-      `group_id must use allura-* format (found: '${groupId}'). ` +
-      `Example: allura-faith-meats`
-    );
-  }
-}
 
 /**
  * Common parameter types for MCP operations
@@ -102,12 +84,8 @@ export class EnforcedMcpClient implements McpToolCaller {
   private readonly innerClient: McpToolCaller;
 
   constructor(groupId: string, innerClient: McpToolCaller) {
-    // Validate group_id format (lowercase, length, etc.)
+    // ARCH-001: validateGroupId now enforces ^allura- prefix
     this.groupId = validateGroupId(groupId);
-    
-    // ARCH-001: Enforce allura-* naming convention
-    validateAlluraPrefix(this.groupId);
-    
     this.innerClient = innerClient;
   }
 

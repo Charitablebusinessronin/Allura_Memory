@@ -21,6 +21,9 @@ import {
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 
+// ARCH-001: Use canonical validateGroupId which enforces ^allura- prefix
+import { validateGroupId } from "@/lib/validation/group-id";
+
 import { Pool } from "pg";
 import neo4j, { Driver } from "neo4j-driver";
 import { config } from "dotenv";
@@ -121,16 +124,6 @@ function canonicalToDisplay(canonicalTags: string[]): string[] {
   return canonicalTags
     .map(t => getDisplayTag(t))
     .filter((t): t is string => t !== null);
-}
-
-/**
- * Validate that a group_id matches canonical tag format
- */
-function validateGroupId(groupId: string): string {
-  if (!groupId || !/^allura-[a-z0-9-]+$/.test(groupId)) {
-    throw new Error(`Invalid group_id: "${groupId}". Must match pattern: allura-* (e.g. allura-myproject)`);
-  }
-  return groupId;
 }
 
 // Insight Lifecycle Statuses

@@ -28,12 +28,15 @@ const ALLURA_PREFIX = "allura-";
 
 /**
  * Validate that group_id follows allura-* naming convention
- * ARCH-001 compliance
- * 
- * @param groupId - Group ID to validate
+ * ARCH-001 compliance — now enforced directly by validateGroupId
+ *
+ * @param groupId - Group ID to validate (already validated by validateGroupId)
  * @throws GroupIdValidationError if invalid format
+ * @deprecated Use validateGroupId directly — it now enforces the allura- prefix
  */
 export function validateAlluraPrefix(groupId: string): void {
+  // ARCH-001: validateGroupId now enforces allura- prefix, so this is a no-op
+  // Kept for backward compatibility — will be removed in future cleanup
   if (!groupId.startsWith(ALLURA_PREFIX)) {
     throw new GroupIdValidationError(
       `group_id must use allura-* format (found: '${groupId}'). ` +
@@ -44,21 +47,18 @@ export function validateAlluraPrefix(groupId: string): void {
 
 /**
  * Validate group_id for kernel operations
- * 
+ *
  * Combines existing validateGroupId() with allura-* prefix check.
- * 
+ * ARCH-001: validateGroupId now enforces the prefix, so this is
+ * effectively a passthrough but kept for explicitness.
+ *
  * @param groupId - Group ID to validate
  * @returns Validated group_id
  * @throws GroupIdValidationError if invalid
  */
 export function validateTenantIsolation(groupId: string): string {
-  // First validate general format (lowercase, length, etc.)
-  const validated = validateGroupId(groupId);
-  
-  // Then enforce allura-* naming convention
-  validateAlluraPrefix(validated);
-  
-  return validated;
+  // validateGroupId now enforces ^allura- prefix (ARCH-001)
+  return validateGroupId(groupId);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

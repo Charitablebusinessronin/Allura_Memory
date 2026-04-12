@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { Pool } from "pg";
+import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
 
 let pgPool: Pool | null = null;
 
@@ -46,12 +47,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Validate group_id format
-    if (!groupId.startsWith("allura-")) {
-      return NextResponse.json(
-        { error: "Invalid group_id. Must match pattern: allura-*" },
-        { status: 400 }
-      );
+    // Validate group_id format (ARCH-001: enforces allura-* pattern)
+    let validatedGroupId: string;
+    try {
+      validatedGroupId = validateGroupId(groupId);
+    } catch (error) {
+      if (error instanceof GroupIdValidationError) {
+        return NextResponse.json(
+          { error: `Invalid group_id: ${error.message}` },
+          { status: 400 }
+        );
+      }
+      throw error;
     }
 
     const pool = await getPool();
@@ -68,7 +75,7 @@ export async function GET(request: NextRequest) {
         ORDER BY score DESC, created_at DESC
         LIMIT $2
       `;
-      params = [groupId, limit];
+      params = [validatedGroupId, limit];
     } else {
       query = `
         SELECT id, group_id, content, score, reasoning, tier, status, trace_ref, created_at
@@ -77,7 +84,7 @@ export async function GET(request: NextRequest) {
         ORDER BY score DESC, created_at DESC
         LIMIT $3
       `;
-      params = [groupId, status, limit];
+      params = [validatedGroupId, status, limit];
     }
 
     const result = await pool.query(query, params);

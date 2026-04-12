@@ -178,7 +178,7 @@ describe("Suite 1 — tools.ts Zod group_id validation", () => {
 // all Zod schemas in tools.ts: /^allura-[a-z0-9-]+$/
 // ---------------------------------------------------------------------------
 
-const ALLURA_REGEX = /^allura-[a-z0-9-]+$/;
+const ALLURA_REGEX = /^allura-[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
 
 describe("Suite 2 — group_id invariant (allura-* namespace)", () => {
   const VALID = ["allura-roninmemory", "allura-test", "allura-project-123"];
