@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Pool } from "pg";
 import neo4j, { Driver } from "neo4j-driver";
 import { randomUUID } from "crypto";
+import { Neo4jConnectionError, Neo4jQueryError } from "@/lib/errors/neo4j-errors";
 
 let pgPool: Pool | null = null;
 let neo4jDriver: Driver | null = null;
@@ -124,28 +125,32 @@ export async function POST(request: NextRequest) {
       const session = neo4j.session();
 
       try {
-        await session.run(
-          `CREATE (m:Memory {
-            id: $id,
-            group_id: $groupId,
-            content: $content,
-            score: $score,
-            provenance: 'conversation',
-            created_at: datetime($createdAt),
-            promoted_at: datetime($promotedAt),
-            promoted_by: $curator_id,
-            deprecated: false
-          })`,
-          {
-            id: memoryId,
-            groupId: group_id,
-            content: proposal.content,
-            score: proposal.score,
-            createdAt: proposal.created_at,
-            promotedAt: decidedAt,
-            curator_id,
-          }
-        );
+        try {
+          await session.run(
+            `CREATE (m:Memory {
+              id: $id,
+              group_id: $groupId,
+              content: $content,
+              score: $score,
+              provenance: 'conversation',
+              created_at: datetime($createdAt),
+              promoted_at: datetime($promotedAt),
+              promoted_by: $curator_id,
+              deprecated: false
+            })`,
+            {
+              id: memoryId,
+              groupId: group_id,
+              content: proposal.content,
+              score: proposal.score,
+              createdAt: proposal.created_at,
+              promotedAt: decidedAt,
+              curator_id,
+            }
+          );
+        } catch (err) {
+          throw new Neo4jQueryError('CREATE Memory', err instanceof Error ? err : new Error(String(err)));
+        }
       } finally {
         await session.close();
       }
@@ -225,6 +230,9 @@ export async function POST(request: NextRequest) {
       });
     }
   } catch (error) {
+    if (error instanceof Neo4jConnectionError) {
+      return NextResponse.json({ error: "Neo4j unavailable" }, { status: 503 });
+    }
     console.error("Failed to process curator decision:", error);
     return NextResponse.json(
       { error: "Failed to process curator decision" },

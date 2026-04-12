@@ -1,5 +1,6 @@
 import neo4j, { Driver, Session, ManagedTransaction } from "neo4j-driver";
 import { env } from "process";
+import { Neo4jConnectionError, Neo4jQueryError } from "../errors/neo4j-errors";
 
 export { ManagedTransaction };
 
@@ -153,8 +154,19 @@ export async function readTransaction<T>(
   const driver = getDriver();
   const session = driver.session({ database: database || "neo4j" });
   
+  const NEO4J_DRIVER_ERRORS = new Set(['ServiceUnavailableError', 'SessionExpiredError', 'AuthorizationExpiredError', 'Neo4jError']);
   try {
     return await session.executeRead(work);
+  } catch (err) {
+    // Re-throw app-level errors untouched
+    if (err instanceof Error && !NEO4J_DRIVER_ERRORS.has(err.name)) {
+      throw err;
+    }
+    const cause = err instanceof Error ? err : new Error(String(err));
+    if (err instanceof Error && ['ServiceUnavailableError', 'SessionExpiredError', 'AuthorizationExpiredError'].includes(err.name)) {
+      throw new Neo4jConnectionError(cause);
+    }
+    throw new Neo4jQueryError('readTransaction', cause);
   } finally {
     await session.close();
   }
@@ -173,8 +185,19 @@ export async function writeTransaction<T>(
   const driver = getDriver();
   const session = driver.session({ database: database || "neo4j" });
   
+  const NEO4J_DRIVER_ERRORS = new Set(['ServiceUnavailableError', 'SessionExpiredError', 'AuthorizationExpiredError', 'Neo4jError']);
   try {
     return await session.executeWrite(work);
+  } catch (err) {
+    // Re-throw app-level errors untouched
+    if (err instanceof Error && !NEO4J_DRIVER_ERRORS.has(err.name)) {
+      throw err;
+    }
+    const cause = err instanceof Error ? err : new Error(String(err));
+    if (err instanceof Error && ['ServiceUnavailableError', 'SessionExpiredError', 'AuthorizationExpiredError'].includes(err.name)) {
+      throw new Neo4jConnectionError(cause);
+    }
+    throw new Neo4jQueryError('writeTransaction', cause);
   } finally {
     await session.close();
   }

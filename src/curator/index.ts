@@ -9,6 +9,7 @@
 import { getPool, closePool } from "../lib/postgres/connection";
 import { getDriver, closeDriver } from "../lib/neo4j/connection";
 import { curatorScore } from "../lib/curator/score";
+import { Neo4jQueryError, Neo4jConnectionError } from "../lib/errors/neo4j-errors";
 
 const COMMAND = process.argv[2] || "run";
 
@@ -63,23 +64,27 @@ async function runCurator() {
     
     // Step 4: Create promotion proposals in Neo4j
     for (const event of highConfidence) {
-      await session.run(`
-        MERGE (p:PromotionProposal {event_id: $eventId})
-        SET p.confidence = $confidence,
-            p.reasoning = $reasoning,
-            p.tier = $tier,
-            p.status = 'pending',
-            p.created_at = datetime(),
-            p.group_id = $groupId
-        RETURN p
-      `, {
-        eventId: event.id,
-        confidence: event.score.confidence,
-        reasoning: event.score.reasoning,
-        tier: event.score.tier,
-        groupId: 'allura-roninmemory'
-      });
-      
+      try {
+        await session.run(`
+          MERGE (p:PromotionProposal {event_id: $eventId})
+          SET p.confidence = $confidence,
+              p.reasoning = $reasoning,
+              p.tier = $tier,
+              p.status = 'pending',
+              p.created_at = datetime(),
+              p.group_id = $groupId
+          RETURN p
+        `, {
+          eventId: event.id,
+          confidence: event.score.confidence,
+          reasoning: event.score.reasoning,
+          tier: event.score.tier,
+          groupId: 'allura-roninmemory'
+        });
+      } catch (err) {
+        throw new Neo4jQueryError('MERGE PromotionProposal', err instanceof Error ? err : new Error(String(err)));
+      }
+
       console.log(`[Curator] Created proposal for event ${event.id}`);
     }
     
@@ -87,7 +92,11 @@ async function runCurator() {
     console.log("[Curator] Run 'bun src/curator/index.ts approve' to approve promotions");
     
   } catch (error) {
-    console.error("[Curator] Error:", error);
+    if (error instanceof Neo4jConnectionError) {
+      console.error("[Curator] Neo4j connection failed:", error.message);
+    } else {
+      console.error("[Curator] Error:", error);
+    }
     process.exit(1);
   } finally {
     await session.close();
@@ -103,15 +112,20 @@ async function approvePromotions() {
   const session = neo4jDriver.session();
   
   try {
-    const result = await session.run(`
-      MATCH (p:PromotionProposal)
-      WHERE p.status = 'pending'
-        AND p.group_id = 'allura-roninmemory'
-      RETURN p.event_id AS eventId,
-             p.confidence AS confidence,
-             p.reasoning AS reasoning
-      LIMIT 10
-    `);
+    let result;
+    try {
+      result = await session.run(`
+        MATCH (p:PromotionProposal)
+        WHERE p.status = 'pending'
+          AND p.group_id = 'allura-roninmemory'
+        RETURN p.event_id AS eventId,
+               p.confidence AS confidence,
+               p.reasoning AS reasoning
+        LIMIT 10
+      `);
+    } catch (err) {
+      throw new Neo4jQueryError('MATCH pending PromotionProposals', err instanceof Error ? err : new Error(String(err)));
+    }
     
     console.log(`[Curator] Found ${result.records.length} pending proposals\n`);
     
@@ -120,21 +134,25 @@ async function approvePromotions() {
       const confidence = record.get('confidence');
       
       // Create Insight node
-      await session.run(`
-        MATCH (p:PromotionProposal {event_id: $eventId})
-        CREATE (i:Insight {
-          insight_id: 'ins_' + randomUUID(),
-          summary: p.reasoning,
-          confidence: p.confidence,
-          status: 'active',
-          created_at: datetime(),
-          group_id: p.group_id
-        })
-        CREATE (p)-[:PROMOTED_TO]->(i)
-        SET p.status = 'approved',
-            p.approved_at = datetime()
-        RETURN i
-      `, { eventId });
+      try {
+        await session.run(`
+          MATCH (p:PromotionProposal {event_id: $eventId})
+          CREATE (i:Insight {
+            insight_id: 'ins_' + randomUUID(),
+            summary: p.reasoning,
+            confidence: p.confidence,
+            status: 'active',
+            created_at: datetime(),
+            group_id: p.group_id
+          })
+          CREATE (p)-[:PROMOTED_TO]->(i)
+          SET p.status = 'approved',
+              p.approved_at = datetime()
+          RETURN i
+        `, { eventId });
+      } catch (err) {
+        throw new Neo4jQueryError('CREATE Insight', err instanceof Error ? err : new Error(String(err)));
+      }
       
       console.log(`[Curator] Approved and promoted: ${eventId} (${confidence})`);
     }
@@ -142,7 +160,11 @@ async function approvePromotions() {
     console.log("\n[Curator] Approval complete!");
     
   } catch (error) {
-    console.error("[Curator] Error:", error);
+    if (error instanceof Neo4jConnectionError) {
+      console.error("[Curator] Neo4j connection failed:", error.message);
+    } else {
+      console.error("[Curator] Error:", error);
+    }
     process.exit(1);
   } finally {
     await session.close();
