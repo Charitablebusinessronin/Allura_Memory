@@ -25,10 +25,20 @@ import type {
   MemoryListResponse,
   MemoryDeleteRequest,
   MemoryDeleteResponse,
+  MemoryUpdateRequest,
+  MemoryUpdateResponse,
+  MemoryPromoteRequest,
+  MemoryPromoteResponse,
+  MemoryExportRequest,
+  MemoryExportResponse,
   GroupId,
   MemoryId,
   MemoryProvenance,
   MemoryResponseMeta,
+} from "@/lib/memory/canonical-contracts";
+import {
+  MemoryNotFoundError,
+  MemoryAlreadyCanonicalError,
 } from "@/lib/memory/canonical-contracts";
 
 import { Pool } from "pg";
@@ -810,6 +820,389 @@ export async function memory_delete(request: MemoryDeleteRequest): Promise<Memor
   }
 }
 
+/**
+ * 6. memory_update
+ *
+ * Append-only versioned update.
+ * - Appends audit event to PostgreSQL (always, append-only)
+ * - If memory exists in Neo4j: creates new node + SUPERSEDES relationship, marks old deprecated
+ * - If episodic-only or Neo4j unavailable: returns stored='episodic' with degradedMeta
+ * - PG errors fail loudly; Neo4j errors degrade gracefully
+ */
+export async function memory_update(request: MemoryUpdateRequest): Promise<MemoryUpdateResponse> {
+  const groupId = validateGroupId(request.group_id);
+  const newId = generateMemoryId();
+  const updatedAt = new Date().toISOString();
+
+  try {
+    const { pg, neo4j: neo4jDriver } = await getConnections();
+
+    // 1. Append audit event to PostgreSQL (mandatory, append-only)
+    await pg.query(
+      `INSERT INTO events (group_id, event_type, agent_id, status, metadata, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        groupId,
+        "memory_update",
+        request.metadata?.agent_id ?? request.user_id,
+        "completed",
+        JSON.stringify({
+          new_memory_id: newId,
+          previous_memory_id: request.id,
+          user_id: request.user_id,
+          content: request.content,
+          reason: request.reason,
+          ...request.metadata,
+        }),
+        updatedAt,
+      ]
+    );
+
+    // 2. Attempt Neo4j SUPERSEDES versioning
+    const session = neo4jDriver.session();
+    try {
+      const existing = await session.run(
+        `MATCH (v1:Memory)
+         WHERE v1.id = $prevId
+           AND v1.group_id = $groupId
+           AND NOT (v1)<-[:SUPERSEDES]-()
+         RETURN v1.version AS version`,
+        { prevId: request.id, groupId }
+      );
+
+      if (existing.records.length === 0) {
+        // Episodic-only memory — no Neo4j node to version
+        return {
+          id: newId,
+          previous_id: request.id as MemoryId,
+          stored: "episodic",
+          version: 1,
+          updated_at: updatedAt,
+          meta: baseMeta(["postgres"]),
+        };
+      }
+
+      const prevVersion: number = existing.records[0].get("version")?.toNumber?.() ?? 1;
+      const newVersion = prevVersion + 1;
+
+      await session.run(
+        `MATCH (v1:Memory { id: $prevId, group_id: $groupId })
+         CREATE (v2:Memory {
+           id: $newId,
+           group_id: $groupId,
+           user_id: $userId,
+           content: $content,
+           score: v1.score,
+           provenance: v1.provenance,
+           version: $version,
+           created_at: datetime($updatedAt),
+           deprecated: false
+         })
+         CREATE (v2)-[:SUPERSEDES]->(v1)
+         SET v1.deprecated = true
+         SET v1:deprecated`,
+        {
+          prevId: request.id,
+          newId,
+          groupId,
+          userId: request.user_id,
+          content: request.content,
+          version: neo4j.int(newVersion),
+          updatedAt,
+        }
+      );
+
+      return {
+        id: newId,
+        previous_id: request.id as MemoryId,
+        stored: "semantic",
+        version: newVersion,
+        updated_at: updatedAt,
+        meta: baseMeta(["postgres", "neo4j"]),
+      };
+    } catch (error) {
+      console.warn("[degraded] Neo4j unavailable in memory_update:", error);
+      return {
+        id: newId,
+        previous_id: request.id as MemoryId,
+        stored: "episodic",
+        version: 1,
+        updated_at: updatedAt,
+        meta: degradedMeta(["postgres"]),
+      };
+    } finally {
+      await session.close();
+    }
+  } catch (error) {
+    if (error instanceof DatabaseUnavailableError || error instanceof DatabaseQueryError) {
+      throw error;
+    }
+    if (error instanceof Error && (error as Error & { code?: string }).code) {
+      throw classifyPostgresError(error, "memory_update", "INSERT memory_update event");
+    }
+    throw error;
+  }
+}
+
+/**
+ * 7. memory_promote
+ *
+ * Request curator promotion for an episodic memory.
+ * Never auto-promotes — always routes through canonical_proposals for HITL.
+ * Idempotent: returns existing proposal_id if a pending proposal already exists.
+ * Fails loudly on Neo4j errors (promotion must be observable).
+ */
+export async function memory_promote(request: MemoryPromoteRequest): Promise<MemoryPromoteResponse> {
+  const groupId = validateGroupId(request.group_id);
+  const queuedAt = new Date().toISOString();
+
+  const { pg, neo4j: neo4jDriver } = await getConnections();
+
+  // 1. Check if already canonical in Neo4j — fails loudly (no silent fallback)
+  const neo4jSession = neo4jDriver.session();
+  try {
+    const canonicalCheck = await neo4jSession.run(
+      `MATCH (m:Memory)
+       WHERE m.id = $id
+         AND m.group_id = $groupId
+         AND NOT (m)<-[:SUPERSEDES]-()
+         AND m.deprecated = false
+       RETURN m.id AS id LIMIT 1`,
+      { id: request.id, groupId }
+    );
+    if (canonicalCheck.records.length > 0) {
+      return {
+        id: request.id,
+        proposal_id: "",
+        status: "already_canonical",
+        queued_at: queuedAt,
+        meta: baseMeta(["neo4j"]),
+      };
+    }
+  } finally {
+    await neo4jSession.close();
+  }
+
+  // 2. Check for existing pending proposal (idempotency)
+  const existingProposal = await pg.query<{ id: string }>(
+    `SELECT id FROM canonical_proposals
+     WHERE group_id = $1
+       AND status = 'pending'
+       AND content LIKE '%' || $2 || '%'
+     LIMIT 1`,
+    [groupId, request.id]
+  );
+  if (existingProposal.rows.length > 0) {
+    return {
+      id: request.id,
+      proposal_id: existingProposal.rows[0].id,
+      status: "queued",
+      queued_at: queuedAt,
+      meta: baseMeta(["postgres"]),
+    };
+  }
+
+  // 3. Fetch memory content from PG
+  const memoryRow = await pg.query<{ id: string; content: string; event_id: string }>(
+    `SELECT metadata->>'memory_id' AS id,
+            metadata->>'content' AS content,
+            id AS event_id
+     FROM events
+     WHERE group_id = $1
+       AND event_type = 'memory_add'
+       AND metadata->>'memory_id' = $2
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    [groupId, request.id]
+  );
+
+  if (memoryRow.rows.length === 0) {
+    throw new MemoryNotFoundError(request.id);
+  }
+
+  const { content, event_id } = memoryRow.rows[0];
+
+  // 4. Score content
+  const scoreResult = await curatorScore({
+    content,
+    source: "conversation",
+    usageCount: 0,
+    daysSinceCreated: 0,
+  });
+
+  // 5. Insert proposal
+  const proposalId = randomUUID();
+  await pg.query(
+    `INSERT INTO canonical_proposals
+       (id, group_id, content, score, reasoning, tier, status, trace_ref, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8)`,
+    [
+      proposalId,
+      groupId,
+      content,
+      scoreResult.confidence,
+      scoreResult.reasoning,
+      scoreResult.tier,
+      event_id,
+      queuedAt,
+    ]
+  );
+
+  // 6. Append audit event
+  await pg.query(
+    `INSERT INTO events (group_id, event_type, agent_id, status, metadata, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [
+      groupId,
+      "memory_promote_requested",
+      request.curator_id ?? request.user_id,
+      "completed",
+      JSON.stringify({
+        memory_id: request.id,
+        proposal_id: proposalId,
+        rationale: request.rationale,
+        score: scoreResult.confidence,
+      }),
+      queuedAt,
+    ]
+  );
+
+  return {
+    id: request.id,
+    proposal_id: proposalId,
+    status: "queued",
+    queued_at: queuedAt,
+    meta: baseMeta(["postgres"]),
+  };
+}
+
+/**
+ * 8. memory_export
+ *
+ * Export memories filtered by group_id and optional canonical status.
+ * canonical_only=true  → Neo4j only; throws DatabaseUnavailableError if Neo4j is down.
+ * canonical_only=false → Both stores; deduplicates by memory_id (Neo4j wins).
+ */
+export async function memory_export(request: MemoryExportRequest): Promise<MemoryExportResponse> {
+  const groupId = validateGroupId(request.group_id);
+  const limit = Math.min(request.limit ?? 1000, 10000);
+  const offset = request.offset ?? 0;
+  const exportedAt = new Date().toISOString();
+
+  const { pg, neo4j: neo4jDriver } = await getConnections();
+
+  // Canonical memories from Neo4j
+  let canonicalMemories: MemoryGetResponse[] = [];
+  let neo4jFailed = false;
+
+  const neo4jSession = neo4jDriver.session();
+  try {
+    const result = await neo4jSession.run(
+      `MATCH (m:Memory)
+       WHERE m.group_id = $groupId
+         AND NOT (m)<-[:SUPERSEDES]-()
+         AND m.deprecated = false
+         AND ($userId IS NULL OR m.user_id = $userId)
+       RETURN m.id AS id,
+              m.content AS content,
+              m.score AS score,
+              m.provenance AS provenance,
+              m.user_id AS user_id,
+              m.created_at AS created_at,
+              m.version AS version
+       ORDER BY m.created_at DESC
+       SKIP $offset
+       LIMIT $limit`,
+      {
+        groupId,
+        userId: request.user_id ?? null,
+        offset: neo4j.int(offset),
+        limit: neo4j.int(limit),
+      }
+    );
+
+    canonicalMemories = result.records.map((record) => ({
+      id: record.get("id") as MemoryId,
+      content: record.get("content"),
+      score: record.get("score"),
+      source: "semantic" as const,
+      provenance: toProvenance(record.get("provenance")),
+      user_id: record.get("user_id"),
+      created_at: record.get("created_at"),
+      version: record.get("version")?.toNumber?.() ?? 1,
+      usage_count: 0,
+      meta: baseMeta(["neo4j"]),
+    }));
+  } catch (error) {
+    if (request.canonical_only) {
+      // canonical_only=true: no fallback — fail loudly
+      throw new DatabaseUnavailableError("memory_export:neo4j", error instanceof Error ? error : undefined);
+    }
+    console.warn("[degraded] Neo4j unavailable in memory_export:", error);
+    neo4jFailed = true;
+  } finally {
+    await neo4jSession.close();
+  }
+
+  if (request.canonical_only) {
+    return {
+      memories: canonicalMemories,
+      count: canonicalMemories.length,
+      exported_at: exportedAt,
+      canonical_count: canonicalMemories.length,
+      episodic_count: 0,
+      meta: baseMeta(["neo4j"]),
+    };
+  }
+
+  // Episodic memories from PostgreSQL
+  const canonicalIds = new Set(canonicalMemories.map((m) => m.id));
+
+  const pgResult = await pg.query<EpisodicMemoryRow>(
+    `SELECT metadata->>'memory_id' AS id,
+            metadata->>'content' AS content,
+            metadata->>'source' AS provenance,
+            metadata->>'user_id' AS user_id,
+            created_at
+     FROM events
+     WHERE group_id = $1
+       AND event_type = 'memory_add'
+       AND ($2::text IS NULL OR metadata->>'user_id' = $2)
+     ORDER BY created_at DESC
+     LIMIT $3 OFFSET $4`,
+    [groupId, request.user_id ?? null, limit, offset]
+  );
+
+  // Deduplicate: Neo4j wins on collision
+  const episodicMemories: MemoryGetResponse[] = pgResult.rows
+    .filter((row) => !canonicalIds.has(row.id as MemoryId))
+    .map((row) => ({
+      id: toMemoryId(row.id),
+      content: row.content,
+      score: 0.5,
+      source: "episodic" as const,
+      provenance: toProvenance(row.provenance),
+      user_id: row.user_id ?? "",
+      created_at: row.created_at,
+      version: 1,
+      usage_count: 0,
+    }));
+
+  const allMemories = [...canonicalMemories, ...episodicMemories];
+  const exportMeta = neo4jFailed
+    ? degradedMeta(["postgres"])
+    : baseMeta(["postgres", "neo4j"]);
+
+  return {
+    memories: allMemories,
+    count: allMemories.length,
+    exported_at: exportedAt,
+    canonical_count: canonicalMemories.length,
+    episodic_count: episodicMemories.length,
+    meta: exportMeta,
+  };
+}
+
 // ── Export for MCP Server ─────────────────────────────────────────────────
 
 export const canonicalMemoryTools = {
@@ -818,4 +1211,7 @@ export const canonicalMemoryTools = {
   memory_get,
   memory_list,
   memory_delete,
+  memory_update,
+  memory_promote,
+  memory_export,
 };
