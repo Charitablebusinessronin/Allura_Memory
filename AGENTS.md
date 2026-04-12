@@ -359,45 +359,105 @@ mcp-add("server-name")   → tools surface as mcp__MCP_DOCKER__<tool_name>
 # Has required_secrets → ensure env vars are set first, then add
 ```
 
-### Active tool stack (already added — use directly)
+### Active tool stack (MCP Docker catalog)
 
-**Web research:**
-| Tool | When to use |
-|------|-------------|
-| `mcp__MCP_DOCKER__tavily_search` | Fast current web search |
-| `mcp__MCP_DOCKER__tavily_research` | Deep multi-source research |
-| `mcp__MCP_DOCKER__tavily_crawl` | Crawl a site from root URL |
-| `mcp__MCP_DOCKER__tavily_extract` | Extract content from specific URL |
-| `mcp__MCP_DOCKER__web_search_exa` | Neural/semantic search |
+All MCP tools are discovered and added via `mcp-find` → `mcp-add`. The `allura-memory-mcp` Docker container bundles several tools by default (Tavily, Exa, Notion, database-server). Additional tools are added via `mcp-add` and configured via `mcp-config-set`.
 
-**Browser automation (HyperBrowser):**
-| Tool | When to use |
-|------|-------------|
-| `mcp__MCP_DOCKER__scrape_webpage` | Single page → markdown/html/links/screenshot |
-| `mcp__MCP_DOCKER__crawl_webpages` | Multi-page site crawl |
-| `mcp__MCP_DOCKER__extract_structured_data` | Structured JSON from page via schema |
-| `mcp__MCP_DOCKER__browser_use_agent` | Fast explicit browser tasks (cheapest) |
-| `mcp__MCP_DOCKER__claude_computer_use_agent` | Complex reasoning in cloud browser |
-| `mcp__MCP_DOCKER__openai_computer_use_agent` | General browser tasks via GPT |
-| `mcp__MCP_DOCKER__search_with_bing` | Bing search via real browser |
+**✅ Connected and working (no API key needed — bundled in MCP Docker):**
 
-**Live docs (Context7):**
-| Tool | When to use |
-|------|-------------|
-| `mcp__MCP_DOCKER__resolve-library-id` | Look up library → get Context7 ID |
-| `mcp__MCP_DOCKER__get-library-docs` | Fetch live docs for any library/version |
+| Category | Tool | When to use |
+|----------|------|-------------|
+| Web search | `tavily_search` | Fast current web search |
+| Web research | `tavily_research` | Deep multi-source research |
+| Web crawl | `tavily_crawl` | Crawl a site from root URL |
+| Web extract | `tavily_extract` | Extract content from specific URL |
+| Web map | `tavily_map` | Map a site's link structure |
+| Neural search | `web_search_exa` | Embedding-based semantic search |
+| Live docs | `resolve-library-id` | Look up library → get Context7 ID |
+| Live docs | `get-library-docs` | Fetch live docs for any library/version |
+| Database NL | `query_database` | Natural language SQL reads |
+| Database SQL | `execute_sql` | Raw SQL (precise reads) |
+| Database SQL | `execute_unsafe_sql` | CREATE, DELETE, INSERT, DROP operations |
+| Database write | `insert_data` | Append events — NEVER UPDATE/DELETE |
+| Database write | `update_data` | Update data in tables |
+| Database write | `delete_data` | Delete data (use with extreme caution) |
+| Database schema | `list_tables`, `describe_table`, `create_table` | Schema introspection |
+| Neo4j read | `read_neo4j_cypher` | Cypher read queries |
+| Neo4j write | `write_neo4j_cypher` | Cypher write queries (SUPERSEDES only) |
+| Neo4j schema | `get_neo4j_schema` | Graph schema inspection |
+| Notion read | `notion-fetch`, `notion-search` | Read pages, databases |
+| Notion write | `notion-create-pages`, `notion-update-page` | Create/update pages |
+| Notion DB | `notion-create-database`, `notion-update-data-source`, `notion-query-database-view` | Database operations |
+| Notion comments | `notion-create-comment`, `notion-get-comments` | Discussion threads |
+| Notion users | `notion-get-users`, `notion-get-teams` | Workspace user/team lookup |
+| MCP discovery | `mcp-find`, `mcp-add`, `mcp-config-set`, `mcp-remove` | Discover and configure MCP servers |
+| MCP compose | `code-mode` | Compose multiple MCP tool calls in JS |
 
-**Database (Allura Brain):**
-| Tool | When to use |
-|------|-------------|
-| `mcp__MCP_DOCKER__query_database` | Natural language SQL (fast reads) |
-| `mcp__MCP_DOCKER__execute_sql` | Raw SQL (precise reads) |
-| `mcp__MCP_DOCKER__insert_data` | Append events — NEVER UPDATE/DELETE |
-| `mcp__MCP_DOCKER__read_neo4j_cypher` | Neo4j reads |
-| `mcp__MCP_DOCKER__write_neo4j_cypher` | Neo4j writes (SUPERSEDES pattern only) |
+**🔧 Connected via `mcp-config-set` (requires Docker network config):**
+
+| Tool | Config | Status |
+|------|--------|--------|
+| `neo4j-cypher` | `bolt://172.18.0.2:7687` (Docker IP) | ✅ Working |
+| `context7` | No config needed | ✅ Working |
+| `database-server` | `postgresql+asyncpg://...` (container network) | ✅ Working |
+
+**⚠️ Available in catalog but NOT connected (requires API keys):**
+
+| Tool | Catalog name | Required secret | Use case |
+|------|-------------|-----------------|----------|
+| HyperBrowser | `hyperbrowser` | `HYPERBROWSER_API_KEY` | Browser automation, JS rendering |
+| Tavily (standalone) | `tavily` | `TAVILY_API_KEY` | Standalone Tavily (bundled version works without key) |
+| Exa (standalone) | `exa` | `EXA_API_KEY` | Standalone Exa (bundled version works without key) |
+| GitHub | `github-official` | `GITHUB_PERSONAL_ACCESS_TOKEN` | GitHub API operations |
+| Playwright | `playwright` | None (long-lived) | Browser automation |
+| Firecrawl | `firecrawl` | `FIRECRAWL_API_KEY` | Web scraping |
+
+**To add a new MCP tool:**
+```bash
+# Step 1 — Find it in the catalog
+mcp-find("keyword")
+
+# Step 2 — If no required_secrets, add immediately
+mcp-add("context7")
+
+# Step 3 — If has required_secrets, configure first
+mcp-config-set("neo4j-cypher", { url: "bolt://172.18.0.2:7687", username: "neo4j", password: "..." })
+mcp-add("neo4j-cypher")
+```
 
 ### Tool selection guide
 
+```
+Need web info?
+  quick answer        → tavily_search
+  deep research       → tavily_research
+  specific page       → tavily_extract
+  site structure      → tavily_map
+  neural/semantic     → web_search_exa (finds things keywords miss)
+  official docs/config → web_search_exa (semantic match to API schemas)
+  architecture patterns → web_search_exa (finds design docs, GitHub issues)
+  full site crawl     → tavily_crawl
+  JS-heavy page       → add hyperbrowser MCP server (requires API key)
+
+Need library docs?
+  → resolve-library-id → get-library-docs
+
+Need DB?
+  read                → query_database (NL) or execute_sql (SQL)
+  write event         → insert_data (append-only, never mutate)
+  knowledge graph     → read_neo4j_cypher / write_neo4j_cypher
+  schema inspection   → get_neo4j_schema
+
+Need Notion?
+  read page/DB        → notion-fetch, notion-search
+  create/update       → notion-create-pages, notion-update-page
+  discussions          → notion-create-comment, notion-get-comments
+  database ops        → notion-create-database, notion-update-data-source
+
+Need a new MCP tool?
+  discover            → mcp-find("keyword")
+  add                 → mcp-add("server-name")
+  configure            → mcp-config-set("server-name", { ... })
 ```
 Need web info?
   quick answer        → tavily_search
