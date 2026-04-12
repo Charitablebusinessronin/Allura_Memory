@@ -7,7 +7,7 @@
  * Run with: RUN_E2E_TESTS=true bun vitest run src/__tests__/curator-approve.test.ts
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import { Pool } from "pg";
 import { randomUUID } from "crypto";
 import { config } from "dotenv";
@@ -288,31 +288,71 @@ describe.skipIf(!shouldRunE2E)("Curator Approve/Reject E2E", () => {
 
 // ── Unit tests (no DB needed) ────────────────────────────────────────────
 
+import { approvePromotions, DeprecatedApprovalPathError } from "../curator/index";
+
 describe("approvePromotions() hard-block", () => {
-  // We'll import the actual function after Task 4 updates it
-  // For now, test the guard logic conceptually
-  it("should throw when called without MIGRATION_MODE or DEBUG_LEGACY env flags", () => {
-    // Clear any existing env flags
+  const originalMigrationMode = process.env.MIGRATION_MODE;
+  const originalDebugLegacy = process.env.DEBUG_LEGACY;
+
+  afterEach(() => {
+    // Restore original env values
+    if (originalMigrationMode !== undefined) {
+      process.env.MIGRATION_MODE = originalMigrationMode;
+    } else {
+      delete process.env.MIGRATION_MODE;
+    }
+    if (originalDebugLegacy !== undefined) {
+      process.env.DEBUG_LEGACY = originalDebugLegacy;
+    } else {
+      delete process.env.DEBUG_LEGACY;
+    }
+  });
+
+  it("should throw DeprecatedApprovalPathError when called without env flags", async () => {
     delete process.env.MIGRATION_MODE;
     delete process.env.DEBUG_LEGACY;
 
-    // The actual function will throw DeprecatedApprovalPathError
-    // This test will be updated in Task 4 to call the real function
-    const shouldThrow = !process.env.MIGRATION_MODE && !process.env.DEBUG_LEGACY;
-    expect(shouldThrow).toBe(true);
+    await expect(approvePromotions()).rejects.toThrow(DeprecatedApprovalPathError);
   });
 
-  it("should allow when MIGRATION_MODE=true", () => {
+  it("should throw with correct error message", async () => {
+    delete process.env.MIGRATION_MODE;
+    delete process.env.DEBUG_LEGACY;
+
+    try {
+      await approvePromotions();
+      expect.unreachable("Should have thrown");
+    } catch (error) {
+      expect(error).toBeInstanceOf(DeprecatedApprovalPathError);
+      expect((error as DeprecatedApprovalPathError).message).toContain("deprecated");
+      expect((error as DeprecatedApprovalPathError).message).toContain("/api/curator/approve");
+      expect((error as DeprecatedApprovalPathError).message).toContain("MIGRATION_MODE");
+    }
+  });
+
+  it("should NOT throw when MIGRATION_MODE=true (will fail on Neo4j connection, but not throw DeprecatedApprovalPathError)", async () => {
     process.env.MIGRATION_MODE = "true";
-    const shouldAllow = process.env.MIGRATION_MODE === "true" || process.env.DEBUG_LEGACY === "true";
-    expect(shouldAllow).toBe(true);
-    delete process.env.MIGRATION_MODE;
+    delete process.env.DEBUG_LEGACY;
+
+    // The function should pass the guard. It will then try to connect to Neo4j
+    // which may fail — but it should NOT throw DeprecatedApprovalPathError.
+    // We just need to verify the guard was passed.
+    try {
+      await approvePromotions();
+    } catch (error) {
+      // If it fails, it should NOT be DeprecatedApprovalPathError
+      expect(error).not.toBeInstanceOf(DeprecatedApprovalPathError);
+    }
   });
 
-  it("should allow when DEBUG_LEGACY=true", () => {
+  it("should NOT throw when DEBUG_LEGACY=true (same as above)", async () => {
+    delete process.env.MIGRATION_MODE;
     process.env.DEBUG_LEGACY = "true";
-    const shouldAllow = process.env.MIGRATION_MODE === "true" || process.env.DEBUG_LEGACY === "true";
-    expect(shouldAllow).toBe(true);
-    delete process.env.DEBUG_LEGACY;
+
+    try {
+      await approvePromotions();
+    } catch (error) {
+      expect(error).not.toBeInstanceOf(DeprecatedApprovalPathError);
+    }
   });
 });

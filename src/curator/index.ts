@@ -13,7 +13,28 @@ import { getDriver, closeDriver } from "../lib/neo4j/connection";
 import { curatorScore } from "../lib/curator/score";
 import { Neo4jQueryError, Neo4jConnectionError } from "../lib/errors/neo4j-errors";
 
-const COMMAND = process.argv[2] || "run";
+// ── Error Types ────────────────────────────────────────────────────────────
+
+/**
+ * Thrown when approvePromotions() is called outside of explicitly
+ * permitted contexts (MIGRATION_MODE or DEBUG_LEGACY).
+ *
+ * This error is the hard-block — it prevents the legacy Neo4j-based
+ * approval path from being used in operational contexts.
+ * The sole operational approval path is POST /api/curator/approve.
+ */
+export class DeprecatedApprovalPathError extends Error {
+  constructor() {
+    super(
+      "approvePromotions() is deprecated. Use /api/curator/approve. " +
+        "Set MIGRATION_MODE=true only for explicit migration contexts."
+    );
+    this.name = "DeprecatedApprovalPathError";
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
+// ── Core Functions ─────────────────────────────────────────────────────────
 
 async function runCurator() {
   console.log("[Curator] Starting workflow...\n");
@@ -95,11 +116,28 @@ async function runCurator() {
  * @deprecated Use POST /api/curator/approve instead.
  * This function reads from legacy PromotionProposal Neo4j nodes
  * which will be removed in a future version.
+ *
+ * HARD-BLOCK: This function throws DeprecatedApprovalPathError unless
+ * called with MIGRATION_MODE=true or DEBUG_LEGACY=true.
+ * No other calling context is permitted.
  */
-async function approvePromotions() {
-  // EXPLICIT RUNTIME WARNING — deprecation without a warning is not deprecation.
-  // Callers must be alerted at runtime, not just via IDE hints or CLI wrappers.
-  console.warn("[DEPRECATED] approvePromotions() is deprecated. Use POST /api/curator/approve instead. This function will be removed in a future version.");
+export async function approvePromotions(): Promise<void> {
+  // ── HARD-BLOCK GUARD ────────────────────────────────────────────────────
+  // The sole operational approval path is POST /api/curator/approve.
+  // This function may ONLY be called in explicit migration or debug contexts.
+  if (process.env.MIGRATION_MODE !== "true" && process.env.DEBUG_LEGACY !== "true") {
+    throw new DeprecatedApprovalPathError();
+  }
+
+  // Log which bypass flag is in effect
+  if (process.env.MIGRATION_MODE === "true") {
+    console.warn("[MIGRATION] approvePromotions() called with MIGRATION_MODE=true — legacy path permitted for migration only.");
+  }
+  if (process.env.DEBUG_LEGACY === "true") {
+    console.warn("[DEBUG] approvePromotions() called with DEBUG_LEGACY=true — legacy path permitted for debugging only.");
+  }
+
+  console.warn("[DEPRECATED] approvePromotions() is deprecated. Use POST /api/curator/approve instead.");
 
   console.log("[Curator] Approving promotions...\n");
   
@@ -167,13 +205,26 @@ async function approvePromotions() {
   }
 }
 
-// Main
-if (COMMAND === "run") {
-  runCurator();
-} else if (COMMAND === "approve") {
-  console.warn("[DEPRECATED] curator approve is deprecated. Use POST /api/curator/approve instead.");
-  approvePromotions();
-} else {
-  console.log("Usage: bun src/curator/index.ts [run|approve]");
-  process.exit(1);
+// ── CLI Mode ────────────────────────────────────────────────────────────────
+
+const isMainModule = process.argv[1]?.includes("index.ts");
+const COMMAND = process.argv[2] || "run";
+
+if (isMainModule) {
+  if (COMMAND === "run") {
+    runCurator();
+  } else if (COMMAND === "approve") {
+    // HARD-BLOCK: CLI 'approve' command also requires env flags
+    if (process.env.MIGRATION_MODE !== "true" && process.env.DEBUG_LEGACY !== "true") {
+      console.error(
+        "[BLOCKED] 'curator approve' is deprecated. Use POST /api/curator/approve instead.\n" +
+        "  Set MIGRATION_MODE=true for explicit migration, or DEBUG_LEGACY=true for debugging."
+      );
+      process.exit(1);
+    }
+    approvePromotions();
+  } else {
+    console.log("Usage: bun src/curator/index.ts [run|approve]");
+    process.exit(1);
+  }
 }
