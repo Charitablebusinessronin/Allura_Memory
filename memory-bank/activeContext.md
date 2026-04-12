@@ -72,8 +72,11 @@
 
 ---
 
-**Next Session**:
-1. **Wire Notion end-to-end** — Create Notion database via MCP, surface pending proposals
-2. **Run full E2E** — `RUN_E2E_TESTS=true bun vitest run`
-3. **Fix remaining pre-existing test failures** (Issue #15: mutate-events, embeddings, etc.)
-4. **Begin Phase 4**: Autonomous curator in production
+**Phase 2: CLOSED ✅**
+
+**Next Session (Phase 4)**:
+1. **Restart Claude Code** — picks up `allura-memory` MCP from settings.json (verified boots clean, 5 tools surface)
+2. **Wire Notion end-to-end** — Create Notion database via MCP, surface pending proposals
+3. **Run full E2E** — `RUN_E2E_TESTS=true bun vitest run`
+4. **Fix remaining pre-existing test failures** (mutate-events, embeddings)
+5. **Phase 4 planning** — ChatGPT integration (untracked plan: docs/allura/chatgpt-integration-plan.md), P2-3 agent hooks, autonomous curator production

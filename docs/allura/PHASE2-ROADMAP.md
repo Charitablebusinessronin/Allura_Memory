@@ -25,7 +25,7 @@ Advance Allura's agent memory capabilities beyond the hardened v1.0 baseline.
 - [x] Graceful degradation to ruvector when Neo4j unavailable (`src/lib/memory/store.ts`)
 - [x] Automatic routing to available store based on query type (Neo4j → ruvector fallback path)
 
-**Schema:** `docker/postgres-init/12-ruvector-fallback.sql` — apply to running DB once.
+**Schema:** `docker/postgres-init/12-ruvector-fallback.sql` — ✅ applied to running DB.
 
 **Estimated:** 2 days ✅ Done
 
