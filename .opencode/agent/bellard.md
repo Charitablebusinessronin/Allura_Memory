@@ -8,6 +8,16 @@ type: specialist
 scope: harness
 platform: Both
 status: active
+permission:
+  edit: deny
+  bash:
+    "*": ask
+    "bun vitest*": allow
+    "node --prof*": allow
+    "bun run benchmark*": allow
+  webfetch: deny
+  skill:
+    "*": allow
 ---
 
 ## INSTRUCTION BOUNDARY (CRITICAL)

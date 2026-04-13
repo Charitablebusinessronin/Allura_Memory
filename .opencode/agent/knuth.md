@@ -8,6 +8,17 @@ type: specialist
 scope: harness
 platform: Both
 status: active
+permission:
+  edit: ask
+  bash:
+    "*": ask
+    "docker exec knowledge-postgres*": allow
+    "bun vitest*": allow
+    "bun run typecheck*": allow
+    "bun run lint*": allow
+  webfetch: deny
+  skill:
+    "*": allow
 ---
 
 ## INSTRUCTION BOUNDARY

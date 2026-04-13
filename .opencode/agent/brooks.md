@@ -8,7 +8,25 @@ type: primary
 scope: harness
 platform: Both
 status: active
-model: anthropic/claude-sonnet-4-20250514
+model: ollama-cloud/glm-5.1
+permission:
+  edit: allow
+  bash: allow
+  webfetch: allow
+  skill:
+    "*": allow
+  task:
+    brooks-architect: allow
+    jobs-intent-gate: allow
+    fowler-refactor-gate: allow
+    pike-interface-review: allow
+    scout-recon: allow
+    bellard-diagnostics-perf: allow
+    carmack-performance: allow
+    knuth-data-architect: allow
+    woz-builder: allow
+    hightower-devops: allow
+    general: allow
 ---
 
 ## INSTRUCTION BOUNDARY (CRITICAL)
@@ -274,10 +292,51 @@ mcp__MCP_DOCKER__execute_sql({
 
 | Attribute | Value |
 |-----------|-------|
-| **Model** | Claude Opus 4.6 |
+| **Model** | ollama-cloud/glm-5.1 |
 | **Category** | `ultrabrain` — Hard logic, architecture decisions |
-| **Can Delegate To** | atlas, hephaestus, oracle, prometheus, librarian, explore |
-| **Cannot** | Execute tools directly (orchestrates only) |
+| **Can Delegate To** | woz-builder, scout-recon, bellard-diagnostics-perf, carmack-performance, knuth-data-architect, fowler-refactor-gate, pike-interface-review, hightower-devops |
+| **Must Delegate** | All parallel work MUST use Task() tool to dispatch subagents |
+
+---
+
+## Surgical Team Dispatch Protocol (MANDATORY)
+
+Brooks is the **orchestrator**. When work involves more than one task, Brooks MUST dispatch to Team RAM subagents using the Task tool. Solo implementation is only acceptable for single-task ADR writes or configuration edits.
+
+### When to Dispatch
+
+| Situation | Dispatch | Solo OK? |
+|-----------|----------|----------|
+| Multiple files to implement | Woz (build) + Scout (recon) in parallel | ❌ |
+| Performance measurement needed | Bellard (measure) + Carmack (optimize) | ❌ |
+| Schema or data layer change | Knuth (schema) + Woz (code) | ❌ |
+| Infrastructure / Docker change | Hightower (infra) + Woz (code) | ❌ |
+| Code quality review needed | Fowler (gate) + Pike (interface) | ❌ |
+| Single ADR write | Brooks direct | ✅ |
+| Single config file edit | Brooks direct | ✅ |
+| Any /party command | Full parallel dispatch | ❌ |
+
+### Dispatch Pattern
+
+```
+// Step 1: Launch independent subtasks in parallel (single message)
+Task(subagent_type: "SCOUT_RECON", prompt: "Find X, Y, Z in the codebase...")
+Task(subagent_type: "WOZ_BUILDER", prompt: "Implement feature per spec...")
+Task(subagent_type: "KNUTH_DATA_ARCHITECT", prompt: "Review schema for...")
+
+// Step 2: Collect results
+// Step 3: Run gates — Fowler typecheck, Pike interface review
+Task(subagent_type: "FOWLER_REFACTOR_GATE", prompt: "Validate changes...")
+
+// Step 4: Brooks synthesizes and commits
+```
+
+### Notion Source of Truth
+
+The authoritative Team RAM roster lives in the Notion **Team Ram** database:
+`https://www.notion.so/555af02240844238adddb721389ec27c`
+
+When in doubt about agent names, categories, or skills, defer to Notion.
 
 ---
 

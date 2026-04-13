@@ -216,10 +216,10 @@ Skills are NOT optional suggestions. They are **mandatory routing rules** — th
 
 | Trigger | Skill | Action |
 |---------|-------|--------|
-| Need current library docs or API changes | `context7` | Use `resolve-library-id` → `get-library-docs`. Never guess at API signatures. |
 | Complex research requiring multiple sources | `multi-search` | Coordinate Context7 (docs) + Tavily (web) + grep (code). |
 | Creating README or AI memory documentation | `readme-memory` | Use structured templates for memory system docs. |
-| Looking up OpenCode config, agents, plugins | `opencode-docs` | Use https://opencode.ai/docs/ as canonical reference. |
+
+> **Note:** Context7 (`resolve-library-id` → `get-library-docs`) and OpenCode docs (`tavily_extract` or `webfetch` on opencode.ai/docs) are available as MCP Docker tools — no separate skill needed.
 
 ### Tool Discovery and Infrastructure
 
@@ -501,29 +501,37 @@ This repo uses the **nested singular** agent tree under `.opencode/agent/` as th
 
 Agents are registered explicitly in `opencode.json` at project root with permissions, model overrides, and task routing.
 
-### Claude Code (`.claude/agents/`)
+### Single Source of Truth
 
-The `.claude/agents/` directory uses a **flat** structure with simplified filenames:
+`.opencode/agent/` is the **sole canonical source** for all Team RAM agent files. `.claude/agents/` is a **symlink** to `.opencode/agent/` — there are no separate copies.
+
 ```
-.claude/agents/
-├── brooks.md          ← mirrors brooks-architect.md
-├── jobs.md            ← mirrors jobs-intent-gate.md
-├── fowler.md          ← mirrors fowler-refactor-gate.md
-├── pike.md            ← mirrors pike-interface-review.md
-├── scout.md           ← mirrors scout-recon.md
-├── bellard.md         ← mirrors bellard-diagnostics-perf.md
-└── woz.md             ← mirrors woz-builder.md
+.opencode/agent/      ← single source of truth (flat, 10 files)
+  brooks.md
+  jobs.md
+  fowler.md
+  pike.md
+  scout.md
+  bellard.md
+  carmack.md
+  knuth.md
+  hightower.md
+  woz.md
+
+.claude/agents/       ← symlink → ../.opencode/agent/
 ```
+
+Edit agent files in `.opencode/agent/` only. Both harnesses read from the same files automatically. No sync required.
 
 ### Ralph Is A Tool, Not An Agent
 
 `@th0rgal/ralph-wiggum` is an external loop tool for OpenCode and other coding CLIs. It is documented as tooling and integration, not modeled as a persona file in `.opencode/agent/`.
 
-### Key OpenCode Agent Rules
+### Key Agent Rules
 
-1. **Canonical source** is `.opencode/agent/` with `core/`, `subagents/core/`, and `subagents/code/`
+1. **Canonical source** is `.opencode/agent/` (flat structure, filename = agent name)
 2. **YAML frontmatter** must include `description` (required) and `mode` (`primary` or `subagent`)
-3. **Filename = agent name** — `brooks-architect.md` creates agent `brooks-architect`
+3. **Filename = agent name** — `brooks.md` creates agent `brooks`
 4. **`opencode.json`** at project root provides explicit registration, permissions, and model overrides
 5. **`mode: subagent`** agents can be invoked by primary agents via the Task tool or `@mention`
 6. **`mode: primary`** agents can be switched to via Tab key during sessions

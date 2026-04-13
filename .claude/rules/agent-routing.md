@@ -52,7 +52,7 @@ Intent-based routing, not model-based. The agent says what kind of work; the har
 
 | Category | Routes To | Use Case |
 |----------|-----------|----------|
-| `visual-engineering` | Gemini 3.1 Pro | Frontend, UI/Sarah, design |
+| `visual-engineering` | Gemini 3.1 Pro | Frontend, UI, design |
 | `deep` | GPT-5.4 | Autonomous research + execution |
 | `quick` | GPT-5.4 Mini | Single-file changes, typos |
 | `ultrabrain` | GPT-5.4 xhigh | Hard logic, architecture decisions |
@@ -107,38 +107,41 @@ The category system reduces this further:
 | Agent | Primary | Fallback 1 | Fallback 2 | Fallback 3 |
 |-------|---------|------------|------------|------------|
 | Brooks | Claude Opus 4.6 (max) | Kimi K2.5 | GPT-5.4 (medium) | GLM-5 |
-| Brooks | Claude Sonnet 4.6 | Kimi K2.5 | GPT-5.4 (medium) | Minimax M2.7 |
 | Woz | GPT-5.4 (medium) | — | — | — |
 | Pike | GPT-5.4 (high) | Gemini 3.1 Pro (high) | Claude Opus 4.6 (max) | — |
-| Scout | Minimax M2.7 | Minimax M2.7 (highspeed) | Claude Haiku 4.5 | GPT-5 Nano |
 | Scout | Claude Haiku 4.5 | GPT-5 Nano | Minimax M2.7 (highspeed) | — |
 | Fowler | Claude Opus 4.6 (max) | GPT-5.4 (high) | GLM-5 | Gemini 3.1 Pro |
-| Sarah | Gemini 3.1 Pro | Claude Sonnet 4.6 | GPT-5.4 (medium) | — |
+| Bellard | GPT-5.4 (medium) | Claude Opus 4.6 | — | — |
+| Carmack | GPT-5.4 (high) | GPT-5.4 (medium) | — | — |
+| Hightower | GPT-5.4 (medium) | Claude Sonnet 4.6 | — | — |
 
 ## The Brooksian Principles
 
 ### 1. Conceptual Integrity
-One architect (Brooks) owns the vision. If Brooks, Fowler, and Sarah all have different ideas about "how to design," we've lost integrity.
+One architect (Brooks) owns the vision. Conceptual integrity breaks the moment two agents hold conflicting design opinions.
 
 ### 2. No Silver Bullet
 Essential complexity (understanding user intent, designing architecture) cannot be removed. Accidental complexity (model selection, context management) is what the harness solves.
 
 ### 3. Second-System Effect
-Resist adding every feature that was "cut from the first version." 8 agents is enough. Don't add more.
+Resist adding every feature that was "cut from the first version." 10 agents is enough. Don't add more.
 
 ### 4. Communication Overhead
-n(n-1)/2 paths. With 8 agents, 28 paths. Category routing reduces this. Keep it lean.
+n(n-1)/2 paths. With 10 agents, 45 paths. Category routing reduces this. Keep it lean.
 
 ### 5. The Surgical Team
-- One surgeon (Brooks)
-- One conductor (Brooks)
+- One architect (Brooks)
+- One intent gate (Jobs)
 - One implementer (Woz)
 - One consultant (Pike)
-- Two researchers (Scout + Scout)
+- One researcher (Scout)
 - One planner (Fowler)
-- One designer (Sarah)
+- One diagnostics (Bellard)
+- One optimizer (Carmack)
+- One data architect (Knuth)
+- One devops (Hightower)
 
-**Total: 8 people.** Not a committee. A surgical team.
+**Total: 10 people.** Not a committee. A surgical team.
 
 ## GitHub Integration
 

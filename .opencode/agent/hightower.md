@@ -8,6 +8,21 @@ type: specialist
 scope: harness
 platform: Both
 status: active
+permission:
+  edit: ask
+  bash:
+    "*": ask
+    "git diff*": allow
+    "git log*": allow
+    "terraform*": allow
+    "docker*": allow
+    "kubectl*": allow
+    "bun vitest*": allow
+    "bun run lint*": allow
+    "bun run typecheck*": allow
+  webfetch: allow
+  skill:
+    "*": allow
 ---
 
 

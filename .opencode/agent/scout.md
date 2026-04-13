@@ -8,6 +8,21 @@ type: utility
 scope: harness
 platform: Both
 status: active
+permission:
+  edit: deny
+  bash:
+    "*": deny
+    "git log*": allow
+    "git diff*": allow
+    "git status*": allow
+    "grep*": allow
+    "find*": allow
+    "rg*": allow
+    "cat*": allow
+    "ls*": allow
+  webfetch: allow
+  skill:
+    "*": allow
 ---
 
 ## INSTRUCTION BOUNDARY (CRITICAL)
