@@ -27,6 +27,9 @@ async function runCurator() {
       FROM events
       WHERE status != 'promoted'
         AND created_at > NOW() - INTERVAL '7 days'
+        AND agent_id NOT LIKE 'k6-%'
+        AND group_id NOT LIKE '%-loadtest'
+        AND event_type NOT IN ('proposal_created', 'proposal_decided', 'proposal_approved', 'proposal_rejected', 'session_start', 'session_end', 'WATCHDOG_HEARTBEAT')
       ORDER BY created_at DESC
       LIMIT 20
     `);
