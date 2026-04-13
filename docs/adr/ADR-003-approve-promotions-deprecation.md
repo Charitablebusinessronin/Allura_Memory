@@ -1,7 +1,8 @@
 # ADR-003: Deprecation of approvePromotions() Legacy Path
 
-**Status**: Active
+**Status**: Executed — closed 2026-04-13
 **Date**: 2026-04-12
+**Executed**: 2026-04-13 (fowler)
 **Decision Maker**: brooks-architect
 
 ## Context
@@ -27,9 +28,10 @@ Until removal:
 | Date | Action |
 |------|--------|
 | 2026-04-12 | ADR-003 published, deprecation documented |
-| 2026-04-19 | Remove `MIGRATION_MODE` env flag acceptance (hard block everywhere) |
-| 2026-04-26 | Remove `approvePromotions()` function from `src/curator/index.ts` |
-| 2026-05-01 | v1.1 release — `approvePromotions()` no longer exists |
+| 2026-04-13 | `approvePromotions()`, `DeprecatedApprovalPathError`, CLI `approve` branch, and hard-block tests removed (fowler — Issue #17 closed) |
+| ~~2026-04-19~~ | ~~Remove `MIGRATION_MODE` env flag acceptance~~ (superseded — removed 2026-04-13) |
+| ~~2026-04-26~~ | ~~Remove `approvePromotions()` from `src/curator/index.ts`~~ (executed early 2026-04-13) |
+| 2026-05-01 | v1.1 release — no action needed; already removed |
 
 ## Consequences
 

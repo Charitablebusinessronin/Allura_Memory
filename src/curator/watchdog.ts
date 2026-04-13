@@ -120,17 +120,35 @@ if (isMainModule) {
     console.log(`[Watchdog] Starting autonomous curator loop`);
     console.log(`[Watchdog] group_id=${GROUP_ID}, interval=${INTERVAL_MS / 1000}s, threshold=${SCORE_THRESHOLD}`);
 
+    let cycleCount = 0;
+    const pool = getPool();
+
+    async function runCycle(): Promise<void> {
+      cycleCount++;
+      const newProposals = await scanAndPropose(watchdogConfig);
+      await pool.query(
+        `INSERT INTO events (event_type, agent_id, group_id, metadata, created_at)
+         VALUES ($1, $2, $3, $4, NOW())`,
+        [
+          'WATCHDOG_HEARTBEAT',
+          'watchdog',
+          watchdogConfig.groupId,
+          JSON.stringify({ proposals_created: newProposals, scan_cycle: cycleCount }),
+        ]
+      );
+      return newProposals > 0
+        ? void console.log(`[Watchdog] Scan complete: ${newProposals} new proposals`)
+        : undefined;
+    }
+
     // Run first scan immediately
-    const firstCount = await scanAndPropose(watchdogConfig);
-    console.log(`[Watchdog] Initial scan: ${firstCount} proposals created`);
+    await runCycle();
+    console.log(`[Watchdog] Initial scan complete (cycle 1)`);
 
     // Then loop
     setInterval(async () => {
       try {
-        const count = await scanAndPropose(watchdogConfig);
-        if (count > 0) {
-          console.log(`[Watchdog] Scan complete: ${count} new proposals`);
-        }
+        await runCycle();
       } catch (error) {
         console.error("[Watchdog] Scan failed:", error);
       }

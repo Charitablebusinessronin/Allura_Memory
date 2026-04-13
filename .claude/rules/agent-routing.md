@@ -3,24 +3,28 @@ description: Agent routing and orchestration rules (Brooksian Surgical Team)
 globs: [".opencode/agent/**", "src/app/agents/**"]
 ---
 
-# Agent Routing — Brooksian Surgical Team
+# Agent Routing — Team RAM (Real Actual Masters)
 
 > "The purpose of organization is to reduce the amount of communication and coordination necessary; hence organization is a radical attack on the communication problems treated above." — Frederick Brooks, *The Mythical Man-Month*
 
-## The Surgical Team
+> **ADR 2026-04-13:** All agent naming uses real people (Team RAM), not Greek mythology. OmO features kept, OmO names dropped. See Notion ADR page.
+
+## Team RAM — The Surgical Team
 
 We don't hire 10 surgeons. We hire one surgeon and a team of specialists who own their domains completely.
 
 | Agent | Persona | Role | Model | Use When |
 |-------|---------|------|-------|----------|
-| **Sisyphus** | Rich Hickey | Orchestrator | Claude Opus 4.6 / Kimi K2.5 / GLM-5 | Task planning, delegation, never stops |
-| **Atlas** | Gergely Orosz | Conductor | Claude Sonnet 4.6 | Todo orchestration, coordinates specialists |
-| **Hephaestus** | Fabrice Bellard | Deep Worker | GPT-5.4 | Autonomous implementation, explores thoroughly |
-| **Oracle** | Rob Pike | Consultant | GPT-5.4 (high) | Read-only architecture consultation |
-| **Librarian** | Julia Evans | Docs Search | Minimax M2.7 | External documentation, debugging guides |
-| **Explore** | Peter Bourgon | Codebase Grep | Claude Haiku 4.5 | Fast codebase search, pattern discovery |
-| **Prometheus** | Martin Fowler | Planner | Claude Opus 4.6 | Interview-mode strategic planning |
-| **UX** | Sara Soueidan | Designer | Gemini 3.1 Pro | Accessibility-first design, user flows |
+| **Brooks** | Frederick Brooks | Architect + Orchestrator | Claude Opus 4.6 / GLM-5 | Task planning, architecture, delegation |
+| **Jobs** | Steve Jobs | Intent Gate | Claude Sonnet 4.6 | Scope control, acceptance criteria |
+| **Woz** | Steve Wozniak | Builder | GPT-5.4 | Autonomous implementation, ships working code |
+| **Pike** | Rob Pike | Interface Gate | GPT-5.4 (high) | Read-only architecture consultation |
+| **Bellard** | Fabrice Bellard | Diagnostics + Perf | GPT-5.4 | Performance, measurement, low-level fixes |
+| **Fowler** | Martin Fowler | Refactor Gate | Claude Opus 4.6 | Maintainability, incremental change |
+| **Scout** | (none) | Recon + Discovery | Claude Haiku 4.5 | Fast codebase search, pattern discovery |
+| **Carmack** | John Carmack | Performance Specialist | GPT-5.4 | Optimization, API design, latency |
+| **Knuth** | Donald Knuth | Data Architect | GPT-5.4 | Schema design, query optimization |
+| **Hightower** | Kelsey Hightower | DevOps Specialist | GPT-5.4 | CI/CD, IaC, deployment, observability |
 
 ## Category Routing
 
@@ -36,28 +40,30 @@ Intent-based routing, not model-based. The agent says what kind of work; the har
 
 ## Routing Rules
 
-### Essential Routing (Surgical Team)
+### Essential Routing (Team RAM)
 
 | Event | Route To | Why |
 |-------|----------|-----|
-| Task planning | Sisyphus | Owns the incision, delegates strategically |
-| Todo execution | Atlas | Coordinates, doesn't implement |
-| Deep implementation | Hephaestus | Give goal, not recipe |
-| Architecture question | Oracle | Read-only consultation |
-| External docs | Librarian | Searches like a librarian |
-| Codebase search | Explore | Fast pattern discovery |
-| Strategic planning | Prometheus | Interview-mode before code |
-| UX review | UX | Accessibility-first design |
+| Task planning | Brooks | Owns the incision, delegates strategically |
+| Intent gate | Jobs | Converts requests into crisp objectives |
+| Deep implementation | Woz | Give goal, not recipe |
+| Architecture question | Pike | Read-only consultation |
+| External docs | MCP tools (Context7, Tavily) | Platform concern, not an agent |
+| Codebase search | Scout | Fast pattern discovery |
+| Strategic planning | Fowler | Interview-mode before code |
+| Performance concern | Bellard / Carmack | Measurement-first |
+| Data/schema work | Knuth | Schema correctness before speed |
+| Infrastructure/CI/CD | Hightower | If it can't be deployed in one command, it's not done |
 
 ### GitHub Integration
 
 | Event | Route To | Why |
 |-------|----------|-----|
-| PR review | Oracle | Read-only consultation on architecture |
-| Code push | Hephaestus | Deep analysis, not surface review |
-| Issue triage | Sisyphus | Orchestrator decides priority |
-| Feature request | Prometheus | Plan before implementing |
-| UX concern | UX | Accessibility review |
+| PR review | Pike | Read-only consultation on architecture |
+| Code push | Woz | Deep analysis, not surface review |
+| Issue triage | Brooks | Orchestrator decides priority |
+| Feature request | Jobs → Fowler | Gate intent, then plan |
+| Infra concern | Hightower | Deployment and pipeline review |
 
 ## Communication Overhead
 
@@ -72,11 +78,9 @@ The category system reduces this further:
 
 | Agent | Denied Tools | Why |
 |-------|--------------|-----|
-| Oracle | write, edit, task, call_omo_agent | Read-only consultation |
-| Librarian | write, edit, task, call_omo_agent | Research only |
-| Explore | write, edit, task, call_omo_agent | Search only |
-| Atlas | task, call_omo_agent | Coordinates, doesn't implement |
-| UX | write, edit | Review only, implementation via visual-engineering |
+| Pike | write, edit, task | Read-only consultation |
+| Scout | write, edit, task | Search only |
+| Hightower | direct production SSH, manual env changes | Infrastructure as code only |
 
 ## Model Fallback Chains
 

@@ -1,16 +1,15 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "experimentalAgentTeams": true,
-  "terminals": "tmux",
   "permissions": {
     "allow": [
       "Read(.claude/**)",
       "Edit(.claude/**)",
       "Write(.claude/**)",
-      "Bash(bun*)",
       "Bash(bun run *)",
-      "Bash(bun test)",
       "Bash(bun install)",
+      "Bash(bun*)",
+      "Bash(cp *)",
+      "Bash(bun test)",
       "Bash(git *)",
       "Bash(docker *)",
       "Bash(gh *)",
@@ -18,7 +17,6 @@
       "Bash(ls *)",
       "Bash(cat *)",
       "Bash(mkdir *)",
-      "Bash(cp *)",
       "Bash(mv *)",
       "Bash(rm -rf .tmp/*)",
       "Bash(rm -rf node_modules/.cache/*)"
@@ -36,40 +34,70 @@
     ],
     "additionalDirectories": []
   },
+  "experimentalAgentTeams": true,
+  "terminals": "tmux",
   "mcpServers": {
     "allura-memory": {
       "command": "bun",
-      "args": ["run", "src/mcp/memory-server-canonical.ts"],
+      "args": [
+        "run",
+        "src/mcp/memory-server-canonical.ts"
+      ],
       "cwd": "/home/ronin704/Projects/allura memory"
     },
     "exa": {
       "command": "docker",
-      "args": ["run", "-i", "--rm", "mcp/exa"],
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "mcp/exa"
+      ],
       "env": {
         "EXA_API_KEY": "${EXA_API_KEY}"
       }
     },
     "tavily": {
       "command": "docker",
-      "args": ["run", "-i", "--rm", "mcp/tavily"],
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "mcp/tavily"
+      ],
       "env": {
         "TAVILY_API_TOKEN": "${TAVILY_API_TOKEN}"
       }
     },
     "hyperbrowser": {
       "command": "docker",
-      "args": ["run", "-i", "--rm", "mcp/hyperbrowser"],
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "mcp/hyperbrowser"
+      ],
       "env": {
         "HYPERBROWSER_API_KEY": "${HYPERBROWSER_API_KEY}"
       }
     },
     "context7": {
       "command": "docker",
-      "args": ["run", "-i", "--rm", "mcp/context7"]
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "mcp/context7"
+      ]
     },
     "notion": {
       "command": "docker",
-      "args": ["run", "-i", "--rm", "mcp/notion"],
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "mcp/notion"
+      ],
       "env": {
         "NOTION_INTERNAL_INTEGRATION_TOKEN": "${NOTION_TOKEN}"
       }
