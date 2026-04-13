@@ -3,7 +3,7 @@ name: KNUTH_DATA_ARCHITECT
 description: "SPECIALIST — Data architect & schema specialist. PostgreSQL, Neo4j, query optimization, data migration. Correctness is non-negotiable."
 mode: subagent
 persona: Knuth
-category: Code Subagents
+category: Core
 type: specialist
 scope: harness
 platform: Both

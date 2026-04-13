@@ -480,30 +480,11 @@ Need DB?
 
 ### Canonical Location (OpenCode)
 
-This repo uses the **nested singular** agent tree under `.opencode/agent/` as the canonical source of truth. Agent files are organized by role so the repo has a stable, human-readable layout.
-
-```
-.opencode/agent/
-├── core/
-│   ├── brooks-architect.md          ← mode: primary
-│   └── jobs-intent-gate.md          ← mode: primary
-└── subagents/
-    ├── core/
-    │   ├── scout-recon.md           ← mode: subagent
-    │   ├── fowler-refactor-gate.md  ← mode: subagent
-    │   └── pike-interface-review.md ← mode: subagent
-    └── code/
-        ├── bellard-diagnostics-perf.md ← mode: subagent
-        └── woz-builder.md           ← mode: subagent
-```
-
-### Registration
-
-Agents are registered explicitly in `opencode.json` at project root with permissions, model overrides, and task routing.
+Agent files live in `.opencode/agent/` (flat directory, filename = agent name). The authoritative roster is the **Notion Team Ram database**: `https://www.notion.so/555af02240844238adddb721389ec27c`
 
 ### Single Source of Truth
 
-`.opencode/agent/` is the **sole canonical source** for all Team RAM agent files. `.claude/agents/` is a **symlink** to `.opencode/agent/` — there are no separate copies.
+`.opencode/agent/` is the **sole canonical source** for all Team RAM agent files — flat structure, 10 files. No nested subdirectories. `.claude/agents/` is a symlink to `.opencode/agent/` — there are no separate copies. Category assignments must match Notion (SOT).
 
 ```
 .opencode/agent/      ← single source of truth (flat, 10 files)

@@ -3,7 +3,7 @@ name: HIGHTOWER_DEVOPS
 description: "SPECIALIST — Infrastructure & deployment. CI/CD, IaC, container orchestration, observability. If it can't be deployed in one command, it's not done."
 mode: subagent
 persona: Hightower
-category: Development Subagents
+category: Core
 type: specialist
 scope: harness
 platform: Both
