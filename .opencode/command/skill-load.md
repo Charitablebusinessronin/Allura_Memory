@@ -11,9 +11,9 @@ Execute a skill by routing it to a specialist agent executor.
 ## Examples
 
 ```
-/skill-load code-review                       # Use default executor (@oracle)
-/skill-load code-review --executor oracle     # Explicit routing
-/skill-load postgres-optimization --executor hephaestus
+/skill-load code-review                       # Use default executor (@Pike)
+/skill-load code-review --executor pike-interface-review     # Explicit routing
+/skill-load postgres-optimization --executor woz-builder
 ```
 
 ## How It Works
@@ -28,14 +28,14 @@ Execute a skill by routing it to a specialist agent executor.
 
 | Executor | Specialty | Permissions |
 |----------|-----------|-------------|
-| `oracle` | Architecture review | Read-only (no writes) |
-| `hephaestus` | Deep implementation | Full read/write |
-| `prometheus` | Strategic planning | Read + planning tools |
+| `pike-interface-review` | Architecture review | Read-only (no writes) |
+| `woz-builder` | Deep implementation | Full read/write |
+| `fowler-refactor-gate` | Strategic planning | Read + planning tools |
 | `ux` | Design + accessibility | Design tools only |
-| `librarian` | Documentation search | Search tools only |
-| `explore` | Codebase patterns | Read + grep tools |
-| `atlas` | Todo coordination | Task + memory tools |
-| `sisyphus` | Orchestration | All tools (planning only) |
+| `scout-recon` | Documentation search | Search tools only |
+| `scout-recon` | Codebase patterns | Read + grep tools |
+| `brooks-architect` | Todo coordination | Task + memory tools |
+| `brooks-architect` | Orchestration | All tools (planning only) |
 
 ## Result
 
@@ -43,7 +43,7 @@ Execute a skill by routing it to a specialist agent executor.
 {
   "event": "SKILL_LOADED",
   "skill_name": "code-review",
-  "executor": "oracle",
+  "executor": "pike-interface-review",
   "context": "project root directory",
   "permissions": ["read", "grep", "lsp"]
 }

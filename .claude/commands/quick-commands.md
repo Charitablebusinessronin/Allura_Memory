@@ -35,13 +35,13 @@ Type these directly in your IDE for fast access to Allura Memory workflows.
 
 | Shortcut | Agent | Persona |
 |----------|-------|---------|
-| `@sisyphus` | Sisyphus | Rich Hickey |
-| `@atlas` | Atlas | Gergely Orosz |
-| `@hephaestus` | Hephaestus | Fabrice Bellard |
-| `@oracle` | Oracle | Rob Pike |
-| `@librarian` | Librarian | Julia Evans |
-| `@explore` | Explore | Peter Bourgon |
-| `@prometheus` | Prometheus | Martin Fowler |
+| `@brooks-architect` | Brooks | Rich Hickey |
+| `@brooks-architect` | Brooks | Gergely Orosz |
+| `@woz-builder` | Woz | Fabrice Bellard |
+| `@pike-interface-review` | Pike | Rob Pike |
+| `@scout-recon` | Scout | Julia Evans |
+| `@scout-recon` | Scout | Peter Bourgon |
+| `@fowler-refactor-gate` | Fowler | Martin Fowler |
 | `@ux` | UX | Sara Soueidan |
 
 ## Usage Examples
@@ -80,7 +80,7 @@ Searches Allura Brain for relevant insights.
 ```
 /review
 ```
-Launches Oracle, Explore, and UX in parallel for review.
+Launches Pike, Scout, and UX in parallel for review.
 
 ---
 
