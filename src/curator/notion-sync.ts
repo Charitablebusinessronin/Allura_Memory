@@ -172,15 +172,40 @@ export async function markSynced(proposalId: string, notionPageId: string): Prom
 /**
  * Sync pending proposals to Notion.
  *
- * When Notion is configured (NOTION_API_KEY + NOTION_CURATOR_DB_ID):
- *   - Creates a Notion page for each pending proposal
+ * When a `notionCreatePage` function is provided in config:
+ *   - Creates a Notion page in the Curator Proposals database for each pending proposal
  *   - Marks each proposal as synced via markSynced()
+ *   - Routes failures to the DLQ — no silent drops
  *
- * When Notion is NOT configured:
+ * When `notionCreatePage` is NOT provided:
  *   - Returns the proposals for display/manual review
- *   - Reports proposalsSynced = 0 with a descriptive error
+ *   - Reports proposalsSynced = 0 with a descriptive message
  *
- * @param config - Sync configuration including group_id and optional Notion credentials
+ * ## Production wiring
+ *
+ * The caller (CLI or worker) provides `notionCreatePage` as a thin adapter
+ * around the MCP tool. Example:
+ *
+ * ```ts
+ * import { mcp__claude_ai_Notion__notion_create_pages } from "...mcp...";
+ *
+ * await syncToNotion({
+ *   groupId: "allura-roninmemory",
+ *   notionDbId: process.env.NOTION_CURATOR_DB_ID,
+ *   notionCreatePage: async (params) => {
+ *     const result = await mcp__claude_ai_Notion__notion_create_pages({
+ *       parent: { data_source_id: params.dataSourceId },
+ *       pages: [{
+ *         properties: params.properties,
+ *         content: params.content,
+ *       }],
+ *     });
+ *     return { id: result.pages[0].id, url: result.pages[0].url };
+ *   },
+ * });
+ * ```
+ *
+ * @param config - Sync configuration including group_id and injectable Notion fn
  * @returns Sync result with counts and any errors
  */
 export async function syncToNotion(config: NotionSyncConfig): Promise<NotionSyncResult> {
@@ -198,32 +223,97 @@ export async function syncToNotion(config: NotionSyncConfig): Promise<NotionSync
     };
   }
 
-  // Check if Notion is configured
-  if (!config.notionApiKey || !config.notionDbId) {
+  // If no Notion create function is provided, return unconfigured state.
+  if (!config.notionCreatePage) {
     return {
       proposalsFound: proposals.length,
       proposalsSynced: 0,
       syncedProposalIds: [],
       errors: [
-        `Notion not configured. Set NOTION_API_KEY and NOTION_CURATOR_DB_ID to enable sync.`,
+        `Notion not configured. Provide a notionCreatePage function (wrapping mcp__claude_ai_Notion__notion-create-pages) to enable sync.`,
         `Found ${proposals.length} pending proposals awaiting review.`,
       ],
     };
   }
 
-  // Notion sync would happen here via MCP_DOCKER_notion-create-pages
-  // For now, we document the interface and return unsynced.
-  // TODO: Wire to MCP_DOCKER_notion-create-pages when API key is available.
+  const dataSourceId = NOTION_CURATOR_DATA_SOURCE_ID;
+  const pool = getPool();
+
   for (const proposal of proposals) {
     try {
-      // Placeholder: would call notion-create-pages here
-      // const notionPage = await notionCreatePage({ ... });
-      // await markSynced(proposal.id, notionPage.id);
-      // syncedIds.push(proposal.id);
+      const notionType = TIER_TO_NOTION_TYPE[proposal.tier] ?? "insight";
+      const score = parseFloat(proposal.score);
 
-      errors.push(`Notion API call not yet wired for proposal ${proposal.id}`);
+      // Build Notes field: include trace_ref and reasoning for context
+      const notesParts: string[] = [];
+      if (proposal.trace_ref !== null) {
+        notesParts.push(`Trace ref: ${proposal.trace_ref}`);
+      }
+      if (proposal.reasoning) {
+        notesParts.push(`Reasoning: ${proposal.reasoning}`);
+      }
+      const notes = notesParts.join("\n") || `Tier: ${proposal.tier}`;
+
+      const pageParams: NotionPageParams = {
+        dataSourceId,
+        properties: {
+          Title: proposal.content.slice(0, 100),
+          Status: "pending",
+          Type: notionType,
+          Score: score,
+          "Group ID": config.groupId,
+          Notes: notes,
+          "date:Proposed At:start": proposal.created_at.slice(0, 10),
+          "Notion Synced": "__YES__",
+        },
+        content: [
+          `## Curator Proposal`,
+          ``,
+          `**Proposal ID:** \`${proposal.id}\``,
+          `**Tier:** ${proposal.tier}`,
+          `**Score:** ${proposal.score}`,
+          `**Group:** ${config.groupId}`,
+          proposal.trace_ref !== null ? `**Trace Ref:** ${proposal.trace_ref}` : null,
+          ``,
+          `### Content`,
+          ``,
+          proposal.content,
+          proposal.reasoning ? `\n### Reasoning\n\n${proposal.reasoning}` : null,
+        ]
+          .filter((line): line is string => line !== null)
+          .join("\n"),
+      };
+
+      const notionPage = await config.notionCreatePage(pageParams);
+
+      await markSynced(proposal.id, notionPage.id);
+      syncedIds.push(proposal.id);
     } catch (err) {
-      errors.push(`Failed to sync proposal ${proposal.id}: ${err instanceof Error ? err.message : String(err)}`);
+      const message = err instanceof Error ? err.message : String(err);
+      errors.push(`Failed to sync proposal ${proposal.id}: ${message}`);
+
+      // Route failure to DLQ — no silent drops
+      const dlqResult = await insertDlqEntry(pool, {
+        groupId: config.groupId,
+        proposalId: proposal.id,
+        originalMetadata: {
+          proposal_id: proposal.id,
+          content: proposal.content,
+          score: proposal.score,
+          tier: proposal.tier,
+          trace_ref: proposal.trace_ref,
+          reasoning: proposal.reasoning,
+          created_at: proposal.created_at,
+        },
+        errorMessage: message,
+        errorCode: "NOTION_CREATE_FAILED",
+      });
+
+      if (!dlqResult.success) {
+        errors.push(
+          `CRITICAL: DLQ insert failed for proposal ${proposal.id}: ${dlqResult.error ?? "unknown"}`
+        );
+      }
     }
   }
 
@@ -264,11 +354,14 @@ if (isMainModule) {
       console.log(`  - [${p.tier}] score=${p.score} | ${p.content.slice(0, 80)}...`);
     }
 
-    // Attempt Notion sync if configured
+    // Attempt Notion sync if configured.
+    // In CLI mode we do not have access to MCP tools, so notionCreatePage is
+    // undefined unless the caller patches it in. The sync will return
+    // unconfigured state and print the pending proposals for manual review.
     const syncResult = await syncToNotion({
       groupId: GROUP_ID,
-      notionApiKey: process.env.NOTION_API_KEY,
-      notionDbId: process.env.NOTION_CURATOR_DB_ID,
+      notionDbId: process.env.NOTION_CURATOR_DB_ID ?? DEFAULT_NOTION_CURATOR_DB_ID,
+      // notionCreatePage is not wired in CLI mode — use the worker or agent context.
     });
 
     if (syncResult.proposalsSynced > 0) {
