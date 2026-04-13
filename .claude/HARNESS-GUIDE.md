@@ -90,7 +90,7 @@ User:
 
 Harness:
   Skill: code-review
-  Executor: @oracle (read-only consultant)
+  Executor: @Pike (read-only consultant)
   Description: Code review and architecture feedback
   
   Next step: /skill-load code-review
@@ -100,10 +100,10 @@ User:
 
 Harness:
   ✅ SKILL_LOADED event logged
-  Routing to: @oracle
+  Routing to: @Pike
   Permissions: read, grep, lsp
   
-  @oracle is now reviewing your code...
+  @Pike is now reviewing your code...
 ```
 
 ### Scenario: You want strategic planning
@@ -114,14 +114,14 @@ User:
 
 Harness:
   Skill: system-design
-  Executor: @prometheus (strategic planning)
+  Executor: @Fowler (strategic planning)
   Description: System architecture and planning
   
 User:
   /skill-load system-design
 
 Harness:
-  ✅ Routed to @prometheus
+  ✅ Routed to @Fowler
   Mode: Interview-based planning
 ```
 
@@ -204,9 +204,9 @@ Harness:
 **Execute a skill by routing to specialist executor.**
 
 ```
-/skill-load code-review                       # Use default (@oracle)
-/skill-load code-review --executor oracle     # Explicit routing
-/skill-load postgres-optimization --executor hephaestus
+/skill-load code-review                       # Use default (@Pike)
+/skill-load code-review --executor pike-interface-review     # Explicit routing
+/skill-load postgres-optimization --executor woz-builder
 ```
 
 **Prerequisites:** Skill must exist and be available
@@ -214,14 +214,14 @@ Harness:
 **Result:** Executor receives skill context + permissions
 
 **Executors:**
-- `@oracle` — Architecture review (read-only)
-- `@hephaestus` — Deep implementation
-- `@prometheus` — Strategic planning
+- `@Pike` — Architecture review (read-only)
+- `@Woz` — Deep implementation
+- `@Fowler` — Strategic planning
 - `@ux` — Design + accessibility
-- `@librarian` — Documentation search
-- `@explore` — Codebase patterns
-- `@atlas` — Todo coordination
-- `@sisyphus` — Orchestration (planning only)
+- `@Scout` — Documentation search
+- `@Scout` — Codebase patterns
+- `@Brooks` — Todo coordination
+- `@Brooks` — Orchestration (planning only)
 
 ---
 
@@ -260,8 +260,8 @@ No auto-discovery, auto-loading, or auto-promotion. Everything requires explicit
 
 Skills are routed to specialist agents with specific permissions:
 
-- `@oracle` — read-only architecture consultation
-- `@hephaestus` — autonomous deep work
+- `@Pike` — read-only architecture consultation
+- `@Woz` — autonomous deep work
 - `@ux` — accessibility-first design
 
 No generalist agents. Each specialist owns their domain completely.

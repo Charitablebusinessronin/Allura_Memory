@@ -11,9 +11,9 @@ Propose a skill and see which specialist agent handles it.
 ## Examples
 
 ```
-/skill-propose code-review           # Code review specialist (@oracle)
-/skill-propose postgres-optimization # Database specialist (@hephaestus)
-/skill-propose system-design         # Architecture specialist (@prometheus)
+/skill-propose code-review           # Code review specialist (@Pike)
+/skill-propose postgres-optimization # Database specialist (@Woz)
+/skill-propose system-design         # Architecture specialist (@Fowler)
 ```
 
 ## How It Works
@@ -27,12 +27,12 @@ Propose a skill and see which specialist agent handles it.
 
 | Skill | Executor | Specialty |
 |-------|----------|-----------|
-| `code-review` | `@oracle` | Read-only architecture review |
-| `postgres-optimization` | `@hephaestus` | Deep database work |
-| `system-design` | `@prometheus` | Strategic planning |
+| `code-review` | `@Pike` | Read-only architecture review |
+| `postgres-optimization` | `@Woz` | Deep database work |
+| `system-design` | `@Fowler` | Strategic planning |
 | `frontend-design` | `@ux` | Accessibility-first design |
-| `deep-research` | `@librarian` | Documentation search |
-| `codebase-search` | `@explore` | Pattern discovery |
+| `deep-research` | `@Scout` | Documentation search |
+| `codebase-search` | `@Scout` | Pattern discovery |
 
 ## Result
 
@@ -40,7 +40,7 @@ Propose a skill and see which specialist agent handles it.
 {
   "event": "SKILL_PROPOSED",
   "skill_name": "code-review",
-  "executor": "oracle",
+  "executor": "pike-interface-review",
   "description": "Read-only code review and architecture feedback",
   "requirements": ["Can read source files", "Cannot write code"]
 }

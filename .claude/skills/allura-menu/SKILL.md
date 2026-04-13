@@ -64,7 +64,7 @@ Interactive menu for common Allura Memory workflows.
 **What it does:**
 - Launches all agents in parallel
 - Each agent works independently
-- Sisyphus synthesizes results
+- Brooks synthesizes results
 - Maximum throughput
 
 **Equivalent skill:** `party-mode <task>`
@@ -90,10 +90,10 @@ Interactive menu for common Allura Memory workflows.
 **Trigger:** `code-review`
 
 **What it does:**
-- Oracle reviews architecture
-- Explore finds patterns
+- Pike reviews architecture
+- Scout finds patterns
 - UX reviews accessibility
-- Sisyphus synthesizes
+- Brooks synthesizes
 
 **Equivalent skill:** `code-review`
 
@@ -191,13 +191,13 @@ Type these directly in your IDE:
 
 | Agent | Shortcut | Persona |
 |-------|----------|---------|
-| Sisyphus | `@sisyphus` | Rich Hickey |
-| Atlas | `@atlas` | Gergely Orosz |
-| Hephaestus | `@hephaestus` | Fabrice Bellard |
-| Oracle | `@oracle` | Rob Pike |
-| Librarian | `@librarian` | Julia Evans |
-| Explore | `@explore` | Peter Bourgon |
-| Prometheus | `@prometheus` | Martin Fowler |
+| Brooks | `@brooks-architect` | Rich Hickey |
+| Brooks | `@brooks-architect` | Gergely Orosz |
+| Woz | `@woz-builder` | Fabrice Bellard |
+| Pike | `@pike-interface-review` | Rob Pike |
+| Scout | `@scout-recon` | Julia Evans |
+| Scout | `@scout-recon` | Peter Bourgon |
+| Fowler | `@fowler-refactor-gate` | Martin Fowler |
 | UX | `@ux` | Sara Soueidan |
 
 ---

@@ -519,7 +519,7 @@ describe("Trace ID Propagation", () => {
       postgres_trace_id: "evt_trace_pg_001",
       neo4j_id: "ins_trace_neo4j_001",
       tier: "adoption",
-      approved_by: "hephaestus-worker",
+      approved_by: "woz-builder",
     };
 
     const result = await promoteToKnowledgeHub(params, mcpClient);

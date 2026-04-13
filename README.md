@@ -224,14 +224,14 @@ The orchestrator for MCP servers and agent skills. Explicit approval flow. No au
 
 5. **Load + Route**: Brooks decides who executes
    ```bash
-   /skill-load code-review --executor oracle
-   # → Logs SKILL_LOADED event; @oracle executes
+/skill-load code-review --executor pike-interface-review
+# → Logs SKILL_LOADED event; @Pike executes
    ```
 
 ### Principles
 
 - **Explicit Approval**: No auto-discovery. Brooks approves before tools load.
-- **Surgical Team Delegation**: Skills routed to specialists (@oracle, @atlas, @hephaestus, etc.)
+- **Surgical Team Delegation**: Skills routed to specialists (@Pike, @Brooks, @Woz, etc.)
 - **Manual Curation**: Registry is YAML; no auto-fetch from external sources.
 - **Append-Only Audit**: All operations logged to PostgreSQL (immutable event trail)
 - **Graceful Error Handling**: No crashes if systems unavailable; automatic degradation.

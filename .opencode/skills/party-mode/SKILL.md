@@ -21,11 +21,11 @@ When you invoke `party-mode`, you get:
 
 | Agent | Persona | Role | Parallel Task |
 |-------|---------|------|---------------|
-| **Sisyphus** | Rich Hickey | Orchestrator | Coordinates the party |
-| **Hephaestus** | Fabrice Bellard | Deep Worker | Implementation |
-| **Oracle** | Rob Pike | Consultant | Architecture review |
-| **Librarian** | Julia Evans | Docs Search | External research |
-| **Explore** | Peter Bourgon | Codebase Grep | Pattern discovery |
+| **Brooks** | Rich Hickey | Orchestrator | Coordinates the party |
+| **Woz** | Fabrice Bellard | Deep Worker | Implementation |
+| **Pike** | Rob Pike | Consultant | Architecture review |
+| **Scout** | Julia Evans | Docs Search | External research |
+| **Scout** | Peter Bourgon | Codebase Grep | Pattern discovery |
 | **UX** | Sara Soueidan | Designer | Accessibility review |
 
 ## Party Protocol
@@ -36,10 +36,10 @@ Launch ALL agents in a single turn. Every agent uses `run_in_background=true`. N
 
 ```javascript
 // Spawn all agents simultaneously
-Agent({ subagent_type: "hephaestus", prompt: "...", run_in_background: true })
-Agent({ subagent_type: "oracle", prompt: "...", run_in_background: true })
-Agent({ subagent_type: "librarian", prompt: "...", run_in_background: true })
-Agent({ subagent_type: "explore", prompt: "...", run_in_background: true })
+Agent({ subagent_type: "WOZ_BUILDER", prompt: "...", run_in_background: true })
+Agent({ subagent_type: "PIKE_INTERFACE_REVIEW", prompt: "...", run_in_background: true })
+Agent({ subagent_type: "SCOUT_RECON", prompt: "...", run_in_background: true })
+Agent({ subagent_type: "SCOUT_RECON", prompt: "...", run_in_background: true })
 Agent({ subagent_type: "ux", prompt: "...", run_in_background: true })
 ```
 
@@ -49,37 +49,37 @@ Use `background_output` to collect results:
 
 ```javascript
 // Check each agent's output
-background_output({ task_id: "hephaestus-task-id" })
-background_output({ task_id: "oracle-task-id" })
-background_output({ task_id: "librarian-task-id" })
-background_output({ task_id: "explore-task-id" })
+background_output({ task_id: "woz-builder-task-id" })
+background_output({ task_id: "pike-interface-review-task-id" })
+background_output({ task_id: "scout-recon-task-id" })
+background_output({ task_id: "scout-recon-task-id" })
 background_output({ task_id: "ux-task-id" })
 ```
 
 ### Phase 3: Synthesize
 
-Sisyphus synthesizes all results and presents unified output.
+Brooks synthesizes all results and presents unified output.
 
 ## Party Rules
 
 1. **No sequential launches** — All agents spawn simultaneously
 2. **No blocking** — Use `run_in_background=true` always
 3. **No dependencies** — Each agent works independently
-4. **Synthesis at the end** — Sisyphus combines results
+4. **Synthesis at the end** — Brooks combines results
 
 ## Example: Full Feature Party
 
 ```
 User: "Add user authentication with OAuth2"
 
-Sisyphus spawns:
-- Hephaestus: Implement OAuth2 flow
-- Oracle: Review security architecture
-- Librarian: Research OAuth2 best practices
-- Explore: Find existing auth patterns in codebase
+Brooks spawns:
+- Woz: Implement OAuth2 flow
+- Pike: Review security architecture
+- Scout: Research OAuth2 best practices
+- Scout: Find existing auth patterns in codebase
 - UX: Review login flow accessibility
 
-All run in parallel. Sisyphus synthesizes.
+All run in parallel. Brooks synthesizes.
 ```
 
 ## Example: Code Review Party
@@ -87,17 +87,17 @@ All run in parallel. Sisyphus synthesizes.
 ```
 User: "Review PR #123"
 
-Sisyphus spawns:
-- Oracle: Architecture review
-- Explore: Find related patterns
+Brooks spawns:
+- Pike: Architecture review
+- Scout: Find related patterns
 - UX: Accessibility review
 
-All run in parallel. Sisyphus synthesizes.
+All run in parallel. Brooks synthesizes.
 ```
 
 ## Communication Overhead
 
-With 5 agents running in parallel, we reduce $\frac{5 \times 4}{2} = 10$ communication paths to **zero** during execution. Sisyphus handles all synthesis.
+With 5 agents running in parallel, we reduce $\frac{5 \times 4}{2} = 10$ communication paths to **zero** during execution. Brooks handles all synthesis.
 
 ---
 

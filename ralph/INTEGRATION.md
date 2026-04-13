@@ -136,7 +136,7 @@ ralph "..." \
 
 Use standard workflow:
 ```
-ContextScout → OpenAgent → Approval → Implementation
+ContextScout → Brooks → Approval → Implementation
 ```
 
 ### NIGHT_BUILD Mode

@@ -18,8 +18,8 @@ This contract defines how Open Ralph Wiggum integrates with the Allura harness f
 | Agent / Tool | Role | When to Use |
 |--------------|------|-------------|
 | **Brooks (Architect)** | System design, ADRs, decisions | Architecture work |
-| **Atlas (Conductor)** | Todo orchestration | Task coordination |
-| **Hephaestus (Implementer)** | Deep implementation | Complex features |
+| **Brooks (Conductor)** | Todo orchestration | Task coordination |
+| **Woz (Implementer)** | Deep implementation | Complex features |
 | **Ralph tool** | Autonomous iteration harness | Clear criteria, NIGHT_BUILD |
 
 **Ralph is a toolsmith's harness** — it runs the loop, doesn't design the architecture.
@@ -52,7 +52,7 @@ This contract defines how Open Ralph Wiggum integrates with the Allura harness f
 
 **Reason**: DAY_BUILD requires approval gates for every decision. Ralph is designed for autonomous execution.
 
-**Alternative**: Use standard OpenCode workflow with ContextScout → OpenAgent → Approval → Implementation.
+**Alternative**: Use standard OpenCode workflow with ContextScout → Brooks → Approval → Implementation.
 
 ### NIGHT_BUILD Mode
 
@@ -77,13 +77,13 @@ This contract defines how Open Ralph Wiggum integrates with the Allura harness f
 | Task Type | Primary Agent | Fallback | Condition |
 |-----------|---------------|-----------|-----------|
 | Discovery | ContextScout | None | Always |
-| Intent/Scope | OpenAgent | None | Always |
+| Intent/Scope | Brooks | None | Always |
 | Architecture | brooks-architect | None | Always |
-| Implementation (DAY) | CoderAgent | OpenCoder | With approval gates |
+| Implementation (DAY) | CoderAgent | Woz | With approval gates |
 | Implementation (NIGHT) | **Ralph tool** | CoderAgent | Autonomous |
-| Refactor | OpenCoder | Ralph tool | If clear criteria |
-| Performance | OpenCoder | None | Only if perf constraint |
-| Validation | OpenCoder | Ralph tool | If automated tests |
+| Refactor | Fowler | Ralph tool | If clear criteria |
+| Performance | Woz | None | Only if perf constraint |
+| Validation | Fowler | Ralph tool | If automated tests |
 
 ### Fallback Logic
 
