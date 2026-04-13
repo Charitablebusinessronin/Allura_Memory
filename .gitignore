@@ -67,3 +67,4 @@ memory-bank/index.meta.json
 .tmp/
 memory-bank/ingestion.meta.json
 package-lock.json
+.claude/worktrees/
