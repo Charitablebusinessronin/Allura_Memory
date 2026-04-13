@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { listInsights } from '@/lib/neo4j/client';
 import { validateGroupId, GroupIdValidationError } from '@/lib/validation/group-id';
+import { requireRole, forbiddenResponse, unauthorizedResponse } from '@/lib/auth/api-auth';
 
 /**
  * GET /api/memory/insights
@@ -12,6 +13,15 @@ import { validateGroupId, GroupIdValidationError } from '@/lib/validation/group-
  * - status: Insight status filter (active | deprecated | pending)
  */
 export async function GET(request: NextRequest) {
+  // Auth: require viewer or above role
+  const roleCheck = requireRole(request, "viewer");
+  if (!roleCheck.user) {
+    return unauthorizedResponse();
+  }
+  if (!roleCheck.allowed) {
+    return forbiddenResponse(roleCheck);
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const group_id_param = searchParams.get('group_id');

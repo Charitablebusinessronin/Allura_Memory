@@ -137,6 +137,15 @@ export interface MemoryAddResponse {
 
   /** Execution metadata */
   meta?: MemoryResponseMeta;
+
+  /** Whether this proposal was a near-duplicate of an existing one */
+  duplicate?: boolean;
+
+  /** ID of the existing proposal this duplicates (when duplicate=true) */
+  duplicate_of?: string;
+
+  /** Similarity score with the existing proposal (when duplicate=true) */
+  similarity?: number;
 }
 
 /**

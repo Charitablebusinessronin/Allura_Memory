@@ -19,9 +19,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Pool } from "pg";
 import { randomUUID } from "crypto";
+import { createHash } from "crypto";
 import { Neo4jConnectionError, Neo4jPromotionError } from "@/lib/errors/neo4j-errors";
 import { createInsight, InsightConflictError } from "@/lib/neo4j/queries/insert-insight";
 import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
+import { requireRole, forbiddenResponse, unauthorizedResponse } from "@/lib/auth/api-auth";
+import { captureException } from "@/lib/observability/sentry";
 
 let pgPool: Pool | null = null;
 
@@ -50,6 +53,15 @@ async function getConnections(): Promise<{ pg: Pool }> {
  * - rationale: Optional reasoning
  */
 export async function POST(request: NextRequest) {
+  // Auth: require curator or admin role
+  const roleCheck = requireRole(request, "curator");
+  if (!roleCheck.user) {
+    return unauthorizedResponse();
+  }
+  if (!roleCheck.allowed) {
+    return forbiddenResponse(roleCheck);
+  }
+
   try {
     const body = await request.json();
     const { proposal_id, group_id, decision, curator_id, rationale } = body;
@@ -124,6 +136,8 @@ export async function POST(request: NextRequest) {
     }
 
     const decidedAt = new Date().toISOString();
+    const witnessPayload = `${proposal_id}|${validatedGroupId}|${proposal.content}|${proposal.score}|${proposal.tier}|${decision}|${decidedAt}|${curator_id}`;
+    const witness_hash = createHash("sha256").update(witnessPayload).digest("hex");
 
     if (decision === "approve") {
       // Promote to Neo4j via versioned InsightHead + SUPERSEDES system
@@ -166,9 +180,10 @@ export async function POST(request: NextRequest) {
          SET status = 'approved',
              decided_at = $1,
              decided_by = $2,
-             rationale = $3
-         WHERE id = $4`,
-        [decidedAt, curator_id, rationale || null, proposal_id]
+             rationale = $3,
+             witness_hash = $4
+         WHERE id = $5`,
+        [decidedAt, curator_id, rationale || null, witness_hash, proposal_id]
       );
 
       // Log approval event
@@ -231,9 +246,10 @@ export async function POST(request: NextRequest) {
          SET status = 'rejected',
              decided_at = $1,
              decided_by = $2,
-             rationale = $3
-         WHERE id = $4`,
-        [decidedAt, curator_id, rationale || null, proposal_id]
+             rationale = $3,
+             witness_hash = $4
+         WHERE id = $5`,
+        [decidedAt, curator_id, rationale || null, witness_hash, proposal_id]
       );
 
       // Log rejection event
@@ -289,8 +305,10 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     if (error instanceof Neo4jConnectionError || error instanceof Neo4jPromotionError) {
+      captureException(error, { tags: { route: "/api/curator/approve", method: "POST", error_type: "neo4j_unavailable" } });
       return NextResponse.json({ error: "Neo4j unavailable" }, { status: 503 });
     }
+    captureException(error, { tags: { route: "/api/curator/approve", method: "POST" } });
     console.error("Failed to process curator decision:", error);
     return NextResponse.json(
       { error: "Failed to process curator decision" },

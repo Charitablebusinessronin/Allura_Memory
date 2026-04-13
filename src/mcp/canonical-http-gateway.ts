@@ -20,6 +20,10 @@ import { createServer, type IncomingMessage, type ServerResponse } from "http";
 import { parse } from "url";
 import { randomUUID } from "crypto";
 import { config } from "dotenv";
+import { applyCors, corsHeaders, isPreflightRequest, getCorsConfig } from "@/lib/cors/index.js";
+import { initSentry, captureException, extractRequestContext, startTransaction } from "@/lib/observability/index.js";
+import { checkReadiness, markMcpInitialized } from "@/lib/health/probes";
+import { collectMetrics, recordHttpRequest, ensureMetricsInitialized } from "@/lib/health/metrics";
 
 // MCP SDK imports for Streamable HTTP transport
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -274,14 +278,16 @@ const mcpTransport = new StreamableHTTPServerTransport({
 // Connect the MCP server to the transport
 await mcpServer.connect(mcpTransport);
 
-// ── Legacy JSON-RPC Tool Handlers ────────────────────────────────────────────
+// ── Initialize Observability ──────────────────────────────────────────────────
 
-// CORS headers
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
+initSentry();
+
+// ── Initialize Health Probes and Metrics ─────────────────────────────────────
+
+markMcpInitialized();
+ensureMetricsInitialized();
+
+// ── Legacy JSON-RPC Tool Handlers ────────────────────────────────────────────
 
 // Tool handlers (legacy JSON-RPC)
 const toolHandlers: Record<string, (args: unknown) => Promise<unknown>> = {
@@ -377,12 +383,24 @@ const toolSchemas = [
 const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
   const url = parse(req.url || "/", true);
 
-  // Handle CORS preflight for all routes
-  if (req.method === "OPTIONS") {
-    res.writeHead(204, corsHeaders);
-    res.end();
+  // ── Apply CORS middleware ──────────────────────────────────────────────────
+  // Handles preflight (OPTIONS) requests and sets CORS headers on all responses.
+  // In development mode (no ALLURA_CORS_ORIGINS), allows all origins.
+  // In production mode, validates against the configured allowlist.
+  const corsResult = applyCors(req, res);
+  if (corsResult.isPreflight) {
+    // Preflight was handled by CORS middleware (204 or 403)
     return;
   }
+
+  // Start a Sentry performance transaction for all requests
+  const transaction = startTransaction({
+    name: `${req.method ?? "GET"} ${url.pathname ?? "/"}`,
+    op: "http.server",
+  });
+
+  // Record request start time for metrics
+  const requestStartTime = Date.now();
 
   // ── MCP Streamable HTTP endpoint ──────────────────────────────────────────
   // Route: POST /mcp, GET /mcp, DELETE /mcp
@@ -392,11 +410,12 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     // Bearer token auth at the transport layer
     if (!validateBearerAuth(req)) {
       res.writeHead(401, {
-        ...corsHeaders,
+        ...corsHeaders(req.headers["origin"]),
         "Content-Type": "application/json",
         "WWW-Authenticate": 'Bearer realm="Allura Memory MCP"',
       });
       res.end(JSON.stringify({ error: "Unauthorized: Invalid or missing Bearer token" }));
+      transaction.finish();
       return;
     }
 
@@ -407,15 +426,18 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
       await mcpTransport.handleRequest(req, res);
     } catch (error) {
       console.error("[mcp-streamable-http] Error handling request:", error);
+      captureException(error, extractRequestContext(req));
       if (!res.headersSent) {
-        res.writeHead(500, { ...corsHeaders, "Content-Type": "application/json" });
+        res.writeHead(500, { ...corsHeaders(req.headers["origin"]), "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Internal server error" }));
       }
     }
+    transaction.finish();
     return;
   }
 
   // ── Legacy JSON-RPC endpoints (backward-compatible) ───────────────────────
+  const requestOrigin = req.headers["origin"];
   try {
     // Parse request body for POST requests
     let body: Record<string, unknown> = {};
@@ -430,24 +452,24 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
 
     if (url.pathname === "/tools" && req.method === "GET") {
       // List tools (legacy)
-      res.writeHead(200, { ...corsHeaders, "Content-Type": "application/json" });
+      res.writeHead(200, { ...corsHeaders(requestOrigin), "Content-Type": "application/json" });
       res.end(JSON.stringify({ tools: toolSchemas }));
     } else if (url.pathname === "/tools/call" && req.method === "POST") {
       // Call tool (legacy)
       const { name, arguments: args } = body as { name: string; arguments?: unknown };
 
       if (!name || !toolHandlers[name]) {
-        res.writeHead(404, { ...corsHeaders, "Content-Type": "application/json" });
+        res.writeHead(404, { ...corsHeaders(requestOrigin), "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: `Unknown tool: ${name}` }));
         return;
       }
 
       const result = await toolHandlers[name](args || {});
-      res.writeHead(200, { ...corsHeaders, "Content-Type": "application/json" });
+      res.writeHead(200, { ...corsHeaders(requestOrigin), "Content-Type": "application/json" });
       res.end(JSON.stringify(result));
     } else if (url.pathname === "/health" || url.pathname === "/api/health") {
       // Health check
-      res.writeHead(200, { ...corsHeaders, "Content-Type": "application/json" });
+      res.writeHead(200, { ...corsHeaders(requestOrigin), "Content-Type": "application/json" });
       res.end(
         JSON.stringify({
           status: "healthy",
@@ -458,18 +480,55 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
           port: PORT,
           port_source: HTTP_PORT.source,
           auth_enabled: !!AUTH_TOKEN,
+          cors_mode: getCorsConfig().isDevelopment ? "development" : "production",
           warnings: HTTP_PORT.warnings,
           timestamp: new Date().toISOString(),
         })
       );
+    } else if (url.pathname === "/ready" || url.pathname === "/api/ready") {
+      // Readiness probe — checks PostgreSQL, Neo4j, MCP initialization
+      const result = await checkReadiness();
+      const statusCode = result.ready ? 200 : 503;
+      res.writeHead(statusCode, { ...corsHeaders(requestOrigin), "Content-Type": "application/json" });
+      res.end(JSON.stringify(result));
+    } else if (url.pathname === "/live" || url.pathname === "/api/live") {
+      // Liveness probe — simple process heartbeat
+      const uptime = process.uptime();
+      res.writeHead(200, { ...corsHeaders(requestOrigin), "Content-Type": "application/json" });
+      res.end(JSON.stringify({ alive: true, uptime, timestamp: new Date().toISOString() }));
+    } else if (url.pathname === "/metrics" || url.pathname === "/api/metrics") {
+      // Prometheus metrics — requires auth (same as MCP endpoint)
+      if (!validateBearerAuth(req)) {
+        res.writeHead(401, {
+          ...corsHeaders(req.headers["origin"]),
+          "Content-Type": "text/plain",
+          "WWW-Authenticate": 'Bearer realm="Allura Memory Metrics"',
+        });
+        res.end("Unauthorized\n");
+        transaction.finish();
+        return;
+      }
+      const metricsText = collectMetrics();
+      res.writeHead(200, {
+        ...corsHeaders(req.headers["origin"]),
+        "Content-Type": "text/plain; version=0.0.4; charset=utf-8",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+      });
+      res.end(metricsText);
     } else {
-      res.writeHead(404, { ...corsHeaders, "Content-Type": "application/json" });
+      res.writeHead(404, { ...corsHeaders(requestOrigin), "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: "Not found" }));
     }
   } catch (error) {
     console.error("Error handling legacy request:", error);
-    res.writeHead(500, { ...corsHeaders, "Content-Type": "application/json" });
+    captureException(error, extractRequestContext(req));
+    res.writeHead(500, { ...corsHeaders(requestOrigin), "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Internal server error" }));
+  } finally {
+    // Record HTTP request metrics
+    const durationSeconds = (Date.now() - requestStartTime) / 1000;
+    recordHttpRequest(req.method ?? "GET", url.pathname ?? "/", durationSeconds);
+    transaction.finish();
   }
 });
 
@@ -484,6 +543,9 @@ server.listen(PORT, () => {
   console.log("  MCP Streamable HTTP:  POST/GET/DELETE /mcp  (primary — OpenAI Agents SDK compatible)");
   console.log("  Legacy JSON-RPC:       GET /tools, POST /tools/call  (backward-compatible)");
   console.log("  Health:                GET /health");
+  console.log("  Readiness:            GET /ready  (checks PostgreSQL, Neo4j, MCP)");
+  console.log("  Liveness:             GET /live   (process heartbeat)");
+  console.log("  Metrics:              GET /metrics (Prometheus format, auth required)");
   console.log("");
   console.log(`Auth: ${AUTH_TOKEN ? "Bearer token required" : "No auth token set (development mode)"}`);
   console.log("");

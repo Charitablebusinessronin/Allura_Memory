@@ -39,26 +39,26 @@ No Cursor rules were found (`.cursorrules` and `.cursor/rules/` are absent).
 bun install
 
 # Dev / build / run
-npm run dev
-npm run build
-npm run start
+bun run dev
+bun run build
+bun run start
 
 # Checks
-npm run typecheck
-npm run lint
+bun run typecheck
+bun run lint
 
 # Tests
-npm test
-npm run test:watch
-npm run test:e2e
-RUN_E2E_TESTS=true npm test
+bun test
+bun run test:watch
+bun run test:e2e
+RUN_E2E_TESTS=true bun test
 
 # MCP / curator workflows
-npm run mcp
-npm run mcp:dev
-npm run curator:run
-npm run curator:approve
-npm run curator:reject
+bun run mcp
+bun run mcp:dev
+bun run curator:run
+bun run curator:approve
+bun run curator:reject
 ```
 
 > **Security Note:** Use `bun` and `bunx` for all package operations. Never use `npm` or `npx` — this avoids supply chain risks.
@@ -480,22 +480,23 @@ Need DB?
 
 ### Canonical Location (OpenCode)
 
-OpenCode discovers agents by **scanning flat `.md` files** in `.opencode/agents/` (plural). The filename (minus `.md`) becomes the agent name. The `mode` field in YAML frontmatter (`primary` or `subagent`) determines the agent type.
-
-**Do NOT use subdirectories** — OpenCode does not discover agents in subdirectories for project-local configs (confirmed in [Issue #2369](https://github.com/anomalyco/opencode/issues/2369)).
+This repo uses the **nested singular** agent tree under `.opencode/agent/` as the canonical source of truth. Agent files are organized by role so the repo has a stable, human-readable layout.
 
 ```
-.opencode/agents/                    ← CANONICAL (plural, flat, auto-discovered)
-├── brooks-architect.md              ← mode: primary
-├── jobs-intent-gate.md              ← mode: primary
-├── scout-recon.md                    ← mode: subagent
-├── fowler-refactor-gate.md          ← mode: subagent
-├── pike-interface-review.md          ← mode: subagent
-├── ralph-loop.md                     ← mode: subagent
-├── bellard-diagnostics-perf.md       ← mode: subagent
-├── dijkstra-review.md                ← mode: subagent
-├── knuth-analyze.md                  ← mode: subagent
-└── woz-builder.md                    ← mode: subagent
+.opencode/agent/
+├── core/
+│   ├── brooks-architect.md          ← mode: primary
+│   └── jobs-intent-gate.md          ← mode: primary
+└── subagents/
+    ├── core/
+    │   ├── scout-recon.md           ← mode: subagent
+    │   ├── fowler-refactor-gate.md  ← mode: subagent
+    │   └── pike-interface-review.md ← mode: subagent
+    └── code/
+        ├── bellard-diagnostics-perf.md ← mode: subagent
+        ├── dijkstra-review.md       ← mode: subagent
+        ├── knuth-analyze.md         ← mode: subagent
+        └── woz-builder.md           ← mode: subagent
 ```
 
 ### Registration
@@ -511,7 +512,6 @@ The `.claude/agents/` directory uses a **flat** structure with simplified filena
 ├── jobs.md            ← mirrors jobs-intent-gate.md
 ├── fowler.md          ← mirrors fowler-refactor-gate.md
 ├── pike.md            ← mirrors pike-interface-review.md
-├── ralph.md           ← mirrors ralph-loop.md
 ├── scout.md           ← mirrors scout-recon.md
 ├── bellard.md         ← mirrors bellard-diagnostics-perf.md
 ├── dijkstra.md         ← mirrors dijkstra-review.md
@@ -519,13 +519,13 @@ The `.claude/agents/` directory uses a **flat** structure with simplified filena
 └── woz.md             ← mirrors woz-builder.md
 ```
 
-### DEPRECATED: `.opencode/agent/` (singular, nested)
+### Ralph Is A Tool, Not An Agent
 
-The old `.opencode/agent/` directory with nested subdirectories (`core/`, `subagents/core/`, `subagents/code/`) is **deprecated**. It remains for reference only. Do not edit files there — edit the canonical copies in `.opencode/agents/` instead.
+`@th0rgal/ralph-wiggum` is an external loop tool for OpenCode and other coding CLIs. It is documented as tooling and integration, not modeled as a persona file in `.opencode/agent/`.
 
 ### Key OpenCode Agent Rules
 
-1. **Flat files only** in `.opencode/agents/` — no subdirectories
+1. **Canonical source** is `.opencode/agent/` with `core/`, `subagents/core/`, and `subagents/code/`
 2. **YAML frontmatter** must include `description` (required) and `mode` (`primary` or `subagent`)
 3. **Filename = agent name** — `brooks-architect.md` creates agent `brooks-architect`
 4. **`opencode.json`** at project root provides explicit registration, permissions, and model overrides
@@ -579,7 +579,7 @@ This is exactly the kind of research where keyword search fails and neural searc
 ```bash
 docker exec knowledge-postgres pg_isready -U ronin4life -d memory
 curl -s http://localhost:7474 | jq .neo4j_version
-npm run typecheck
-npm run lint
-npm test
+bun run typecheck
+bun run lint
+bun test
 ```

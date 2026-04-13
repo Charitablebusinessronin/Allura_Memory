@@ -1,48 +1,66 @@
 # Active Context — Brooks Architect Persona
 
-**Session**: 2026-04-12f (MCP Streamable HTTP Transport)
-**Status**: ✅ MCP STREAMABLE HTTP TRANSPORT SHIPPED | Dual-transport gateway live | ADR ACTIVE
+**Session**: 2026-04-12g (Phase 6-9 Parallel Implementation Sprint)
+**Status**: ✅ PARALLEL SPRINT COMPLETE | Typecheck clean | 1133 tests passing
 
 ## Current Focus
 
-**MCP Streamable HTTP transport shipped on `canonical-http-gateway.ts`.** The gateway now serves two transports on port 3201: MCP Streamable HTTP at `/mcp` (primary) and legacy JSON-RPC at `/tools` (backward-compatible). OpenAI Agents SDK can connect natively via `MCPServerStreamableHttp` or `hostedMcpTool()`.
+**Phase 6-9 parallel implementation sprint completed.** Six surgical team agents worked in parallel to implement the remaining deliverables across all phases.
 
 ### What Changed This Session
 
-1. **MCP Streamable HTTP transport** — Added `StreamableHTTPServerTransport` from `@modelcontextprotocol/sdk` to `canonical-http-gateway.ts`. MCP `Server` instance with same 5 canonical tools as STDIO server. `/mcp` route delegates to transport.
-2. **Bearer token auth** — `ALLURA_MCP_AUTH_TOKEN` env var. Timing-safe comparison. Dev mode: no token = no auth.
-3. **Integration tests** — `src/__tests__/mcp-streamable-http.test.ts` covering protocol init, tool discovery, execution, auth, backward compat.
-4. **ADR flipped** — `docs/deferred/chatgpt-integration-plan.md` status DEFERRED → ACTIVE. GPT Actions demoted to FALLBACK.
-5. **`@openai/agents@0.8.3`** installed for integration tests.
+1. **Notion Sync DLQ** — Dead letter queue for zero event drop rate
+   - `docker/postgres-init/14-notion-sync-dlq.sql` — Migration with backoff schedule
+   - `src/curator/notion-sync-dlq.ts` — Full DLQ operations module
+   - `src/curator/notion-sync-worker.ts` — Updated to route failures to DLQ
+   - 21 unit tests + 17 E2E integration tests
 
-### Architecture Decision
+2. **Knowledge Hub Bridge** — Flow 2 implementation (approved → KH entries)
+   - `src/lib/memory/knowledge-promotion.ts` — Replaced stubs with real implementations
+   - `queryApprovedInsights()`, `queryKnowledgeHubBySourceId()`, `promoteToKnowledgeHub()`
+   - Trace ID propagation: PG event ID + Neo4j insight ID → Notion KH
+   - 44 tests
 
-- **MCP Streamable HTTP** is the primary integration path (eliminates REST bridge + OpenAPI schema)
-- **GPT Actions** (REST/OpenAPI) is OPTIONAL/FALLBACK for ChatGPT web UI only
-- **Conceptual integrity preserved**: canonical 5-operation interface unchanged
+3. **Auth Middleware** — RBAC route protection
+   - `src/middleware.ts` — Next.js middleware with viewer/curator/admin roles
+   - `src/lib/auth/` — Full auth module (config, roles, clerk, dev-auth, api-auth, types)
+   - DevAuthProvider for local development (no Clerk needed)
+   - Clerk integration layer ready for `@clerk/nextjs`
+
+4. **Audit Log CSV Export** — SOC2 compliance endpoint
+   - `GET /api/audit/events?format=csv` — RFC 4180 compliant CSV export
+   - `src/lib/csv/serialize.ts` — Streaming CSV writer
+   - `src/lib/audit/query-builder.ts` — Parameterized SQL with group_id enforcement
+   - 41 tests
+
+5. **TypeScript SDK** (`packages/sdk/`)
+   - `@allura/sdk` package with tsup build (ESM + CJS)
+   - `AlluraClient` class with retry, timeout, Bearer token auth
+   - 5 memory operations: add/search/get/list/delete
+   - Custom error classes
+
+6. **CORS Hardening** (`src/lib/cors/`)
+   - Environment-driven origin allowlist
+   - Development mode: allow all when no allowlist
+   - `CorsResponse` interface for testability
+
+7. **Sentry Integration** (`src/lib/observability/`)
+   - `initSentry()`, `captureException()`, `withSentry()`
+   - Complete no-op when DSN not configured
+   - Dynamic `require('@sentry/nextjs')` — no bundle cost
 
 ## Issues on the Board
 
 | Issue | Severity | Description | Status |
 |-------|----------|-------------|--------|
-| #7 | MEDIUM | Legacy tools missing `^allura-` validation | **FIXED** (commit 863ac5b9) |
+| #7 | MEDIUM | Legacy tools missing `^allura-` validation | **FIXED** |
 | #12 | HIGH | Kernel proof gate returns errors as data | **FIXED** |
 | #13 | HIGH | Neo4j I/O modules lack try/catch | **FIXED** |
 | #14 | HIGH | `memory_list` swallows PostgreSQL errors | **FIXED** |
 | #15 | HIGH | E2E test fixtures violate `^allura-` group_id | **FIXED** |
 | #16 | HIGH | SQL tier CHECK uses 'established' instead of 'mainstream' | **FIXED** |
 | #17 | MEDIUM | approvePromotions() dual-path risk | **HARD-BLOCKED** |
-| ARCH-001 | HIGH | groupIdEnforcer inconsistent enforcement | **FIXED** (commit f6e79074) |
-
-## Pipeline Status
-
-| Step | Task | Status |
-|------|------|--------|
-| 1 | RUVIX_KERNEL_SECRET fix | ✅ DONE (commit 177f4bd4) |
-| 2 | Canonical-memory content fix | ✅ DONE (commit 3bec5cf7) |
-| 3 | Pre-existing failures baselined | ✅ DONE (commit dc632124) |
-| 4 | ARCH-001 groupIdEnforcer fix | ✅ DONE (commit f6e79074) |
-| 5 | Curator admin UI skeleton | ✅ DONE (commit 86818b5f) |
+| ARCH-001 | HIGH | groupIdEnforcer inconsistent enforcement | **FIXED** |
 
 ## Key Invariants Verified
 
@@ -50,28 +68,34 @@
 - ✅ `/api/curator/approve` is the sole operational approval door
 - ✅ `approvePromotions()` throws in operational context
 - ✅ `^allura-[a-z0-9-]+$` enforced at ALL entry points (ARCH-001)
-- ✅ 154/154 validation tests pass
-- ✅ 102/102 invariant sweep tests pass
-- ✅ 0 test failures, 1103 passed, 123 properly skipped
+- ✅ 1133 tests passing, 0 failures
+- ✅ Typecheck clean
 
 ## System Health
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Postgres | ✅ READY | Proposals pending |
+| Postgres | ✅ READY | DLQ table added (migration 14) |
 | Neo4j | ✅ READY | SUPERSEDES versioning |
-| Typecheck | ✅ CLEAN | All 5 Phase 5 commits verified |
-| Invariant Sweep | ✅ VERIFIED | 102/102 |
-| Validation Suite | ✅ VERIFIED | 154/154 |
-| Admin UI | ✅ SCAFFOLDED | `/admin/approvals` |
+| Typecheck | ✅ CLEAN | All new files verified |
+| Tests | ✅ VERIFIED | 1133 passed, 381 skipped |
+| Auth Middleware | ✅ BUILT | RBAC with dev fallback |
+| CORS | ✅ BUILT | Environment-driven allowlist |
+| Sentry | ✅ BUILT | No-op when DSN not configured |
+| SDK | ✅ BUILT | `@allura/sdk` package scaffolded |
 
 ---
 
 **Phase 4: CLOSED ✅**
 **Phase 5: CLOSED ✅**
+**Phase 6: IN PROGRESS** (DLQ ✅, KH Bridge ✅, Worker soak � running, Backlog 🔴)
+**Phase 7: CLOSED ✅** (Auth ✅, Audit CSV ✅, Clerk wiring ✅, UI auth guard ✅)
+**Phase 8: CLOSED ✅** (SDK ✅, CORS ✅, Sentry ✅, instrumentation ✅)
+**Phase 9: IN PROGRESS** (Probes ✅, k6 ✅, BYOK ✅, SDK publish CI ✅, Load test run 🔴, Uptime benchmark 🔴)
 
-**Next Session (Phase 6)**:
-1. Wire Notion curator DB end-to-end — pending proposals → Notion pages via MCP
-2. Fix remaining pre-existing test failures (embeddings, session, wrapped-client)
-3. Production hardening — rate limiting, auth middleware, CORS
+**Next Session**:
+1. Run k6 load test at VU=100, validate p95 < 200ms
+2. Process 116 backlogged proposals through dedup + Notion sync
+3. Verify 24h watchdog soak completed with 0 unhandled rejections
+4. Close Phase 6 after watchdog completes
 4. Phase 6 planning — Agent hooks, autonomous curator production pipeline

@@ -1,0 +1,102 @@
+/**
+ * @allura/sdk — Public API barrel export
+ *
+ * This is the main entry point for the @allura/sdk package.
+ * Import from `@allura/sdk` to access all types and the client.
+ *
+ * ```typescript
+ * import { AlluraClient } from "@allura/sdk";
+ *
+ * const client = new AlluraClient({
+ *   baseUrl: "http://localhost:3201",
+ *   authToken: process.env.ALLURA_AUTH_TOKEN,
+ * });
+ * ```
+ */
+
+// ── Client ──────────────────────────────────────────────────────────────────
+
+export { AlluraClient } from "./client.js";
+
+// ── Memory Operations ────────────────────────────────────────────────────────
+
+export { MemoryOperations } from "./memory.js";
+export type { TransportMode, RequestFn } from "./memory.js";
+
+// ── Types ────────────────────────────────────────────────────────────────────
+
+export type {
+  // Core scalars
+  GroupId,
+  MemoryId,
+  UserId,
+  MemoryContent,
+  ConfidenceScore,
+  StorageLocation,
+  PromotionMode,
+  MemoryProvenance,
+  MemoryStatus,
+  MemorySortOrder,
+  // Config
+  AlluraClientConfig,
+  // Request params
+  MemoryAddParams,
+  MemorySearchParams,
+  MemoryGetParams,
+  MemoryListParams,
+  MemoryDeleteParams,
+  // Responses
+  MemoryAddResponse,
+  MemorySearchResult,
+  MemorySearchResponse,
+  MemoryGetResponse,
+  MemoryListResponse,
+  MemoryDeleteResponse,
+  MemoryResponseMeta,
+  HealthResponse,
+} from "./types.js";
+
+// ── Zod Schemas (for runtime validation) ──────────────────────────────────────
+
+export {
+  GroupIdSchema,
+  MemoryIdSchema,
+  ConfidenceScoreSchema,
+  MemoryAddResponseSchema,
+  MemorySearchResponseSchema,
+  MemoryGetResponseSchema,
+  MemoryListResponseSchema,
+  MemoryDeleteResponseSchema,
+  HealthResponseSchema,
+} from "./types.js";
+
+// ── Errors ───────────────────────────────────────────────────────────────────
+
+export {
+  AlluraError,
+  AuthenticationError,
+  ValidationError,
+  NotFoundError,
+  RateLimitError,
+  ServerError,
+  ConnectionError,
+  RetryExhaustedError,
+  createErrorFromResponse,
+} from "./errors.js";
+
+// ── Auth Helpers ─────────────────────────────────────────────────────────────
+
+export { resolveAuthToken, requireAuthToken, createAuthHeader } from "./auth.js";
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+
+export {
+  validateGroupId,
+  withRetry,
+  calculateBackoff,
+  isRetryable,
+  buildHeaders,
+  normalizeBaseUrl,
+  DEFAULT_TIMEOUT,
+  DEFAULT_RETRIES,
+} from "./utils.js";

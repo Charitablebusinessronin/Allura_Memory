@@ -15,14 +15,14 @@ This contract defines how Open Ralph Wiggum integrates with the Allura harness f
 
 ### Role in Surgical Team
 
-| Agent | Role | When to Use |
-|-------|------|-------------|
+| Agent / Tool | Role | When to Use |
+|--------------|------|-------------|
 | **Brooks (Architect)** | System design, ADRs, decisions | Architecture work |
 | **Atlas (Conductor)** | Todo orchestration | Task coordination |
 | **Hephaestus (Implementer)** | Deep implementation | Complex features |
-| **RalphLoop (NEW)** | Autonomous iteration | Clear criteria, NIGHT_BUILD |
+| **Ralph tool** | Autonomous iteration harness | Clear criteria, NIGHT_BUILD |
 
-**RalphLoop is a toolsmith** — it runs the loop, doesn't design the architecture.
+**Ralph is a toolsmith's harness** — it runs the loop, doesn't design the architecture.
 
 ---
 
@@ -64,7 +64,7 @@ This contract defines how Open Ralph Wiggum integrates with the Allura harness f
 ```
 1. Brooks reviews architecture (ADR created)
 2. TaskManager breaks down epic into stories
-3. RalphLoop executes each story autonomously
+3. Ralph executes each story autonomously
 4. Brooks reviews results, logs completion
 ```
 
@@ -80,10 +80,10 @@ This contract defines how Open Ralph Wiggum integrates with the Allura harness f
 | Intent/Scope | OpenAgent | None | Always |
 | Architecture | brooks-architect | None | Always |
 | Implementation (DAY) | CoderAgent | OpenCoder | With approval gates |
-| Implementation (NIGHT) | **RalphLoop** | CoderAgent | Autonomous |
-| Refactor | OpenCoder | RalphLoop | If clear criteria |
+| Implementation (NIGHT) | **Ralph tool** | CoderAgent | Autonomous |
+| Refactor | OpenCoder | Ralph tool | If clear criteria |
 | Performance | OpenCoder | None | Only if perf constraint |
-| Validation | OpenCoder | RalphLoop | If automated tests |
+| Validation | OpenCoder | Ralph tool | If automated tests |
 
 ### Fallback Logic
 
@@ -94,7 +94,7 @@ function selectExecutionMethod(mode, taskType, criteriaClarity):
     
     if mode == NIGHT_BUILD:
         if criteriaClarity == "high":
-            return "ralph-loop"  # Autonomous execution
+            return "ralph"  # Autonomous execution tool
         else:
             return "approval-gates"  # Fall back to approval
     

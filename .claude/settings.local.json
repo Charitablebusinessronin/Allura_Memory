@@ -34,7 +34,8 @@
       "mcp__claude_ai_Notion__notion-update-page",
       "mcp__claude_ai_Notion__notion-update-data-source",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Skill(start-session)"
     ]
   },
   "enabledPlugins": {

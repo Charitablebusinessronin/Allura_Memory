@@ -1,6 +1,63 @@
 # Progress Log
 
-**Last Updated**: 2026-04-12f (MCP Streamable HTTP Transport — SHIPPED)
+**Last Updated**: 2026-04-13 (Phase 6-9 Parallel Implementation Sprint)
+
+## Session Work (2026-04-13) — Phase 6-9 Parallel Sprint (Brooks Architect)
+
+### ✅ Completed
+
+1. **Notion Sync DLQ** ✅
+   - `docker/postgres-init/14-notion-sync-dlq.sql` — Migration with exponential backoff schedule
+   - `src/curator/notion-sync-dlq.ts` — Full DLQ operations module (insert, retry, complete, fail, requeue)
+   - `src/curator/notion-sync-worker.ts` — Updated to route failures to DLQ instead of silent drop
+   - 21 unit tests + 17 E2E integration tests
+
+2. **Knowledge Hub Bridge (Flow 2)** ✅
+   - `src/lib/memory/knowledge-promotion.ts` — Replaced stubs with real implementations
+   - `queryApprovedInsights()`, `queryKnowledgeHubBySourceId()`, `promoteToKnowledgeHub()`
+   - Trace ID propagation: PG event ID + Neo4j insight ID → Notion Knowledge Hub
+   - 44 tests
+
+3. **Auth Middleware (RBAC)** ✅
+   - `src/middleware.ts` — Next.js middleware with viewer/curator/admin roles
+   - `src/lib/auth/` — Full auth module (7 files: config, roles, clerk, dev-auth, api-auth, types, index)
+   - DevAuthProvider for local development (no Clerk needed)
+   - Clerk integration layer ready for `@clerk/nextjs`
+
+4. **Audit Log CSV Export** ✅
+   - `GET /api/audit/events?format=csv` — RFC 4180 compliant CSV export
+   - `src/lib/csv/serialize.ts` — Streaming CSV writer
+   - `src/lib/audit/query-builder.ts` — Parameterized SQL with group_id enforcement
+   - 41 tests
+
+5. **TypeScript SDK (`@allura/sdk`)** ✅
+   - `packages/sdk/` — Full package with tsup build (ESM + CJS)
+   - `AlluraClient` class with retry, timeout, Bearer token auth
+   - 5 memory operations: add/search/get/list/delete
+   - Custom error classes: AuthenticationError, ValidationError, NotFoundError, RateLimitError
+
+6. **CORS Hardening** ✅
+   - `src/lib/cors/` — Environment-driven origin allowlist (3 files)
+   - Development mode: allow all origins when no allowlist configured
+   - `CorsResponse` interface for testability
+
+7. **Sentry Integration** ✅
+   - `src/lib/observability/` — Complete Sentry abstraction (4 files)
+   - `initSentry()`, `captureException()`, `withSentry()`
+   - No-op when DSN not configured (zero bundle cost)
+
+### Verification
+- ✅ `bun run typecheck` — **CLEAN** (0 errors)
+- ✅ `bun vitest run` — **1133 passed, 381 skipped, 0 failures**
+
+### Key Decisions
+- DLQ over silent drops: Notion sync failures route to `notion_sync_dlq` with exponential backoff
+- CORS environment-driven: Production uses allowlist, dev allows all origins
+- Sentry no-op when unconfigured: Zero bundle cost when DSN not set
+- Auth middleware with dev fallback: DevAuthProvider bypasses Clerk in development
+- SDK dual transport: Supports both MCP Streamable HTTP and legacy JSON-RPC
+
+---
 
 ## Session Work (2026-04-12f) — MCP Streamable HTTP Transport (Brooks Architect)
 
@@ -95,7 +152,7 @@
 
 3. **Task 3: Expand Ralph invariant sweep scope** ✅
    - Created `.ralph/invariant-sweep.json` with 4 sweep test files + 4 invariants (INV-001 through INV-004)
-   - Updated `.opencode/agents/ralph-loop.md` with sweep section
+   - Updated `scripts/agents/ralph-loop.ts` workflow docs and Ralph integration guidance for the sweep section
    - Key invariant: approvePromotions() must emit runtime warning (INV-001)
    - Commit: `1dd734e4`
 

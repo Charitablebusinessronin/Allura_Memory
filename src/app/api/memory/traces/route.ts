@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logTrace, TraceLog } from '@/lib/postgres/trace-logger';
 import { validateGroupId, GroupIdValidationError } from '@/lib/validation/group-id';
+import { requireRole, forbiddenResponse, unauthorizedResponse } from '@/lib/auth/api-auth';
 
 /**
  * GET /api/memory/traces
@@ -20,6 +21,15 @@ import { validateGroupId, GroupIdValidationError } from '@/lib/validation/group-
  * - type: Trace type filter (memory | decision | action | prompt)
  */
 export async function GET(request: NextRequest) {
+  // Auth: require viewer or above role
+  const roleCheck = requireRole(request, "viewer");
+  if (!roleCheck.user) {
+    return unauthorizedResponse();
+  }
+  if (!roleCheck.allowed) {
+    return forbiddenResponse(roleCheck);
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const group_id_param = searchParams.get('group_id');
@@ -83,6 +93,15 @@ export async function GET(request: NextRequest) {
  * - confidence: Confidence score (0.0-1.0, default: 0.5)
  */
 export async function POST(request: NextRequest) {
+  // Auth: require viewer or above role (trace creation is a write but still viewer-level)
+  const roleCheck = requireRole(request, "viewer");
+  if (!roleCheck.user) {
+    return unauthorizedResponse();
+  }
+  if (!roleCheck.allowed) {
+    return forbiddenResponse(roleCheck);
+  }
+
   try {
     const body = await request.json();
     const { group_id, type, content, agent, metadata, confidence = 0.5 } = body;

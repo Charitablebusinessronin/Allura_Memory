@@ -35,10 +35,13 @@ import {
   DatabaseQueryError,
 } from "@/lib/errors/database-errors";
 import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
+import { requireRole, forbiddenResponse, unauthorizedResponse } from "@/lib/auth/api-auth";
+import { captureException } from "@/lib/observability/sentry";
 
 // ── Error Handling ────────────────────────────────────────────────────────
 
-function handleError(error: unknown): NextResponse {
+function handleError(error: unknown, route: string, method: string): NextResponse {
+  captureException(error, { tags: { route, method } });
   console.error("Memory API error:", error);
   
   if (error instanceof GroupIdValidationError) {
@@ -87,6 +90,15 @@ function handleError(error: unknown): NextResponse {
 // ── POST /api/memory (memory_add) ─────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  // Auth: require viewer or above role
+  const roleCheck = requireRole(request, "viewer");
+  if (!roleCheck.user) {
+    return unauthorizedResponse();
+  }
+  if (!roleCheck.allowed) {
+    return forbiddenResponse(roleCheck);
+  }
+
   try {
     const body = await request.json();
     
@@ -130,13 +142,22 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json(response);
   } catch (error) {
-    return handleError(error);
+    return handleError(error, "/api/memory", "POST");
   }
 }
 
 // ── GET /api/memory (memory_list) ─────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
+  // Auth: require viewer or above role
+  const roleCheck = requireRole(request, "viewer");
+  if (!roleCheck.user) {
+    return unauthorizedResponse();
+  }
+  if (!roleCheck.allowed) {
+    return forbiddenResponse(roleCheck);
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     
@@ -199,6 +220,6 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json(response);
   } catch (error) {
-    return handleError(error);
+    return handleError(error, "/api/memory", "GET");
   }
 }

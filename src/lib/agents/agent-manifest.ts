@@ -121,18 +121,6 @@ const manifestEntries: Array<AgentManifestEntry> = [
 
   // ── Core Subagents ────────────────────────────────────────────────────
   {
-    id: "ralph",
-    persona: "Ralph",
-    role: "Loop Harness",
-    category: "core",
-    scriptPath: "scripts/agents/ralph-loop.ts",
-    ciRoutes: [],
-    modelBackend: "opencode",
-    auth: "OPENCODE_CONFIG",
-    description:
-      "Harness wrapper for the `ralph` CLI (@th0rgal/ralph-wiggum). Invokes the installed ralph tool with Allura defaults and audit logging. Ralph is NOT built here — it is an installed plugin that wraps any AI agent in a self-correcting loop.",
-  },
-  {
     id: "pike",
     persona: "Rob Pike",
     role: "Interface Review",
