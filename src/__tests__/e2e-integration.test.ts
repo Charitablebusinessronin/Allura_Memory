@@ -7,7 +7,7 @@
  * - Neo4j accessible via NEO4J_URI or NEO4J_* env vars
  * - Environment variables set (see .env.production.example)
  * 
- * Run with: npm run test:e2e
+ * Run with: bun run test:e2e
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";

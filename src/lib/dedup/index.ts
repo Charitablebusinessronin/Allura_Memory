@@ -64,6 +64,18 @@ export {
 } from './merger'
 export type { Neo4jClient } from './merger'
 
+// Proposal Dedup
+export {
+  ProposalDedupChecker,
+  createProposalDedupChecker,
+  getDedupThreshold,
+  DEFAULT_PROPOSAL_DEDUP_THRESHOLD,
+} from './proposal-dedup'
+export type {
+  ProposalCandidate,
+  ProposalDedupResult,
+} from './proposal-dedup'
+
 // Default export
 import { DuplicateDetector } from './detector'
 import { MergeManager } from './merger'

@@ -9,6 +9,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Pool } from "pg";
 import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
+import { requireRole, forbiddenResponse, unauthorizedResponse } from "@/lib/auth/api-auth";
+import { captureException } from "@/lib/observability/sentry";
 
 let pgPool: Pool | null = null;
 
@@ -34,6 +36,15 @@ async function getPool(): Promise<Pool> {
  * - limit: Max results (default: 20)
  */
 export async function GET(request: NextRequest) {
+  // Auth: require viewer or above role
+  const roleCheck = requireRole(request, "viewer");
+  if (!roleCheck.user) {
+    return unauthorizedResponse();
+  }
+  if (!roleCheck.allowed) {
+    return forbiddenResponse(roleCheck);
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const groupId = searchParams.get("group_id");
@@ -103,6 +114,7 @@ export async function GET(request: NextRequest) {
       })),
     });
   } catch (error) {
+    captureException(error, { tags: { route: "/api/curator/proposals", method: "GET" } });
     console.error("Failed to fetch proposals:", error);
     return NextResponse.json(
       { error: "Failed to fetch proposals" },

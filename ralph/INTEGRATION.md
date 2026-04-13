@@ -7,10 +7,10 @@
 
 ## What Was Created
 
-### 1. RalphLoop Subagent Definition
-**File**: `.opencode/agent/subagents/core/ralph-loop.md`
+### 1. Ralph Tooling Contract
+**File**: `.opencode/contracts/ralph-integration.md`
 
-Defines RalphLoop as a toolsmith subagent in the Brooksian surgical team. Role: autonomous iteration runner for tasks with clear completion criteria.
+Defines Ralph as an external loop tool used for autonomous iteration when criteria are clear. Ralph is not an agent persona in this repo.
 
 ### 2. Ralph Integration Contract
 **File**: `.opencode/contracts/ralph-integration.md`
@@ -22,10 +22,10 @@ Defines:
 - PRD format recommendations
 - Allura-specific rules
 
-### 3. Agent Metadata Update
+### 3. Tooling Metadata Update
 **File**: `.opencode/config/agent-metadata.json`
 
-Added `ralph-loop` subagent entry with dependencies on task-delegation-basics and ralph-integration contract.
+Tracks Ralph integration dependencies without modeling Ralph as an agent persona.
 
 ### 4. Features JSON (Ralph Format)
 **File**: `ralph/features.json`
@@ -147,7 +147,7 @@ Workflow:
 ```
 1. Brooks reviews architecture (ADR created)
 2. TaskManager breaks down epic into stories
-3. RalphLoop executes each story autonomously
+3. Ralph executes each story autonomously
 4. Brooks reviews results, logs completion
 ```
 
@@ -176,9 +176,8 @@ These rules are enforced via:
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `.opencode/agent/subagents/core/ralph-loop.md` | Created | Subagent definition |
-| `.opencode/contracts/ralph-integration.md` | Created | Integration contract |
-| `.opencode/config/agent-metadata.json` | Modified | Added ralph-loop entry |
+| `.opencode/contracts/ralph-integration.md` | Created | Tooling contract |
+| `.opencode/config/agent-metadata.json` | Modified | Recorded Ralph integration metadata |
 | `ralph/features.json` | Created | Ralph-format feature list |
 | `ralph/allura-ralph.sh` | Created | Wrapper script |
 | `ralph/INTEGRATION.md` | Created | This file |

@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 
 import type { Metadata } from "next";
 
+import { ClerkProvider } from "@clerk/nextjs";
+
 import { cookies } from "next/headers";
 
 import { Toaster } from "@/components/ui/sonner";
@@ -54,6 +56,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       </head>
       {/* suppressHydrationWarning: browser extensions inject attributes (e.g. data-gptw) onto body before React hydrates */}
       <body className={`${fontVars} min-h-screen antialiased`} suppressHydrationWarning>
+        <ClerkProvider afterSignOutUrl="/"
+>
         <TooltipProvider>
           <PreferencesStoreProvider
             themeMode={theme_mode}
@@ -69,6 +73,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             <Toaster />
           </PreferencesStoreProvider>
         </TooltipProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

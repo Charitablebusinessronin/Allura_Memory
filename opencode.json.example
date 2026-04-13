@@ -63,12 +63,6 @@
       "mode": "subagent",
       "permission": { "edit": "deny", "bash": { "git diff*": "allow", "git log*": "allow", "grep*": "allow", "*": "deny" }, "webfetch": "deny", "skill": { "*": "allow" } }
     },
-    "ralph-loop": {
-      "description": "Harness wrapper for ralph CLI. Wraps any AI coding agent in a self-correcting loop.",
-      "mode": "subagent",
-      "model": "ollama-cloud/glm-5.1",
-      "permission": { "edit": "allow", "bash": "allow", "webfetch": "allow", "skill": { "*": "allow" } }
-    },
     "bellard-diagnostics-perf": {
       "description": "SPECIALIST — Performance + deep diagnostics. Measurement-first.",
       "mode": "subagent",

@@ -37,7 +37,6 @@ declare -a SYNC_MAP=(
   "agent/core/jobs-intent-gate.md|agents/jobs.md"
   "agent/subagents/core/fowler-refactor-gate.md|agents/fowler.md"
   "agent/subagents/core/pike-interface-review.md|agents/pike.md"
-  "agent/subagents/core/ralph-loop.md|agents/ralph.md"
   "agent/subagents/core/scout-recon.md|agents/scout.md"
   "agent/subagents/code/bellard-diagnostics-perf.md|agents/bellard.md"
   "agent/subagents/code/dijkstra-review.md|agents/dijkstra.md"

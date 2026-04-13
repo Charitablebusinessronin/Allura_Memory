@@ -14,10 +14,14 @@
 import { createServer } from "http";
 import { parse } from "url";
 import { config } from "dotenv";
-import { getPort } from "../../lib/config/ports";
-
+import { getPort } from "../../lib/config/ports.js";
+import { corsHeaders as getCorsHeaders, isPreflightRequest, getCorsConfig } from "@/lib/cors/index.js";
+import { initSentry, captureException, extractRequestContext, startTransaction } from "@/lib/observability/index.js";
 // Load environment variables
 config();
+
+// Initialize observability
+initSentry();
 
 const PORT = getPort("openclaw", "OPENCLAW_PORT");
 
@@ -46,12 +50,17 @@ const tools: Record<string, (args: unknown) => Promise<unknown>> = {
   adas_approve_design: adasApproveDesign,
 };
 
-// CORS headers
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
+// CORS headers — resolved per-request via getCorsHeaders()
+// In development mode (no ALLURA_CORS_ORIGINS), allows all origins.
+// In production mode, validates against the configured allowlist.
+
+/**
+ * Resolve CORS headers for a request origin.
+ * Uses the dynamic CORS configuration instead of hardcoded wildcard.
+ */
+function cors(origin?: string): Record<string, string> {
+  return getCorsHeaders(origin);
+}
 
 // WhatsApp webhook verification token
 const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || "test_verify_token";
@@ -66,7 +75,7 @@ const receivedMessages: Array<{
 }> = [];
 
 // WhatsApp webhook verification (Meta requires this)
-async function verifyWhatsAppWebhook(query: Record<string, unknown>): Promise<Response> {
+async function verifyWhatsAppWebhook(query: Record<string, unknown>, origin?: string): Promise<Response> {
   const mode = query["hub.mode"] as string;
   const token = query["hub.verify_token"] as string;
   const challenge = query["hub.challenge"] as string;
@@ -75,7 +84,7 @@ async function verifyWhatsAppWebhook(query: Record<string, unknown>): Promise<Re
     console.log(`✅ WhatsApp webhook verified`);
     return {
       status: 200,
-      headers: { "Content-Type": "text/plain", ...corsHeaders },
+      headers: { "Content-Type": "text/plain", ...cors(origin) },
       body: challenge,
     };
   }
@@ -83,13 +92,13 @@ async function verifyWhatsAppWebhook(query: Record<string, unknown>): Promise<Re
   console.warn(`❌ WhatsApp webhook verification failed`);
   return {
     status: 403,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
+    headers: { "Content-Type": "application/json", ...cors(origin) },
     body: JSON.stringify({ error: "Verification failed" }),
   };
 }
 
 // Process incoming WhatsApp message
-async function processWhatsAppMessage(body: unknown): Promise<Response> {
+async function processWhatsAppMessage(body: unknown, origin?: string): Promise<Response> {
   try {
     const data = body as {
       object?: string;
@@ -115,7 +124,7 @@ async function processWhatsAppMessage(body: unknown): Promise<Response> {
     if (data.object !== "whatsapp_business_api") {
       return {
         status: 400,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...cors(origin) },
         body: JSON.stringify({ error: "Invalid object type" }),
       };
     }
@@ -150,24 +159,25 @@ async function processWhatsAppMessage(body: unknown): Promise<Response> {
 
     return {
       status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+      headers: { "Content-Type": "application/json", ...cors(origin) },
       body: JSON.stringify({ status: "received" }),
     };
   } catch (error) {
     console.error("Error processing WhatsApp message:", error);
+    captureException(error, { tags: { component: "openclaw-gateway", endpoint: "whatsapp" } });
     return {
       status: 500,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+      headers: { "Content-Type": "application/json", ...cors(origin) },
       body: JSON.stringify({ error: "Internal server error" }),
     };
   }
 }
 
 // Get received messages (for testing)
-async function getReceivedMessages(): Promise<Response> {
+async function getReceivedMessages(origin?: string): Promise<Response> {
   return {
     status: 200,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
+    headers: { "Content-Type": "application/json", ...cors(origin) },
     body: JSON.stringify({
       messages: receivedMessages,
       count: receivedMessages.length,
@@ -176,14 +186,14 @@ async function getReceivedMessages(): Promise<Response> {
 }
 
 // Send test message (simulates receiving a message)
-async function sendTestMessage(body: unknown): Promise<Response> {
+async function sendTestMessage(body: unknown, origin?: string): Promise<Response> {
   try {
     const { from, text } = body as { from?: string; text?: string };
     
     if (!from || !text) {
       return {
         status: 400,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...cors(origin) },
         body: JSON.stringify({ error: "Missing 'from' or 'text' field" }),
       };
     }
@@ -201,7 +211,7 @@ async function sendTestMessage(body: unknown): Promise<Response> {
 
     return {
       status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+      headers: { "Content-Type": "application/json", ...cors(origin) },
       body: JSON.stringify({ 
         status: "test message received",
         message: msg,
@@ -210,32 +220,33 @@ async function sendTestMessage(body: unknown): Promise<Response> {
   } catch (error) {
     return {
       status: 500,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+      headers: { "Content-Type": "application/json", ...cors(origin) },
       body: JSON.stringify({ error: "Failed to process test message" }),
     };
   }
 }
 
 // Health check endpoint
-async function healthCheck(): Promise<Response> {
+async function healthCheck(origin?: string): Promise<Response> {
   return {
     status: 200,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
+    headers: { "Content-Type": "application/json", ...cors(origin) },
     body: JSON.stringify({
       status: "healthy",
       service: "openclaw-gateway",
       version: "1.0.0",
       port: PORT,
+      cors_mode: getCorsConfig().isDevelopment ? "development" : "production",
       tools: Object.keys(tools),
     }),
   };
 }
 
 // List tools endpoint
-async function listTools(): Promise<Response> {
+async function listTools(origin?: string): Promise<Response> {
   return {
     status: 200,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
+    headers: { "Content-Type": "application/json", ...cors(origin) },
     body: JSON.stringify({
       tools: Object.keys(tools).map((name) => ({
         name,
@@ -248,14 +259,15 @@ async function listTools(): Promise<Response> {
 // Execute tool endpoint
 async function executeTool(
   toolName: string,
-  args: unknown
+  args: unknown,
+  origin?: string
 ): Promise<Response> {
   const tool = tools[toolName];
 
   if (!tool) {
     return {
       status: 404,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+      headers: { "Content-Type": "application/json", ...cors(origin) },
       body: JSON.stringify({ error: `Tool not found: ${toolName}` }),
     };
   }
@@ -264,13 +276,14 @@ async function executeTool(
     const result = await tool(args);
     return {
       status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+      headers: { "Content-Type": "application/json", ...cors(origin) },
       body: JSON.stringify(result),
     };
   } catch (error) {
+    captureException(error, { tags: { component: "openclaw-gateway", tool: toolName } });
     return {
       status: 500,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+      headers: { "Content-Type": "application/json", ...cors(origin) },
       body: JSON.stringify({
         error: error instanceof Error ? error.message : "Unknown error",
       }),
@@ -282,64 +295,65 @@ async function executeTool(
 async function handleRequest(req: Request): Promise<Response> {
   const url = parse(req.url || "/", true);
   const path = url.pathname ?? "/";
+  const origin = req.headers["origin"];
 
   // CORS preflight
   if (req.method === "OPTIONS") {
     return {
       status: 204,
-      headers: corsHeaders,
+      headers: cors(origin),
       body: "",
     };
   }
 
   // Health check
   if (path === "/health" || path === "/api/health") {
-    return healthCheck();
+    return healthCheck(origin);
   }
 
   // List tools
   if (path === "/tools" || path === "/api/tools") {
     if (req.method === "GET") {
-      return listTools();
+      return listTools(origin);
     }
   }
 
   // Execute tool
   const toolMatch = path.match(/^\/tools\/([a-z_]+)$/);
   if (toolMatch && req.method === "POST") {
-    return executeTool(toolMatch[1], req.body);
+    return executeTool(toolMatch[1], req.body, origin);
   }
 
   // API execute tool
   if (path === "/api/execute" && req.method === "POST") {
     const { tool, args } = req.body as { tool: string; args: unknown };
-    return executeTool(tool, args);
+    return executeTool(tool, args, origin);
   }
 
   // WhatsApp webhook verification (GET)
   if (path === "/webhook/whatsapp" && req.method === "GET") {
-    return verifyWhatsAppWebhook(url.query as Record<string, unknown>);
+    return verifyWhatsAppWebhook(url.query as Record<string, unknown>, origin);
   }
 
   // WhatsApp webhook message receiver (POST)
   if (path === "/webhook/whatsapp" && req.method === "POST") {
-    return processWhatsAppMessage(req.body);
+    return processWhatsAppMessage(req.body, origin);
   }
 
   // Get received messages (for testing)
   if (path === "/webhook/whatsapp/messages" && req.method === "GET") {
-    return getReceivedMessages();
+    return getReceivedMessages(origin);
   }
 
   // Send test message (simulates receiving a message)
   if (path === "/webhook/whatsapp/test" && req.method === "POST") {
-    return sendTestMessage(req.body);
+    return sendTestMessage(req.body, origin);
   }
 
   // 404
   return {
     status: 404,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
+    headers: { "Content-Type": "application/json", ...cors(origin) },
     body: JSON.stringify({ error: "Not found" }),
   };
 }
@@ -370,7 +384,25 @@ const server = createServer(async (req, res) => {
     body,
   };
 
-  const response = await handleRequest(request);
+  // Start a Sentry performance transaction
+  const transaction = startTransaction({
+    name: `${req.method ?? "GET"} ${(req.url ?? "/").split("?")[0]}`,
+    op: "http.server",
+  });
+
+  let response: Response;
+  try {
+    response = await handleRequest(request);
+  } catch (error) {
+    captureException(error, extractRequestContext(req as any));
+    response = {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...cors(req.headers["origin"]) },
+      body: JSON.stringify({ error: "Internal server error" }),
+    };
+  } finally {
+    transaction.finish();
+  }
 
   // Send response
   res.writeHead(response.status, response.headers);

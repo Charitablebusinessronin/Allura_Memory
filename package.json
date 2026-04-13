@@ -47,10 +47,12 @@
     "registry:log-audit": "bun run scripts/opencode-registry/log-audit.ts",
     "registry:drift": "bun run scripts/drift-detection.ts",
     "ports:check": "bun scripts/check-ports.ts",
-    "ports:generate": "bun -e \"console.log(require('./src/lib/config/ports').generateEnvEntries(true))\""
+    "ports:generate": "bun -e \"console.log(require('./src/lib/config/ports').generateEnvEntries(true))\"",
+    "load-test": "bash tests/load/run-load-test.sh"
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0-beta.4",
+    "@clerk/nextjs": "^7.0.12",
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",
     "@hookform/resolvers": "^3.10.0",

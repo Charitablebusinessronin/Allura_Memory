@@ -1,17 +1,27 @@
 /**
  * Canonical MCP Tools for Allura Memory
- * 
- * Implements the 5 canonical memory operations defined in canonical-contracts.ts.
+ *
+ * Implements the 8 canonical memory operations defined in canonical-contracts.ts.
  * This is the ONLY interface exposed to AI agents via MCP.
- * 
+ *
  * Reference: docs/allura/BLUEPRINT.md
- * 
+ *
  * Operations:
- * 1. memory_add - Add a memory (episodic → score → promote/queue)
- * 2. memory_search - Search memories (federated: Postgres + Neo4j)
- * 3. memory_get - Get a single memory by ID
- * 4. memory_list - List all memories for a user
- * 5. memory_delete - Soft-delete a memory
+ * 1. memory_add    - Add a memory (episodic → score → promote/queue)
+ * 2. memory_search  - Search memories (federated: Postgres + Neo4j)
+ * 3. memory_get     - Get a single memory by ID
+ * 4. memory_list    - List all memories for a user
+ * 5. memory_delete  - Soft-delete a memory
+ * 6. memory_update  - Append-only versioned update
+ * 7. memory_promote - Request curator promotion
+ * 8. memory_export  - Export memories
+ *
+ * Budget & Circuit Breaker Integration:
+ * - memory_add: Budget-enforced (pre-check, post-update). Write-intensive, needs rate limiting.
+ * - memory_update, memory_delete, memory_promote: Budget-tracked (record usage after call).
+ * - All write ops: Wrapped in circuit breakers for DB calls (separate breakers for PG & Neo4j).
+ * - Read ops: Circuit breakers on DB calls, no budget check (reads are cheap).
+ * - Fail-open: If budget/circuit breaker can't initialize, requests pass through.
  */
 
 import type {
@@ -52,8 +62,192 @@ import {
 } from "@/lib/errors/database-errors";
 import { curatorScore } from "@/lib/curator/score";
 import { validateGroupId as canonicalValidateGroupId } from "@/lib/validation/group-id";
+import { createProposalDedupChecker, getDedupThreshold, type ProposalCandidate } from "@/lib/dedup/proposal-dedup";
+import { BudgetEnforcer } from "@/lib/budget/enforcer";
+import { type SessionId, DEFAULT_BUDGET_CONFIG } from "@/lib/budget/types";
+import {
+  checkBudgetBeforeCall,
+  updateBudgetAfterCall,
+  createSessionId,
+} from "@/lib/budget/middleware-integration";
+import { BreakerManager } from "@/lib/circuit-breaker/manager";
 
 config();
+
+// ── Budget Enforcer & Circuit Breaker Setup ────────────────────────────────
+//
+// Fail-open design: if budget enforcer or circuit breaker can't initialize,
+// requests pass through. Budget is only enforced on write operations.
+// Circuit breakers wrap database calls, not tool handlers.
+
+const BUDGET_ENABLED = process.env.BUDGET_ENABLED !== "false";
+const BUDGET_MAX_RPM = parseInt(process.env.BUDGET_MAX_RPM || "60", 10);
+const BUDGET_MAX_TOKENS_PER_HOUR = parseInt(process.env.BUDGET_MAX_TOKENS_PER_HOUR || "100000", 10);
+const CIRCUIT_BREAKER_FAILURE_THRESHOLD = parseInt(process.env.CIRCUIT_BREAKER_FAILURE_THRESHOLD || "5", 10);
+const CIRCUIT_BREAKER_RESET_TIMEOUT = parseInt(process.env.CIRCUIT_BREAKER_RESET_TIMEOUT || "30000", 10);
+
+let budgetEnforcer: BudgetEnforcer | null = null;
+let breakerManager: BreakerManager | null = null;
+
+function getBudgetEnforcer(): BudgetEnforcer | null {
+  if (!BUDGET_ENABLED) return null;
+  try {
+    if (!budgetEnforcer) {
+      budgetEnforcer = new BudgetEnforcer({
+        budgetConfig: {
+          ...DEFAULT_BUDGET_CONFIG,
+          defaults: {
+            ...DEFAULT_BUDGET_CONFIG.defaults,
+            maxTokens: BUDGET_MAX_TOKENS_PER_HOUR,
+            maxToolCalls: BUDGET_MAX_RPM,
+          },
+        },
+        enabled: true,
+      });
+    }
+    return budgetEnforcer;
+  } catch (error) {
+    console.error("[budget] Failed to initialize budget enforcer, failing open:", error);
+    return null;
+  }
+}
+
+function getBreakerManager(): BreakerManager | null {
+  try {
+    if (!breakerManager) {
+      breakerManager = new BreakerManager({
+        defaultConfig: {
+          errorThreshold: CIRCUIT_BREAKER_FAILURE_THRESHOLD,
+          openTimeoutMs: CIRCUIT_BREAKER_RESET_TIMEOUT,
+        },
+        enableAutoRecovery: true,
+        healthCheckIntervalMs: 30000,
+        maxBreakersPerScope: 100,
+      });
+    }
+    return breakerManager;
+  } catch (error) {
+    console.error("[circuit-breaker] Failed to initialize breaker manager, failing open:", error);
+    return null;
+  }
+}
+
+const activeSessions = new Map<string, SessionId>();
+
+function ensureSession(groupId: string, agentId: string): SessionId | null {
+  const enforcer = getBudgetEnforcer();
+  if (!enforcer) return null;
+
+  const sessionKey = `${groupId}:${agentId}`;
+  const existing = activeSessions.get(sessionKey);
+  if (existing) {
+    if (enforcer.getSessionState(existing)) {
+      return existing;
+    }
+    activeSessions.delete(sessionKey);
+  }
+
+  try {
+    const sessionId = createSessionId(groupId, agentId, `mcp-${Date.now()}`);
+    enforcer.startSession(sessionId);
+    activeSessions.set(sessionKey, sessionId);
+    return sessionId;
+  } catch (error) {
+    console.warn("[budget] Failed to start session, failing open:", error);
+    return null;
+  }
+}
+
+async function checkBudget(
+  groupId: string,
+  agentId: string,
+  toolName: string,
+): Promise<{ allowed: boolean; reason?: string; retryAfter?: number }> {
+  const enforcer = getBudgetEnforcer();
+  const sessionId = ensureSession(groupId, agentId);
+
+  if (!enforcer || !sessionId) {
+    return { allowed: true };
+  }
+
+  try {
+    const budgetCheck = checkBudgetBeforeCall(enforcer, sessionId);
+    if (!budgetCheck.allowed) {
+      const halt = budgetCheck.haltReason;
+      const retryAfter =
+        halt?.type === "time_limit"
+          ? Math.ceil((halt.limitMs - halt.elapsedMs) / 1000)
+          : undefined;
+      console.warn(
+        `[budget] Budget exceeded for ${groupId}/${agentId} on ${toolName}: ${budgetCheck.reason}`,
+      );
+      return { allowed: false, reason: budgetCheck.reason, retryAfter };
+    }
+    return { allowed: true };
+  } catch (error) {
+    console.error("[budget] Budget check failed, failing open:", error);
+    return { allowed: true };
+  }
+}
+
+function recordToolCall(
+  groupId: string,
+  agentId: string,
+  toolName: string,
+  durationMs: number,
+  success: boolean,
+): void {
+  const enforcer = getBudgetEnforcer();
+  const sessionId = ensureSession(groupId, agentId);
+  if (!enforcer || !sessionId) return;
+
+  try {
+    updateBudgetAfterCall(enforcer, sessionId, { toolName, durationMs, success });
+  } catch (error) {
+    console.warn("[budget] Failed to record tool call:", error);
+  }
+}
+
+async function withCircuitBreaker<T>(
+  breakerName: string,
+  groupId: string,
+  operation: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const manager = getBreakerManager();
+  if (!manager) {
+    return fn();
+  }
+
+  try {
+    const { result, breakerResult } = await manager.executeThrough(
+      breakerName,
+      groupId,
+      operation,
+      fn,
+    );
+
+    if (!breakerResult.allowed) {
+      throw new Error(
+        `Circuit breaker open for ${breakerName}: ${breakerResult.rejectionReason}`,
+      );
+    }
+
+    if (!breakerResult.success && breakerResult.error) {
+      throw breakerResult.error;
+    }
+
+    return result as T;
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.startsWith("Circuit breaker open")
+    ) {
+      console.warn(`[circuit-breaker] ${error.message}`);
+    }
+    throw error;
+  }
+}
 
 // ── Connection Management ─────────────────────────────────────────────────
 
@@ -100,6 +294,9 @@ export function resetConnections(): void {
     neo4jDriver.close().catch(() => {});
     neo4jDriver = null;
   }
+  budgetEnforcer = null;
+  breakerManager = null;
+  activeSessions.clear();
 }
 
 interface EpisodicMemoryRow {
@@ -171,24 +368,24 @@ function generateMemoryId(): MemoryId {
 async function checkDuplicate(
   neo4j: Driver,
   groupId: GroupId,
-  userId: string,
+  userId: string | null | undefined,
   content: string
 ): Promise<MemoryId | null> {
   const session = neo4j.session();
-  
+
   try {
     // Exact match check
     const result = await session.run(
       `
       MATCH (m:Memory)
       WHERE m.group_id = $groupId
-        AND m.user_id = $userId
+        AND ($userId IS NULL OR m.user_id = $userId)
         AND m.content = $content
         AND NOT (m)<-[:SUPERSEDES]-()
       RETURN m.id AS id
       LIMIT 1
       `,
-      { groupId, userId, content }
+      { groupId, userId: userId ?? null, content }
     );
     
     if (result.records.length > 0) {
@@ -226,14 +423,35 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
   console.log(`[DEBUG memory_add] PROMOTION_MODE=${PROMOTION_MODE}, AUTO_APPROVAL_THRESHOLD=${AUTO_APPROVAL_THRESHOLD}`);
   
   const groupId = validateGroupId(request.group_id);
+  const agentId = request.metadata?.agent_id || "api";
   const memoryId = generateMemoryId();
   const createdAt = new Date().toISOString();
+  const startTime = Date.now();
+
+  // Budget pre-check: memory_add is write-intensive, enforce budget before proceeding
+  const budgetResult = await checkBudget(groupId, agentId, "memory_add");
+  if (!budgetResult.allowed) {
+    return {
+      id: memoryId,
+      stored: "episodic",
+      score: 0,
+      created_at: createdAt,
+      meta: {
+        contract_version: "v1",
+        degraded: true,
+        stores_used: [],
+        stores_attempted: [],
+        warnings: [budgetResult.reason ?? "Budget exceeded"],
+      },
+    } satisfies MemoryAddResponse;
+  }
   
   try {
     const { pg, neo4j } = await getConnections();
   
-  // Write to PostgreSQL (episodic)
-  const eventResult = await pg.query(
+  // Write to PostgreSQL (episodic) — wrapped in circuit breaker
+  const eventResult = await withCircuitBreaker("postgres", groupId, "memory_add:insert_event", async () =>
+    pg.query(
     `INSERT INTO events (
       group_id, event_type, agent_id, status, metadata, created_at
     ) VALUES ($1, $2, $3, $4, $5, $6)
@@ -241,7 +459,7 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
     [
       groupId,
       "memory_add",
-      request.metadata?.agent_id || "api",
+      agentId,
       "completed",
       JSON.stringify({
         memory_id: memoryId,
@@ -252,7 +470,7 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
       }),
       createdAt,
     ]
-  );
+  ));
   
   const eventId = eventResult.rows[0].id;
   
@@ -285,11 +503,16 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
   if (PROMOTION_MODE === "auto") {
     // Auto mode: Promote immediately
     
-    // Check for duplicates (only in auto mode)
+    // Check for duplicates (only in auto mode) — circuit-breaker wrapped
     let duplicateId: MemoryId | null = null;
     try {
-      duplicateId = await checkDuplicate(neo4j, groupId, request.user_id, request.content);
+      duplicateId = await withCircuitBreaker("neo4j", groupId, "memory_add:duplicate_check", async () =>
+        checkDuplicate(neo4j, groupId, request.user_id, request.content),
+      );
     } catch (error) {
+      if (error instanceof Error && error.message.startsWith("Circuit breaker open")) {
+        throw error;
+      }
       console.warn("[degraded] Neo4j duplicate check unavailable in memory_add:", error);
       return {
         id: memoryId,
@@ -336,8 +559,9 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
         }
       );
       
-      // Log promotion event
-      await pg.query(
+      // Log promotion event — circuit-breaker wrapped
+      await withCircuitBreaker("postgres", groupId, "memory_add:log_promotion", async () =>
+        pg.query(
         `INSERT INTO events (
           group_id, event_type, agent_id, status, metadata, created_at
         ) VALUES ($1, $2, $3, $4, $5, $6)`,
@@ -355,7 +579,7 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
           }),
           createdAt,
         ]
-      );
+      ));
       
       return {
         id: memoryId,
@@ -376,23 +600,77 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
       await session.close();
     }
   } else {
-    // SOC2 mode: Queue for human approval (skip duplicate check, always queue)
-    await pg.query(
-      `INSERT INTO canonical_proposals (
-        id, group_id, content, score, reasoning, tier, status, trace_ref, created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-      [
-        randomUUID(),
-        groupId,
-        request.content,
-        score,
-        reasoning,
-        tier,
-        "pending",
-        eventId,
-        createdAt,
-      ]
-    );
+    // SOC2 mode: Queue for human approval with dedup check
+
+    // Check for near-duplicate proposals before inserting
+    const dedupThreshold = getDedupThreshold();
+    const dedupChecker = createProposalDedupChecker(undefined, dedupThreshold);
+
+    try {
+      const existingRows = await pg.query<{ id: string; content: string; score: number; status: string; created_at: string }>(
+        `SELECT id, content, score, status, created_at
+         FROM canonical_proposals
+         WHERE group_id = $1
+           AND status IN ('pending', 'approved')
+         ORDER BY created_at DESC
+         LIMIT 100`,
+        [groupId],
+      );
+
+      const existingProposals: ProposalCandidate[] = existingRows.rows.map((row) => ({
+        id: row.id,
+        content: row.content,
+        score: Number(row.score),
+        status: row.status,
+        created_at: row.created_at,
+      }));
+
+      const dedupResult = dedupChecker.checkProposals(request.content, existingProposals);
+
+      if (dedupResult.isDuplicate && dedupResult.existingProposal) {
+        // Skip duplicate — log and return existing
+        console.warn(
+          `[dedup] Skipping duplicate proposal for group_id=${groupId}: ` +
+          `similarity=${dedupResult.similarity.toFixed(4)} threshold=${dedupResult.threshold} ` +
+          `existing_proposal_id=${dedupResult.existingProposal.id} ` +
+          `new_content_preview="${request.content.slice(0, 80)}..."`,
+        );
+
+        return {
+          id: memoryId,
+          stored: "episodic",
+          score,
+          pending_review: true,
+          created_at: createdAt,
+          meta: baseMeta(["postgres"]),
+          duplicate: true,
+          duplicate_of: dedupResult.existingProposal.id,
+          similarity: dedupResult.similarity,
+        };
+      }
+    } catch (dedupError) {
+      // Dedup check is non-blocking: log warning and proceed with insert
+      console.warn("[dedup] Proposal dedup check failed, proceeding with insert:", dedupError);
+    }
+
+    // SOC2 mode: Queue for human approval — circuit-breaker wrapped PG insert
+    await withCircuitBreaker("postgres", groupId, "memory_add:insert_proposal", async () =>
+      pg.query(
+        `INSERT INTO canonical_proposals (
+          id, group_id, content, score, reasoning, tier, status, trace_ref, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [
+          randomUUID(),
+          groupId,
+          request.content,
+          score,
+          reasoning,
+          tier,
+          "pending",
+          eventId,
+          createdAt,
+        ]
+      ));
     
     return {
       id: memoryId,
@@ -411,6 +689,8 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
       throw classifyPostgresError(error, "memory_add", "INSERT events");
     }
     throw error;
+  } finally {
+    recordToolCall(groupId, agentId, "memory_add", Date.now() - startTime, true);
   }
 }
 
@@ -675,7 +955,7 @@ export async function memory_list(request: MemoryListRequest): Promise<MemoryLis
              const result = await session.run(
                `MATCH (m:Memory)
                 WHERE m.group_id = $groupId
-                  AND m.user_id = $userId
+                  AND ($userId IS NULL OR m.user_id = $userId)
                   AND NOT (m)<-[:SUPERSEDES]-()
                RETURN m.id AS id,
                       m.content AS content,
@@ -687,7 +967,7 @@ export async function memory_list(request: MemoryListRequest): Promise<MemoryLis
                ORDER BY created_at DESC
                SKIP $offset
                LIMIT $limit`,
-               { groupId, userId: request.user_id, limit: neo4j.int(limit), offset: neo4j.int(offset) }
+               { groupId, userId: request.user_id ?? null, limit: neo4j.int(limit), offset: neo4j.int(offset) }
              );
             
             return result.records.map((record) => ({
@@ -760,48 +1040,60 @@ export async function memory_delete(request: MemoryDeleteRequest): Promise<Memor
   // Validate
   const groupId = validateGroupId(request.group_id);
   const deletedAt = new Date().toISOString();
+  const startTime = Date.now();
   
   try {
     const { pg, neo4j } = await getConnections();
   
-  // 1. Append deletion event to PostgreSQL
-  await pg.query(
-    `INSERT INTO events (
-      group_id, event_type, agent_id, status, metadata, created_at
-    ) VALUES ($1, $2, $3, $4, $5, $6)`,
-    [
-      groupId,
-      "memory_delete",
-      request.user_id,
-      "completed",
-      JSON.stringify({
-        memory_id: request.id,
-        user_id: request.user_id,
-      }),
-      deletedAt,
-    ]
+  // 1. Append deletion event to PostgreSQL — circuit-breaker wrapped
+  await withCircuitBreaker("postgres", groupId, "memory_delete:insert_event", async () =>
+    pg.query(
+      `INSERT INTO events (
+        group_id, event_type, agent_id, status, metadata, created_at
+      ) VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        groupId,
+        "memory_delete",
+        request.user_id,
+        "completed",
+        JSON.stringify({
+          memory_id: request.id,
+          user_id: request.user_id,
+        }),
+        deletedAt,
+      ]
+    )
   );
   
   // 2. Mark Neo4j node as deprecated (if exists) — secondary store, degradation acceptable
   let deleteMeta = baseMeta(["postgres", "neo4j"]);
-  const session = neo4j.session();
   try {
-    await session.run(
-      `MATCH (m:Memory)
-       WHERE m.id = $id
-         AND m.group_id = $groupId
-       SET m.deprecated = true,
-           m.deleted_at = datetime($deletedAt)
-       RETURN m.id AS id`,
-      { id: request.id, groupId, deletedAt }
-    );
+    await withCircuitBreaker("neo4j", groupId, "memory_delete:mark_deprecated", async () => {
+      const session = neo4j.session();
+      try {
+        await session.run(
+          `MATCH (m:Memory)
+           WHERE m.id = $id
+             AND m.group_id = $groupId
+           SET m.deprecated = true,
+               m.deleted_at = datetime($deletedAt)
+           RETURN m.id AS id`,
+          { id: request.id, groupId, deletedAt }
+        );
+      } finally {
+        await session.close();
+      }
+    });
   } catch (error) {
+    if (error instanceof Error && error.message.startsWith("Circuit breaker open")) {
+      throw error;
+    }
     console.warn("[degraded] Neo4j unavailable in memory_delete:", error);
     deleteMeta = degradedMeta(["postgres"]);
-  } finally {
-    await session.close();
   }
   
+  recordToolCall(groupId, request.user_id, "memory_delete", Date.now() - startTime, true);
+
   return {
     id: request.id,
     deleted: true,
@@ -833,95 +1125,108 @@ export async function memory_update(request: MemoryUpdateRequest): Promise<Memor
   const groupId = validateGroupId(request.group_id);
   const newId = generateMemoryId();
   const updatedAt = new Date().toISOString();
+  const agentId = String(request.metadata?.agent_id ?? request.user_id);
+  const startTime = Date.now();
 
   try {
     const { pg, neo4j: neo4jDriver } = await getConnections();
 
-    // 1. Append audit event to PostgreSQL (mandatory, append-only)
-    await pg.query(
-      `INSERT INTO events (group_id, event_type, agent_id, status, metadata, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [
-        groupId,
-        "memory_update",
-        request.metadata?.agent_id ?? request.user_id,
-        "completed",
-        JSON.stringify({
-          new_memory_id: newId,
-          previous_memory_id: request.id,
-          user_id: request.user_id,
-          content: request.content,
-          reason: request.reason,
-          ...request.metadata,
-        }),
-        updatedAt,
-      ]
+    // 1. Append audit event to PostgreSQL (mandatory, append-only) — circuit-breaker wrapped
+    await withCircuitBreaker("postgres", groupId, "memory_update:insert_event", async () =>
+      pg.query(
+        `INSERT INTO events (group_id, event_type, agent_id, status, metadata, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          groupId,
+          "memory_update",
+          agentId,
+          "completed",
+          JSON.stringify({
+            new_memory_id: newId,
+            previous_memory_id: request.id,
+            user_id: request.user_id,
+            content: request.content,
+            reason: request.reason,
+            ...request.metadata,
+          }),
+          updatedAt,
+        ]
+      )
     );
 
-    // 2. Attempt Neo4j SUPERSEDES versioning
-    const session = neo4jDriver.session();
+    // 2. Attempt Neo4j SUPERSEDES versioning — circuit-breaker wrapped
     try {
-      const existing = await session.run(
-        `MATCH (v1:Memory)
-         WHERE v1.id = $prevId
-           AND v1.group_id = $groupId
-           AND NOT (v1)<-[:SUPERSEDES]-()
-         RETURN v1.version AS version`,
-        { prevId: request.id, groupId }
-      );
+      return await withCircuitBreaker("neo4j", groupId, "memory_update:supersedes", async () => {
+        const session = neo4jDriver.session();
+        try {
+          const existing = await session.run(
+            `MATCH (v1:Memory)
+             WHERE v1.id = $prevId
+               AND v1.group_id = $groupId
+               AND NOT (v1)<-[:SUPERSEDES]-()
+             RETURN v1.version AS version`,
+            { prevId: request.id, groupId }
+          );
 
-      if (existing.records.length === 0) {
-        // Episodic-only memory — no Neo4j node to version
-        return {
-          id: newId,
-          previous_id: request.id as MemoryId,
-          stored: "episodic",
-          version: 1,
-          updated_at: updatedAt,
-          meta: baseMeta(["postgres"]),
-        };
-      }
+          if (existing.records.length === 0) {
+            return {
+              id: newId,
+              previous_id: request.id as MemoryId,
+              stored: "episodic" as const,
+              version: 1,
+              updated_at: updatedAt,
+              meta: baseMeta(["postgres"]),
+            };
+          }
 
-      const prevVersion: number = existing.records[0].get("version")?.toNumber?.() ?? 1;
-      const newVersion = prevVersion + 1;
+          const prevVersion: number = existing.records[0].get("version")?.toNumber?.() ?? 1;
+          const newVersion = prevVersion + 1;
 
-      await session.run(
-        `MATCH (v1:Memory { id: $prevId, group_id: $groupId })
-         CREATE (v2:Memory {
-           id: $newId,
-           group_id: $groupId,
-           user_id: $userId,
-           content: $content,
-           score: v1.score,
-           provenance: v1.provenance,
-           version: $version,
-           created_at: datetime($updatedAt),
-           deprecated: false
-         })
-         CREATE (v2)-[:SUPERSEDES]->(v1)
-         SET v1.deprecated = true
-         SET v1:deprecated`,
-        {
-          prevId: request.id,
-          newId,
-          groupId,
-          userId: request.user_id,
-          content: request.content,
-          version: neo4j.int(newVersion),
-          updatedAt,
+          await session.run(
+            `MATCH (v1:Memory { id: $prevId, group_id: $groupId })
+             CREATE (v2:Memory {
+               id: $newId,
+               group_id: $groupId,
+               user_id: $userId,
+               content: $content,
+               score: v1.score,
+               provenance: v1.provenance,
+               version: $version,
+               created_at: datetime($updatedAt),
+               deprecated: false
+             })
+             CREATE (v2)-[:SUPERSEDES]->(v1)
+             SET v1.deprecated = true
+             SET v1:deprecated`,
+            {
+              prevId: request.id,
+              newId,
+              groupId,
+              userId: request.user_id,
+              content: request.content,
+              version: neo4j.int(newVersion),
+              updatedAt,
+            }
+          );
+
+          return {
+            id: newId,
+            previous_id: request.id as MemoryId,
+            stored: "semantic" as const,
+            version: newVersion,
+            updated_at: updatedAt,
+            meta: baseMeta(["postgres", "neo4j"]),
+          };
+        } finally {
+          await session.close();
         }
-      );
-
-      return {
-        id: newId,
-        previous_id: request.id as MemoryId,
-        stored: "semantic",
-        version: newVersion,
-        updated_at: updatedAt,
-        meta: baseMeta(["postgres", "neo4j"]),
-      };
+      });
     } catch (error) {
+      if (error instanceof Error && error.message.startsWith("Circuit breaker open")) {
+        throw error;
+      }
       console.warn("[degraded] Neo4j unavailable in memory_update:", error);
+      recordToolCall(groupId, agentId, "memory_update", Date.now() - startTime, true);
       return {
         id: newId,
         previous_id: request.id as MemoryId,
@@ -930,8 +1235,6 @@ export async function memory_update(request: MemoryUpdateRequest): Promise<Memor
         updated_at: updatedAt,
         meta: degradedMeta(["postgres"]),
       };
-    } finally {
-      await session.close();
     }
   } catch (error) {
     if (error instanceof DatabaseUnavailableError || error instanceof DatabaseQueryError) {
@@ -941,6 +1244,8 @@ export async function memory_update(request: MemoryUpdateRequest): Promise<Memor
       throw classifyPostgresError(error, "memory_update", "INSERT memory_update event");
     }
     throw error;
+  } finally {
+    recordToolCall(groupId, agentId, "memory_update", Date.now() - startTime, true);
   }
 }
 
@@ -1002,7 +1307,11 @@ export async function memory_promote(request: MemoryPromoteRequest): Promise<Mem
     };
   }
 
-  // 3. Fetch memory content from PG
+  // 3. Dedup: check for near-duplicate proposals using text similarity
+  const dedupThreshold = getDedupThreshold();
+  const dedupChecker = createProposalDedupChecker(undefined, dedupThreshold);
+
+  // 4. Fetch memory content from PG
   const memoryRow = await pg.query<{ id: string; content: string; event_id: string }>(
     `SELECT metadata->>'memory_id' AS id,
             metadata->>'content' AS content,
@@ -1029,6 +1338,48 @@ export async function memory_promote(request: MemoryPromoteRequest): Promise<Mem
     usageCount: 0,
     daysSinceCreated: 0,
   });
+
+  // 4b. Dedup: check for near-duplicate proposals before inserting
+  try {
+    const dedupRows = await pg.query<{ id: string; content: string; score: number; status: string; created_at: string }>(
+      `SELECT id, content, score, status, created_at
+       FROM canonical_proposals
+       WHERE group_id = $1
+         AND status IN ('pending', 'approved')
+       ORDER BY created_at DESC
+       LIMIT 100`,
+      [groupId],
+    );
+
+    const dedupCandidates: ProposalCandidate[] = dedupRows.rows.map((row) => ({
+      id: row.id,
+      content: row.content,
+      score: Number(row.score),
+      status: row.status,
+      created_at: row.created_at,
+    }));
+
+    const dedupResult = dedupChecker.checkProposals(content, dedupCandidates);
+
+    if (dedupResult.isDuplicate && dedupResult.existingProposal) {
+      console.warn(
+        `[dedup] Skipping duplicate promote proposal for group_id=${groupId}: ` +
+        `similarity=${dedupResult.similarity.toFixed(4)} threshold=${dedupResult.threshold} ` +
+        `existing_proposal_id=${dedupResult.existingProposal.id} ` +
+        `content_preview="${content.slice(0, 80)}..."`,
+      );
+
+      return {
+        id: request.id,
+        proposal_id: dedupResult.existingProposal.id,
+        status: "queued",
+        queued_at: queuedAt,
+        meta: baseMeta(["postgres"]),
+      };
+    }
+  } catch (dedupErr) {
+    console.warn("[dedup] Proposal dedup check failed in memory_promote, proceeding with insert:", dedupErr);
+  }
 
   // 5. Insert proposal
   const proposalId = randomUUID();
@@ -1215,3 +1566,5 @@ export const canonicalMemoryTools = {
   memory_promote,
   memory_export,
 };
+
+export { getBudgetEnforcer, getBreakerManager, ensureSession, checkBudget, recordToolCall, withCircuitBreaker };

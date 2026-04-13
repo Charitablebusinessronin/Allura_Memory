@@ -16,13 +16,12 @@
  *   3. Logs the loop start/end to PostgreSQL (audit trail)
  *   4. Passes through to the real `ralph` CLI — no reimplementation
  *
- * Manifest ID: ralph
+ * Tool: Ralph integration harness
  * CI Route: none (manual or issue-tagged dispatch only)
- * See: src/lib/agents/agent-manifest.ts
- * See: .opencode/agent/subagents/core/ralph-loop.md
+ * See: .opencode/contracts/ralph-integration.md
  *
  * Install Ralph:
- *   npm install -g @th0rgal/ralph-wiggum
+ *   bun add -g @th0rgal/ralph-wiggum
  *   # or: bun add -g @th0rgal/ralph-wiggum
  *
  * Gracefully handles missing DB connections (for CI environments).

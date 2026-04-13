@@ -6,12 +6,18 @@
  * 1. Polls PostgreSQL for notion_sync_pending events
  * 2. Calls MCP Docker Notion tools to create/update pages
  * 3. Updates event status and writes Notion page URL back to proposal
+ * 4. Routes failures to the Dead Letter Queue (DLQ) for retry
  *
- * ## Architecture (AD-CURATOR-NOTION)
+ * ## Architecture (AD-CURATOR-NOTION, AD-CURATOR-DLQ)
  *
  * The approve route emits a notion_sync_pending event. This worker
  * picks it up and calls MCP Docker Notion tools directly. No API keys
  * needed — the MCP Docker toolkit handles auth.
+ *
+ * When Notion page creation fails, the event is routed to the DLQ
+ * (notion_sync_dlq table) with exponential backoff retry scheduling.
+ * After 5 failed attempts, the entry is marked permanently_failed
+ * for human intervention. This ensures 0% event drop rate.
  *
  * ## Usage
  *
@@ -38,10 +44,20 @@
  */
 
 import { getPool, closePool } from "../lib/postgres/connection";
+import {
+  insertDlqEntry,
+  getRetryableEntries,
+  markEntryRetrying,
+  markEntryCompleted,
+  markEntryFailed,
+  getDlqStats,
+  type DlqEntry,
+  type InsertDlqEntryParams,
+} from "./notion-sync-dlq";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-interface NotionSyncEvent {
+export interface NotionSyncEvent {
   id: string;
   group_id: string;
   event_type: string;
@@ -51,7 +67,7 @@ interface NotionSyncEvent {
   created_at: string;
 }
 
-interface PendingProposal {
+export interface PendingProposal {
   proposal_id: string;
   content: string;
   score: number;
@@ -112,11 +128,23 @@ async function markEventCompleted(eventId: string, notionPageUrl?: string): Prom
 }
 
 /**
- * Mark event as failed.
+ * Mark event as failed and route to DLQ for retry.
+ *
+ * Instead of silently dropping the event, we:
+ * 1. Update the events table status to 'failed'
+ * 2. Insert into notion_sync_dlq for exponential backoff retry
+ *
+ * This ensures 0% event drop rate — every failure is tracked and retried.
  */
-async function markEventFailed(eventId: string, error: string): Promise<void> {
+async function markEventFailed(
+  eventId: string,
+  error: string,
+  groupId: string,
+  metadata: Record<string, unknown>
+): Promise<void> {
   const pool = getPool();
 
+  // 1. Update events table status (append-only safe — we UPDATE status, not the row)
   await pool.query(
     `UPDATE events
      SET status = 'failed',
@@ -128,6 +156,28 @@ async function markEventFailed(eventId: string, error: string): Promise<void> {
      WHERE id = $2`,
     [`"${error.replace(/"/g, '\\"')}"`, eventId]
   );
+
+  // 2. Route to DLQ for retry
+  const proposalId = metadata.proposal_id as string | undefined;
+  const dlqResult = await insertDlqEntry(pool, {
+    groupId,
+    originalEventId: parseInt(eventId, 10),
+    proposalId,
+    originalMetadata: metadata,
+    errorMessage: error,
+  });
+
+  if (!dlqResult.success) {
+    console.error(
+      `[NotionSyncWorker] CRITICAL: Failed to insert DLQ entry for event ${eventId}: ${dlqResult.error}`
+    );
+    // The event is still marked as failed in the events table,
+    // but we couldn't queue it for retry. This should trigger an alert.
+  } else {
+    console.log(
+      `[NotionSyncWorker] Event ${eventId} routed to DLQ (dlq_id=${dlqResult.dlqId}) for retry`
+    );
+  }
 }
 
 /**
@@ -217,10 +267,13 @@ async function createNotionPage(
  *
  * This is the main entry point for the agent (you) to process events.
  * You call this function after fetching pending events from PostgreSQL.
+ *
+ * If the event processing fails, it is automatically routed to the DLQ
+ * for exponential backoff retry. No event is ever silently dropped.
  */
 export async function processNotionSyncEvent(
   event: NotionSyncEvent
-): Promise<{ success: boolean; pageUrl?: string; error?: string }> {
+): Promise<{ success: boolean; pageUrl?: string; error?: string; dlqId?: number }> {
   const proposal: PendingProposal = {
     proposal_id: event.metadata.proposal_id as string,
     content: event.metadata.content as string,
@@ -264,6 +317,142 @@ export async function processNotionSyncEvent(
   };
 }
 
+/**
+ * Handle a Notion sync failure by routing to the DLQ.
+ *
+ * This function is called when the MCP Notion call fails.
+ * It routes the event to the DLQ for exponential backoff retry.
+ *
+ * @param event - The original event that failed
+ * @param error - The error message from the failed Notion call
+ * @returns DLQ entry ID if successfully routed, null otherwise
+ */
+export async function handleNotionSyncFailure(
+  event: NotionSyncEvent,
+  error: string
+): Promise<number | null> {
+  const pool = getPool();
+
+  // Route to DLQ
+  const dlqResult = await insertDlqEntry(pool, {
+    groupId: event.group_id,
+    originalEventId: event.id as unknown as number,
+    proposalId: event.metadata.proposal_id as string | undefined,
+    originalMetadata: event.metadata as Record<string, unknown>,
+    errorMessage: error,
+  });
+
+  if (!dlqResult.success) {
+    console.error(
+      `[NotionSyncWorker] CRITICAL: Failed to route event ${event.id} to DLQ: ${dlqResult.error}`
+    );
+    return null;
+  }
+
+  console.log(
+    `[NotionSyncWorker] Event ${event.id} routed to DLQ (dlq_id=${dlqResult.dlqId})`
+  );
+
+  // Also mark the original event as failed
+  await markEventFailed(String(event.id), error, event.group_id, event.metadata as Record<string, unknown>);
+
+  return dlqResult.dlqId ?? null;
+}
+
+/**
+ * Process DLQ retries for a given group_id.
+ *
+ * Fetches retryable entries from the DLQ and attempts to re-process them.
+ * This should be called on a separate schedule from the main event processing.
+ *
+ * @param groupId - Tenant group_id for isolation
+ * @param processFn - Function to process each entry (calls MCP Notion tools)
+ * @returns Number of entries processed
+ */
+export async function processDlqRetries(
+  groupId: string,
+  processFn: (entry: DlqEntry) => Promise<{ success: boolean; pageId?: string; pageUrl?: string; error?: string }>
+): Promise<{ processed: number; succeeded: number; failed: number; permanentlyFailed: number }> {
+  const pool = getPool();
+  const entries = await getRetryableEntries(pool, groupId);
+
+  let succeeded = 0;
+  let failed = 0;
+  let permanentlyFailed = 0;
+
+  for (const entry of entries) {
+    // Mark as retrying
+    const retryResult = await markEntryRetrying(pool, entry.id, groupId);
+    if (!retryResult.success) {
+      console.error(`[NotionSyncWorker] Failed to mark DLQ entry ${entry.id} as retrying: ${retryResult.error}`);
+      continue;
+    }
+
+    try {
+      const result = await processFn(entry);
+
+      if (result.success) {
+        // Mark as completed in DLQ
+        await markEntryCompleted(
+          pool,
+          entry.id,
+          groupId,
+          result.pageId ?? "",
+          result.pageUrl ?? ""
+        );
+
+        // Also mark the original event as completed
+        if (entry.original_event_id) {
+          await markEventCompleted(String(entry.original_event_id), result.pageUrl);
+        }
+
+        // Write Notion URL back to proposal
+        if (entry.proposal_id && result.pageUrl) {
+          await writeNotionUrlToProposal(entry.proposal_id, result.pageUrl);
+        }
+
+        succeeded++;
+      } else {
+        // Mark as failed in DLQ (schedules next retry or permanent failure)
+        const failResult = await markEntryFailed(
+          pool,
+          entry.id,
+          groupId,
+          result.error ?? "Unknown error during DLQ retry"
+        );
+
+        if (!failResult.success) {
+          console.error(`[NotionSyncWorker] Failed to update DLQ entry ${entry.id}: ${failResult.error}`);
+        }
+
+        // Check if this was the last retry
+        if (entry.retry_count + 1 >= entry.max_retries) {
+          permanentlyFailed++;
+          console.error(
+            `[NotionSyncWorker] DLQ entry ${entry.id} permanently failed after ${entry.max_retries} attempts`
+          );
+        }
+
+        failed++;
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+
+      // Mark as failed in DLQ
+      await markEntryFailed(pool, entry.id, groupId, errorMessage);
+
+      if (entry.retry_count + 1 >= entry.max_retries) {
+        permanentlyFailed++;
+      }
+
+      failed++;
+      console.error(`[NotionSyncWorker] DLQ retry ${entry.id} threw: ${errorMessage}`);
+    }
+  }
+
+  return { processed: entries.length, succeeded, failed, permanentlyFailed };
+}
+
 // ── CLI Mode ────────────────────────────────────────────────────────────────
 
 const isMainModule = process.argv[1]?.includes("notion-sync-worker.ts");
@@ -290,7 +479,31 @@ if (isMainModule) {
         console.log(`[NotionSyncWorker] Agent must call mcp__MCP_DOCKER__notion-create-pages`);
       } else {
         console.error(`[NotionSyncWorker] Failed to prepare event: ${result.error}`);
+        // Route to DLQ for retry
+        const dlqId = await handleNotionSyncFailure(event, result.error ?? "Unknown error");
+        if (dlqId) {
+          console.log(`[NotionSyncWorker] Event routed to DLQ (dlq_id=${dlqId})`);
+        }
       }
+    }
+
+    // Process DLQ retries
+    console.log("[NotionSyncWorker] Processing DLQ retries...");
+    const dlqStats = await getDlqStats(getPool(), "allura-roninmemory");
+    console.log(`[NotionSyncWorker] DLQ stats: ${JSON.stringify(dlqStats)}`);
+
+    if (dlqStats.pending_retry > 0) {
+      console.log(
+        `[NotionSyncWorker] ${dlqStats.pending_retry} entries pending retry — ` +
+        `run processDlqRetries() with MCP Notion tools to process them`
+      );
+    }
+
+    if (dlqStats.permanently_failed > 0) {
+      console.error(
+        `[NotionSyncWorker] ⚠️ ${dlqStats.permanently_failed} entries permanently failed — ` +
+        `human intervention required`
+      );
     }
 
     console.log("[NotionSyncWorker] Done.");

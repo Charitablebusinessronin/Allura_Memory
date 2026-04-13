@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { Pool } from 'pg';
 import neo4j from 'neo4j-driver';
+import { captureException } from '@/lib/observability/sentry';
 
 /**
  * Health status for a component
@@ -422,6 +423,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       message: `Alert ${result.data.alertId} acknowledged`,
     });
   } catch (error) {
+    captureException(error, { tags: { route: "/api/health", method: "POST" } });
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { error: 'Failed to acknowledge alert', details: errorMessage },

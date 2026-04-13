@@ -6,7 +6,8 @@
  * Usage: bun src/curator/index.ts run
  */
 
-// TODO: Remove approvePromotions() after all integrations use POST /api/curator/approve
+// TODO: Remove approvePromotions() by 2026-05-01 (ADR-003)
+//       Only POST /api/curator/approve is the canonical path.
 
 import { getPool, closePool } from "../lib/postgres/connection";
 import { getDriver, closeDriver } from "../lib/neo4j/connection";
@@ -113,13 +114,15 @@ async function runCurator() {
 }
 
 /**
- * @deprecated Use POST /api/curator/approve instead.
- * This function reads from legacy PromotionProposal Neo4j nodes
- * which will be removed in a future version.
+ * @deprecated Since v1.0. Will be REMOVED in v1.1 (target: 2026-05-01).
  *
- * HARD-BLOCK: This function throws DeprecatedApprovalPathError unless
- * called with MIGRATION_MODE=true or DEBUG_LEGACY=true.
- * No other calling context is permitted.
+ * Use POST /api/curator/approve instead.
+ *
+ * This function throws DeprecatedApprovalPathError unless MIGRATION_MODE=true
+ * or DEBUG_LEGACY=true. See ADR-003 for deprecation timeline.
+ *
+ * @see docs/adr/ADR-003-approve-promotions-deprecation.md
+ * @see src/app/api/curator/approve/route.ts
  */
 export async function approvePromotions(): Promise<void> {
   // ── HARD-BLOCK GUARD ────────────────────────────────────────────────────

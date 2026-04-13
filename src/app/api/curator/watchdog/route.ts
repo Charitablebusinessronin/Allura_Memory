@@ -16,11 +16,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { scanAndPropose } from "@/curator/watchdog";
 import { getPool } from "@/lib/postgres/connection";
 import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
+import { requireRole, forbiddenResponse, unauthorizedResponse } from "@/lib/auth/api-auth";
 
 const DEFAULT_GROUP_ID = process.env.ALLURA_GROUP_ID ?? "allura-roninmemory";
 const DEFAULT_THRESHOLD = parseFloat(process.env.CURATOR_SCORE_THRESHOLD ?? "0.7");
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  // Auth: require curator or admin role
+  const roleCheck = requireRole(req, "curator");
+  if (!roleCheck.user) {
+    return unauthorizedResponse();
+  }
+  if (!roleCheck.allowed) {
+    return forbiddenResponse(roleCheck);
+  }
+
   const requestId = crypto.randomUUID().slice(0, 8);
   console.log(`[watchdog:POST] start requestId=${requestId}`);
 
@@ -66,7 +76,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   });
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  // Auth: require curator or admin role
+  const roleCheck = requireRole(req, "curator");
+  if (!roleCheck.user) {
+    return unauthorizedResponse();
+  }
+  if (!roleCheck.allowed) {
+    return forbiddenResponse(roleCheck);
+  }
+
   console.log(`[watchdog:GET] status check group=${DEFAULT_GROUP_ID}`);
   const pool = getPool();
 
