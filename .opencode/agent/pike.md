@@ -8,6 +8,16 @@ type: specialist
 scope: harness
 platform: Both
 status: active
+permission:
+  edit: deny
+  bash:
+    "*": deny
+    "git diff*": allow
+    "git log*": allow
+    "grep*": allow
+  webfetch: deny
+  skill:
+    "*": allow
 ---
 
 ## INSTRUCTION BOUNDARY (CRITICAL)

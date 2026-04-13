@@ -33,13 +33,7 @@ COPIED=0; MISSING=0; MATCHED=0; TOTAL=0; DRIFT=0
 
 declare -a SYNC_MAP=(
   "AI-GUIDELINES.md|AI-GUIDELINES.md"
-  "agent/core/brooks-architect.md|agents/brooks.md"
-  "agent/core/jobs-intent-gate.md|agents/jobs.md"
-  "agent/subagents/core/fowler-refactor-gate.md|agents/fowler.md"
-  "agent/subagents/core/pike-interface-review.md|agents/pike.md"
-  "agent/subagents/core/scout-recon.md|agents/scout.md"
-  "agent/subagents/code/bellard-diagnostics-perf.md|agents/bellard.md"
-"agent/subagents/code/woz-builder.md|agents/woz.md"
+  # Agents removed from sync — .claude/agents/ is now a symlink to .opencode/agent/ (single source of truth)
   "templates/BLUEPRINT.template.md|templates/BLUEPRINT.template.md"
   "templates/DATA-DICTIONARY.template.md|templates/DATA-DICTIONARY.template.md"
   "templates/DESIGN.template.md|templates/DESIGN.template.md"

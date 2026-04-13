@@ -8,6 +8,18 @@ type: subagent
 scope: harness
 platform: Both
 status: active
+permission:
+  edit: allow
+  bash: allow
+  webfetch: allow
+  skill:
+    "*": allow
+  task:
+    scout-recon: allow
+    fowler-refactor-gate: allow
+    pike-interface-review: allow
+    explore: allow
+    general: allow
 ---
 
 ## INSTRUCTION BOUNDARY (CRITICAL)
