@@ -38,7 +38,8 @@ export async function scanAndPropose(config: WatchdogConfig): Promise<number> {
     WHERE e.group_id = $1
       AND e.status != 'promoted'
       AND e.agent_id != 'system'
-      AND e.event_type NOT IN ('proposal_created', 'proposal_decided', 'session_start', 'session_end')
+      AND e.agent_id NOT LIKE 'k6-%'
+      AND e.event_type NOT IN ('proposal_created', 'proposal_decided', 'proposal_approved', 'proposal_rejected', 'session_start', 'session_end', 'WATCHDOG_HEARTBEAT', 'notion_sync_pending')
       AND NOT EXISTS (
         SELECT 1 FROM canonical_proposals cp
         WHERE cp.trace_ref = e.id

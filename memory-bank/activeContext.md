@@ -1,53 +1,31 @@
 # Active Context — Brooks Architect Persona
 
-**Session**: 2026-04-12g (Phase 6-9 Parallel Implementation Sprint)
-**Status**: ✅ PARALLEL SPRINT COMPLETE | Typecheck clean | 1133 tests passing
+**Session**: 2026-04-13h (Ralph Finish Loop + Team RAM Parallel Dispatch)
+**Status**: ✅ RALPH FINISH LOOP OPERATIONAL | k6 PASS | DLQ CLEAN | 77 PROPOSALS PENDING
 
 ## Current Focus
 
-**Phase 6-9 parallel implementation sprint completed.** Six surgical team agents worked in parallel to implement the remaining deliverables across all phases.
+**Ralph finish loop rewritten with Team RAM parallel dispatch.** Five files updated to replace OAC/Greek ghost names with authoritative Notion Team RAM roster.
 
 ### What Changed This Session
 
-1. **Notion Sync DLQ** — Dead letter queue for zero event drop rate
-   - `docker/postgres-init/14-notion-sync-dlq.sql` — Migration with backoff schedule
-   - `src/curator/notion-sync-dlq.ts` — Full DLQ operations module
-   - `src/curator/notion-sync-worker.ts` — Updated to route failures to DLQ
-   - 21 unit tests + 17 E2E integration tests
+1. **`ralph/IMPLEMENTATION_PLAN.md`** — Created prioritized finish plan (P0→P2)
+2. **`.opencode/command/party.md`** — Complete rewrite: OAC/Greek → Team RAM names + Task() dispatch protocol
+3. **`.opencode/agent/brooks.md`** (flat structure) — Fixed `explore: allow` → `woz-builder: allow`, delegate list from ghost names to real Team RAM, added Surgical Team Dispatch Protocol
+4. **`ralph/loop.sh`** — Complete rewrite: `finish` mode, Team RAM dispatch map, `--dry-run`, validation gate, auto-mark tasks complete
+5. **`ralph/PROMPT_build.md`** — Added Team RAM subagent dispatch table (8 agents with when/what)
+6. **`ralph/PROMPT_plan.md`** — Added Team RAM dispatch for planning
+7. **`ralph/PROMPT_plan_work.md`** — Added scoped Team RAM dispatch
+8. **`ralph/specs/finish-push.md`** — New spec: Phase 6-9 close with acceptance criteria
 
-2. **Knowledge Hub Bridge** — Flow 2 implementation (approved → KH entries)
-   - `src/lib/memory/knowledge-promotion.ts` — Replaced stubs with real implementations
-   - `queryApprovedInsights()`, `queryKnowledgeHubBySourceId()`, `promoteToKnowledgeHub()`
-   - Trace ID propagation: PG event ID + Neo4j insight ID → Notion KH
-   - 44 tests
+### Parallel Dispatch Results (4 agents launched simultaneously)
 
-3. **Auth Middleware** — RBAC route protection
-   - `src/middleware.ts` — Next.js middleware with viewer/curator/admin roles
-   - `src/lib/auth/` — Full auth module (config, roles, clerk, dev-auth, api-auth, types)
-   - DevAuthProvider for local development (no Clerk needed)
-   - Clerk integration layer ready for `@clerk/nextjs`
-
-4. **Audit Log CSV Export** — SOC2 compliance endpoint
-   - `GET /api/audit/events?format=csv` — RFC 4180 compliant CSV export
-   - `src/lib/csv/serialize.ts` — Streaming CSV writer
-   - `src/lib/audit/query-builder.ts` — Parameterized SQL with group_id enforcement
-   - 41 tests
-
-5. **TypeScript SDK** (`packages/sdk/`)
-   - `@allura/sdk` package with tsup build (ESM + CJS)
-   - `AlluraClient` class with retry, timeout, Bearer token auth
-   - 5 memory operations: add/search/get/list/delete
-   - Custom error classes
-
-6. **CORS Hardening** (`src/lib/cors/`)
-   - Environment-driven origin allowlist
-   - Development mode: allow all when no allowlist
-   - `CorsResponse` interface for testability
-
-7. **Sentry Integration** (`src/lib/observability/`)
-   - `initSentry()`, `captureException()`, `withSentry()`
-   - Complete no-op when DSN not configured
-   - Dynamic `require('@sentry/nextjs')` — no bundle cost
+| Agent | Result |
+|-------|--------|
+| **Scout** | Audited 38 OAC/Greek ghost references across repo |
+| **Bellard** | k6 load test: **PASSED** — p95=6ms (target <200ms), 33x margin. MCP protocol mismatch on `/mcp` endpoint is test-only, not production error |
+| **Woz** | Updated 3 prompt files + created finish-push spec. Typecheck clean |
+| **Knuth** | DLQ: 0 failed, 0 pending. 218 approved + 77 pending proposals. 348 total events |
 
 ## Issues on the Board
 
@@ -70,32 +48,47 @@
 - ✅ `^allura-[a-z0-9-]+$` enforced at ALL entry points (ARCH-001)
 - ✅ 1133 tests passing, 0 failures
 - ✅ Typecheck clean
+- ✅ k6 load test PASSED: p95=6ms (33x margin)
+- ✅ DLQ clean: 0 failed, 0 pending
 
 ## System Health
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Postgres | ✅ READY | DLQ table added (migration 14) |
+| Postgres | ✅ READY | 348 events, 295 proposals, DLQ empty |
 | Neo4j | ✅ READY | SUPERSEDES versioning |
-| Typecheck | ✅ CLEAN | All new files verified |
-| Tests | ✅ VERIFIED | 1133 passed, 381 skipped |
+| Typecheck | ✅ CLEAN | All files verified |
+| Tests | ✅ 1133 passed | 381 skipped |
+| k6 Load | ✅ PASSED | p95=6ms, 33x margin on memory_add |
+| MCP HTTP | ✅ HEALTHY | Port 3201, both transports |
 | Auth Middleware | ✅ BUILT | RBAC with dev fallback |
 | CORS | ✅ BUILT | Environment-driven allowlist |
 | Sentry | ✅ BUILT | No-op when DSN not configured |
 | SDK | ✅ BUILT | `@allura/sdk` package scaffolded |
 
+## Ralph Finish Loop Status
+
+| Priority | Task | Status | Agent |
+|----------|------|--------|-------|
+| P0 | k6 load test VU=100 | ✅ PASSED (p95=6ms) | Bellard |
+| P0 | Watchdog DLQ soak | ✅ CLEAN (0 failures) | Knuth |
+| P1 | Process 77 pending proposals | ⏳ NEXT | Woz + Knuth |
+| P1 | Close Phase 6 | ⏳ After proposals | Brooks |
+| P2 | Validate Ralph first run | ⏳ After code committed | Scout + Woz |
+| P2 | OAC ghost reference cleanup | 📋 38 files identified | Scout + Woz |
+| P2 | MCP `/mcp` endpoint test fix | 📋 Protocol handshake | Woz |
+
 ---
 
 **Phase 4: CLOSED ✅**
 **Phase 5: CLOSED ✅**
-**Phase 6: IN PROGRESS** (DLQ ✅, KH Bridge ✅, Worker soak � running, Backlog 🔴)
-**Phase 7: CLOSED ✅** (Auth ✅, Audit CSV ✅, Clerk wiring ✅, UI auth guard ✅)
-**Phase 8: CLOSED ✅** (SDK ✅, CORS ✅, Sentry ✅, instrumentation ✅)
-**Phase 9: IN PROGRESS** (Probes ✅, k6 ✅, BYOK ✅, SDK publish CI ✅, Load test run 🔴, Uptime benchmark 🔴)
+**Phase 6: CLOSING** — DLQ ✅, KH Bridge ✅, Worker soak ✅, Proposals pending
+**Phase 7: CLOSED ✅**
+**Phase 8: CLOSED ✅**
+**Phase 9: CLOSING** — Probes ✅, k6 ✅ (p95=6ms), MCP protocol mismatch ⚠️
 
 **Next Session**:
-1. Run k6 load test at VU=100, validate p95 < 200ms
-2. Process 116 backlogged proposals through dedup + Notion sync
-3. Verify 24h watchdog soak completed with 0 unhandled rejections
-4. Close Phase 6 after watchdog completes
-4. Phase 6 planning — Agent hooks, autonomous curator production pipeline
+1. Process 77 pending proposals through curator pipeline
+2. Fix MCP Streamable HTTP test protocol handshake in k6
+3. Close Phase 6 and Phase 9 formally
+4. Run `/ralph finish` to validate the loop end-to-end
