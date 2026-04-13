@@ -100,32 +100,29 @@ echo -e "${BOLD}${BLUE}Running load test...${NC}"
 echo -e "${BLUE}─────────────────────────────────────────${NC}"
 echo ""
 
-# Build k6 command
-K6_CMD="k6 run"
+# Build k6 command as array to handle paths with spaces correctly
+K6_CMD=(k6 run)
 
 # Pass environment variables to k6
-K6_CMD="${K6_CMD} --env BASE_URL=${BASE_URL}"
+K6_CMD+=(--env "BASE_URL=${BASE_URL}")
 
 if [[ -n "${AUTH_TOKEN}" ]]; then
-  K6_CMD="${K6_CMD} --env ALLURA_MCP_AUTH_TOKEN=${AUTH_TOKEN}"
+  K6_CMD+=(--env "ALLURA_MCP_AUTH_TOKEN=${AUTH_TOKEN}")
 fi
 
-# Output summary to JSON
-K6_CMD="${K6_CMD} --summary-export=${JSON_RESULTS}"
-
-# Output summary as text report
-K6_CMD="${K6_CMD} --out json=${RESULTS_DIR}/raw-${TIMESTAMP}.json"
+# Output raw metrics as JSON (--summary-export removed in k6 v1.x; handleSummary in the JS handles the summary file)
+K6_CMD+=(--out "json=${RESULTS_DIR}/raw-${TIMESTAMP}.json")
 
 # Run the test script
-K6_CMD="${K6_CMD} ${SCRIPT_DIR}/k6-load-test.js"
+K6_CMD+=("${SCRIPT_DIR}/k6-load-test.js")
 
 # Execute
-echo -e "${CYAN}Command: ${K6_CMD}${NC}"
+echo -e "${CYAN}Command: ${K6_CMD[*]}${NC}"
 echo ""
 
 # Run k6 — capture exit code
 set +e
-${K6_CMD}
+"${K6_CMD[@]}"
 K6_EXIT_CODE=$?
 set -e
 

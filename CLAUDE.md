@@ -161,7 +161,7 @@ Standard workflow:
 ```
 /start-session           → load memory and verify infra
 /orchestrate <task>      → plan → approve → delegate
-  ↳ [spawns Explore sub-agent for scout phase]
+  ↳ [spawns Scout sub-agent for scout phase]
   ↳ [spawns general-purpose sub-agent for implementation]
   ↳ [spawns general-purpose sub-agent for tests]
 /validate-repo           → typecheck + lint + tests
