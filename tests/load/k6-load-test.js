@@ -15,7 +15,7 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Rate, Trend, Counter } from 'k6/metrics';
-import { randomString } from 'k6/data';
+import { randomString } from 'k6/utils';
 
 // ── Custom Metrics ────────────────────────────────────────────────────────────
 
