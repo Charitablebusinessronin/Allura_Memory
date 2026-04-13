@@ -10,120 +10,151 @@
  *
  * Or via runner:
  *   bun run load-test
+ *
+ * NOTE: k6 uses the Goja JS engine (ES5.1+). No trailing commas, no optional
+ * chaining, no for...of Object.entries(). Keep syntax strict-ES5 compatible.
  */
 
-import http from 'k6/http';
-import { check, sleep } from 'k6';
-import { Rate, Trend, Counter } from 'k6/metrics';
+import http from "k6/http";
+import { check, sleep } from "k6";
+import { Rate, Trend, Counter } from "k6/metrics";
 
 // ── Custom Metrics ────────────────────────────────────────────────────────────
 
-const memoryAddDuration = new Trend('memory_add_duration', true);
-const memorySearchDuration = new Trend('memory_search_duration', true);
-const memoryGetDuration = new Trend('memory_get_duration', true);
-const memoryListDuration = new Trend('memory_list_duration', true);
-const mcpRequestDuration = new Trend('mcp_request_duration', true);
-const errorRate = new Rate('errors');
-const requestsTotal = new Counter('requests_total');
+const memoryAddDuration = new Trend("memory_add_duration", true);
+const memorySearchDuration = new Trend("memory_search_duration", true);
+const memoryGetDuration = new Trend("memory_get_duration", true);
+const memoryListDuration = new Trend("memory_list_duration", true);
+const mcpRequestDuration = new Trend("mcp_request_duration", true);
+const errorRate = new Rate("errors");
+var requestsTotal = new Counter("requests_total");
 
 // ── Test Configuration ────────────────────────────────────────────────────────
 
-export const options = {
+export var options = {
   scenarios: {
     // Smoke test: 1 VU, 1 iteration — validates endpoints are reachable
     smoke: {
-      executor: 'per-vu-iterations',
+      executor: "per-vu-iterations",
       vus: 1,
       iterations: 1,
-      tags: { test_type: 'smoke' },
-      gracefulStop: '5s',
+      tags: { test_type: "smoke" },
+      gracefulStop: "5s"
     },
     // Load test: ramp up to 100 VUs, hold, ramp down
     load: {
-      executor: 'ramping-vus',
+      executor: "ramping-vus",
       startVUs: 0,
       stages: [
-        { duration: '30s', target: 20 },   // Ramp up to 20
-        { duration: '30s', target: 50 },   // Ramp up to 50
-        { duration: '30s', target: 100 },  // Ramp up to 100 (Phase 9 target)
-        { duration: '60s', target: 100 },  // Hold at 100 — sustained load
-        { duration: '30s', target: 0 },    // Ramp down
-      },
-      tags: { test_type: 'load' },
-      gracefulStop: '30s',
-    },
+        { duration: "30s", target: 20 },   // Ramp up to 20
+        { duration: "30s", target: 50 },   // Ramp up to 50
+        { duration: "30s", target: 100 },  // Ramp up to 100 (Phase 9 target)
+        { duration: "60s", target: 100 },  // Hold at 100 — sustained load
+        { duration: "30s", target: 0 }     // Ramp down
+      ],
+      tags: { test_type: "load" },
+      gracefulStop: "30s"
+    }
   },
   thresholds: {
     // Phase 9 benchmark: memory_add p95 < 200ms
-    memory_add_duration: ['p(95)<200', 'avg<100'],
+    memory_add_duration: ["p(95)<200", "avg<100"],
     // memory_search p95 < 500ms
-    memory_search_duration: ['p(95)<500'],
+    memory_search_duration: ["p(95)<500"],
     // General HTTP p95 < 500ms
-    http_req_duration: ['p(95)<500'],
+    http_req_duration: ["p(95)<500"],
     // Error rate < 5%
-    errors: ['rate<0.05'],
-  },
+    errors: ["rate<0.05"]
+  }
 };
 
 // ── Environment ───────────────────────────────────────────────────────────────
 
-const BASE_URL = __ENV.BASE_URL || 'http://localhost:3201';
-const AUTH_TOKEN = __ENV.ALLURA_MCP_AUTH_TOKEN || '';
-const GROUP_ID = 'allura-roninmemory-loadtest';
+var BASE_URL = __ENV.BASE_URL || "http://localhost:3201";
+var AUTH_TOKEN = __ENV.ALLURA_MCP_AUTH_TOKEN || "";
+var GROUP_ID = "allura-roninmemory-loadtest";
 
-// ── Helper Functions ──────────────────────────────────────────────────────────
+// ── Helper Functions ─────────────────────────────────────────────────────────
 
 /**
  * Generate common request headers.
  */
-function getHeaders(extra = {}) {
-  const headers = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
+function getHeaders(extra) {
+  var headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json"
   };
   if (AUTH_TOKEN) {
-    headers['Authorization'] = `Bearer ${AUTH_TOKEN}`;
+    headers["Authorization"] = "Bearer " + AUTH_TOKEN;
   }
-  return { ...headers, ...extra };
+  if (extra) {
+    var keys = Object.keys(extra);
+    for (var i = 0; i < keys.length; i++) {
+      headers[keys[i]] = extra[keys[i]];
+    }
+  }
+  return headers;
 }
 
 /**
  * Generate a unique memory content string for testing.
  */
 function generateMemoryContent(vuId, iter) {
-  const timestamp = Date.now();
-  const rand = Math.random().toString(36).substring(2, 10);
-  return `Load test memory VU=${vuId} iter=${iter} ts=${timestamp} rnd=${rand}`;
+  var timestamp = Date.now();
+  var rand = Math.random().toString(36).substring(2, 10);
+  return "Load test memory VU=" + vuId + " iter=" + iter + " ts=" + timestamp + " rnd=" + rand;
 }
 
 /**
  * Generate a unique user ID per VU to avoid collisions.
  */
 function getUserId(vuId) {
-  return `load-test-vu-${vuId}`;
+  return "load-test-vu-" + vuId;
 }
 
-// ── MCP Streamable HTTP Helpers ───────────────────────────────────────────────
+// ── MCP Streamable HTTP Helpers ──────────────────────────────────────────────
 
 /**
  * Send an MCP tool call via the Streamable HTTP transport.
  * The MCP Streamable HTTP spec uses POST /mcp with JSON-RPC 2.0 messages.
+ *
+ * After session initialization, subsequent requests MUST include:
+ * - Mcp-Session-Id header (if the server returned one during init)
+ * - Mcp-Protocol-Version header (the version negotiated during init)
+ *
+ * @param {string} toolName - MCP tool name (e.g. "memory_search")
+ * @param {object} args - Tool arguments
+ * @param {number} requestId - JSON-RPC request ID
+ * @param {object} [session] - Optional session state from mcpInitialize()
+ *   { sessionId: string|null, protocolVersion: string }
  */
-function mcpToolCall(toolName, args, requestId = 1) {
-  const payload = {
-    jsonrpc: '2.0',
+function mcpToolCall(toolName, args, requestId, session) {
+  if (requestId === undefined) requestId = 1;
+  if (!session) session = null;
+
+  var payload = {
+    jsonrpc: "2.0",
     id: requestId,
-    method: 'tools/call',
+    method: "tools/call",
     params: {
       name: toolName,
-      arguments: args,
-    },
+      arguments: args
+    }
   };
 
-  const response = http.post(
-    `${BASE_URL}/mcp`,
+  // Build headers — include session and protocol headers if available
+  var extraHeaders = {};
+  if (session && session.protocolVersion) {
+    extraHeaders["Mcp-Protocol-Version"] = session.protocolVersion;
+  }
+  if (session && session.sessionId) {
+    extraHeaders["Mcp-Session-Id"] = session.sessionId;
+  }
+
+  var response = http.post(
+    BASE_URL + "/mcp",
     JSON.stringify(payload),
-    { headers: getHeaders() },
+    { headers: getHeaders(extraHeaders) }
   );
 
   mcpRequestDuration.add(response.timings.duration);
@@ -132,27 +163,92 @@ function mcpToolCall(toolName, args, requestId = 1) {
 
 /**
  * Initialize an MCP session (POST /mcp with initialize method).
+ *
+ * Per the MCP Streamable HTTP spec (2025-03-26):
+ * 1. Client sends an "initialize" JSON-RPC request
+ * 2. Server responds with capabilities + optional Mcp-Session-Id header
+ * 3. Client sends a "notifications/initialized" notification to complete handshake
+ * 4. Subsequent requests include Mcp-Session-Id and Mcp-Protocol-Version headers
+ *
+ * In stateless mode (sessionIdGenerator: undefined), the server may not
+ * return a session ID. The test must handle this gracefully.
+ *
+ * @param {number} requestId - JSON-RPC request ID for the initialize call
+ * @returns {{ response: object, sessionId: string|null, protocolVersion: string }}
  */
-function mcpInitialize(requestId = 0) {
-  const payload = {
-    jsonrpc: '2.0',
+function mcpInitialize(requestId) {
+  if (requestId === undefined) requestId = 0;
+
+  var payload = {
+    jsonrpc: "2.0",
     id: requestId,
-    method: 'initialize',
+    method: "initialize",
     params: {
-      protocolVersion: '2025-03-26',
+      protocolVersion: "2025-03-26",
       capabilities: {},
       clientInfo: {
-        name: 'k6-load-test',
-        version: '1.0.0',
-      },
-    },
+        name: "k6-load-test",
+        version: "1.0.0"
+      }
+    }
   };
 
-  return http.post(
-    `${BASE_URL}/mcp`,
+  var response = http.post(
+    BASE_URL + "/mcp",
     JSON.stringify(payload),
-    { headers: getHeaders() },
+    { headers: getHeaders() }
   );
+
+  // Capture Mcp-Session-Id from response header (may be absent in stateless mode)
+  var sessionId = response.headers["Mcp-Session-Id"] || null;
+
+  // Extract negotiated protocol version from response body
+  var protocolVersion = "2025-03-26"; // default to what we requested
+  try {
+    var body = JSON.parse(response.body);
+    if (body && body.result && body.result.protocolVersion) {
+      protocolVersion = body.result.protocolVersion;
+    }
+  } catch (e) {
+    // If we can't parse, stick with the default
+  }
+
+  return { response: response, sessionId: sessionId, protocolVersion: protocolVersion };
+}
+
+/**
+ * Send the "notifications/initialized" notification to complete the MCP handshake.
+ * This is required after receiving the initialize response before making tool calls.
+ *
+ * Per the MCP spec, notifications have no "id" field and receive no response.
+ * The server returns 202 Accepted for notification-only requests.
+ *
+ * @param {object} session - Session state from mcpInitialize()
+ *   { sessionId: string|null, protocolVersion: string }
+ */
+function mcpInitialized(session) {
+  // Notifications have no "id" field — they are fire-and-forget
+  var payload = {
+    jsonrpc: "2.0",
+    method: "notifications/initialized"
+  };
+
+  // Include protocol version header if available (required after init)
+  var extraHeaders = {};
+  if (session.protocolVersion) {
+    extraHeaders["Mcp-Protocol-Version"] = session.protocolVersion;
+  }
+  if (session.sessionId) {
+    extraHeaders["Mcp-Session-Id"] = session.sessionId;
+  }
+
+  var response = http.post(
+    BASE_URL + "/mcp",
+    JSON.stringify(payload),
+    { headers: getHeaders(extraHeaders) }
+  );
+
+  return response;
 }
 
 // ── Legacy JSON-RPC Helpers ───────────────────────────────────────────────────
@@ -161,15 +257,15 @@ function mcpInitialize(requestId = 0) {
  * Call a tool via the legacy JSON-RPC endpoint.
  */
 function legacyToolCall(toolName, args) {
-  const payload = {
+  var payload = {
     name: toolName,
-    arguments: args,
+    arguments: args
   };
 
   return http.post(
-    `${BASE_URL}/tools/call`,
+    BASE_URL + "/tools/call",
     JSON.stringify(payload),
-    { headers: getHeaders() },
+    { headers: getHeaders() }
   );
 }
 
@@ -179,25 +275,25 @@ function legacyToolCall(toolName, args) {
  * Test health endpoint — should always return 200.
  */
 function testHealth() {
-  const response = http.get(`${BASE_URL}/health`);
-  const passed = check(response, {
-    'health status is 200': (r) => r.status === 200,
-    'health body has status': (r) => {
+  var response = http.get(BASE_URL + "/health");
+  var passed = check(response, {
+    "health status is 200": function(r) { return r.status === 200; },
+    "health body has status": function(r) {
       try {
-        const body = JSON.parse(r.body);
-        return body.status === 'healthy';
+        var body = JSON.parse(r.body);
+        return body.status === "healthy";
       } catch (e) {
         return false;
       }
     },
-    'health body has transports': (r) => {
+    "health body has transports": function(r) {
       try {
-        const body = JSON.parse(r.body);
+        var body = JSON.parse(r.body);
         return Array.isArray(body.transports);
       } catch (e) {
         return false;
       }
-    },
+    }
   });
 
   if (!passed) {
@@ -211,17 +307,17 @@ function testHealth() {
  * Test readiness probe — checks PostgreSQL and Neo4j.
  */
 function testReadiness() {
-  const response = http.get(`${BASE_URL}/api/ready`);
-  const passed = check(response, {
-    'readiness status is 200 or 503': (r) => r.status === 200 || r.status === 503,
-    'readiness body has ready field': (r) => {
+  var response = http.get(BASE_URL + "/api/ready");
+  var passed = check(response, {
+    "readiness status is 200 or 503": function(r) { return r.status === 200 || r.status === 503; },
+    "readiness body has ready field": function(r) {
       try {
-        const body = JSON.parse(r.body);
-        return typeof body.ready === 'boolean';
+        var body = JSON.parse(r.body);
+        return typeof body.ready === "boolean";
       } catch (e) {
         return false;
       }
-    },
+    }
   });
 
   if (!passed) {
@@ -235,17 +331,17 @@ function testReadiness() {
  * Test liveness probe — simple process heartbeat.
  */
 function testLiveness() {
-  const response = http.get(`${BASE_URL}/api/live`);
-  const passed = check(response, {
-    'liveness status is 200': (r) => r.status === 200,
-    'liveness body has alive=true': (r) => {
+  var response = http.get(BASE_URL + "/api/live");
+  var passed = check(response, {
+    "liveness status is 200": function(r) { return r.status === 200; },
+    "liveness body has alive=true": function(r) {
       try {
-        const body = JSON.parse(r.body);
+        var body = JSON.parse(r.body);
         return body.alive === true;
       } catch (e) {
         return false;
       }
-    },
+    }
   });
 
   if (!passed) {
@@ -259,15 +355,15 @@ function testLiveness() {
  * Test Prometheus metrics endpoint.
  */
 function testMetrics() {
-  const response = http.get(`${BASE_URL}/api/metrics`, { headers: getHeaders() });
-  const passed = check(response, {
-    'metrics status is 200 or 401': (r) => r.status === 200 || r.status === 401,
+  var response = http.get(BASE_URL + "/api/metrics", { headers: getHeaders() });
+  var passed = check(response, {
+    "metrics status is 200 or 401": function(r) { return r.status === 200 || r.status === 401; }
   });
 
   // If auth is required and we have a token, verify we get metrics
   if (AUTH_TOKEN && response.status === 200) {
-    const hasContent = check(response, {
-      'metrics has content': (r) => r.body && r.body.length > 0,
+    var hasContent = check(response, {
+      "metrics has content": function(r) { return r.body && r.body.length > 0; }
     });
     if (!hasContent) errorRate.add(1);
   }
@@ -281,36 +377,36 @@ function testMetrics() {
  * Records custom metric: memory_add_duration.
  */
 function testMemoryAdd(vuId, iter) {
-  const content = generateMemoryContent(vuId, iter);
-  const userId = getUserId(vuId);
+  var content = generateMemoryContent(vuId, iter);
+  var userId = getUserId(vuId);
 
-  const args = {
+  var args = {
     group_id: GROUP_ID,
     user_id: userId,
     content: content,
     metadata: {
-      source: 'manual',
-      agent_id: `k6-vu-${vuId}`,
-    },
+      source: "manual",
+      agent_id: "k6-vu-" + vuId
+    }
   };
 
-  const startTime = Date.now();
-  const response = legacyToolCall('memory_add', args);
-  const duration = Date.now() - startTime;
+  var startTime = Date.now();
+  var response = legacyToolCall("memory_add", args);
+  var duration = Date.now() - startTime;
 
   memoryAddDuration.add(duration);
 
-  const passed = check(response, {
-    'memory_add status is 200': (r) => r.status === 200,
-    'memory_add returns result': (r) => {
+  var passed = check(response, {
+    "memory_add status is 200": function(r) { return r.status === 200; },
+    "memory_add returns result": function(r) {
       try {
-        const body = JSON.parse(r.body);
+        var body = JSON.parse(r.body);
         // Result may be wrapped in { content: [...] } or returned directly
         return body !== null && body !== undefined;
       } catch (e) {
         return false;
       }
-    },
+    }
   });
 
   if (!passed) {
@@ -319,16 +415,22 @@ function testMemoryAdd(vuId, iter) {
   requestsTotal.add(1);
 
   // Extract memory ID for subsequent get/delete operations
-  let memoryId = null;
+  var memoryId = null;
   try {
-    const body = JSON.parse(response.body);
+    var body = JSON.parse(response.body);
     // Handle both direct result and MCP-wrapped result
     if (body.id) {
       memoryId = body.id;
     } else if (body.content && Array.isArray(body.content)) {
-      const textContent = body.content.find((c) => c.type === 'text');
+      var textContent = null;
+      for (var i = 0; i < body.content.length; i++) {
+        if (body.content[i].type === "text") {
+          textContent = body.content[i];
+          break;
+        }
+      }
       if (textContent) {
-        const parsed = JSON.parse(textContent.text);
+        var parsed = JSON.parse(textContent.text);
         memoryId = parsed.id || parsed.memory_id || null;
       }
     }
@@ -336,7 +438,7 @@ function testMemoryAdd(vuId, iter) {
     // Non-critical — ID extraction is best-effort
   }
 
-  return { passed, memoryId, content };
+  return { passed: passed, memoryId: memoryId, content: content };
 }
 
 /**
@@ -344,31 +446,31 @@ function testMemoryAdd(vuId, iter) {
  * Records custom metric: memory_search_duration.
  */
 function testMemorySearch(vuId, iter) {
-  const userId = getUserId(vuId);
+  var userId = getUserId(vuId);
 
-  const args = {
-    query: `load test VU=${vuId}`,
+  var args = {
+    query: "load test VU=" + vuId,
     group_id: GROUP_ID,
     user_id: userId,
-    limit: 5,
+    limit: 5
   };
 
-  const startTime = Date.now();
-  const response = legacyToolCall('memory_search', args);
-  const duration = Date.now() - startTime;
+  var startTime = Date.now();
+  var response = legacyToolCall("memory_search", args);
+  var duration = Date.now() - startTime;
 
   memorySearchDuration.add(duration);
 
-  const passed = check(response, {
-    'memory_search status is 200': (r) => r.status === 200,
-    'memory_search returns results': (r) => {
+  var passed = check(response, {
+    "memory_search status is 200": function(r) { return r.status === 200; },
+    "memory_search returns results": function(r) {
       try {
-        const body = JSON.parse(r.body);
+        var body = JSON.parse(r.body);
         return body !== null && body !== undefined;
       } catch (e) {
         return false;
       }
-    },
+    }
   });
 
   if (!passed) {
@@ -385,19 +487,19 @@ function testMemorySearch(vuId, iter) {
 function testMemoryGet(memoryId) {
   if (!memoryId) return true; // Skip if no ID available
 
-  const args = {
+  var args = {
     id: memoryId,
-    group_id: GROUP_ID,
+    group_id: GROUP_ID
   };
 
-  const startTime = Date.now();
-  const response = legacyToolCall('memory_get', args);
-  const duration = Date.now() - startTime;
+  var startTime = Date.now();
+  var response = legacyToolCall("memory_get", args);
+  var duration = Date.now() - startTime;
 
   memoryGetDuration.add(duration);
 
-  const passed = check(response, {
-    'memory_get status is 200': (r) => r.status === 200,
+  var passed = check(response, {
+    "memory_get status is 200": function(r) { return r.status === 200; }
   });
 
   if (!passed) {
@@ -412,22 +514,22 @@ function testMemoryGet(memoryId) {
  * Records custom metric: memory_list_duration.
  */
 function testMemoryList(vuId) {
-  const userId = getUserId(vuId);
+  var userId = getUserId(vuId);
 
-  const args = {
+  var args = {
     group_id: GROUP_ID,
     user_id: userId,
-    limit: 10,
+    limit: 10
   };
 
-  const startTime = Date.now();
-  const response = legacyToolCall('memory_list', args);
-  const duration = Date.now() - startTime;
+  var startTime = Date.now();
+  var response = legacyToolCall("memory_list", args);
+  var duration = Date.now() - startTime;
 
   memoryListDuration.add(duration);
 
-  const passed = check(response, {
-    'memory_list status is 200': (r) => r.status === 200,
+  var passed = check(response, {
+    "memory_list status is 200": function(r) { return r.status === 200; }
   });
 
   if (!passed) {
@@ -438,13 +540,28 @@ function testMemoryList(vuId) {
 }
 
 /**
- * Test MCP Streamable HTTP endpoint (initialize + tool call).
+ * Test MCP Streamable HTTP endpoint using proper handshake protocol.
+ *
+ * The MCP Streamable HTTP spec requires:
+ * 1. POST initialize request → server responds with capabilities + session ID
+ * 2. POST notifications/initialized → completes the handshake (server returns 202)
+ * 3. POST tools/call (or other requests) with session/protocol headers
+ *
+ * In stateless mode, the server may not return a session ID.
+ * If the server is misconfigured or the handshake fails, the test degrades
+ * gracefully rather than hard-failing — this allows the rest of the load
+ * test to continue validating legacy endpoints.
  */
 function testMcpStreamableHttp(vuId, iter) {
   // Step 1: Initialize MCP session
-  const initResponse = mcpInitialize(iter * 1000 + vuId);
-  const initPassed = check(initResponse, {
-    'mcp initialize status is 200': (r) => r.status === 200,
+  var initResult = mcpInitialize(iter * 1000 + vuId);
+  var session = {
+    sessionId: initResult.sessionId,
+    protocolVersion: initResult.protocolVersion
+  };
+
+  var initPassed = check(initResult.response, {
+    "mcp initialize status is 200": function(r) { return r.status === 200; }
   });
 
   if (!initPassed) {
@@ -452,16 +569,39 @@ function testMcpStreamableHttp(vuId, iter) {
   }
   requestsTotal.add(1);
 
-  // Step 2: Call memory_search via MCP protocol
-  const searchArgs = {
-    query: `mcp test VU=${vuId}`,
+  // Step 1b: Send notifications/initialized to complete the handshake
+  // Even if init failed, we still attempt the full sequence to collect
+  // diagnostic data and to verify the complete protocol flow.
+  var notifResponse = mcpInitialized(session);
+  // Servers should return 202 for notification-only requests, but some
+  // implementations return 200. Both are acceptable.
+  var notifOk = notifResponse.status === 200 || notifResponse.status === 202;
+  if (!notifOk) {
+    // Log but don't fail — some servers may not handle standalone notifications
+    // and we still want to attempt the tool call
+    console.warn(
+      "MCP initialized notification returned " + notifResponse.status +
+      " (expected 200 or 202). Session ID: " + (session.sessionId || "none")
+    );
+  }
+  requestsTotal.add(1);
+
+  // Step 2: Call memory_search via MCP protocol with session headers
+  var searchArgs = {
+    query: "mcp test VU=" + vuId,
     group_id: GROUP_ID,
-    limit: 3,
+    limit: 3
   };
 
-  const callResponse = mcpToolCall('memory_search', searchArgs, iter * 1000 + vuId + 1);
-  const callPassed = check(callResponse, {
-    'mcp tool call status is 200': (r) => r.status === 200,
+  var callResponse = mcpToolCall(
+    "memory_search",
+    searchArgs,
+    iter * 1000 + vuId + 1,
+    session
+  );
+
+  var callPassed = check(callResponse, {
+    "mcp tool call status is 200": function(r) { return r.status === 200; }
   });
 
   if (!callPassed) {
@@ -476,13 +616,13 @@ function testMcpStreamableHttp(vuId, iter) {
  * Test curator proposals endpoint.
  */
 function testCuratorProposals() {
-  const response = http.get(
-    `${BASE_URL}/api/curator/proposals?group_id=${GROUP_ID}`,
-    { headers: getHeaders() },
+  var response = http.get(
+    BASE_URL + "/api/curator/proposals?group_id=" + GROUP_ID,
+    { headers: getHeaders() }
   );
 
-  const passed = check(response, {
-    'curator proposals status is 200 or 404': (r) => r.status === 200 || r.status === 404,
+  var passed = check(response, {
+    "curator proposals status is 200 or 404": function(r) { return r.status === 200 || r.status === 404; }
   });
 
   if (!passed) {
@@ -495,8 +635,8 @@ function testCuratorProposals() {
 // ── Main Test Function ────────────────────────────────────────────────────────
 
 export default function () {
-  const vuId = __VU;
-  const iter = __ITER;
+  var vuId = __VU;
+  var iter = __ITER;
 
   // ── Phase 1: Health & Probes (every iteration) ────────────────────────────
   testHealth();
@@ -512,7 +652,7 @@ export default function () {
 
   // ── Phase 2: Memory Operations (primary benchmark) ───────────────────────
   // memory_add is the Phase 9 benchmark target: p95 < 200ms at 100 VUs
-  const addResult = testMemoryAdd(vuId, iter);
+  var addResult = testMemoryAdd(vuId, iter);
   sleep(0.05);
 
   // memory_search after add — tests federated search
@@ -545,110 +685,120 @@ export default function () {
 // ── Setup & Teardown ──────────────────────────────────────────────────────────
 
 export function setup() {
-  console.log(`Allura Memory Load Test`);
-  console.log(`========================`);
-  console.log(`Base URL: ${BASE_URL}`);
-  console.log(`Auth: ${AUTH_TOKEN ? 'Bearer token configured' : 'No auth token (dev mode)'}`);
-  console.log(`Group ID: ${GROUP_ID}`);
-  console.log(``);
+  console.log("Allura Memory Load Test");
+  console.log("========================");
+  console.log("Base URL: " + BASE_URL);
+  console.log("Auth: " + (AUTH_TOKEN ? "Bearer token configured" : "No auth token (dev mode)"));
+  console.log("Group ID: " + GROUP_ID);
+  console.log("");
 
   // Verify server is reachable before starting
-  const healthResponse = http.get(`${BASE_URL}/health`);
+  var healthResponse = http.get(BASE_URL + "/health");
   if (healthResponse.status !== 200) {
-    console.error(`Server health check failed: ${healthResponse.status}`);
-    console.error(`Make sure the server is running at ${BASE_URL}`);
+    console.error("Server health check failed: " + healthResponse.status);
+    console.error("Make sure the server is running at " + BASE_URL);
     // Don't fail setup — let the test run and report failures
   } else {
-    console.log(`Server is healthy. Starting load test...`);
+    console.log("Server is healthy. Starting load test...");
   }
 
   return { startTime: Date.now() };
 }
 
 export function teardown(data) {
-  const duration = ((Date.now() - data.startTime) / 1000).toFixed(1);
-  console.log(``);
-  console.log(`Load test completed in ${duration}s`);
-  console.log(``);
-  console.log(`Phase 9 Benchmark Thresholds:`);
-  console.log(`  memory_add p95 < 200ms`);
-  console.log(`  memory_search p95 < 500ms`);
-  console.log(`  General HTTP p95 < 500ms`);
-  console.log(`  Error rate < 5%`);
-  console.log(``);
-  console.log(`Check k6 output above for threshold results.`);
+  var duration = ((Date.now() - data.startTime) / 1000).toFixed(1);
+  console.log("");
+  console.log("Load test completed in " + duration + "s");
+  console.log("");
+  console.log("Phase 9 Benchmark Thresholds:");
+  console.log("  memory_add p95 < 200ms");
+  console.log("  memory_search p95 < 500ms");
+  console.log("  General HTTP p95 < 500ms");
+  console.log("  Error rate < 5%");
+  console.log("");
+  console.log("Check k6 output above for threshold results.");
 }
 
 // ── Handle Summary ────────────────────────────────────────────────────────────
 
 export function handleSummary(data) {
-  const summary = {
-    stdout: textSummary(data, { indent: '  ', enableColors: true }),
-    'tests/load/results/summary.json': JSON.stringify(data, null, 2),
+  var summary = {
+    stdout: textSummary(data, { indent: "  ", enableColors: true }),
+    "tests/load/results/summary.json": JSON.stringify(data, null, 2)
   };
 
   // Also write a human-readable report
-  const report = generateReport(data);
-  summary['tests/load/results/load-test-report.txt'] = report;
+  var report = generateReport(data);
+  summary["tests/load/results/load-test-report.txt"] = report;
 
   return summary;
 }
 
 function textSummary(data, options) {
   // Use k6's built-in summary if available, otherwise generate our own
-  if (typeof __ENV !== 'undefined') {
+  if (typeof __ENV !== "undefined") {
     // k6 will handle the default summary output
-    return '';
+    return "";
   }
   return JSON.stringify(data, null, 2);
 }
 
+function getMetricValue(values, key) {
+  if (!values) return "N/A";
+  var v = values[key];
+  if (v === undefined || v === null) return "N/A";
+  return v.toFixed(2);
+}
+
 function generateReport(data) {
-  const lines = [];
-  lines.push('Allura Memory Load Test Report');
-  lines.push('================================');
-  lines.push(`Date: ${new Date().toISOString()}`);
-  lines.push(`Base URL: ${BASE_URL}`);
-  lines.push(`Group ID: ${GROUP_ID}`);
-  lines.push('');
+  var lines = [];
+  lines.push("Allura Memory Load Test Report");
+  lines.push("================================");
+  lines.push("Date: " + new Date().toISOString());
+  lines.push("Base URL: " + BASE_URL);
+  lines.push("Group ID: " + GROUP_ID);
+  lines.push("");
 
   // HTTP metrics
   if (data.metrics && data.metrics.http_req_duration) {
-    const httpDur = data.metrics.http_req_duration;
-    lines.push('HTTP Request Duration:');
-    lines.push(`  avg: ${httpDur.values.avg?.toFixed(2) || 'N/A'}ms`);
-    lines.push(`  p95: ${httpDur.values['p(95)']?.toFixed(2) || 'N/A'}ms`);
-    lines.push(`  p99: ${httpDur.values['p(99)']?.toFixed(2) || 'N/A'}ms`);
-    lines.push('');
+    var httpDur = data.metrics.http_req_duration;
+    lines.push("HTTP Request Duration:");
+    lines.push("  avg: " + getMetricValue(httpDur.values, "avg") + "ms");
+    lines.push("  p95: " + getMetricValue(httpDur.values, "p(95)") + "ms");
+    lines.push("  p99: " + getMetricValue(httpDur.values, "p(99)") + "ms");
+    lines.push("");
   }
 
   // Custom metrics
   if (data.metrics && data.metrics.memory_add_duration) {
-    const addDur = data.metrics.memory_add_duration;
-    lines.push('Memory Add Duration (Phase 9 Benchmark):');
-    lines.push(`  avg: ${addDur.values.avg?.toFixed(2) || 'N/A'}ms`);
-    lines.push(`  p95: ${addDur.values['p(95)']?.toFixed(2) || 'N/A'}ms`);
-    lines.push(`  p99: ${addDur.values['p(99)']?.toFixed(2) || 'N/A'}ms`);
-    lines.push(`  THRESHOLD: p95 < 200ms`);
-    lines.push('');
+    var addDur = data.metrics.memory_add_duration;
+    lines.push("Memory Add Duration (Phase 9 Benchmark):");
+    lines.push("  avg: " + getMetricValue(addDur.values, "avg") + "ms");
+    lines.push("  p95: " + getMetricValue(addDur.values, "p(95)") + "ms");
+    lines.push("  p99: " + getMetricValue(addDur.values, "p(99)") + "ms");
+    lines.push("  THRESHOLD: p95 < 200ms");
+    lines.push("");
   }
 
   if (data.metrics && data.metrics.memory_search_duration) {
-    const searchDur = data.metrics.memory_search_duration;
-    lines.push('Memory Search Duration:');
-    lines.push(`  avg: ${searchDur.values.avg?.toFixed(2) || 'N/A'}ms`);
-    lines.push(`  p95: ${searchDur.values['p(95)']?.toFixed(2) || 'N/A'}ms`);
-    lines.push('');
+    var searchDur = data.metrics.memory_search_duration;
+    lines.push("Memory Search Duration:");
+    lines.push("  avg: " + getMetricValue(searchDur.values, "avg") + "ms");
+    lines.push("  p95: " + getMetricValue(searchDur.values, "p(95)") + "ms");
+    lines.push("");
   }
 
-  // Threshold results
+  // Threshold results — use ES5-compatible iteration
   if (data.thresholds) {
-    lines.push('Threshold Results:');
-    for (const [name, result] of Object.entries(data.thresholds)) {
-      lines.push(`  ${name}: ${result.ok ? 'PASS' : 'FAIL'}`);
+    lines.push("Threshold Results:");
+    var keys = Object.keys(data.thresholds);
+    for (var i = 0; i < keys.length; i++) {
+      var name = keys[i];
+      var result = data.thresholds[name];
+      lines.push("  " + name + ": " + (result.ok ? "PASS" : "FAIL"));
     }
-    lines.push('');
+    lines.push("");
   }
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
