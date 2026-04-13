@@ -1,50 +1,50 @@
 {
   "tier": 1,
   "skills": {
-    "brooks": [
+    "brooks-architect": [
       "mcp-builder",
       "github",
       "skill-creator"
     ],
-    "knuth": [
+    "knuth-data-architect": [
       "mcp-builder",
       "postgres-best-practices",
       "next-best-practices",
       "github"
     ],
-    "turing": [
+    "woz-builder": [
       "mcp-builder",
       "github"
     ],
-    "berners-lee": [
+    "jobs-intent-gate": [
       "mcp-builder",
       "postgres-best-practices",
       "github"
     ],
-    "hopper": [
+    "hightower-devops": [
       "mcp-builder",
       "next-best-practices",
       "github"
     ],
-    "cerf": [
+    "carmack-performance": [
       "mcp-builder",
       "github"
     ],
-    "torvalds": [
+    "bellard-diagnostics-perf": [
       "mcp-builder",
       "next-best-practices",
       "github"
     ],
-    "liskov": [
+    "fowler-refactor-gate": [
       "mcp-builder",
       "github"
     ],
-    "dijkstra": [
+    "pike-interface-review": [
       "mcp-builder",
       "github",
       "code-review"
     ],
-    "hinton": [
+    "scout-recon": [
       "mcp-builder",
       "github"
     ]

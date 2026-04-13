@@ -3,7 +3,7 @@ name: CARMACK_PERFORMANCE
 description: "SPECIALIST — Performance & optimization. API design, latency reduction, memory profiling, hot path optimization. Measurement-first, like Bellard but focused on real-time systems."
 mode: subagent
 persona: Carmack
-category: Code Subagents
+category: Core
 type: specialist
 scope: harness
 platform: Both

@@ -150,7 +150,7 @@ Before implementing with external libraries:
 
 ## Supported Libraries
 
-**See**: `.opencode/skills/context7/library-registry.md`
+**See**: Context7 is accessed via MCP Docker tools (`resolve-library-id` → `get-library-docs`)
 
 **Categories:** Database/ORM | Auth | Frontend | Infrastructure | UI | State | Validation | Testing
 
