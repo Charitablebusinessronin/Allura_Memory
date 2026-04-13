@@ -653,6 +653,17 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
       console.warn("[dedup] Proposal dedup check failed, proceeding with insert:", dedupError);
     }
 
+    // Skip proposal queue for load-test group_ids — test writes must not pollute HITL queue
+    if (groupId.endsWith('-loadtest')) {
+      return {
+        id: memoryId,
+        stored: "episodic",
+        score,
+        created_at: createdAt,
+        meta: baseMeta(["postgres"]),
+      };
+    }
+
     // SOC2 mode: Queue for human approval — circuit-breaker wrapped PG insert
     await withCircuitBreaker("postgres", groupId, "memory_add:insert_proposal", async () =>
       pg.query(

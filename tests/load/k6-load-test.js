@@ -15,7 +15,6 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Rate, Trend, Counter } from 'k6/metrics';
-import { randomString } from 'k6/utils';
 
 // ── Custom Metrics ────────────────────────────────────────────────────────────
 
@@ -70,7 +69,7 @@ export const options = {
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:3201';
 const AUTH_TOKEN = __ENV.ALLURA_MCP_AUTH_TOKEN || '';
-const GROUP_ID = 'allura-roninmemory';
+const GROUP_ID = 'allura-roninmemory-loadtest';
 
 // ── Helper Functions ──────────────────────────────────────────────────────────
 
@@ -93,7 +92,8 @@ function getHeaders(extra = {}) {
  */
 function generateMemoryContent(vuId, iter) {
   const timestamp = Date.now();
-  return `Load test memory VU=${vuId} iter=${iter} ts=${timestamp} rnd=${randomString(8)}`;
+  const rand = Math.random().toString(36).substring(2, 10);
+  return `Load test memory VU=${vuId} iter=${iter} ts=${timestamp} rnd=${rand}`;
 }
 
 /**
@@ -186,7 +186,7 @@ function testHealth() {
       try {
         const body = JSON.parse(r.body);
         return body.status === 'healthy';
-      } catch {
+      } catch (e) {
         return false;
       }
     },
@@ -194,7 +194,7 @@ function testHealth() {
       try {
         const body = JSON.parse(r.body);
         return Array.isArray(body.transports);
-      } catch {
+      } catch (e) {
         return false;
       }
     },
@@ -218,7 +218,7 @@ function testReadiness() {
       try {
         const body = JSON.parse(r.body);
         return typeof body.ready === 'boolean';
-      } catch {
+      } catch (e) {
         return false;
       }
     },
@@ -242,7 +242,7 @@ function testLiveness() {
       try {
         const body = JSON.parse(r.body);
         return body.alive === true;
-      } catch {
+      } catch (e) {
         return false;
       }
     },
@@ -307,7 +307,7 @@ function testMemoryAdd(vuId, iter) {
         const body = JSON.parse(r.body);
         // Result may be wrapped in { content: [...] } or returned directly
         return body !== null && body !== undefined;
-      } catch {
+      } catch (e) {
         return false;
       }
     },
@@ -332,7 +332,7 @@ function testMemoryAdd(vuId, iter) {
         memoryId = parsed.id || parsed.memory_id || null;
       }
     }
-  } catch {
+  } catch (e) {
     // Non-critical — ID extraction is best-effort
   }
 
@@ -365,7 +365,7 @@ function testMemorySearch(vuId, iter) {
       try {
         const body = JSON.parse(r.body);
         return body !== null && body !== undefined;
-      } catch {
+      } catch (e) {
         return false;
       }
     },
