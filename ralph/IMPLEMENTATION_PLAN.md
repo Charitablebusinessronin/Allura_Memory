@@ -17,7 +17,7 @@ implements, validates, commits, and updates this file.
 
 ---
 
-## P0 — Hard Gates (MUST pass before Phase 6 close)
+## P0 — Hard Gates (MUST pass before Phase 6 close) — ✅ ALL PASSED
 
 - [x] **k6 load test at VU=100** — **PASSED** p95=6ms (33x margin), errors only from MCP protocol mismatch
   - Agent: Bellard (measure) + Carmack (optimize if needed)
@@ -34,17 +34,15 @@ implements, validates, commits, and updates this file.
 
 ## P1 — Queue Clearance & Phase Close
 
-- [ ] **Process remaining pending proposals** — dedup + Notion sync
-  - Agent: Woz (implementation) + Knuth (data layer)
-  - 7 already approved and promoted to Neo4j (3× mainstream 0.85, 1× adoption 0.80, 3× emerging 0.70)
-  - Remaining ~70 proposals still pending in canonical_proposals
-  - Flow: canonical_proposals (status=pending) → dedup check → /api/curator/approve → Notion sync
-  - Dedup: `src/lib/memory/knowledge-promotion.ts` → `queryApprovedInsights()`
-  - Notion sync: `src/curator/notion-sync.ts` → `syncToNotion()`
+- [x] **Process remaining proposals** — ✅ DRAINED (3 approved this session, 0 pending remaining)
+  - Agent: Knuth (data operations)
+  - 228 total approved, 0 pending, 0 rejected
+  - 10 total promoted to Neo4j (7 prior + 3 this session)
+  - DLQ: 0 failed, 0 pending
 
 - [ ] **Close Phase 6** after soak completes (24h clock started 2026-04-13)
   - Agent: Brooks (sign-off)
-  - Watchdog: single clean instance running, feedback loops closed
+  - Watchdog: 25 heartbeats in 24h, last at 2026-04-13T20:42:58Z
   - Update: `memory-bank/activeContext.md`, `memory-bank/progress.md`
 
 ## P2 — Tooling & Cleanup
@@ -57,9 +55,16 @@ implements, validates, commits, and updates this file.
   - Agent: Woz (implementation)
   - File: `src/middleware.ts` → `src/middleware.ts.legacy`, `src/proxy.ts`
 
-- [x] **HITL queue: 7 proposals promoted** — 3× mainstream (0.85), 1× adoption (0.80), 3× emerging (0.70)
+- [x] **HITL queue: 7+3 proposals promoted** — 3× mainstream (0.85), 1× adoption (0.80), 3× emerging (0.70) + 3 more this session
   - Agent: Brooks + Knuth
   - Promoted to Neo4j with SUPERSEDES versioning
+  - Queue now DRAINED: 0 pending, 228 approved
+
+- [x] **Fix MCP `/mcp` k6 test** — Added session handshake + Goja compatibility
+  - Agent: Woz (implementation)
+  - File: `tests/load/k6-load-test.js`
+  - Added mcpInitialize(), mcpInitialized(), mcpToolCall() protocol conformance
+  - Converted ES2017+ to ES5.1 for k6/Goja engine
 
 - [ ] **Validate Ralph first run** — `/ralph plan` generates this file, `/ralph build` executes against it
   - Agent: Scout (verify) + Woz (fix if needed)
@@ -89,10 +94,10 @@ implements, validates, commits, and updates this file.
 | Phase 3 | ✅ CLOSED | Controlled activation |
 | Phase 4 | ✅ CLOSED | Pipeline validated |
 | Phase 5 | ✅ CLOSED | Ralph loop — 0 failures |
-| Phase 6 | 🔲 CLOSING | DLQ ✅, KH Bridge ✅, Worker soak pending |
+| Phase 6 | 🔲 SOAK RUNNING | DLQ ✅, KH Bridge ✅, Feedback loops ✅, Queue DRAINED, 24h soak ticking |
 | Phase 7 | ✅ CLOSED | Auth, Audit CSV, Clerk |
 | Phase 8 | ✅ CLOSED | SDK, CORS, Sentry |
-| Phase 9 | 🔲 CLOSING | Probes ✅, k6 ✅, Load test run pending |
+| Phase 9 | ✅ CLOSED | k6 p95=6ms ✅, MCP handshake ✅, SDK ✅, CORS ✅, Sentry ✅ |
 
 ---
 
