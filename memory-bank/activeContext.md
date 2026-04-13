@@ -1,13 +1,18 @@
 # Active Context — Brooks Architect Persona
 
-**Session**: 2026-04-13h (Ralph Finish Loop + Team RAM Parallel Dispatch)
-**Status**: ✅ RALPH FINISH LOOP OPERATIONAL | k6 PASS | DLQ CLEAN | 77 PROPOSALS PENDING
+**Session**: 2026-04-13i (Watchdog Feedback Loops + Proxy Migration + HITL Promotions)
+**Status**: ✅ PHASE 6 SOAK CLOCK STARTED | 7 PROMOTED | FEEDBACK LOOPS CLOSED
 
 ## Current Focus
 
-**Ralph finish loop rewritten with Team RAM parallel dispatch.** Five files updated to replace OAC/Greek ghost names with authoritative Notion Team RAM roster.
+**Watchdog feedback loops closed. Next.js 16 proxy migration done. 7 proposals promoted to Neo4j. Phase 6 soak clock started.**
 
-### What Changed This Session
+### What Changed (Session 2026-04-13T20:30:00Z)
+
+1. **Watchdog feedback loops closed** — excluded WATCHDOG_HEARTBEAT, proposal_approved, proposal_rejected, notion_sync_pending from event scan (was re-processing own outputs)
+2. **middleware.ts → middleware.ts.legacy** — proxy.ts is now the sole Next.js 16 proxy
+3. **HITL queue: 7 proposals approved and promoted to Neo4j** — 3× mainstream (0.85), 1× adoption (0.80), 3× emerging (0.70)
+4. **Single clean watchdog instance running** — Phase 6 soak clock started
 
 1. **`ralph/IMPLEMENTATION_PLAN.md`** — Created prioritized finish plan (P0→P2)
 2. **`.opencode/command/party.md`** — Complete rewrite: OAC/Greek → Team RAM names + Task() dispatch protocol
@@ -72,8 +77,10 @@
 |----------|------|--------|-------|
 | P0 | k6 load test VU=100 | ✅ PASSED (p95=6ms) | Bellard |
 | P0 | Watchdog DLQ soak | ✅ CLEAN (0 failures) | Knuth |
-| P1 | Process 77 pending proposals | ⏳ NEXT | Woz + Knuth |
-| P1 | Close Phase 6 | ⏳ After proposals | Brooks |
+| P0 | Watchdog feedback loops | ✅ CLOSED (4 excluded) | Woz |
+| P0 | Next.js 16 proxy migration | ✅ proxy.ts is sole proxy | Woz |
+| P1 | Process ~70 remaining proposals | ⏳ 7/77 promoted so far | Woz + Knuth |
+| P1 | Close Phase 6 (24h soak clock started) | ⏳ Soak running | Brooks |
 | P2 | Validate Ralph first run | ⏳ After code committed | Scout + Woz |
 | P2 | OAC ghost reference cleanup | 📋 38 files identified | Scout + Woz |
 | P2 | MCP `/mcp` endpoint test fix | 📋 Protocol handshake | Woz |
@@ -82,13 +89,14 @@
 
 **Phase 4: CLOSED ✅**
 **Phase 5: CLOSED ✅**
-**Phase 6: CLOSING** — DLQ ✅, KH Bridge ✅, Worker soak ✅, Proposals pending
+**Phase 6: SOAK RUNNING** — DLQ ✅, KH Bridge ✅, Feedback loops ✅, Proxy ✅, 7 promoted, ~70 pending, 24h soak clock started
 **Phase 7: CLOSED ✅**
 **Phase 8: CLOSED ✅**
 **Phase 9: CLOSING** — Probes ✅, k6 ✅ (p95=6ms), MCP protocol mismatch ⚠️
 
 **Next Session**:
-1. Process 77 pending proposals through curator pipeline
-2. Fix MCP Streamable HTTP test protocol handshake in k6
-3. Close Phase 6 and Phase 9 formally
-4. Run `/ralph finish` to validate the loop end-to-end
+1. Process ~70 remaining pending proposals through curator pipeline
+2. Wait for Phase 6 soak clock (24h from 2026-04-13)
+3. Fix MCP Streamable HTTP test protocol handshake in k6
+4. Close Phase 6 and Phase 9 formally
+5. Run `./ralph/loop.sh finish` to validate the loop end-to-end
