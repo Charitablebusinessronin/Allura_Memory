@@ -34,17 +34,32 @@ implements, validates, commits, and updates this file.
 
 ## P1 — Queue Clearance & Phase Close
 
-- [ ] **Process 116 backlogged proposals** — dedup + Notion sync
+- [ ] **Process remaining pending proposals** — dedup + Notion sync
   - Agent: Woz (implementation) + Knuth (data layer)
+  - 7 already approved and promoted to Neo4j (3× mainstream 0.85, 1× adoption 0.80, 3× emerging 0.70)
+  - Remaining ~70 proposals still pending in canonical_proposals
   - Flow: canonical_proposals (status=pending) → dedup check → /api/curator/approve → Notion sync
   - Dedup: `src/lib/memory/knowledge-promotion.ts` → `queryApprovedInsights()`
   - Notion sync: `src/curator/notion-sync.ts` → `syncToNotion()`
 
-- [ ] **Close Phase 6** after watchdog + soak confirmed
+- [ ] **Close Phase 6** after soak completes (24h clock started 2026-04-13)
   - Agent: Brooks (sign-off)
+  - Watchdog: single clean instance running, feedback loops closed
   - Update: `memory-bank/activeContext.md`, `memory-bank/progress.md`
 
 ## P2 — Tooling & Cleanup
+
+- [x] **Watchdog feedback loops closed** — excluded WATCHDOG_HEARTBEAT, proposal_approved, proposal_rejected, notion_sync_pending from event scan
+  - Agent: Woz (implementation)
+  - Files: `src/curator/watchdog.ts`, `src/curator/index.ts`
+
+- [x] **Next.js 16 proxy migration** — middleware.ts → middleware.ts.legacy, proxy.ts is sole proxy
+  - Agent: Woz (implementation)
+  - File: `src/middleware.ts` → `src/middleware.ts.legacy`, `src/proxy.ts`
+
+- [x] **HITL queue: 7 proposals promoted** — 3× mainstream (0.85), 1× adoption (0.80), 3× emerging (0.70)
+  - Agent: Brooks + Knuth
+  - Promoted to Neo4j with SUPERSEDES versioning
 
 - [ ] **Validate Ralph first run** — `/ralph plan` generates this file, `/ralph build` executes against it
   - Agent: Scout (verify) + Woz (fix if needed)
