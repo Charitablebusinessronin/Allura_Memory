@@ -7,18 +7,52 @@
  *
  * ## Notion Integration
  *
- * The Notion sync requires these environment variables:
- *   - NOTION_API_KEY: Notion integration token
- *   - NOTION_CURATOR_DB_ID: ID of the Notion database for curator proposals
+ * Notion page creation is performed via the `notionCreatePage` injectable
+ * function. In production the caller passes a thin wrapper around
+ * mcp__claude_ai_Notion__notion-create-pages (or mcp__MCP_DOCKER__notion-create-pages).
+ * In tests, a mock is injected instead.
  *
- * If Notion is not configured, this module still queries canonical_proposals
- * and outputs the data for manual review. The Notion page creation is done
- * via MCP_DOCKER_notion-create-pages when the API key is available.
+ * Required env vars (only needed when using the default CLI runner):
+ *   - NOTION_CURATOR_DB_ID: ID of the Curator Proposals database
+ *     default: 08d2e672-2a73-45b0-a31d-b4a7be551e16
+ *     data_source_id: 42894678-aedb-4c90-9371-6494a9fe5270
+ *
+ * ## Notion DB Schema (collection://42894678-aedb-4c90-9371-6494a9fe5270)
+ *   Title        — title  (proposal content, max 100 chars)
+ *   Status       — select: pending | approved | rejected
+ *   Type         — select: insight | pattern | decision | constraint
+ *   Score        — number
+ *   Group ID     — text
+ *   Notes        — text   (trace_ref + reasoning summary)
+ *   Proposed At  — date
+ *   Notion Synced — checkbox
  *
  * Usage: bun src/curator/notion-sync.ts [--group-id allura-roninmemory]
  */
 
 import { getPool, closePool } from "../lib/postgres/connection";
+import { insertDlqEntry } from "./notion-sync-dlq";
+
+// ── Constants ──────────────────────────────────────────────────────────────
+
+/**
+ * Default Notion Curator Proposals database ID.
+ * Override via NOTION_CURATOR_DB_ID env var.
+ */
+export const DEFAULT_NOTION_CURATOR_DB_ID = "08d2e672-2a73-45b0-a31d-b4a7be551e16";
+
+/**
+ * The data_source_id for the Curator Proposals collection.
+ * This is the collection UUID used in mcp__claude_ai_Notion__notion-create-pages.
+ */
+export const NOTION_CURATOR_DATA_SOURCE_ID = "42894678-aedb-4c90-9371-6494a9fe5270";
+
+/** Maps canonical tier values to Notion Type select options */
+const TIER_TO_NOTION_TYPE: Record<string, string> = {
+  emerging: "insight",
+  adoption: "pattern",
+  mainstream: "decision",
+};
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -34,9 +68,53 @@ export interface PendingProposal {
 
 export interface NotionSyncConfig {
   groupId: string;
-  notionApiKey?: string;
+  /**
+   * Notion Curator Proposals database ID.
+   * Defaults to DEFAULT_NOTION_CURATOR_DB_ID / NOTION_CURATOR_DB_ID env var.
+   */
   notionDbId?: string;
+  /**
+   * Injectable Notion page creation function.
+   * In production: wrap mcp__claude_ai_Notion__notion-create-pages.
+   * In tests: provide a mock.
+   *
+   * @param params - Page creation parameters
+   * @returns Object with the created page's id and url
+   */
+  notionCreatePage?: NotionCreatePageFn;
 }
+
+/**
+ * Parameters passed to the injectable Notion page creation function.
+ */
+export interface NotionPageParams {
+  /** data_source_id of the Curator Proposals collection */
+  dataSourceId: string;
+  properties: {
+    Title: string;
+    Status: string;
+    Type: string;
+    Score: number;
+    "Group ID": string;
+    Notes: string;
+    "date:Proposed At:start": string;
+    "Notion Synced": string;
+  };
+  content: string;
+}
+
+/**
+ * Result returned by the injectable Notion page creation function.
+ */
+export interface NotionPageResult {
+  id: string;
+  url: string;
+}
+
+/**
+ * Signature for the injectable Notion page creation function.
+ */
+export type NotionCreatePageFn = (params: NotionPageParams) => Promise<NotionPageResult>;
 
 export interface NotionSyncResult {
   proposalsFound: number;

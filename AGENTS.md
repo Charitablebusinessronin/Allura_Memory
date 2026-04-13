@@ -494,8 +494,6 @@ This repo uses the **nested singular** agent tree under `.opencode/agent/` as th
     │   └── pike-interface-review.md ← mode: subagent
     └── code/
         ├── bellard-diagnostics-perf.md ← mode: subagent
-        ├── dijkstra-review.md       ← mode: subagent
-        ├── knuth-analyze.md         ← mode: subagent
         └── woz-builder.md           ← mode: subagent
 ```
 
@@ -514,8 +512,6 @@ The `.claude/agents/` directory uses a **flat** structure with simplified filena
 ├── pike.md            ← mirrors pike-interface-review.md
 ├── scout.md           ← mirrors scout-recon.md
 ├── bellard.md         ← mirrors bellard-diagnostics-perf.md
-├── dijkstra.md         ← mirrors dijkstra-review.md
-├── knuth.md           ← mirrors knuth-analyze.md
 └── woz.md             ← mirrors woz-builder.md
 ```
 
