@@ -66,7 +66,12 @@ CREATE TABLE IF NOT EXISTS allura_memories (
     group_id        TEXT        NOT NULL CHECK (group_id ~ '^allura-[a-z0-9-]+$'),
 
     -- Soft delete support
-    deleted_at      TIMESTAMPTZ
+    deleted_at      TIMESTAMPTZ,
+
+    -- Stored generated tsvector column for RuVector hybrid search FTS
+    -- Required by ruvector_register_hybrid() as the fts_column parameter.
+    -- Automatically kept in sync with content column by PostgreSQL.
+    content_tsv    tsvector GENERATED ALWAYS AS (to_tsvector('english', content)) STORED
 );
 
 -- ============================================================================
@@ -81,14 +86,14 @@ CREATE INDEX IF NOT EXISTS allura_mem_embedding_hnsw
     ON allura_memories USING hnsw (embedding ruvector_cosine_ops);
 
 -- ============================================================================
--- 3. BM25/GIN index for full-text search
+-- 3. GIN index for full-text search on stored tsvector
 -- ============================================================================
--- Enables keyword scoring for ruvector_hybrid_search() fusion.
--- Matches English text content against ts_vector representations.
+-- The content_tsv column is a stored generated tsvector. This GIN index
+-- enables fast BM25-style keyword search for hybrid retrieval.
 -- ============================================================================
 
 CREATE INDEX IF NOT EXISTS allura_mem_content_fts
-    ON allura_memories USING gin(to_tsvector('english', content));
+    ON allura_memories USING gin(content_tsv);
 
 -- ============================================================================
 -- 4. Composite index for tenant+time queries
@@ -178,33 +183,24 @@ COMMENT ON COLUMN allura_memories.memory_type IS
 -- ============================================================================
 -- POST-MIGRATION: Hybrid search registration
 -- ============================================================================
--- After the table has data, register it for hybrid search:
+-- ruvector_register_hybrid() is SESSION-SCOPED in v0.3.0 (not persistent).
+-- It must be called in the same database session as hybrid queries.
+-- This is a KNOWN LIMITATION — the registration does not survive reconnection.
 --
---   SELECT ruvector_register_hybrid(
---     'allura_memories',   -- collection (table name)
---     'embedding',          -- vector_column
---     'content',            -- fts_column (ts_vector for BM25)
---     'content'             -- text_column (raw text for keyword scoring)
---   );
+-- For this reason, Allura implements its own hybrid search using:
+--   - ruvector_cosine_distance() for vector ANN (REAL, verified)
+--   - ts_rank() for BM25 (PostgreSQL native)
+--   - Reciprocal Rank Fusion (RRF) to merge the two result sets
 --
--- Then query with:
---   SELECT ruvector_hybrid_search(
---     'allura_memories',        -- collection
---     'search terms',           -- query_text
---     ARRAY[0.1, 0.2, ...]::real[],  -- query_vector (768 dims)
---     10,                       -- k (number of results)
---     'rrf',                    -- fusion method (optional: 'rrf', 'linear')
---     0.7                       -- alpha (optional: vector weight, 0.0-1.0)
---   );
+-- See src/lib/ruvector/bridge.ts retrieveMemories() for implementation.
 --
--- SONA feedback loop:
---   SELECT ruvector_record_feedback(
---     'allura_memories',
---     ARRAY[0.1, 0.2, ...]::real[],  -- query_vector
---     ARRAY[1, 3, 7]::bigint[],       -- relevant_ids
---     ARRAY[2, 5]::bigint[]            -- irrelevant_ids
---   );
---   SELECT ruvector_sona_learn('allura_memories', trajectory_json::jsonb);
+-- SONA FUNCTIONS ARE STUBS in v0.3.0:
+--   - ruvector_record_feedback() → no-op (requires enable_learning, which doesn't persist)
+--   - ruvector_sona_learn() → returns hard-coded {steps:0, final_reward:0.5}
+--   - ruvector_enable_learning() → session-scoped, lost on reconnect
+--
+-- Allura records feedback in allura_feedback table and may call
+-- ruvector_sona_learn() best-effort. See bridge.ts postFeedback().
 -- ============================================================================
 
 -- ============================================================================

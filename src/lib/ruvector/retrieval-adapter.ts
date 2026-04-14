@@ -79,14 +79,14 @@ export async function shouldUseRuVector(): Promise<boolean> {
  *
  * @param userId - Tenant isolation key (validated as group_id per ARCH-001)
  * @param query - Search query text
- * @param options - Optional limit and threshold overrides
+ * @param options - Optional limit, threshold, and searchMode overrides
  * @returns Enriched retrieval result with feedback metadata
  * @throws GroupIdValidationError if userId doesn't match ^allura-[a-z0-9-]+$
  */
 export async function searchWithFeedback(
   userId: string,
   query: string,
-  options?: { limit?: number; threshold?: number }
+  options?: { limit?: number; threshold?: number; searchMode?: "hybrid" | "vector" | "text" }
 ): Promise<RetrievalWithFeedbackResult> {
   // Validate group_id per ARCH-001 tenant isolation
   validateGroupId(userId);
@@ -96,6 +96,7 @@ export async function searchWithFeedback(
     query,
     limit: options?.limit,
     threshold: options?.threshold,
+    searchMode: options?.searchMode,
   });
 
   return {

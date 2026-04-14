@@ -48,6 +48,8 @@
     "registry:drift": "bun run scripts/drift-detection.ts",
     "ports:check": "bun scripts/check-ports.ts",
     "ports:generate": "bun -e \"console.log(require('./src/lib/config/ports').generateEnvEntries(true))\"",
+    "backfill:embeddings": "bun run src/curator/embedding-backfill-worker.ts --once",
+    "backfill:embeddings:watch": "bun run src/curator/embedding-backfill-worker.ts --interval 30000",
     "load-test": "bash tests/load/run-load-test.sh"
   },
   "dependencies": {

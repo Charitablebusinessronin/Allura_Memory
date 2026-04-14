@@ -109,11 +109,12 @@ describe("RuVector Retrieval Adapter — searchWithFeedback", () => {
   it("should return trajectoryId from retrieveMemories", async () => {
     vi.mocked(retrieveMemories).mockResolvedValue({
       memories: [
-        { id: "mem-1", content: "Test memory", memoryType: "episodic", score: 0.9 },
+        { id: "mem-1", content: "Test memory", memoryType: "episodic" as const, score: 0.9 },
       ],
       total: 1,
       latencyMs: 12,
       trajectoryId: "traj-abc-123",
+      modesUsed: ["text"],
     });
 
     const result = await searchWithFeedback("allura-test", "test query");
@@ -124,17 +125,19 @@ describe("RuVector Retrieval Adapter — searchWithFeedback", () => {
       query: "test query",
       limit: undefined,
       threshold: undefined,
+      searchMode: undefined,
     });
   });
 
   it("should set bridgeSource to 'ruvector'", async () => {
     vi.mocked(retrieveMemories).mockResolvedValue({
       memories: [
-        { id: "mem-1", content: "Test", memoryType: "episodic", score: 0.75 },
+        { id: "mem-1", content: "Test", memoryType: "episodic" as const, score: 0.75 },
       ],
       total: 1,
       latencyMs: 5,
       trajectoryId: "traj-xyz",
+      modesUsed: ["text"],
     });
 
     const result = await searchWithFeedback("allura-test", "test");
@@ -145,12 +148,13 @@ describe("RuVector Retrieval Adapter — searchWithFeedback", () => {
   it("should set shouldLogFeedback to true when memories exist", async () => {
     vi.mocked(retrieveMemories).mockResolvedValue({
       memories: [
-        { id: "mem-1", content: "Alpha", memoryType: "episodic", score: 0.8 },
-        { id: "mem-2", content: "Beta", memoryType: "semantic", score: 0.6 },
+        { id: "mem-1", content: "Alpha", memoryType: "episodic" as const, score: 0.8 },
+        { id: "mem-2", content: "Beta", memoryType: "semantic" as const, score: 0.6 },
       ],
       total: 2,
       latencyMs: 8,
       trajectoryId: "traj-feedback-test",
+      modesUsed: ["vector", "text"],
     });
 
     const result = await searchWithFeedback("allura-test", "alpha beta");
@@ -165,6 +169,7 @@ describe("RuVector Retrieval Adapter — searchWithFeedback", () => {
       total: 0,
       latencyMs: 3,
       trajectoryId: "traj-empty",
+      modesUsed: ["text"],
     });
 
     const result = await searchWithFeedback("allura-test", "nonexistent query");
@@ -173,17 +178,19 @@ describe("RuVector Retrieval Adapter — searchWithFeedback", () => {
     expect(result.memories).toHaveLength(0);
   });
 
-  it("should pass limit and threshold options through", async () => {
+  it("should pass limit, threshold, and searchMode options through", async () => {
     vi.mocked(retrieveMemories).mockResolvedValue({
       memories: [],
       total: 0,
       latencyMs: 2,
       trajectoryId: "traj-opts",
+      modesUsed: ["vector", "text"],
     });
 
     await searchWithFeedback("allura-test", "query", {
       limit: 5,
       threshold: 0.8,
+      searchMode: "hybrid",
     });
 
     expect(retrieveMemories).toHaveBeenCalledWith({
@@ -191,6 +198,7 @@ describe("RuVector Retrieval Adapter — searchWithFeedback", () => {
       query: "query",
       limit: 5,
       threshold: 0.8,
+      searchMode: "hybrid",
     });
   });
 
@@ -200,6 +208,7 @@ describe("RuVector Retrieval Adapter — searchWithFeedback", () => {
       total: 0,
       latencyMs: 1,
       trajectoryId: "traj-validate",
+      modesUsed: ["text"],
     });
 
     await searchWithFeedback("allura-test", "test");
@@ -218,11 +227,12 @@ describe("RuVector Retrieval Adapter — RetrievalWithFeedbackResult type", () =
   it("should satisfy the type contract with all fields", () => {
     const result: RetrievalWithFeedbackResult = {
       memories: [
-        { id: "1", content: "m", memoryType: "episodic", score: 0.5 },
+        { id: "1", content: "m", memoryType: "episodic" as const, score: 0.5 },
       ],
       total: 1,
       latencyMs: 10,
       trajectoryId: "traj-type-test",
+      modesUsed: ["text"],
       bridgeSource: "ruvector",
       shouldLogFeedback: true,
     };
@@ -230,6 +240,7 @@ describe("RuVector Retrieval Adapter — RetrievalWithFeedbackResult type", () =
     expect(result.bridgeSource).toBe("ruvector");
     expect(result.shouldLogFeedback).toBe(true);
     expect(result.trajectoryId).toBe("traj-type-test");
+    expect(result.modesUsed).toEqual(["text"]);
   });
 
   it("should allow bridgeSource to be undefined (postgres fallback)", () => {
@@ -238,6 +249,7 @@ describe("RuVector Retrieval Adapter — RetrievalWithFeedbackResult type", () =
       total: 0,
       latencyMs: 5,
       trajectoryId: "traj-pg",
+      modesUsed: ["text"],
       shouldLogFeedback: false,
     };
 
