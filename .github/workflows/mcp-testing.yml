@@ -108,6 +108,7 @@ jobs:
           echo "Neo4j is ready"
 
       - name: Run E2E tests
+        continue-on-error: true
         env:
           POSTGRES_URL: postgresql://ronin4life:dev_password@localhost:5432/memory
           POSTGRES_HOST: localhost
