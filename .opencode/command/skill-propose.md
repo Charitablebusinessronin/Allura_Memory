@@ -25,14 +25,26 @@ Propose a skill and see which specialist agent handles it.
 
 ## Surgical Team
 
-| Skill | Executor | Specialty |
-|-------|----------|-----------|
-| `code-review` | `@Pike` | Read-only architecture review |
-| `postgres-optimization` | `@Woz` | Deep database work |
-| `system-design` | `@Fowler` | Strategic planning |
-| `frontend-design` | `@ux` | Accessibility-first design |
-| `deep-research` | `@Scout` | Documentation search |
-| `codebase-search` | `@Scout` | Pattern discovery |
+| Skill                      | Executor     | Specialty                                    |
+| -------------------------- | ------------ | -------------------------------------------- |
+| `code-review`              | `@Pike`      | Read-only architecture review                |
+| `postgres-optimization`    | `@Knuth`     | Deep database work                           |
+| `system-design`            | `@Fowler`    | Strategic planning                           |
+| `frontend-design`          | `@ux`        | Accessibility-first design                   |
+| `deep-research`            | `@Scout`     | Documentation search                         |
+| `codebase-search`          | `@Scout`     | Pattern discovery                            |
+| `intelligence-sources`     | `@Scout`     | Intelligence source discovery and evaluation |
+| `multi-search`             | `@Scout`     | Multi-source research orchestration          |
+| `mcp-builder`              | `@Woz`       | MCP server construction                      |
+| `skill-creator`            | `@Brooks`    | OpenCode skill creation and maintenance      |
+| `github`                   | `@Woz`       | GitHub operations                            |
+| `mcp-docker`               | `@Hightower` | Docker-based MCP management                  |
+| `mcp-docker-memory-system` | `@Knuth`     | Memory system MCP operations                 |
+| `memory-client`            | `@Brooks`    | Allura Brain memory operations               |
+| `systematic-debugging`     | `@Bellard`   | Systematic debugging with memory             |
+| `party-mode`               | `@Brooks`    | Parallel agent orchestration                 |
+| `task-creator`             | `@Brooks`    | Structured task creation with memory         |
+| `task-management`          | `@Brooks`    | Task tracking and management                 |
 
 ## Result
 
