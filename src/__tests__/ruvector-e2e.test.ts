@@ -140,7 +140,9 @@ describe.skipIf(!shouldRunE2E)("RuVector Bridge E2E", () => {
       expect(typeof result.id).toBe("string");
       // BIGSERIAL id should parse to a number
       expect(Number.isNaN(Number(result.id))).toBe(false);
-      expect(result.status).toBe("stored_pending_embedding");
+      // Status is "stored" when Ollama embedding succeeds,
+      // "stored_pending_embedding" when Ollama is unavailable
+      expect(result.status === "stored" || result.status === "stored_pending_embedding").toBe(true);
       expect(result.groupId).toBe(GROUP_ID);
       expect(result.createdAt).toBeDefined();
       // Verify ISO-8601 timestamp

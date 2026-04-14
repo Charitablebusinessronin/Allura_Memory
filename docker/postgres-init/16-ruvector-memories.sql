@@ -11,8 +11,14 @@
 -- RuVector v0.3.0 uses the `ruvector` type for vector columns (not real[]).
 -- - HNSW indexes require ruvector_cosine_ops on ruvector(N) columns
 -- - ruvector_hybrid_search() accepts real[] for query_vector internally
--- - bge-small-en-v1.5 produces 384-dimensional embeddings
+-- - nomic-embed-text produces 768-dimensional embeddings
 -- - group_id enforced to ^allura- via CHECK constraint
+--
+-- ARCHITECTURE DECISION: Changed from bge-small-en-v1.5 (384d) to nomic-embed-text (768d).
+-- Reason: bge-small-en-v1.5 not available in Ollama catalog. nomic-embed-text is already
+-- running locally, produces 768d vectors, and is well-tested. The ruvector column and
+-- HNSW index have been updated to match. ALTER TABLE was applied to the running instance.
+-- ============================================================================
 --
 -- KNOWN BUG (documented, not fixed here):
 --   docker/postgres-init/12-ruvector-fallback.sql creates
@@ -34,7 +40,7 @@
 --   user_id         - User who triggered this memory
 --   content         - Raw text content (indexed for BM25 via GIN)
 --   memory_type     - Semantic taxonomy: episodic | semantic | procedural
---   embedding       - bge-small-en-v1.5 vector, 384 dims, NULL until populated
+--   embedding       - nomic-embed-text vector, 768 dims, NULL until populated
 --   metadata        - Flexible JSONB for extensible attributes
 --   trajectory_id   - SONA feedback correlation key
 --   created_at      - Immutable insertion timestamp
@@ -50,7 +56,7 @@ CREATE TABLE IF NOT EXISTS allura_memories (
     content         TEXT        NOT NULL,
     memory_type     TEXT        NOT NULL DEFAULT 'episodic'
         CHECK (memory_type IN ('episodic', 'semantic', 'procedural')),
-    embedding       ruvector(384),  -- bge-small-en-v1.5; NULL until embedding service populates
+    embedding       ruvector(768),  -- nomic-embed-text; NULL until embedding service populates
     metadata        JSONB       NOT NULL DEFAULT '{}'::jsonb,
     trajectory_id   TEXT,       -- for SONA feedback correlation
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -140,14 +146,14 @@ CREATE INDEX IF NOT EXISTS allura_mem_session
 
 COMMENT ON TABLE allura_memories IS
     'Hybrid vector+BM25 memory store for Allura. '
-    'Embeddings use ruvector(384) (bge-small-en-v1.5, 384 dims). '
+    'Embeddings use ruvector(768) (nomic-embed-text, 768 dims). '
     'HNSW index enables fast ANN search via ruvector_cosine_ops. '
     'ruvector_hybrid_search() combines BM25 + ANN for fusion retrieval. '
     'group_id enforced to ^allura- via CHECK. '
     'SONA feedback loop uses trajectory_id for correlation.';
 
 COMMENT ON COLUMN allura_memories.embedding IS
-    'Vector embedding as ruvector(384). bge-small-en-v1.5 produces 384-dim vectors. '
+    'Vector embedding as ruvector(768). nomic-embed-text produces 768-dim vectors. '
     'NULL until embedding service populates it. '
     'HNSW index uses ruvector_cosine_ops for approximate nearest-neighbor search.';
 
@@ -185,7 +191,7 @@ COMMENT ON COLUMN allura_memories.memory_type IS
 --   SELECT ruvector_hybrid_search(
 --     'allura_memories',        -- collection
 --     'search terms',           -- query_text
---     ARRAY[0.1, 0.2, ...]::real[],  -- query_vector (384 dims)
+--     ARRAY[0.1, 0.2, ...]::real[],  -- query_vector (768 dims)
 --     10,                       -- k (number of results)
 --     'rrf',                    -- fusion method (optional: 'rrf', 'linear')
 --     0.7                       -- alpha (optional: vector weight, 0.0-1.0)

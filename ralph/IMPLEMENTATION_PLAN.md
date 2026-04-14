@@ -71,6 +71,34 @@ implements, validates, commits, and updates this file.
   - Design: Feature-flagged via `shouldUseRuVector()`, fail-closed (PG+Neo4j still work if RuVector down)
   - Evidence-gated: trajectoryId in metadata for caller to use with postFeedback()
   - Tests: 20 new unit tests + 49 existing RuVector tests + 38 canonical tests all pass
+
+- [x] **RuVector E2E test suite against live PG** — 7 tests passing
+  - Agent: Woz (implementation)
+  - File: `src/__tests__/ruvector-e2e.test.ts`
+  - Tests: storeMemory, retrieveMemories, postFeedback, isRuVectorReady, group_id validation
+  - Gated by `RUN_E2E_TESTS=true`
+  - Cleanup in afterAll hook
+
+- [ ] **Embedding service for bge-small-en-v1.5** — BLOCKED: needs architecture decision
+  - Agent: Woz (build) + Brooks (architect)
+  - Options: (a) Ollama with bge-small-en model pulled locally, (b) ONNX runtime in-process, (c) @xenova/transformers WASM
+  - CRITICAL: dimension must be 384 (ruvector(384) column). Existing providers produce 768+ dims.
+  - CRITICAL: no onnxruntime-node or @xenova/transformers installed. Need Bun compatibility check.
+  - Two existing embedding systems: `src/lib/memory/embeddings.ts` and `src/lib/dedup/embeddings.ts` — must unify or extend one.
+  - `storeMemory()` returns `stored_pending_embedding` — async backfill was planned.
+  - Best pattern: follow `notion-sync-worker.ts` (standalone Bun script, polling, DLQ) for backfill worker.
+
+- [ ] **Register hybrid search collection** — After embeddings populated, run `ruvector_register_hybrid()` on RuVector PG
+  - Agent: Knuth (data)
+  - SQL: `SELECT ruvector_register_hybrid('allura_memories', 'embedding', 'content', 'content')`
+  - Estimated: 15min after embeddings exist
+
+- [ ] **Update docs/RUVECTOR_INTEGRATION.md** — Doc references nonexistent `ruvector_preload_model()` and `ruvector_embed()` functions
+  - Agent: Scout (research) + Woz (edit)
+  - Replace with actual API: `ruvector_cosine_distance()`, `ruvector_hybrid_search()`, `ruvector_record_feedback()`
+
+- [ ] **Update memory-bank/activeContext.md and progress.md** — Both stale (last updated 2026-04-13)
+  - Agent: Brooks
   - Added mcpInitialize(), mcpInitialized(), mcpToolCall() protocol conformance
   - Converted ES2017+ to ES5.1 for k6/Goja engine
 
