@@ -1,570 +1,206 @@
 # AGENTS Guide
 
-> [!NOTE]
-> **AI-Assisted Documentation**
-> Portions of this document were drafted with the assistance of an AI language model.
-> Content has been reviewed against the repository guidance files and should be kept in sync with source-of-truth docs.
-> When in doubt, defer to code, schemas, and team consensus.
-
-This file is the operating handbook for agentic coding assistants in `roninmemory`.
-It should be concise, actionable, and kept in sync with repo conventions.
+> AI-Assisted Documentation — reviewed against source code and team consensus. When in doubt, defer to code and schemas.
 
 ## 1) Project Summary
 
-- Next.js 16 + React 19 app with TypeScript 5.9 (`strict: true`)
-- Bun is the primary runtime for scripts and tests
-- PostgreSQL stores raw append-only traces
-- Neo4j stores curated/versioned knowledge with `SUPERSEDES`
-- Validation uses Zod at external boundaries
-- UI stack: Zustand + shadcn/ui + Tailwind v4
+Allura Memory — a **dual-database AI memory engine** exposed via MCP. Self-hosted, compliance-grade alternative to mem0.
 
-## 2) Read First When Starting a Session
+- **Runtime**: Bun (never `npm`/`npx` — supply chain security policy)
+- **Framework**: Next.js 16 + React 19 + TypeScript 5.9 (`strict: true`)
+- **Data**: PostgreSQL 16 (append-only traces) + Neo4j 5.26+APOC (versioned knowledge graph, `SUPERSEDES`) + RuVector PG on port 5433 (768d embeddings, hybrid RRF search)
+- **MCP Server**: `src/mcp/memory-server-canonical.ts`
+- **Curator Pipeline**: HITL promotion — agents cannot autonomously write to Neo4j; route through `curator:approve`
+- **Auth**: Clerk RBAC in production; `DevAuthProvider` fallback in dev. Role hierarchy: `admin > curator > viewer`
+- **UI**: Zustand + shadcn/ui + Tailwind v4
 
-**USE SKILL: `allura-memory-context`** — Invoke this skill at session start to load all context.
+## 2) Non-Negotiable Invariants
 
-Then read in order:
-1. `memory-bank/activeContext.md` — Current focus and blockers
-2. `memory-bank/progress.md` — What's been done
-3. `memory-bank/systemPatterns.md` — Architecture patterns
-4. `memory-bank/techContext.md` — Tech stack details
-5. `_bmad-output/planning-artifacts/source-of-truth.md` — Document hierarchy (CRITICAL)
+These are **runtime-enforced constraints**, not style preferences. Violations cause CHECK constraint failures or data corruption.
 
-Also review `.github/copilot-instructions.md` at least once per session.
-No Cursor rules were found (`.cursorrules` and `.cursor/rules/` are absent).
+- **`group_id` on every DB read/write** — pattern `^allura-[a-z0-9-]+$`. Missing or malformed → rejected by DB.
+- **PostgreSQL traces are append-only** — no UPDATE/DELETE on trace rows, ever.
+- **Neo4j versioning via `SUPERSEDES`** — `(v2)-[:SUPERSEDES]->(v1:deprecated)`. Never edit existing nodes.
+- **HITL required for promotion** — agents cannot autonomously promote to Neo4j/Notion. Use `curator:approve`.
+- **`allura-*` tenant namespace** — `roninclaw-*` is deprecated; flag any occurrence as drift.
+- **No secrets in source, docs, memory artifacts, or logs** — enforced by pre-commit hook.
+- **DB operations via MCP_DOCKER tools only** — never `docker exec` into containers.
 
-## 3) Build / Lint / Test Commands
-
-```bash
-# Install
-bun install
-
-# Dev / build / run
-bun run dev
-bun run build
-bun run start
-
-# Checks
-bun run typecheck
-bun run lint
-
-# Tests
-bun test
-bun run test:watch
-bun run test:e2e
-RUN_E2E_TESTS=true bun test
-
-# MCP / curator workflows
-bun run mcp
-bun run mcp:dev
-bun run curator:run
-bun run curator:approve
-bun run curator:reject
-```
-
-> **Security Note:** Use `bun` and `bunx` for all package operations. Never use `npm` or `npx` — this avoids supply chain risks.
-
-### Single-test commands
+## 3) Commands
 
 ```bash
-# Single file
-bun vitest run src/lib/postgres/connection.test.ts
+bun install                      # Install dependencies
+bun run dev                      # Next.js dev (port $PAPERCLIP_PORT, default 3100)
+bun run build                    # Production build (output: standalone)
+bun run start                    # Production server
 
-# Single test by name
-bun vitest run -t "should build connection config"
+bun run typecheck                # tsc --noEmit (ALWAYS run before commits)
+bun run lint                     # ALIAS for typecheck (not a separate linter)
 
-# Integration test file
-bun vitest run src/__tests__/agent-lifecycle-confidence.test.ts
+bun test                         # Vitest unit tests
+bun run test:watch               # Watch mode
+bun run test:e2e                 # E2E (requires postgres + neo4j running)
+bun run test:all                 # typecheck + lint + unit + e2e + mcp:browser
+bun vitest run src/lib/postgres/connection.test.ts          # Single file
+bun vitest run -t "should build connection config"           # Single test by name
+
+bun run mcp                      # Canonical stdio MCP server
+bun run mcp:dev                  # Watch mode
+bun run mcp:http                  # HTTP gateway (port 3201)
+bun run curator:run               # Score and queue proposals
+bun run curator:approve           # Approve pending proposals
+bun run curator:reject            # Reject pending proposals
+bun run session:start             # Brooks session start (preferred)
+bun run backfill:embeddings       # One-shot: embed NULL rows via Ollama
 ```
 
-## 4) TypeScript / Formatting Rules
+**Order matters:** `lint` → `test` → `test:e2e` (`lint` is typecheck here, not eslint).
 
-- Use explicit return types on exported functions.
-- Prefer `unknown` over `any`; narrow before use.
-- Use `import type` for type-only imports.
-- Keep double quotes, semicolons, and trailing commas.
-- Prefer `const` and narrow interfaces over broad object shapes.
-- Validate env-derived and user-controlled input with Zod.
+### Pre-commit Hook
 
-## 5) Import / Module Conventions
+```bash
+git config core.hooksPath .githooks   # One-time setup
+```
 
-- Import order: external packages → `@/` aliases → relative imports.
-- Use `@/*` for cross-feature imports under `src/`.
-- Use relative imports for nearby sibling modules.
-- Do not import server-only DB modules into client components.
-- Add server guards to DB/integration modules:
+Runs `bun run typecheck` and blocks `.env` files with real secrets. If typecheck fails, the commit is blocked — fix the errors, don't silence the canary.
 
+## 4) Architecture at a Glance
+
+```
+L1: RuVix Kernel (proof-gated mutation) — src/kernel/
+L2: PostgreSQL 16 (traces) + Neo4j 5.26 (insights) + RuVector PG (embeddings)
+L3: Agent Runtime (OpenCode)
+L4: Workflow / DAGs / A2A Bus
+L5: Paperclip (Next.js UI) + OpenClaw (MCP gateway)
+```
+
+**Key entrypoints:**
+
+| Path | Purpose |
+|------|---------|
+| `src/mcp/memory-server-canonical.ts` | MCP tool server (store/retrieve/delete/list/propose_insight) |
+| `src/mcp/canonical-http-gateway.ts` | HTTP wrapper for MCP server |
+| `src/curator/index.ts` | HITL promotion pipeline CLI |
+| `src/curator/embedding-backfill-worker.ts` | Ollama embed worker (batches of 10) |
+| `src/lib/ruvector/bridge.ts` | Hybrid search: RRF fusion of vector ANN + BM25 |
+| `src/kernel/ruvix.ts` | Proof-gated mutation engine |
+| `src/middleware.ts` | Route protection + RBAC (Clerk or DevAuthProvider) |
+| `src/server/server-actions.ts` | Server actions for persistence |
+| `src/config/app-config.ts` | App metadata |
+| `packages/sdk/` | Standalone SDK package (separate build) |
+
+## 5) Directory Ownership
+
+| Directory | What Lives Here |
+|-----------|----------------|
+| `src/mcp/` | MCP servers (canonical + legacy) |
+| `src/curator/` | HITL promotion pipeline + notion sync + embedding backfill |
+| `src/kernel/` | RuVix proof-gated mutation |
+| `src/lib/ruvector/` | Hybrid search bridge + embedding service |
+| `src/lib/auth/` | Clerk RBAC + DevAuthProvider |
+| `src/lib/budget/`, `circuit-breaker/` | Agent runaway prevention |
+| `src/lib/adr/` | 5-layer architectural decision records |
+| `src/server/` | Server actions for persistence |
+| `src/stores/` | Zustand client state |
+| `src/app/` | Next.js App Router (Server Components by default) |
+| `src/__tests__/` | Integration tests |
+| `tests/` | Fixture, load, MCP browser tests |
+| `packages/sdk/` | Standalone SDK (separate tsconfig, build, tests) |
+| `.opencode/agent/` | Team RAM agent files (sole canonical source, flat 10 files) |
+| `.opencode/skills/` | OpenCode skill definitions |
+| `_bmad-output/` | Retired — gitignored, do not re-add |
+| `docs/allura/` | Human canon — canonical six only |
+
+## 6) Conventions
+
+**TypeScript:** `strict: true`, explicit return types on exports, `unknown` over `any`, `import type` for type-only imports. Double quotes, semicolons, trailing commas.
+
+**Naming:** files `kebab-case`, components `PascalCase`, hooks `useCamelCase`, DB ids `snake_case`, constants `SCREAMING_SNAKE_CASE`, tests `should ... when ...`.
+
+**Imports:** External packages first → `@/*` aliases → relative imports. Use `@/*` for cross-feature; relative for sibling modules.
+
+**Server-only modules** must include:
 ```ts
-if (typeof window !== "undefined") {
-  throw new Error("This module can only be used server-side");
-}
+if (typeof window !== "undefined") throw new Error("server-side only");
 ```
 
-## 6) Naming Conventions
+**Next.js:** Default Server Components. Add `"use client"` only where needed. Server actions in `src/server/`.
 
-- Files: `kebab-case`
-- React components: `PascalCase`
-- Hooks: `camelCase` with `use` prefix
-- Types/interfaces/classes: `PascalCase`
-- Constants: `SCREAMING_SNAKE_CASE`
-- DB identifiers: `snake_case`
-- Tests: behavior phrasing (`should ... when ...`)
+**Zod:** Validate env vars and user input at external boundaries only.
 
-## 7) Error Handling / Reliability
+## 7) Testing Quirks
 
-- Fail fast on missing required env vars with explicit messages.
-- Throw typed domain errors for validation/conflict cases when useful.
-- Preserve causal info when wrapping errors.
-- Log errors with module context and identifiers.
-- Use retry/backoff only for retryable failures (5xx, 429, transient network).
-- Avoid silent failures unless the fallback is documented.
+- Vitest with `environment: "node"` and `passWithNoTests: true`
+- Co-locate unit tests with modules; integration tests in `src/__tests__/`
+- E2E tests require running postgres + neo4j (gated by `RUN_E2E_TESTS=true`)
+- MCP browser tests: `bun run test:mcp:browser`
+- Test path aliases match production: `@mcp-docker/playwright` and `@mcp-docker/next-devtools` map to mocks in `tests/mcp/`
+- For DB tests: set minimal env defaults and clean up pools after
 
-## 8) Testing Standards
+## 8) RuVector / Hybrid Search Warning
 
-- Use Vitest (`environment: node`).
-- Co-locate unit tests with modules when practical.
-- Keep integration tests in `src/__tests__/`.
-- Prefer deterministic unit tests and mocked I/O.
-- For DB tests, set minimal env defaults and clean up pools.
-- Add regression tests for bug fixes and state transitions.
+`ruvector_hybrid_search()` and other learning/agent functions in the extension are **stubs** — they return fabricated data. Only vector math, graph DB, and RDF/SPARQL functions are real. Allura's own `retrieveMemories()` in `src/lib/ruvector/bridge.ts` implements RRF fusion directly (two-pass: vector ANN via `ruvector_cosine_distance()` + BM25 via `ts_rank` on stored `content_tsv` column). Three modes: `"hybrid"` (default), `"vector"`, `"text"`. Falls back to BM25 if vector search fails.
 
-## 9) Architecture Guardrails
-
-- PostgreSQL traces are append-only; never mutate historical rows.
-- Enforce `group_id` on every DB read/write path.
-- Neo4j insight versioning must use explicit lineage (`SUPERSEDES`).
-- Query dual context when required: project scope + global scope.
-- Human approval (HITL) is required before behavior-changing promotion flows.
-- No secrets in source, docs, memory artifacts, or logs.
-- Use MCP Neo4j memory tools instead of raw Cypher for basic memory operations.
-- Prefer premade MCP servers from `MCP_DOCKER`; avoid custom MCP wrappers when a catalog server already exists.
-
-## 10) Debugging Protocol
-
-**When encountering bugs, test failures, or unexpected behavior:**
-
-**ALWAYS invoke `systematic-debugging-memory` skill first.**
-
-The skill enforces a 5-phase process:
-
-| Phase | Name | Purpose |
-|-------|------|---------|
-| 0 | Memory Hydration | Check previous debugging sessions |
-| 1 | Root Cause Investigation | Gather evidence, understand WHY |
-| 2 | Pattern Analysis | Find working examples, compare |
-| 3 | Hypothesis and Testing | Test one hypothesis at a time |
-| 4 | Implementation | Create failing test, then fix |
-| 5 | Persistence | Log to memory for future sessions |
-
-**Red Flags that mean STOP:**
-- "Quick fix for now, investigate later"
-- "Just try changing X and see if it works"
-- "I see the problem, let me fix it" (without investigation)
-- "One more fix attempt" (after 2+ failures)
-
-**If 3+ fixes failed:** Question the architecture, don't fix again.
-
-## 11) Next.js / React Patterns
-
-- Default to Server Components in `src/app/`.
-- Add `"use client"` only where needed.
-- Use server actions for server-side persistence flows.
-- Keep client components focused on interaction.
-- Reuse existing UI primitives and `cn` patterns.
-
-## 12) Documentation Rules
-
-- New initiatives belong in `docs/<project-name>/PROJECT.md`.
-- Keep requirement and decision IDs consistent (`B#`, `F#`, `AD-##`, `RK-##`).
-- Use Mermaid fenced blocks for diagrams.
-- Keep docs and schema/API changes in the same PR when coupled.
-- Include AI-assistance disclosure blocks when required by `AI-GUIDELINES.md`.
-- **IMPORTANT:** Documentation canon is `_bmad-output/planning-artifacts/`. When conflict, defer to `_bmad-output/planning-artifacts/*` over `_bmad-output/planning-artifacts/*`.
-- **Tenant naming:** Always use `allura-*` convention. Legacy `roninclaw-*` is deprecated.
-
-## 13) Copilot / Memory Bank Rules
-
-- Copilot instructions are mandatory: `.github/copilot-instructions.md`.
-- Preserve Steel Frame versioning, `group_id` enforcement, and HITL promotion.
-- Read/update memory bank files as work progresses.
-
-## 14) Skill Triggers (Deterministic IF/THEN)
-
-Skills are NOT optional suggestions. They are **mandatory routing rules** — the agent MUST invoke the specified skill when the trigger condition is met.
-
-### Session Lifecycle (ALWAYS)
-
-| Trigger | Skill | Action |
-|---------|-------|--------|
-| Session START | `allura-memory-context` | Load all context. Read `memory-bank/activeContext.md` and `memory-bank/progress.md`. |
-| Session END | `memory-client` | Write session reflection to Neo4j knowledge graph. Verify read-back. Log what changed + why. |
-
-### Bugs, Failures, and Unexpected Behavior
-
-| Trigger | Skill | Action |
-|---------|-------|--------|
-| ANY bug, test failure, or unexpected output | `systematic-debugging-memory` | Run BEFORE proposing any fix. Phase 0 (check memory) → Phase 1 (root cause) → Phase 2 (pattern) → Phase 3 (hypothesis) → Phase 4 (implementation). If 3+ fixes fail → Phase 4.5 (question architecture). |
-
-**Iron Law: NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST**
-
-### Security and Proof Gate
-
-| Trigger | Skill | Action |
-|---------|-------|--------|
-| Touching auth, secrets, permissions, proof gate, or anything security-shaped | `bun-security` | Load and follow security audit checklist BEFORE finalizing changes. |
-
-### Research and Documentation
-
-| Trigger | Skill | Action |
-|---------|-------|--------|
-| Complex research requiring multiple sources | `multi-search` | Coordinate Context7 (docs) + Tavily (web) + grep (code). |
-| Creating README or AI memory documentation | `readme-memory` | Use structured templates for memory system docs. |
-
-> **Note:** Context7 (`resolve-library-id` → `get-library-docs`) and OpenCode docs (`tavily_extract` or `webfetch` on opencode.ai/docs) are available as MCP Docker tools — no separate skill needed.
-
-### Tool Discovery and Infrastructure
-
-| Trigger | Skill | Action |
-|---------|-------|--------|
-| Need an MCP tool that's not already active | `mcp-docker` | Find → configure → add. Never write custom MCP wrappers when catalog exists. |
-| Bootstrapping or operating memory system tooling | `mcp-docker-memory-system` | Discover, configure, and operate Neo4j/PostgreSQL/Notion-backed MCP workflows. |
-
-### Skill Creation and Task Management
-
-| Trigger | Skill | Action |
-|---------|-------|--------|
-| Creating or editing a skill | `skill-creator` | Use the structured template. Don't freehand skill files. |
-| Tracking structured subtasks with status and dependencies | `task-management` | CLI-based task tracking with validation gates. |
-| Creating structured tasks linked to Allura Brain | `task-creator` | Generate task files with metadata and memory links. |
-
-### Parallel Execution
-
-| Trigger | Skill | Action |
-|---------|-------|--------|
-| Need maximum throughput on independent subtasks | `party-mode` | Launch multiple agents in parallel. Surgical team works together. |
-
-### Skills NOT Yet Wired (Keep, Don't Invoke Automatically)
-
-These exist but have no deterministic trigger yet:
-
-| Skill | Why It Exists | When to Wire |
-|-------|---------------|--------------|
-| `hitl-governance` | Human-in-the-loop promotion enforcement | When curator pipeline is active |
-| `mcp-builder` | Building custom MCP servers | When we actually build one |
-| `trailofbits-audit` | Security audit workflow | Before production release |
-| `superpowers-memory` | Memory logging for superpowers skills | When superpowers skills are in use |
-
-## 15) Session End Protocol (MANDATORY)
-
-**Every session MUST end with a memory write and verification.**
-
-```
-1. Use MCP_DOCKER create_entities to write a Reflection entity
-   - group_id: roninmemory
-   - agent_id: your persona (e.g. brooks-architect)
-   - event_type: session_complete
-   - status: completed
-   - Timestamp (ISO 8601)
-   - Key insights (what changed and why)
-   - Commits made
-   - Open issues remaining
-
-2. Use MCP_DOCKER search_nodes to verify the write (read-back)
-   - Confirm the Reflection entity appears in search results
-
-3. Use MCP_DOCKER add_observations to append to Memory Master entity
-   - One-line summary with date and key outcomes
-
-4. Link to your agent entity with create_relations if it exists
-```
-
-**No session is complete until the knowledge graph confirms the write.**
-
-## 15) Skill Workflow
-
-### Starting a Session
-
-```
-1. Invoke allura-memory-context skill
-2. Read memory-bank/activeContext.md
-3. Read memory-bank/progress.md
-4. Check for critical blockers
-```
-
-### Encountering a Bug or Issue
-
-**BEFORE proposing any fix:**
-
-```
-1. Invoke systematic-debugging-memory skill
-2. Complete Phase 0: Check memory for previous debugging sessions
-3. Complete Phase 1: Root Cause Investigation
-   - Read error messages carefully
-   - Reproduce consistently
-   - Check recent changes
-   - Gather evidence
-4. Complete Phase 2: Pattern Analysis
-5. Complete Phase 3: Hypothesis and Testing
-6. Only then proceed to Phase 4: Implementation
-```
-
-**Iron Law: NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST**
-
-If 3+ fixes failed → Question architecture (Phase 4.5)
-
-### Creating Stories / PRDs
-
-```
-1. Use bmad-create-prd, bmad-create-architecture, etc.
-2. BMad reads from _bmad-output/planning-artifacts/ (canon)
-3. BMad writes to _bmad-output/planning-artifacts/
-```
-
-### Building Features
-
-```
-1. Use bmad-dev-story or bmad-quick-dev
-2. Follow Steel Frame versioning
-3. Enforce group_id on all operations
-4. Write tests first (test-driven-development skill)
-```
-
-## 16) Architecture Model
-
-**5-Layer Allura Agent-OS:**
-
-| Layer | Component |
-|-------|-----------|
-| L1 | RuVix Kernel (proof-gated mutation) |
-| L2 | PostgreSQL 16 + Neo4j 5.26 |
-| L3 | Agent Runtime (OpenCode) |
-| L4 | Workflow / DAGs / A2A Bus |
-| L5 | Paperclip + OpenClaw |
-
-**Governance Rule:** "Allura governs. Runtimes execute. Curators promote."
-
-## 17) MCP Docker Toolkit — Tool Discovery & Usage
-
-**NEVER use `docker exec` for database operations. ALWAYS use MCP_DOCKER tools.**
-
-### How to discover and add tools
-
-```
-# Step 1 — search the Docker MCP catalog (300+ servers)
-mcp-find("keyword")      → returns: name, description, required_secrets
-
-# Step 2 — add it (pulls image, registers tools in session immediately)
-mcp-add("server-name")   → tools surface as mcp__MCP_DOCKER__<tool_name>
-
-# No required_secrets → add immediately
-# Has required_secrets → ensure env vars are set first, then add
-```
-
-### Active tool stack (MCP Docker catalog)
-
-All MCP tools are discovered and added via `mcp-find` → `mcp-add`. The `allura-memory-mcp` Docker container bundles several tools by default (Tavily, Exa, Notion, database-server). Additional tools are added via `mcp-add` and configured via `mcp-config-set`.
-
-**✅ Connected and working (no API key needed — bundled in MCP Docker):**
-
-| Category | Tool | When to use |
-|----------|------|-------------|
-| Web search | `tavily_search` | Fast current web search |
-| Web research | `tavily_research` | Deep multi-source research |
-| Web crawl | `tavily_crawl` | Crawl a site from root URL |
-| Web extract | `tavily_extract` | Extract content from specific URL |
-| Web map | `tavily_map` | Map a site's link structure |
-| Neural search | `web_search_exa` | Embedding-based semantic search |
-| Live docs | `resolve-library-id` | Look up library → get Context7 ID |
-| Live docs | `get-library-docs` | Fetch live docs for any library/version |
-| Database NL | `query_database` | Natural language SQL reads |
-| Database SQL | `execute_sql` | Raw SQL (precise reads) |
-| Database SQL | `execute_unsafe_sql` | CREATE, DELETE, INSERT, DROP operations |
-| Database write | `insert_data` | Append events — NEVER UPDATE/DELETE |
-| Database write | `update_data` | Update data in tables |
-| Database write | `delete_data` | Delete data (use with extreme caution) |
-| Database schema | `list_tables`, `describe_table`, `create_table` | Schema introspection |
-| Neo4j read | `read_neo4j_cypher` | Cypher read queries |
-| Neo4j write | `write_neo4j_cypher` | Cypher write queries (SUPERSEDES only) |
-| Neo4j schema | `get_neo4j_schema` | Graph schema inspection |
-| Notion read | `notion-fetch`, `notion-search` | Read pages, databases |
-| Notion write | `notion-create-pages`, `notion-update-page` | Create/update pages |
-| Notion DB | `notion-create-database`, `notion-update-data-source`, `notion-query-database-view` | Database operations |
-| Notion comments | `notion-create-comment`, `notion-get-comments` | Discussion threads |
-| Notion users | `notion-get-users`, `notion-get-teams` | Workspace user/team lookup |
-| MCP discovery | `mcp-find`, `mcp-add`, `mcp-config-set`, `mcp-remove` | Discover and configure MCP servers |
-| MCP compose | `code-mode` | Compose multiple MCP tool calls in JS |
-
-**🔧 Connected via `mcp-config-set` (requires Docker network config):**
-
-| Tool | Config | Status |
-|------|--------|--------|
-| `neo4j-cypher` | `bolt://172.18.0.2:7687` (Docker IP) | ✅ Working |
-| `context7` | No config needed | ✅ Working |
-| `database-server` | `postgresql+asyncpg://...` (container network) | ✅ Working |
-
-**⚠️ Available in catalog but NOT connected (requires API keys):**
-
-| Tool | Catalog name | Required secret | Use case |
-|------|-------------|-----------------|----------|
-| HyperBrowser | `hyperbrowser` | `HYPERBROWSER_API_KEY` | Browser automation, JS rendering |
-| Tavily (standalone) | `tavily` | `TAVILY_API_KEY` | Standalone Tavily (bundled version works without key) |
-| Exa (standalone) | `exa` | `EXA_API_KEY` | Standalone Exa (bundled version works without key) |
-| GitHub | `github-official` | `GITHUB_PERSONAL_ACCESS_TOKEN` | GitHub API operations |
-| Playwright | `playwright` | None (long-lived) | Browser automation |
-| Firecrawl | `firecrawl` | `FIRECRAWL_API_KEY` | Web scraping |
-
-**To add a new MCP tool:**
-```bash
-# Step 1 — Find it in the catalog
-mcp-find("keyword")
-
-# Step 2 — If no required_secrets, add immediately
-mcp-add("context7")
-
-# Step 3 — If has required_secrets, configure first
-mcp-config-set("neo4j-cypher", { url: "bolt://172.18.0.2:7687", username: "neo4j", password: "..." })
-mcp-add("neo4j-cypher")
-```
-
-### Tool selection guide
-
-```
-Need web info?
-  quick answer        → tavily_search
-  deep research       → tavily_research
-  specific page       → tavily_extract
-  site structure      → tavily_map
-  neural/semantic     → web_search_exa (finds things keywords miss)
-  official docs/config → web_search_exa (semantic match to API schemas)
-  architecture patterns → web_search_exa (finds design docs, GitHub issues)
-  full site crawl     → tavily_crawl
-  JS-heavy page       → add hyperbrowser MCP server (requires API key)
-
-Need library docs?
-  → resolve-library-id → get-library-docs
-
-Need DB?
-  read                → query_database (NL) or execute_sql (SQL)
-  write event         → insert_data (append-only, never mutate)
-  knowledge graph     → read_neo4j_cypher / write_neo4j_cypher
-  schema inspection   → get_neo4j_schema
-
-Need Notion?
-  read page/DB        → notion-fetch, notion-search
-  create/update       → notion-create-pages, notion-update-page
-  discussions          → notion-create-comment, notion-get-comments
-  database ops        → notion-create-database, notion-update-data-source
-
-Need a new MCP tool?
-  discover            → mcp-find("keyword")
-  add                 → mcp-add("server-name")
-  configure            → mcp-config-set("server-name", { ... })
-```
-Need web info?
-  quick answer        → tavily_search
-  deep research       → tavily_research
-  specific page       → tavily_extract or scrape_webpage
-  neural/semantic     → web_search_exa
-  JS-heavy site       → scrape_webpage (HyperBrowser renders JS)
-  automate browser    → browser_use_agent (cheap) or claude_computer_use_agent (smart)
-
-Need library docs?
-  → resolve-library-id → get-library-docs
-
-Need DB?
-  read                → query_database (NL) or execute_sql (SQL)
-  write event         → insert_data (append-only, never mutate)
-  knowledge graph     → read/write_neo4j_cypher
-```
-
-## 18) Agent Directory Structure
-
-### Canonical Location (OpenCode)
-
-Agent files live in `.opencode/agent/` (flat directory, filename = agent name). The authoritative roster is the **Notion Team Ram database**: `https://www.notion.so/555af02240844238adddb721389ec27c`
-
-### Single Source of Truth
-
-`.opencode/agent/` is the **sole canonical source** for all Team RAM agent files — flat structure, 10 files. No nested subdirectories. `.claude/agents/` is a symlink to `.opencode/agent/` — there are no separate copies. Category assignments must match Notion (SOT).
-
-```
-.opencode/agent/      ← single source of truth (flat, 10 files)
-  brooks.md
-  jobs.md
-  fowler.md
-  pike.md
-  scout.md
-  bellard.md
-  carmack.md
-  knuth.md
-  hightower.md
-  woz.md
-
-.claude/agents/       ← symlink → ../.opencode/agent/
-```
-
-Edit agent files in `.opencode/agent/` only. Both harnesses read from the same files automatically. No sync required.
-
-### Ralph Is A Tool, Not An Agent
-
-`@th0rgal/ralph-wiggum` is an external loop tool for OpenCode and other coding CLIs. It is documented as tooling and integration, not modeled as a persona file in `.opencode/agent/`.
-
-### Key Agent Rules
-
-1. **Canonical source** is `.opencode/agent/` (flat structure, filename = agent name)
-2. **YAML frontmatter** must include `description` (required) and `mode` (`primary` or `subagent`)
-3. **Filename = agent name** — `brooks.md` creates agent `brooks`
-4. **`opencode.json`** at project root provides explicit registration, permissions, and model overrides
-5. **`mode: subagent`** agents can be invoked by primary agents via the Task tool or `@mention`
-6. **`mode: primary`** agents can be switched to via Tab key during sessions
-
-## 19) Web Research Tools — Exa Usage Guide
-
-### `web_search_exa` — Neural/Semantic Search
-
-The `MCP_DOCKER_web_search_exa` tool provides **neural/semantic search** powered by Exa AI. Use it when you need real-time, relevance-ranked web results rather than keyword matching.
-
-**When to use Exa vs other search tools:**
-
-| Need | Best Tool | Why |
-|------|-----------|-----|
-| Quick fact, current event | `tavily_search` | Fast, keyword-based |
-| Deep multi-source research | `tavily_research` | Comprehensive, multi-step |
-| Specific URL content | `tavily_extract` | Extract from known URL |
-| **Library/framework docs** | `context7` → `get-library-docs` | Canonical, versioned docs |
-| **Neural/semantic search** | `web_search_exa` | Embedding-based relevance ranking |
-| **Official tool configs** | `web_search_exa` | Finds actual API docs, config schemas |
-| **Architecture patterns** | `web_search_exa` | Finds design docs, best practices |
-
-**Exa parameters:**
-
-```javascript
-MCP_DOCKER_web_search_exa({
-  query: "opencode agents subagent configuration",  // Natural language query
-  numResults: 5      // Number of results (default: 5)
-})
-```
-
-**Exa excels at:**
-- Finding official documentation for tools and frameworks (e.g., OpenCode agent config, Next.js patterns)
-- Semantic matching — "how to configure subagents" finds the right docs even without exact keywords
-- Discovering canonical config schemas and examples
-- Locating GitHub issues and discussions about specific features
-
-**Example: Verifying OpenCode agent discovery**
-
-When we needed to confirm whether OpenCode discovers agents in subdirectories, Exa found:
-- The official OpenCode agents documentation (opencode.ai/docs/agents/)
-- The opencodeguide.com agent configuration reference
-- GitHub issue #2369 confirming subdirectory discovery is broken
-
-This is exactly the kind of research where keyword search fails and neural search shines.
-
-## 20) Quick Verification
+## 9) Docker / Infrastructure
 
 ```bash
-docker exec knowledge-postgres pg_isready -U ronin4life -d memory
-curl -s http://localhost:7474 | jq .neo4j_version
-bun run typecheck
-bun run lint
-bun test
+docker compose up -d                    # postgres + neo4j + dozzle + mcp
+docker compose -f docker-compose.yml -f docker-compose.enterprise.yml up -d  # + observability stack
+
+# Health checks (use MCP_DOCKER tools, NOT docker exec, for DB operations)
+curl -s http://localhost:7474 | jq .neo4j_version    # Neo4j health
 ```
+
+- PostgreSQL: port 5432, container `knowledge-postgres`, db `memory`, user from `.env`
+- Neo4j: ports 7474 (HTTP) + 7687 (Bolt), container `knowledge-neo4j`, APOC enabled
+- RuVector PG: port 5433, container `knowledge-ruvector`
+- MCP: container `allura-memory-mcp`, depends on postgres + neo4j health checks
+- Dozzle: port 8088, container log viewer
+
+## 10) Session Start Protocol
+
+Read in order:
+1. `memory-bank/activeContext.md` — current focus and blockers
+2. `memory-bank/progress.md` — what has been done
+3. `memory-bank/systemPatterns.md` — architecture patterns
+4. `memory-bank/techContext.md` — tech stack details
+
+Invoke skill `allura-memory-context` at session start. Invoke `memory-client` skill at session end to write reflection to Neo4j knowledge graph.
+
+## 11) Debugging Protocol
+
+**Iron Law: NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST.**
+
+Before proposing any fix, invoke the `systematic-debugging-memory` skill. If 3+ fixes fail, question the architecture (Phase 4.5).
+
+## 12) Documentation Hierarchy
+
+1. Notion — Allura Memory Control Center
+2. `docs/allura/` — canonical six: BLUEPRINT, SOLUTION-ARCHITECTURE, DESIGN, REQUIREMENTS-MATRIX, RISKS-AND-DECISIONS, DATA-DICTIONARY
+3. `docs/` — project-specific docs (one `PROJECT.md` per initiative)
+4. `docs/archive/` or `memory-bank/` — session context and historical reference
+
+Do not create net-new files in `docs/allura/` beyond the canonical six. Keep requirement and decision IDs consistent (`B#`, `F#`, `AD-##`, `RK-##`).
+
+## 13) Agent Directory
+
+Canonical source: `.opencode/agent/` (flat, 10 files). `.claude/agents/` is a symlink to it — edit only in `.opencode/agent/`.
+
+```
+brooks.md    jobs.md     fowler.md   pike.md     scout.md
+bellard.md   carmack.md  knuth.md    hightower.md woz.md
+```
+
+Filename = agent name. YAML frontmatter must include `description` (required) and `mode` (`primary` or `subagent`).
+
+## 14) Common Gotchas
+
+- **`bun run lint` IS `bun run typecheck`** — there is no separate eslint. Both run `tsc --noEmit`.
+- **Pre-commit hook must be manually set up** — `git config core.hooksPath .githooks`. Without it, typecheck is not enforced on commit.
+- **E2E tests require both databases running** — set `RUN_E2E_TESTS=true` and ensure docker compose is up.
+- **`_bmad-output/` is gitignored** — do not re-add it. It's retired.
+- **RuVector learning/agent functions are stubs** — see §8.
+- **`PAPERCLIP_PORT`** defaults to 3100, `ALLURA_MCP_HTTP_PORT` defaults to 3201.
+- **`packages/sdk/`** has its own `tsconfig.json`, `vitest.config.ts`, and `tsup.config.ts` — it builds independently.
+- **`src/config/app-config.ts`** references the root `package.json` for version — don't move it without updating the import.
+- **Clerk is optional in dev** — if Clerk env vars are missing, `DevAuthProvider` kicks in with default admin role.
