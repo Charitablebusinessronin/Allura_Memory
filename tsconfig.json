@@ -2,7 +2,11 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["dom", "dom.iterable", "es2022"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "es2022"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -13,17 +17,31 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "baseUrl": ".",
     "ignoreDeprecations": "5.0",
     "paths": {
-      "@/*": ["./src/*"],
-      "@mcp-docker/playwright": ["./tests/mcp/browser/__mocks__/@mcp-docker/playwright.ts"],
-      "@mcp-docker/next-devtools": ["./tests/mcp/integration/__mocks__/@mcp-docker/next-devtools.ts"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@mcp-docker/playwright": [
+        "./tests/mcp/browser/__mocks__/@mcp-docker/playwright.ts"
+      ],
+      "@mcp-docker/next-devtools": [
+        "./tests/mcp/integration/__mocks__/@mcp-docker/next-devtools.ts"
+      ]
     },
-    "types": ["node", "vitest/globals", "@types/bun"],
-    "plugins": [{ "name": "next" }]
+    "types": [
+      "node",
+      "vitest/globals",
+      "@types/bun"
+    ],
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
   "include": [
     "next-env.d.ts",
@@ -37,5 +55,7 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ]
 }
