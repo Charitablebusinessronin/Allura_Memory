@@ -7,15 +7,6 @@ const config: NextConfig = {
   reactStrictMode: true,
   output: "standalone",
 
-  // RuVix kernel initialization
-  experimental: {
-    instrumentationHook: true,
-  },
-
-  serverRuntimeConfig: {
-    ruVixKernelEnabled: true,
-  },
-
   logging: {
     fetches: {
       fullUrl: true,

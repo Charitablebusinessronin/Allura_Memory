@@ -1,39 +1,76 @@
 /**
  * Auth Middleware Tests
  *
- * Tests for the Next.js middleware route protection and RBAC.
+ * Tests for the Next.js proxy middleware route protection and RBAC.
+ * Uses mocked Clerk to test dev-auth fallback paths.
  *
  * Reference: Phase 7 benchmark — Clerk SSO + RBAC
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { NextRequest } from "next/server";
+import { describe, it, expect, beforeEach, vi } from "vitest"
+import { NextRequest, NextResponse } from "next/server"
 
 // ── Mock Environment ────────────────────────────────────────────────────────
 
 // Set dev auth environment before importing modules
-process.env.ALLURA_DEV_AUTH_ENABLED = "true";
-process.env.ALLURA_DEV_AUTH_ROLE = "admin";
-process.env.ALLURA_DEV_AUTH_GROUP_ID = "allura-roninmemory";
-process.env.ALLURA_DEV_AUTH_USER_ID = "dev-user-allura";
-process.env.ALLURA_DEV_AUTH_EMAIL = "dev@allura.local";
+process.env.ALLURA_DEV_AUTH_ENABLED = "true"
+process.env.ALLURA_DEV_AUTH_ROLE = "admin"
+process.env.ALLURA_DEV_AUTH_GROUP_ID = "allura-roninmemory"
+process.env.ALLURA_DEV_AUTH_USER_ID = "dev-user-allura"
+process.env.ALLURA_DEV_AUTH_EMAIL = "dev@allura.local"
 // @ts-expect-error — NODE_ENV is read-only in Next.js types but must be set for tests
-process.env.NODE_ENV = "test";
+process.env.NODE_ENV = "test"
 
 // Clear Clerk keys to force dev auth mode
-delete process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-delete process.env.CLERK_SECRET_KEY;
+delete process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+delete process.env.CLERK_SECRET_KEY
 
-// ── Import after env setup ──────────────────────────────────────────────────
+// ── Mock Clerk ────────────────────────────────────────────────────────────────
+// clerkMiddleware wraps our handler; the mock passes (auth, req) directly so
+// the dev-mode branch executes when Clerk is disabled.
 
-import { middleware } from "@/middleware";
-import { PROTECTED_ROUTES, PUBLIC_ROUTES } from "@/lib/auth/config";
-import { clearAuthConfig } from "@/lib/auth/config";
+vi.mock("@clerk/nextjs/server", () => ({
+  clerkMiddleware: (handler: (auth: any, req: any) => any) => {
+    // Return a function that calls the handler with a mock auth and the request
+    return (req: NextRequest) =>
+      handler(
+        // Mock auth() — should never be called in dev mode (Clerk disabled)
+        vi.fn().mockResolvedValue({ userId: null, sessionClaims: null }),
+        req
+      )
+  },
+  createRouteMatcher: (patterns: string[]) => {
+    // Simple route matcher that converts glob patterns to regex
+    const regexes = patterns.map((p: string) => {
+      const escaped = p.replace(/[.+^${}()|[\]\\]/g, "\\$&")
+      const asRegex = escaped.replace(/\(\.\*\)/g, ".*").replace(/\*/g, "[^/]*")
+      return new RegExp(`^${asRegex}$`)
+    })
+    return (req: { url: string } | NextRequest) => {
+      const pathname =
+        typeof (req as any).nextUrl !== "undefined" ? (req as NextRequest).nextUrl.pathname : new URL(req.url).pathname
+      return regexes.some((r) => r.test(pathname))
+    }
+  },
+}))
+
+// ── Import after env setup and mocks ──────────────────────────────────────────
+
+import proxyDefault from "@/proxy"
+import { PROTECTED_ROUTES, PUBLIC_ROUTES } from "@/lib/auth/config"
+import { clearAuthConfig } from "@/lib/auth/config"
+
+// vi.mock replaces the real clerkMiddleware with our passthrough, so the
+// default export is actually (req: NextRequest) => Promise<NextResponse>.
+// Cast to a test-friendly type so strict mode doesn't complain about
+// the missing NextFetchEvent arg or nullable return.
+type TestMiddleware = (req: NextRequest) => Promise<NextResponse>
+const middleware = proxyDefault as unknown as TestMiddleware
 
 describe("Auth Middleware", () => {
   beforeEach(() => {
-    clearAuthConfig();
-  });
+    clearAuthConfig()
+  })
 
   // ── Public Routes ────────────────────────────────────────────────────────
 
@@ -50,54 +87,54 @@ describe("Auth Middleware", () => {
       "/auth/v1/register",
       "/auth/v2/register",
       "/",
-    ])("should allow access to public route %s", (path) => {
-      const request = new NextRequest(new URL(path, "http://localhost:3100"));
-      const response = middleware(request);
-      expect(response.status).toBe(200);
-    });
-  });
+    ])("should allow access to public route %s", async (path) => {
+      const request = new NextRequest(new URL(path, "http://localhost:3100"))
+      const response = await middleware(request)
+      expect(response.status).toBe(200)
+    })
+  })
 
   // ── Protected Routes (Dev Auth — admin role) ──────────────────────────────
 
   describe("protected routes with dev auth (admin role)", () => {
-    it("should allow admin access to /admin routes", () => {
-      const request = new NextRequest(new URL("/admin/approvals", "http://localhost:3100"));
-      const response = middleware(request);
+    it("should allow admin access to /admin routes", async () => {
+      const request = new NextRequest(new URL("/admin/approvals", "http://localhost:3100"))
+      const response = await middleware(request)
       // Dev auth defaults to admin, so should pass
-      expect(response.status).not.toBe(401);
-      expect(response.status).not.toBe(403);
-    });
+      expect(response.status).not.toBe(401)
+      expect(response.status).not.toBe(403)
+    })
 
-    it("should allow admin access to /api/curator/approve", () => {
+    it("should allow admin access to /api/curator/approve", async () => {
       const request = new NextRequest(new URL("/api/curator/approve", "http://localhost:3100"), {
         method: "POST",
-      });
-      const response = middleware(request);
-      expect(response.status).not.toBe(401);
-      expect(response.status).not.toBe(403);
-    });
+      })
+      const response = await middleware(request)
+      expect(response.status).not.toBe(401)
+      expect(response.status).not.toBe(403)
+    })
 
-    it("should allow admin access to /api/memory", () => {
-      const request = new NextRequest(new URL("/api/memory?group_id=allura-test", "http://localhost:3100"));
-      const response = middleware(request);
-      expect(response.status).not.toBe(401);
-      expect(response.status).not.toBe(403);
-    });
+    it("should allow admin access to /api/memory", async () => {
+      const request = new NextRequest(new URL("/api/memory?group_id=allura-test", "http://localhost:3100"))
+      const response = await middleware(request)
+      expect(response.status).not.toBe(401)
+      expect(response.status).not.toBe(403)
+    })
 
-    it("should allow admin access to /memory UI", () => {
-      const request = new NextRequest(new URL("/memory", "http://localhost:3100"));
-      const response = middleware(request);
-      expect(response.status).not.toBe(401);
-      expect(response.status).not.toBe(403);
-    });
+    it("should allow admin access to /memory UI", async () => {
+      const request = new NextRequest(new URL("/memory", "http://localhost:3100"))
+      const response = await middleware(request)
+      expect(response.status).not.toBe(401)
+      expect(response.status).not.toBe(403)
+    })
 
-    it("should allow admin access to /curator UI", () => {
-      const request = new NextRequest(new URL("/curator", "http://localhost:3100"));
-      const response = middleware(request);
-      expect(response.status).not.toBe(401);
-      expect(response.status).not.toBe(403);
-    });
-  });
+    it("should allow admin access to /curator UI", async () => {
+      const request = new NextRequest(new URL("/curator", "http://localhost:3100"))
+      const response = await middleware(request)
+      expect(response.status).not.toBe(401)
+      expect(response.status).not.toBe(403)
+    })
+  })
 
   // ── Static Assets ─────────────────────────────────────────────────────────
 
@@ -108,86 +145,86 @@ describe("Auth Middleware", () => {
       "/favicon.ico",
       "/logo.svg",
       "/styles.css",
-    ])("should allow access to static asset %s", (path) => {
-      const request = new NextRequest(new URL(path, "http://localhost:3100"));
-      const response = middleware(request);
-      expect(response.status).toBe(200);
-    });
-  });
+    ])("should allow access to static asset %s", async (path) => {
+      const request = new NextRequest(new URL(path, "http://localhost:3100"))
+      const response = await middleware(request)
+      expect(response.status).toBe(200)
+    })
+  })
 
   // ── Route Matching ───────────────────────────────────────────────────────
 
   describe("route matching", () => {
-    it("should match nested admin paths", () => {
-      const request = new NextRequest(new URL("/admin/settings/roles", "http://localhost:3100"));
-      const response = middleware(request);
+    it("should match nested admin paths", async () => {
+      const request = new NextRequest(new URL("/admin/settings/roles", "http://localhost:3100"))
+      const response = await middleware(request)
       // Dev auth is admin, so should pass
-      expect(response.status).not.toBe(401);
-      expect(response.status).not.toBe(403);
-    });
+      expect(response.status).not.toBe(401)
+      expect(response.status).not.toBe(403)
+    })
 
-    it("should match nested memory API paths", () => {
-      const request = new NextRequest(new URL("/api/memory/traces?group_id=allura-test", "http://localhost:3100"));
-      const response = middleware(request);
-      expect(response.status).not.toBe(401);
-      expect(response.status).not.toBe(403);
-    });
+    it("should match nested memory API paths", async () => {
+      const request = new NextRequest(new URL("/api/memory/traces?group_id=allura-test", "http://localhost:3100"))
+      const response = await middleware(request)
+      expect(response.status).not.toBe(401)
+      expect(response.status).not.toBe(403)
+    })
 
-    it("should match nested memory UI paths", () => {
-      const request = new NextRequest(new URL("/memory/search", "http://localhost:3100"));
-      const response = middleware(request);
-      expect(response.status).not.toBe(401);
-      expect(response.status).not.toBe(403);
-    });
-  });
+    it("should match nested memory UI paths", async () => {
+      const request = new NextRequest(new URL("/memory/search", "http://localhost:3100"))
+      const response = await middleware(request)
+      expect(response.status).not.toBe(401)
+      expect(response.status).not.toBe(403)
+    })
+  })
 
   // ── Auth Headers ──────────────────────────────────────────────────────────
 
   describe("auth header injection", () => {
-    it("should inject x-allura-user-id header for authenticated requests", () => {
-      const request = new NextRequest(new URL("/memory", "http://localhost:3100"));
-      const response = middleware(request);
-      expect(response.headers.get("x-allura-user-id")).toBe("dev-user-allura");
-    });
+    it("should inject x-allura-user-id header for authenticated requests", async () => {
+      const request = new NextRequest(new URL("/memory", "http://localhost:3100"))
+      const response = await middleware(request)
+      expect(response.headers.get("x-allura-user-id")).toBe("dev-user-allura")
+    })
 
-    it("should inject x-allura-role header for authenticated requests", () => {
-      const request = new NextRequest(new URL("/memory", "http://localhost:3100"));
-      const response = middleware(request);
-      expect(response.headers.get("x-allura-role")).toBe("admin");
-    });
+    it("should inject x-allura-role header for authenticated requests", async () => {
+      const request = new NextRequest(new URL("/memory", "http://localhost:3100"))
+      const response = await middleware(request)
+      expect(response.headers.get("x-allura-role")).toBe("admin")
+    })
 
-    it("should inject x-allura-group-id header for authenticated requests", () => {
-      const request = new NextRequest(new URL("/memory", "http://localhost:3100"));
-      const response = middleware(request);
-      expect(response.headers.get("x-allura-group-id")).toBe("allura-roninmemory");
-    });
-  });
+    it("should inject x-allura-group-id header for authenticated requests", async () => {
+      const request = new NextRequest(new URL("/memory", "http://localhost:3100"))
+      const response = await middleware(request)
+      expect(response.headers.get("x-allura-group-id")).toBe("allura-roninmemory")
+    })
+  })
 
   // ── Role-Based Access (with different dev roles) ──────────────────────────
 
   describe("role-based access control", () => {
     it("should define correct protected routes", () => {
-      expect(PROTECTED_ROUTES).toBeDefined();
-      expect(PROTECTED_ROUTES.length).toBeGreaterThan(0);
+      expect(PROTECTED_ROUTES).toBeDefined()
+      expect(PROTECTED_ROUTES.length).toBeGreaterThan(0)
 
       // Check admin routes
-      const adminRoutes = PROTECTED_ROUTES.filter((r) => r.requiredRole === "admin");
-      expect(adminRoutes.some((r) => r.pattern.includes("/admin"))).toBe(true);
+      const adminRoutes = PROTECTED_ROUTES.filter((r) => r.requiredRole === "admin")
+      expect(adminRoutes.some((r) => r.pattern.includes("/admin"))).toBe(true)
 
       // Check curator routes
-      const curatorRoutes = PROTECTED_ROUTES.filter((r) => r.requiredRole === "curator");
-      expect(curatorRoutes.some((r) => r.pattern.includes("/curator"))).toBe(true);
+      const curatorRoutes = PROTECTED_ROUTES.filter((r) => r.requiredRole === "curator")
+      expect(curatorRoutes.some((r) => r.pattern.includes("/curator"))).toBe(true)
 
       // Check viewer routes
-      const viewerRoutes = PROTECTED_ROUTES.filter((r) => r.requiredRole === "viewer");
-      expect(viewerRoutes.some((r) => r.pattern.includes("/memory"))).toBe(true);
-    });
+      const viewerRoutes = PROTECTED_ROUTES.filter((r) => r.requiredRole === "viewer")
+      expect(viewerRoutes.some((r) => r.pattern.includes("/memory"))).toBe(true)
+    })
 
     it("should define correct public routes", () => {
-      expect(PUBLIC_ROUTES).toBeDefined();
-      expect(PUBLIC_ROUTES).toContain("/api/health");
-      expect(PUBLIC_ROUTES).toContain("/api/mcp");
-      expect(PUBLIC_ROUTES).toContain("/");
-    });
-  });
-});
+      expect(PUBLIC_ROUTES).toBeDefined()
+      expect(PUBLIC_ROUTES).toContain("/api/health")
+      expect(PUBLIC_ROUTES).toContain("/api/mcp")
+      expect(PUBLIC_ROUTES).toContain("/")
+    })
+  })
+})
