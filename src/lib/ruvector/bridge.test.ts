@@ -2,11 +2,12 @@
  * Tests for RuVector MCP Bridge Module
  *
  * Tests the three primary functions:
- * - storeMemory()  — validates group_id, inserts with NULL embedding
+ * - storeMemory()  — validates group_id, generates embedding, inserts with vector
  * - retrieveMemories() — ts_rank text search with trajectory tracking
  * - postFeedback() — SONA feedback loop with guard for empty usedMemoryIds
  *
- * Uses mocked pg Pool to avoid database dependency in unit tests.
+ * Uses mocked pg Pool and mocked embedding service to avoid
+ * database and Ollama dependencies in unit tests.
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -23,6 +24,11 @@ vi.mock("./connection", () => ({
   checkRuVectorHealth: vi.fn(() =>
     Promise.resolve({ status: "healthy", latencyMs: 5, version: "RuVector 0.3.0" })
   ),
+}));
+
+// Mock the embedding service BEFORE importing bridge
+vi.mock("./embedding-service", () => ({
+  generateEmbedding: vi.fn(),
 }));
 
 // Mock validation module
@@ -62,6 +68,17 @@ import {
 // Import mocked modules for assertion access
 import { getRuVectorPool, isRuVectorEnabled, checkRuVectorHealth } from "./connection";
 import { validateGroupId } from "../validation/group-id";
+import { generateEmbedding } from "./embedding-service";
+
+// Typed mock reference for the mocked embedding service
+const mockGenerateEmbedding = vi.mocked(generateEmbedding);
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Create a fake 768-dim embedding vector */
+function makeFakeEmbedding(): number[] {
+  return Array.from({ length: 768 }, (_, i) => i / 768);
+}
 
 // ── Test Suite ───────────────────────────────────────────────────────────────
 
@@ -69,9 +86,11 @@ describe("RuVector Bridge — storeMemory", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockQuery.mockReset();
+    // Default: embedding generation succeeds
+    mockGenerateEmbedding.mockResolvedValue(makeFakeEmbedding());
   });
 
-  it("should store a memory with valid group_id and return result", async () => {
+  it("should store a memory with embedding and return status 'stored'", async () => {
     mockQuery.mockResolvedValueOnce({
       rows: [{ id: 42, created_at: new Date("2025-01-01T00:00:00Z") }],
       rowCount: 1,
@@ -86,10 +105,13 @@ describe("RuVector Bridge — storeMemory", () => {
     });
 
     expect(result.id).toBe("42");
-    expect(result.status).toBe("stored_pending_embedding");
+    expect(result.status).toBe("stored");
     expect(result.groupId).toBe("allura-test");
     expect(result.createdAt).toBeTruthy();
     expect(mockQuery).toHaveBeenCalledTimes(1);
+
+    // Verify embedding service was called with content
+    expect(mockGenerateEmbedding).toHaveBeenCalledWith("This is a test memory");
 
     // Verify parameterized query (no string interpolation)
     const call = mockQuery.mock.calls[0];
@@ -97,7 +119,31 @@ describe("RuVector Bridge — storeMemory", () => {
     expect(call[0]).toContain("$2");
     expect(call[0]).toContain("$3");
     expect(call[0]).toContain("$4");
-    // Verify NULL embedding
+    // Verify embedding is formatted as ruvector literal string '[0.1,0.2,...]'
+    const embeddingParam = call[1][4];
+    expect(typeof embeddingParam === "string").toBe(true);
+    expect(embeddingParam).toMatch(/^\[.*\]$/);
+    expect(embeddingParam).toContain("0.1");
+  });
+
+  it("should store with 'stored_pending_embedding' when embedding fails", async () => {
+    mockGenerateEmbedding.mockResolvedValueOnce(null);
+    mockQuery.mockResolvedValueOnce({
+      rows: [{ id: 43, created_at: new Date("2025-01-01T00:00:00Z") }],
+      rowCount: 1,
+    });
+
+    const result = await storeMemory({
+      userId: "allura-test",
+      sessionId: "session-1",
+      content: "No embedding for this",
+    });
+
+    expect(result.id).toBe("43");
+    expect(result.status).toBe("stored_pending_embedding");
+
+    // Verify NULL embedding in query params
+    const call = mockQuery.mock.calls[0];
     expect(call[1][4]).toBeNull();
   });
 
@@ -114,7 +160,7 @@ describe("RuVector Bridge — storeMemory", () => {
     });
 
     const call = mockQuery.mock.calls[0];
-    // New param order: [groupId, sessionId, content, memoryType, null, metadataJSON, groupId]
+    // New param order: [groupId, sessionId, content, memoryType, embedding, metadataJSON, groupId]
     // memory_type is $4 (index 3)
     expect(call[1][3]).toBe("episodic");
   });
@@ -214,9 +260,27 @@ describe("RuVector Bridge — storeMemory", () => {
       });
 
       const call = mockQuery.mock.calls[mockQuery.mock.calls.length - 1];
-      // New param order: [groupId, sessionId, content, memoryType, null, metadataJSON, groupId]
+      // New param order: [groupId, sessionId, content, memoryType, embedding, metadataJSON, groupId]
       expect(call[1][3]).toBe(memoryType);
     }
+  });
+
+  it("should generate embedding before inserting into database", async () => {
+    mockQuery.mockResolvedValueOnce({
+      rows: [{ id: 45, created_at: new Date() }],
+      rowCount: 1,
+    });
+
+    await storeMemory({
+      userId: "allura-test",
+      sessionId: "session-1",
+      content: "Check call order",
+    });
+
+    // Embedding should be generated before DB query
+    // Both are called exactly once
+    expect(mockGenerateEmbedding).toHaveBeenCalledTimes(1);
+    expect(mockQuery).toHaveBeenCalledTimes(1);
   });
 });
 

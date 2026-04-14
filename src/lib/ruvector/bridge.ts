@@ -13,7 +13,7 @@
  * - Uses existing getRuVectorPool() from connection.ts (no duplicate pool)
  * - Parameterized queries ONLY (no string interpolation)
  * - group_id validation: ^allura-[a-z0-9-]+$
- * - Embedding column type is ruvector(384) in PG (NULL until embedding service)
+ * - Embedding column type is ruvector(768) in PG (nomic-embed-text, 768d)
  * - Memory IDs are BIGSERIAL (stringified); feedback IDs are UUID v4
  */
 
@@ -29,6 +29,7 @@ import { getRuVectorPool, isRuVectorEnabled, checkRuVectorHealth } from "./conne
 import { validateGroupId } from "../validation/group-id";
 import { GroupIdValidationError } from "../validation/group-id";
 import { DatabaseUnavailableError, DatabaseQueryError, classifyPostgresError } from "../errors/database-errors";
+import { generateEmbedding } from "./embedding-service";
 import type {
   StoreMemoryParams,
   StoreMemoryResult,
@@ -77,11 +78,12 @@ const FEEDBACK_TABLE = "allura_feedback";
 /**
  * Store a memory in RuVector with tenant isolation.
  *
- * Validates group_id, inserts into allura_memories with NULL embedding
- * (embedding generation comes later), and returns the stored memory ID.
+ * Validates group_id, generates an embedding via Ollama (graceful degradation
+ * if Ollama is unreachable), and inserts into allura_memories.
  *
  * @param params - Memory storage parameters
- * @returns Store result with ID and status
+ * @returns Store result with ID and status ("stored" if embedding generated,
+ *          "stored_pending_embedding" if embedding failed)
  * @throws GroupIdValidationError if userId doesn't match ^allura-[a-z0-9-]+$
  * @throws DatabaseUnavailableError if RuVector is unreachable
  * @throws DatabaseQueryError if the insert fails
@@ -104,6 +106,15 @@ export async function storeMemory(
     throw new RuVectorBridgeValidationError("sessionId", "sessionId must be a non-empty string");
   }
 
+  // Generate embedding before DB insert (graceful degradation if Ollama is down)
+  const embedding: number[] | null = await generateEmbedding(content);
+
+  if (embedding === null) {
+    console.info(
+      `[RuVector Bridge] Embedding generation failed for memory in session ${sessionId} — storing without vector (status: stored_pending_embedding)`
+    );
+  }
+
   let pool: Pool;
   try {
     pool = getRuVectorPool();
@@ -120,17 +131,21 @@ export async function storeMemory(
   // tenant is needed. Until then: user_id = group_id = validated groupId.
   let result: QueryResult;
   try {
+    // Format embedding for ruvector type: must be string '[0.1,0.2,...]' or null
+    // The pg driver sends JS arrays as PG arrays, but ruvector expects vector literal syntax
+    const embeddingValue = embedding ? `[${embedding.join(",")}]` : null;
+
     result = await pool.query(
       `INSERT INTO ${MEMORIES_TABLE}
          (user_id, session_id, content, memory_type, embedding, metadata, group_id)
-       VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)
+       VALUES ($1, $2, $3, $4, $5::ruvector, $6::jsonb, $7)
        RETURNING id, created_at`,
       [
         groupId,  // user_id — same as group_id per ARCH-001 tenant model
         sessionId,
         content,
         memoryType,
-        null, // embedding is NULL until embedding service is integrated
+        embeddingValue, // formatted as ruvector literal or null
         JSON.stringify(metadata),
         groupId,  // group_id — validated ^allura-[a-z0-9-]+$
       ]
@@ -147,7 +162,7 @@ export async function storeMemory(
   const row = result.rows[0];
   return {
     id: String(row.id),
-    status: "stored_pending_embedding",
+    status: embedding ? "stored" : "stored_pending_embedding",
     createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
     groupId,
   };

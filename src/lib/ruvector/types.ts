@@ -7,7 +7,7 @@
  *
  * Key design decisions:
  * - `userId` maps to `group_id` for tenant isolation (ARCH-001)
- * - `embedding` column uses `ruvector(384)` type in PostgreSQL (bge-small-en-v1.5)
+ * - `embedding` column uses `ruvector(768)` type in PostgreSQL (nomic-embed-text)
  *   TypeScript represents this as `number[] | null` since pg driver returns arrays
  * - `trajectoryId` enables SONA feedback loop correlation
  * - Memory IDs are BIGSERIAL (stringified); feedback IDs are UUID v4
@@ -177,7 +177,7 @@ export interface RuVectorReadinessResult {
  * Used internally when mapping query results.
  *
  * Note: id is BIGSERIAL (bigint in PG, stringified in JS),
- * embedding is ruvector(384) in PG (number[] | null in JS).
+ * embedding is ruvector(768) in PG (number[] | null in JS).
  */
 export interface AlluraMemoryRow {
   id: string;             // BIGSERIAL, stringified
@@ -185,7 +185,7 @@ export interface AlluraMemoryRow {
   session_id: string;
   content: string;
   memory_type: RuVectorMemoryType;
-  embedding: number[] | null;  // ruvector(384) → number[] in JS
+  embedding: number[] | null;  // ruvector(768) → number[] in JS
   metadata: Record<string, unknown>;
   created_at: string;
   group_id: string;
