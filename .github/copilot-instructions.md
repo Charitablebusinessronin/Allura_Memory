@@ -114,7 +114,7 @@ When working on this project, read in this order:
 2. `memory-bank/progress.md` - What's been done
 3. `memory-bank/systemPatterns.md` - How things are built
 4. `memory-bank/techContext.md` - Tools and constraints
-5. `_bmad-output/implementation-artifacts/` - Story specs and tech details
+5. `docs/allura/` — canonical architecture and design docs
 
 ## Project-Specific Rules
 
@@ -132,9 +132,8 @@ When working on this project, read in this order:
 | File | Purpose |
 |------|---------|
 | `docker-compose.yml` | PostgreSQL and Neo4j containers |
-| `_bmad-output/planning-artifacts/epics.md` | Story definitions |
-| `_bmad-output/implementation-artifacts/tech-spec-*.md` | Technical specifications |
-| `_bmad-output/implementation-artifacts/sprint-status.yaml` | Current sprint status |
+| `docs/allura/` | Canonical architecture, design, and requirements docs |
+| `memory-bank/activeContext.md` | Current session focus and blockers |
 
 ## Verification Commands
 
