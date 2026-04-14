@@ -40,8 +40,19 @@ tsconfig.tsbuildinfo
 # OpenCode config with potential secrets
 opencode.json
 opencode.json.*
-!opencode.json.example
 .opencode/opencode.json*
+
+# Legacy / retired artifacts (never re-add)
+_bmad-output/
+workspaces/
+skills-lock.json
+INSTALLATION-REPORT.md
+UNIVERSAL_MCP_RULE.md
+test-cli-integration.sh
+test-harness.sh
+sentry.client.config.ts
+sentry.server.config.ts
+.sops.yaml
 
 # Misc
 .cache
