@@ -43,6 +43,9 @@ import type {
   MemoryExportResponse,
   GroupId,
   MemoryId,
+  MemoryContent,
+  ConfidenceScore,
+  StorageLocation,
   MemoryProvenance,
   MemoryResponseMeta,
 } from "@/lib/memory/canonical-contracts";
@@ -71,6 +74,7 @@ import {
   createSessionId,
 } from "@/lib/budget/middleware-integration";
 import { BreakerManager } from "@/lib/circuit-breaker/manager";
+import { shouldUseRuVector, searchWithFeedback } from "@/lib/ruvector/retrieval-adapter";
 
 config();
 
@@ -787,7 +791,36 @@ export async function memory_search(request: MemorySearchRequest): Promise<Memor
     console.warn("[degraded] Neo4j unavailable in memory_search:", error);
     searchMeta = degradedMeta(["postgres"]);
   }
-  
+
+  // --- RuVector conditional enrichment ---
+  // Feature-flagged: only activates when RUVECTOR_ENABLED=true AND health check passes.
+  // Fail-closed: if RuVector is unavailable, search continues with PG+Neo4j results only.
+  let ruvectorResults: Array<{ id: string; content: string; score: number; source: string }> = [];
+  let ruvectorTrajectoryId: string | undefined;
+
+  try {
+    if (await shouldUseRuVector()) {
+      const ruvectorResult = await searchWithFeedback(groupId, request.query, {
+        limit: request.limit ?? 10,
+        threshold: 0.3, // Lower threshold for recall; canonical layer filters further
+      });
+
+      ruvectorTrajectoryId = ruvectorResult.trajectoryId;
+      ruvectorResults = ruvectorResult.memories.map((m) => ({
+        id: m.id,
+        content: m.content,
+        score: m.score,
+        source: "ruvector",
+      }));
+    }
+  } catch (ruvectorErr) {
+    // RuVector failure is non-fatal — log and continue with PG+Neo4j results only
+    console.warn(
+      "[memory_search] RuVector enrichment failed, continuing with PG+Neo4j:",
+      ruvectorErr instanceof Error ? ruvectorErr.message : String(ruvectorErr),
+    );
+  }
+
   // Merge results
   const episodic = episodicResults.rows.map((row) => ({
     id: toMemoryId(row.id),
@@ -808,19 +841,52 @@ export async function memory_search(request: MemorySearchRequest): Promise<Memor
     created_at: item.created_at,
     usage_count: item.usage_count,
   }));
+
+  // Map RuVector results into canonical shape
+  const ruvector = ruvectorResults.map((r) => ({
+    id: r.id as MemoryId,
+    content: r.content as MemoryContent,
+    score: r.score as ConfidenceScore,
+    source: "episodic" as StorageLocation, // RuVector is episodic storage
+    provenance: "conversation" as MemoryProvenance,
+    created_at: new Date().toISOString(), // RuVector doesn't return created_at in retrieveMemories
+    usage_count: 0,
+  }));
   
   // Combine and sort by score
-  const results = [...semantic, ...episodic]
+  const results = [...semantic, ...episodic, ...ruvector]
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
   
   const latency = Date.now() - startTime;
-  
+
+  // Build stores_used array based on what actually returned results
+  const storesUsed: Array<"postgres" | "neo4j" | "ruvector"> = [];
+  if (episodic.length > 0 || searchMeta.stores_used.includes("postgres")) {
+    storesUsed.push("postgres");
+  }
+  if (semanticResults.length > 0 || searchMeta.stores_used.includes("neo4j")) {
+    storesUsed.push("neo4j");
+  }
+  if (ruvectorResults.length > 0) {
+    storesUsed.push("ruvector");
+  }
+  // Fallback: ensure at least the stores attempted are listed
+  if (storesUsed.length === 0) {
+    storesUsed.push(...searchMeta.stores_used);
+  }
+
   return {
     results,
     count: results.length,
     latency_ms: latency,
-    meta: searchMeta,
+    meta: {
+      ...searchMeta,
+      stores_used: storesUsed,
+      ...(ruvectorTrajectoryId !== undefined
+        ? { ruvector_trajectory_id: ruvectorTrajectoryId, ruvector_count: ruvectorResults.length }
+        : {}),
+    },
   };
   } catch (error) {
     if (error instanceof DatabaseUnavailableError || error instanceof DatabaseQueryError) {

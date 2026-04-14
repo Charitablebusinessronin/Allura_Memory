@@ -64,6 +64,13 @@ implements, validates, commits, and updates this file.
 - [x] **Fix MCP `/mcp` k6 test** — Added session handshake + Goja compatibility
   - Agent: Woz (implementation)
   - File: `tests/load/k6-load-test.js`
+
+- [x] **Wire canonical-tools.ts → RuVector bridge** — memory_search now has conditional third search source
+  - Agent: Woz (implementation) + Scout (recon) + Brooks (orchestration)
+  - Files: `src/mcp/canonical-tools.ts`, `src/lib/memory/canonical-contracts.ts`, `src/__tests__/memory-search-ruvector.test.ts`
+  - Design: Feature-flagged via `shouldUseRuVector()`, fail-closed (PG+Neo4j still work if RuVector down)
+  - Evidence-gated: trajectoryId in metadata for caller to use with postFeedback()
+  - Tests: 20 new unit tests + 49 existing RuVector tests + 38 canonical tests all pass
   - Added mcpInitialize(), mcpInitialized(), mcpToolCall() protocol conformance
   - Converted ES2017+ to ES5.1 for k6/Goja engine
 
