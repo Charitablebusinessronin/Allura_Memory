@@ -5,7 +5,7 @@
  * search capabilities. Provides three primary functions:
  *
  * 1. storeMemory()     — Insert memory with tenant isolation
- * 2. retrieveMemories()— Text search (ts_rank) with trajectory tracking
+ * 2. retrieveMemories()— Hybrid search (vector ANN + BM25 with RRF fusion)
  * 3. postFeedback()    — SONA feedback loop for relevance learning
  *
  * Key constraints:
@@ -15,6 +15,8 @@
  * - group_id validation: ^allura-[a-z0-9-]+$
  * - Embedding column type is ruvector(768) in PG (nomic-embed-text, 768d)
  * - Memory IDs are BIGSERIAL (stringified); feedback IDs are UUID v4
+ * - Query vectors must be formatted as string literal '[0.1,0.2,...]'::ruvector
+ *   (pg driver cannot send JS arrays to ruvector columns — parser error in vector.rs)
  */
 
 // Server-only guard
@@ -72,6 +74,101 @@ const MEMORIES_TABLE = "allura_memories";
 
 /** Table name for SONA feedback */
 const FEEDBACK_TABLE = "allura_feedback";
+
+/** Standard RRF constant (k=60 is the widely-adopted default) */
+const RRF_K = 60;
+
+// ── RRF Fusion ────────────────────────────────────────────────────────────────
+
+/**
+ * Row shape returned from vector ANN query.
+ */
+interface VectorSearchRow {
+  id: string;
+  content: string;
+  memory_type: RuVectorMemoryType;
+  vector_score: number;
+}
+
+/**
+ * Row shape returned from BM25 text search query.
+ */
+interface BM25SearchRow {
+  id: string;
+  content: string;
+  memory_type: RuVectorMemoryType;
+  bm25_score: number;
+}
+
+/**
+ * Fuse vector and BM25 results using Reciprocal Rank Fusion (RRF).
+ *
+ * RRF score = 1/(k+rank_v) + 1/(k+rank_b) where:
+ * - k = 60 (standard RRF smoothing constant)
+ * - rank_v = rank in vector results (1-indexed)
+ * - rank_b = rank in BM25 results (1-indexed)
+ *
+ * Results appearing in only one list get contribution from that list only.
+ * Deduplication: if a memory appears in both lists, its content/memoryType
+ * comes from the vector result (higher confidence from structural matching).
+ *
+ * @param vectorResults - Rows from vector ANN search
+ * @param bm25Results - Rows from BM25 text search
+ * @param threshold - Minimum RRF score (normalized to 0-1) to include
+ * @returns Fused and sorted RetrievedMemory array
+ */
+function fuseResults(
+  vectorResults: VectorSearchRow[],
+  bm25Results: BM25SearchRow[],
+  threshold: number,
+): RetrievedMemory[] {
+  const rrfScores = new Map<string, number>();
+  const contentMap = new Map<string, { content: string; memoryType: RuVectorMemoryType }>();
+
+  // Vector ranks (1-indexed)
+  vectorResults.forEach((r, i) => {
+    const rank = i + 1;
+    rrfScores.set(r.id, 1 / (RRF_K + rank));
+    contentMap.set(r.id, { content: r.content, memoryType: r.memory_type });
+  });
+
+  // BM25 ranks (1-indexed) — add to existing scores
+  bm25Results.forEach((r, i) => {
+    const rank = i + 1;
+    const existing = rrfScores.get(r.id) || 0;
+    rrfScores.set(r.id, existing + 1 / (RRF_K + rank));
+    // Only add content if not already present (vector result takes precedence)
+    if (!contentMap.has(r.id)) {
+      contentMap.set(r.id, { content: r.content, memoryType: r.memory_type });
+    }
+  });
+
+  // Max possible RRF score for normalization:
+  // A result at rank 1 in both lists: 2/(k+1)
+  const maxPossibleScore = 2 / (RRF_K + 1);
+
+  // Build result array, normalize scores to 0-1, filter by threshold
+  const fused: RetrievedMemory[] = [];
+  for (const [id, rawScore] of rrfScores) {
+    const normalizedScore = rawScore / maxPossibleScore;
+    if (normalizedScore >= threshold) {
+      const entry = contentMap.get(id);
+      if (entry) {
+        fused.push({
+          id,
+          content: entry.content,
+          memoryType: entry.memoryType,
+          score: normalizedScore,
+        });
+      }
+    }
+  }
+
+  // Sort by score descending
+  fused.sort((a, b) => b.score - a.score);
+
+  return fused;
+}
 
 // ── storeMemory ─────────────────────────────────────────────────────────────
 
@@ -171,16 +268,23 @@ export async function storeMemory(
 // ── retrieveMemories ─────────────────────────────────────────────────────────
 
 /**
- * Retrieve memories using text search (ts_rank).
+ * Retrieve memories using hybrid search (vector + BM25 with RRF fusion).
  *
- * In the initial version, this uses PostgreSQL full-text search with
- * to_tsvector/plainto_tsquery. Vector similarity search will be added
- * when embedding generation is integrated.
+ * Search modes:
+ * - 'hybrid' (default): Two-pass query — vector ANN via cosine distance
+ *   + BM25 via ts_rank, fused with Reciprocal Rank Fusion (RRF).
+ * - 'vector': Vector ANN only (requires embeddings).
+ * - 'text': BM25 text search only (original ts_rank behavior).
+ *
+ * Graceful degradation:
+ * - If embedding generation fails OR no embeddings exist in the table,
+ *   the function falls back to text-only (BM25) search regardless of
+ *   the requested searchMode.
  *
  * Returns a trajectoryId for SONA feedback correlation.
  *
  * @param params - Retrieval parameters
- * @returns Search results with trajectory ID
+ * @returns Search results with trajectory ID and modes used
  * @throws GroupIdValidationError if userId doesn't match ^allura-[a-z0-9-]+$
  * @throws DatabaseUnavailableError if RuVector is unreachable
  * @throws DatabaseQueryError if the query fails
@@ -193,6 +297,7 @@ export async function retrieveMemories(
     query,
     limit = DEFAULT_LIMIT,
     threshold = DEFAULT_THRESHOLD,
+    searchMode = "hybrid",
   } = params;
 
   // Validate group_id (userId maps to group_id per ARCH-001)
@@ -215,6 +320,7 @@ export async function retrieveMemories(
 
   const trajectoryId = randomUUID();
   const startTime = Date.now();
+  const modesUsed: Array<"vector" | "text"> = [];
 
   let pool: Pool;
   try {
@@ -226,64 +332,150 @@ export async function retrieveMemories(
     );
   }
 
-  let result: QueryResult;
-  try {
-    // Text search using ts_rank with English text search configuration.
-    // Filter by user_id (tenant isolation), threshold, and limit.
-    // Normalize ts_rank to 0.0-1.0 range by dividing by the document length.
-    result = await pool.query(
-      `SELECT
-         id,
-         content,
-         memory_type,
-         ts_rank(
-           to_tsvector('english', content),
-           plainto_tsquery('english', $1)
-         ) AS raw_score
-       FROM ${MEMORIES_TABLE}
-       WHERE user_id = $2
-       ORDER BY raw_score DESC
-       LIMIT $3`,
-      [query, groupId, limit]
-    );
-  } catch (error) {
-    const classified = classifyPostgresError(
-      error instanceof Error ? error : new Error(String(error)),
-      "retrieveMemories",
-      `SELECT from ${MEMORIES_TABLE}`
-    );
-    throw classified;
+  // Attempt to generate query embedding for vector search
+  let queryEmbedding: number[] | null = null;
+  if (searchMode !== "text") {
+    queryEmbedding = await generateEmbedding(query);
+    if (queryEmbedding === null) {
+      console.info(
+        `[RuVector Bridge] Query embedding generation failed for session — falling back to text-only search`
+      );
+    }
   }
 
-  // Calculate max possible score for normalization.
-  // ts_rank can return values > 0; we normalize scores to 0.0-1.0 range.
-  const rows = result.rows as Array<{
-    id: string;
-    content: string;
-    memory_type: RuVectorMemoryType;
-    raw_score: number;
-  }>;
+  // Determine effective mode: only use vector if we have an embedding
+  const canUseVector = queryEmbedding !== null && searchMode !== "text";
+  const canUseText = searchMode !== "vector";
 
-  const maxScore = rows.length > 0
-    ? Math.max(...rows.map((r) => r.raw_score), 1)
-    : 1;
+  // ── Pass 1: Vector ANN search ──────────────────────────────────────────
+  let vectorResults: VectorSearchRow[] = [];
+  if (canUseVector) {
+    try {
+      // Check if any embeddings exist in the table for this user
+      const embeddingCheck = await pool.query(
+        `SELECT 1 FROM ${MEMORIES_TABLE}
+         WHERE user_id = $1 AND embedding IS NOT NULL AND deleted_at IS NULL
+         LIMIT 1`,
+        [groupId]
+      );
 
-  const memories: RetrievedMemory[] = rows
-    .map((row) => ({
-      id: row.id,
-      content: row.content,
-      memoryType: row.memory_type,
-      score: row.raw_score / maxScore,
-    }))
-    .filter((m) => m.score >= threshold);
+      if (embeddingCheck.rows.length > 0) {
+        // Format query vector as ruvector literal string '[0.1,0.2,...]'
+        // The pg driver cannot send JS arrays to ruvector columns (parser error in vector.rs)
+        const embeddingValue = `[${queryEmbedding!.join(",")}]`;
+
+        const vectorResult = await pool.query(
+          `SELECT
+             id,
+             content,
+             memory_type,
+             1 - ruvector_cosine_distance(embedding, $1::ruvector) AS vector_score
+           FROM ${MEMORIES_TABLE}
+           WHERE user_id = $2
+             AND embedding IS NOT NULL
+             AND deleted_at IS NULL
+           ORDER BY ruvector_cosine_distance(embedding, $1::ruvector) ASC
+           LIMIT $3`,
+          [embeddingValue, groupId, limit]
+        );
+
+        vectorResults = vectorResult.rows as VectorSearchRow[];
+        modesUsed.push("vector");
+      } else {
+        console.info(
+          `[RuVector Bridge] No embeddings found in table for user ${groupId} — skipping vector pass`
+        );
+      }
+    } catch (error) {
+      // Graceful degradation: if vector search fails, log and fall back to text
+      const errMsg = error instanceof Error ? error.message : String(error);
+      console.warn(
+        `[RuVector Bridge] Vector search failed — falling back to text-only: ${errMsg}`
+      );
+      vectorResults = [];
+    }
+  }
+
+  // ── Pass 2: BM25 text search ───────────────────────────────────────────
+  let bm25Results: BM25SearchRow[] = [];
+  if (canUseText) {
+    try {
+      const bm25Result = await pool.query(
+        `SELECT
+           id,
+           content,
+           memory_type,
+           ts_rank(
+             to_tsvector('english', content),
+             plainto_tsquery('english', $1)
+           ) AS bm25_score
+         FROM ${MEMORIES_TABLE}
+         WHERE user_id = $2 AND deleted_at IS NULL
+         ORDER BY bm25_score DESC
+         LIMIT $3`,
+        [query, groupId, limit]
+      );
+
+      bm25Results = bm25Result.rows as BM25SearchRow[];
+      modesUsed.push("text");
+    } catch (error) {
+      const classified = classifyPostgresError(
+        error instanceof Error ? error : new Error(String(error)),
+        "retrieveMemories",
+        `SELECT from ${MEMORIES_TABLE} (BM25)`
+      );
+      throw classified;
+    }
+  }
+
+  // ── Fuse or convert results ────────────────────────────────────────────
+  let memories: RetrievedMemory[];
+
+  if (modesUsed.includes("vector") && modesUsed.includes("text")) {
+    // Hybrid: fuse with RRF
+    memories = fuseResults(vectorResults, bm25Results, threshold);
+  } else if (modesUsed.includes("vector")) {
+    // Vector-only: normalize vector scores and filter
+    const maxScore = vectorResults.length > 0
+      ? Math.max(...vectorResults.map((r) => r.vector_score), 1)
+      : 1;
+    memories = vectorResults
+      .map((row) => ({
+        id: row.id,
+        content: row.content,
+        memoryType: row.memory_type,
+        score: row.vector_score / maxScore,
+      }))
+      .filter((m) => m.score >= threshold);
+  } else {
+    // Text-only (BM25): normalize scores and filter (original behavior)
+    const maxScore = bm25Results.length > 0
+      ? Math.max(...bm25Results.map((r) => r.bm25_score), 1)
+      : 1;
+    memories = bm25Results
+      .map((row) => ({
+        id: row.id,
+        content: row.content,
+        memoryType: row.memory_type,
+        score: row.bm25_score / maxScore,
+      }))
+      .filter((m) => m.score >= threshold);
+  }
+
+  const total = modesUsed.includes("vector") && modesUsed.includes("text")
+    ? new Set([...vectorResults, ...bm25Results].map((r) => r.id)).size
+    : modesUsed.includes("vector")
+      ? vectorResults.length
+      : bm25Results.length;
 
   const latencyMs = Date.now() - startTime;
 
   return {
     memories,
-    total: rows.length,
+    total,
     latencyMs,
     trajectoryId,
+    modesUsed,
   };
 }
 

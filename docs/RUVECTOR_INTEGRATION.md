@@ -40,7 +40,9 @@ CREATE TABLE IF NOT EXISTS allura_memories (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     relevance       REAL        NOT NULL DEFAULT 0.0,
     group_id        TEXT        NOT NULL CHECK (group_id ~ '^allura-[a-z0-9-]+$'),
-    deleted_at      TIMESTAMPTZ
+    deleted_at      TIMESTAMPTZ,
+    -- Stored generated tsvector for efficient FTS (required by Allura's hybrid search)
+    content_tsv     tsvector GENERATED ALWAYS AS (to_tsvector('english', content)) STORED
 );
 ```
 
@@ -49,7 +51,7 @@ CREATE TABLE IF NOT EXISTS allura_memories (
 | Index | Method | Purpose |
 |---|---|---|
 | `allura_mem_embedding_hnsw` | HNSW (`ruvector_cosine_ops`) | Approximate nearest-neighbor vector search on 768d embeddings |
-| `allura_mem_content_fts` | GIN (`to_tsvector`) | BM25 full-text search for hybrid fusion |
+| `allura_mem_content_fts` | GIN (`content_tsv`) | BM25 full-text search on stored tsvector column |
 | `allura_mem_group_time` | B-tree | Tenant-scoped chronological queries |
 | `allura_mem_group_type` | B-tree | Filter by memory type within a tenant |
 | `allura_mem_trajectory` | B-tree (partial) | SONA feedback correlation lookups |
@@ -74,82 +76,137 @@ curl http://localhost:11434/api/embeddings \
   -d '{"model": "nomic-embed-text", "prompt": "text to embed"}'
 ```
 
-The TypeScript bridge uses `generateEmbedding()` from `src/lib/ruvector/embed.ts` to wrap this call:
+The TypeScript bridge uses `generateEmbedding()` from `src/lib/ruvector/embedding-service.ts` to wrap this call:
 
 ```typescript
-import { generateEmbedding } from "@/lib/ruvector/embed";
+import { generateEmbedding } from "@/lib/ruvector/embedding-service";
 
 // Generate a 768-dim embedding via Ollama
-const embedding: number[] = await generateEmbedding("text to embed");
-// embedding.length === 768
+const embedding: number[] | null = await generateEmbedding("text to embed");
+// embedding.length === 768 (or null if Ollama is down)
 
-// Store in RuVector
-await pool.query(
-  `INSERT INTO allura_memories (session_id, user_id, content, embedding, group_id)
-   VALUES ($1, $2, $3, $4::ruvector(768), $5)`,
-  [sessionId, userId, content, embedding, groupId]
-);
+// Store in RuVector — MUST format as string literal for ruvector type
+if (embedding) {
+  const embeddingValue = `[${embedding.join(",")}]`;  // String literal format
+  await pool.query(
+    `INSERT INTO allura_memories (session_id, user_id, content, embedding, group_id)
+     VALUES ($1, $2, $3, $4::ruvector, $5)`,
+    [sessionId, userId, content, embeddingValue, groupId]
+  );
+}
 ```
+
+**CRITICAL**: The `ruvector` type requires string literal format `'[0.1,0.2,...]'` with `::ruvector` cast.
+JS arrays sent via the pg driver fail with `ruvector_in_inner` parser error in `vector.rs`.
 
 ## Hybrid Search
 
-After registering the table for hybrid search:
+### ⚠️ RuVector v0.3.0 Stub Audit (2026-04-14)
 
-```sql
-SELECT ruvector_register_hybrid(
-  'allura_memories',   -- collection (table name)
-  'embedding',          -- vector_column
-  'content',            -- fts_column (ts_vector for BM25)
-  'content'             -- text_column (raw text for keyword scoring)
-);
+A comprehensive audit of RuVector v0.3.0's 154 SQL functions revealed that **the hybrid search and learning subsystems are non-functional stubs**:
+
+| Function | Status | Evidence |
+|----------|--------|----------|
+| `ruvector_hybrid_search()` | **STUB** | Returns fabricated results (IDs 1-5, not actual table data). Note field: "This is a demonstration." |
+| `ruvector_register_hybrid()` | **SESSION-SCOPED STUB** | Reports success but registration is lost on reconnect. `hybrid_list()` always shows 0 collections. |
+| `ruvector_record_feedback()` | **STUB** | Requires `enable_learning()` which doesn't persist. Returns "No recent trajectory found." |
+| `ruvector_sona_learn()` | **STUB** | Returns hard-coded `{steps: 0, final_reward: 0.5}` regardless of input. |
+| `ruvector_enable_learning()` | **SESSION-SCOPED STUB** | Sets in-memory flag only, lost when connection pool recycles. |
+| `ruvector_auto_tune()` | **STUB** | Requires `enable_learning()` which doesn't persist. |
+
+### What IS Production-Ready in RuVector v0.3.0
+
+| Function | Status | Notes |
+|----------|--------|-------|
+| `ruvector_cosine_distance()` | ✅ REAL | Core vector similarity. Verified on actual data. |
+| `ruvector_dims()` | ✅ REAL | Returns actual dimension count. |
+| `ruvector_inner_product()` | ✅ REAL | Verified mathematically correct. |
+| `ruvector_add()` | ✅ REAL | Vector addition works. |
+| `ruvector_hybrid_score()` | ✅ REAL | Pure math: `alpha * vdist + (1-alpha) * kscore`. |
+| Graph DB functions | ✅ REAL | `create_graph`, `add_node`, `add_edge`, `shortest_path` |
+| RDF/SPARQL functions | ✅ REAL | `create_rdf_store`, `insert_triple`, `sparql`, `query_triples` |
+| TDA/Attention functions | ✅ REAL | `betti_numbers`, `bottleneck_distance`, `cross_attention`, etc. |
+
+### Allura's Self-Implemented Hybrid Search
+
+Since `ruvector_hybrid_search()` is a stub, Allura implements its own hybrid search using **Reciprocal Rank Fusion (RRF)** in `src/lib/ruvector/bridge.ts`:
+
+```typescript
+// retrieveMemories() implements two passes:
+// 1. Vector ANN: ruvector_cosine_distance() for cosine similarity
+// 2. BM25: ts_rank() for keyword relevance
+// 3. RRF fusion: score = 1/(k+rank_v) + 1/(k+rank_t) where k=60
 ```
 
-Query with:
+The `content_tsv` stored generated column enables efficient FTS:
 
 ```sql
-SELECT ruvector_hybrid_search(
-  'allura_memories',        -- collection
-  'search terms',           -- query_text
-  ARRAY[0.1, 0.2, ...]::real[],  -- query_vector (768 dims from nomic-embed-text)
-  10,                       -- k (number of results)
-  'rrf',                    -- fusion method (optional: 'rrf', 'linear')
-  0.7                       -- alpha (optional: vector weight, 0.0-1.0)
-);
+-- Stored generated tsvector column (automatically maintained by PG)
+content_tsv tsvector GENERATED ALWAYS AS (to_tsvector('english', content)) STORED
+
+-- GIN index on the stored column (replaces expression-based index)
+CREATE INDEX allura_mem_content_fts ON allura_memories USING gin(content_tsv);
 ```
+
+Three search modes are available:
+
+| Mode | Vector Pass | BM25 Pass | Fusion |
+|------|-------------|-----------|--------|
+| `hybrid` (default) | ✅ | ✅ | RRF |
+| `vector` | ✅ | ❌ | N/A |
+| `text` | ❌ | ✅ | N/A |
+
+Graceful degradation: if embedding generation fails or no embeddings exist in the table, falls back to text-only (BM25) search.
 
 ### TypeScript Bridge for Retrieval
 
 ```typescript
-import { generateEmbedding } from "@/lib/ruvector/embed";
+import { retrieveMemories } from "@/lib/ruvector/bridge";
 
-async function searchMemories(query: string, groupId: string, k = 10) {
-  const queryVector = await generateEmbedding(query);
-  // queryVector is 768 dims from nomic-embed-text
+// Hybrid search (default) — vector + BM25 with RRF fusion
+const result = await retrieveMemories({
+  userId: "allura-my-tenant",
+  query: "search terms",
+  limit: 10,
+  threshold: 0.5,
+  searchMode: "hybrid",  // default: hybrid. Options: "hybrid" | "vector" | "text"
+});
 
-  const result = await pool.query(
-    `SELECT * FROM ruvector_hybrid_search(
-       'allura_memories', $1, $2::real[], $3, 'rrf', 0.7
-    )`,
-    [query, queryVector, k]
-  );
-  return result.rows;
-}
+// result.modesUsed tells which passes actually ran
+// e.g. ["vector", "text"] for hybrid, ["text"] for text-only fallback
 ```
 
 ## SONA Feedback Loop
 
-```sql
--- Record explicit feedback
-SELECT ruvector_record_feedback(
-  'allura_memories',
-  ARRAY[0.1, 0.2, ...]::real[],  -- query_vector (768 dims)
-  ARRAY[1, 3, 7]::bigint[],       -- relevant_ids
-  ARRAY[2, 5]::bigint[]           -- irrelevant_ids
-);
+### ⚠️ RuVector v0.3.0: SONA Functions Are Stubs
 
--- Apply trajectory-based learning
-SELECT ruvector_sona_learn('allura_memories', trajectory_json::jsonb);
+The following RuVector functions are **non-functional stubs**:
+
+- `ruvector_record_feedback()` — No-op. Requires `enable_learning()` which doesn't persist.
+- `ruvector_sona_learn()` — Returns hard-coded `{steps: 0, final_reward: 0.5}`.
+- `ruvector_enable_learning()` — Session-scoped only, lost on reconnect.
+
+### Allura's Self-Implemented Feedback
+
+Allura records SONA feedback directly in the `allura_feedback` table:
+
+```sql
+CREATE TABLE IF NOT EXISTS allura_feedback (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    trajectory_id    TEXT NOT NULL,
+    relevance_scores JSONB NOT NULL,
+    relevant_ids    TEXT[] NOT NULL DEFAULT '{}',
+    irrelevant_ids  TEXT[] NOT NULL DEFAULT '{}',
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    group_id        TEXT NOT NULL CHECK (group_id ~ '^allura-[a-z0-9-]+$')
+);
 ```
+
+The `postFeedback()` function in `bridge.ts`:
+1. Records feedback in `allura_feedback` (always succeeds)
+2. Calls `ruvector_sona_learn()` best-effort (logs warning if stub)
+
+Evidence-gated: feedback is ONLY fired when `usedMemoryIds.length > 0`.
 
 ## Connection Details
 
@@ -164,5 +221,35 @@ SELECT ruvector_sona_learn('allura_memories', trajectory_json::jsonb);
 
 - `ruvector(N)` is the column type (not `real[]`).
 - HNSW indexes require `ruvector_cosine_ops` on `ruvector(N)` columns.
-- `ruvector_hybrid_search()` accepts `real[]` for the query_vector parameter internally.
 - The 768-dimensional vectors from `nomic-embed-text` must be cast to `ruvector(768)` on insert.
+- **CRITICAL**: JS arrays must be formatted as string literals `'[0.1,0.2,...]'` for `::ruvector` cast. The pg driver's array format triggers `ruvector_in_inner` parser errors.
+- `ruvector_cosine_distance()`, `ruvector_dims()`, `ruvector_inner_product()`, `ruvector_add()` are **REAL** and work on actual data.
+- `ruvector_hybrid_search()` is a **STUB** — returns fabricated results, not actual table data.
+- `ruvector_register_hybrid()` is **SESSION-SCOPED** — registration lost on reconnect.
+- `ruvector_record_feedback()` and `ruvector_sona_learn()` are **STUBS** — no persistent state.
+- Allura implements its own hybrid search using RRF fusion over `ruvector_cosine_distance()` + `ts_rank()`.
+- Extension version mismatch: `pg_extension` reports `0.3.0`, `ruvector_version()` reports `2.0.5`.
+
+## Embedding Backfill Worker
+
+For existing memories with `embedding IS NULL`, run the backfill worker:
+
+```bash
+# Single batch (process pending rows once)
+bun run backfill:embeddings
+
+# Continuous polling (every 30 seconds)
+bun run backfill:embeddings:watch
+
+# Dry run (no writes)
+bun run src/curator/embedding-backfill-worker.ts --dry-run
+
+# Specific tenant
+bun run src/curator/embedding-backfill-worker.ts --group-id allura-my-tenant
+```
+
+The worker:
+1. Queries `allura_memories WHERE embedding IS NULL AND deleted_at IS NULL`
+2. Calls `generateEmbeddingBatch()` in groups of 10
+3. Updates each row with the embedding string literal format
+4. Gracefully degrades — failed embeddings remain NULL for retry next cycle

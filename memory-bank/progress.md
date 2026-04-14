@@ -1,6 +1,75 @@
 # Progress Log
 
-**Last Updated**: 2026-04-13 (Phase 6-9 Complete — ALL PHASES CLOSED)
+**Last Updated**: 2026-04-14 (RuVector Integration Complete — 13/13)
+
+## Session Work (2026-04-14) — RuVector Hybrid Search + Stub Audit (Brooks Architect)
+
+### ✅ Completed
+
+1. **RuVector v0.3.0 Stub Audit** ✅ (Scout recon — 154 functions)
+   - Comprehensive audit of all RuVector SQL extension functions
+   - Found 35+ STUB functions (hybrid search, learning, agent routing, healing)
+   - Found 30+ REAL functions (vector math, graph DB, RDF/SPARQL, TDA)
+   - `ruvector_hybrid_search()` returns fabricated demo data, not actual table rows
+   - `ruvector_register_hybrid()` is session-scoped, doesn't persist across connections
+   - `ruvector_sona_learn()` returns hard-coded `{steps: 0, final_reward: 0.5}`
+   - `ruvector_record_feedback()` requires `enable_learning()` which doesn't persist
+   - Vector math functions (`cosine_distance`, `dims`, `add`, `inner_product`) are verified REAL
+   - Extension version mismatch: pg_extension says 0.3.0, ruvector_version() says 2.0.5
+
+2. **Self-Implemented Hybrid Search** ✅ (Woz build — RRF fusion)
+   - Replaced `ruvector_hybrid_search()` stub with custom RRF implementation
+   - Two-pass query: vector ANN (`ruvector_cosine_distance`) + BM25 (`ts_rank`)
+   - Reciprocal Rank Fusion: `score = 1/(k+rank_v) + 1/(k+rank_t)` where k=60
+   - Three search modes: `"hybrid"` (default), `"vector"`, `"text"`
+   - Graceful degradation: embedding failure → text-only fallback
+   - Query vector format: string literal `'[0.1,...]'::ruvector` for pg driver compatibility
+   - `RetrieveMemoriesParams` gained `searchMode` field
+   - `RetrieveMemoriesResult` gained `modesUsed` field
+   - 11 new tests (78 total in ruvector suite)
+
+3. **Embedding Backfill Worker** ✅ (Woz build — follows notion-sync pattern)
+   - `src/curator/embedding-backfill-worker.ts` — 260+ lines
+   - Polls `allura_memories WHERE embedding IS NULL AND deleted_at IS NULL`
+   - Calls `generateEmbeddingBatch()` in groups of 10
+   - Updates with `SET embedding = $1::ruvector` using string literal format
+   - CLI: `--once`, `--dry-run`, `--interval`, `--group-id`
+   - 31 tests, all passing
+   - Package scripts: `backfill:embeddings`, `backfill:embeddings:watch`
+
+4. **Migration DDL Update** ✅
+   - Added `content_tsv tsvector GENERATED ALWAYS AS (to_tsvector('english', content)) STORED`
+   - Updated GIN index from expression-based to column-based (more efficient)
+   - Documented `ruvector_register_hybrid` as session-scoped stub in comments
+   - Documented all stub findings in post-migration comments
+
+5. **Documentation Rewrite** ✅
+   - `docs/RUVECTOR_INTEGRATION.md` — Major rewrite:
+     - Added stub audit section with function classification table
+     - Replaced `ruvector_hybrid_search()` docs with self-implemented RRF search docs
+     - Added `content_tsv` column to schema
+     - Updated index documentation
+     - Added embedding format caveat (string literal `::ruvector`)
+     - Added backfill worker documentation
+     - Updated SONA feedback section to document that it's a stub
+
+### Verification
+- ✅ 109 RuVector tests passed (bridge 49, adapter 13, embedding 16, backfill 31)
+- ✅ 20 canonical wiring tests passed
+- ✅ 1336 total tests passed (1 pre-existing auth-middleware failure)
+- ✅ content_tsv column added and populated on running instance
+- ✅ GIN index on content_tsv created on running instance
+
+### Key Decisions
+- Self-implemented RRF over `ruvector_hybrid_search()` stub — we own the search logic, no black-box extension dependency
+- `content_tsv` stored generated column for efficient FTS — always in sync with `content`, no triggers needed
+- Evidence-gated feedback stays — `allura_feedback` table is our ground truth, `ruvector_sona_learn()` is best-effort
+- Backfill worker is standalone Bun script following notion-sync-worker pattern
+
+### Commits This Session
+(To be committed)
+
+---
 
 ## Session Work (2026-04-13) — Phase 6-9 Parallel Sprint (Brooks Architect)
 

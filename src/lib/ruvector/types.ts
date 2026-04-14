@@ -74,9 +74,8 @@ export interface StoreMemoryResult {
 /**
  * Parameters for retrieving memories from RuVector.
  *
- * Uses text search (ts_rank) in the initial version.
- * Vector similarity search will be added when embedding
- * generation is integrated.
+ * Supports hybrid search (vector + BM25 with RRF fusion), vector-only,
+ * or text-only (BM25) search modes. Default: 'hybrid'.
  */
 export interface RetrieveMemoriesParams {
   /** Tenant isolation key (maps to group_id) */
@@ -90,6 +89,9 @@ export interface RetrieveMemoriesParams {
 
   /** Minimum similarity score (0.0-1.0). Default: 0.5 */
   threshold?: number;
+
+  /** Search mode: 'hybrid' (vector+BM25), 'vector', or 'text'. Default: 'hybrid' */
+  searchMode?: "hybrid" | "vector" | "text";
 }
 
 /**
@@ -115,6 +117,8 @@ export interface RetrievedMemory {
  * Includes `trajectoryId` for SONA feedback correlation.
  * The trajectory ID is generated per retrieval call and
  * can be used to correlate feedback with the original search.
+ * `modesUsed` indicates which search modes were actually used
+ * (may differ from requested searchMode if embedding fails).
  */
 export interface RetrieveMemoriesResult {
   /** Retrieved memories, sorted by relevance (descending) */
@@ -131,6 +135,9 @@ export interface RetrieveMemoriesResult {
    * Pass this to postFeedback() along with relevance scores.
    */
   trajectoryId: string;
+
+  /** Which search modes were actually used */
+  modesUsed: Array<"vector" | "text">;
 }
 
 /**

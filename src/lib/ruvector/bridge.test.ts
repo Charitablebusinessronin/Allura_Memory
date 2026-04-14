@@ -288,12 +288,14 @@ describe("RuVector Bridge — retrieveMemories", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockQuery.mockReset();
+    // Default: embedding generation fails (text-only fallback for existing tests)
+    mockGenerateEmbedding.mockResolvedValue(null);
   });
 
-  it("should retrieve memories using text search with ts_rank", async () => {
+  it("should retrieve memories using text search with ts_rank (searchMode: text)", async () => {
     const mockRows = [
-      { id: "mem-1", content: "Test memory alpha", memory_type: "episodic", raw_score: 0.8 },
-      { id: "mem-2", content: "Test memory beta", memory_type: "semantic", raw_score: 0.4 },
+      { id: "mem-1", content: "Test memory alpha", memory_type: "episodic", bm25_score: 0.8 },
+      { id: "mem-2", content: "Test memory beta", memory_type: "semantic", bm25_score: 0.4 },
     ];
     mockQuery.mockResolvedValueOnce({ rows: mockRows, rowCount: 2 });
 
@@ -302,12 +304,14 @@ describe("RuVector Bridge — retrieveMemories", () => {
       query: "test",
       limit: 10,
       threshold: 0.3,
+      searchMode: "text",
     });
 
     expect(result.memories).toHaveLength(2);
     expect(result.trajectoryId).toBeTruthy();
     expect(result.total).toBe(2);
     expect(result.latencyMs).toBeGreaterThanOrEqual(0);
+    expect(result.modesUsed).toEqual(["text"]);
 
     // Verify parameterized query
     const call = mockQuery.mock.calls[0];
@@ -317,10 +321,10 @@ describe("RuVector Bridge — retrieveMemories", () => {
     expect(call[1][1]).toBe("allura-test"); // group_id value
   });
 
-  it("should filter results below threshold", async () => {
+  it("should filter results below threshold in text mode", async () => {
     const mockRows = [
-      { id: "mem-1", content: "High score", memory_type: "episodic", raw_score: 10 },
-      { id: "mem-2", content: "Low score", memory_type: "semantic", raw_score: 1 },
+      { id: "mem-1", content: "High score", memory_type: "episodic", bm25_score: 10 },
+      { id: "mem-2", content: "Low score", memory_type: "semantic", bm25_score: 1 },
     ];
     mockQuery.mockResolvedValueOnce({ rows: mockRows, rowCount: 2 });
 
@@ -329,11 +333,13 @@ describe("RuVector Bridge — retrieveMemories", () => {
       userId: "allura-test",
       query: "test",
       threshold: 0.5,
+      searchMode: "text",
     });
 
-    // raw_score of 10 normalizes to 1.0 (10/10), raw_score of 1 normalizes to 0.1 (1/10)
+    // bm25_score of 10 normalizes to 1.0 (10/10), bm25_score of 1 normalizes to 0.1 (1/10)
     // With threshold 0.5, only the first memory passes
     expect(result.memories.length).toBeLessThanOrEqual(1);
+    expect(result.modesUsed).toEqual(["text"]);
   });
 
   it("should return empty memories when no results found", async () => {
@@ -342,11 +348,30 @@ describe("RuVector Bridge — retrieveMemories", () => {
     const result = await retrieveMemories({
       userId: "allura-test",
       query: "nonexistent",
+      searchMode: "text",
     });
 
     expect(result.memories).toHaveLength(0);
     expect(result.total).toBe(0);
     expect(result.trajectoryId).toBeTruthy();
+    expect(result.modesUsed).toEqual(["text"]);
+  });
+
+  it("should fall back to text-only when embedding generation fails (hybrid default)", async () => {
+    mockGenerateEmbedding.mockResolvedValue(null);
+    const mockRows = [
+      { id: "mem-1", content: "Fallback result", memory_type: "semantic", bm25_score: 5 },
+    ];
+    mockQuery.mockResolvedValueOnce({ rows: mockRows, rowCount: 1 });
+
+    const result = await retrieveMemories({
+      userId: "allura-test",
+      query: "test",
+      // searchMode defaults to 'hybrid', but embedding fails → text fallback
+    });
+
+    expect(result.modesUsed).toEqual(["text"]);
+    expect(result.memories).toHaveLength(1);
   });
 
   it("should reject invalid group_id", async () => {
@@ -409,10 +434,12 @@ describe("RuVector Bridge — retrieveMemories", () => {
     const result1 = await retrieveMemories({
       userId: "allura-test",
       query: "one",
+      searchMode: "text",
     });
     const result2 = await retrieveMemories({
       userId: "allura-test",
       query: "two",
+      searchMode: "text",
     });
 
     // With the mocked randomUUID, both get the same value,
@@ -432,6 +459,282 @@ describe("RuVector Bridge — retrieveMemories", () => {
         query: "test",
       })
     ).rejects.toThrow();
+  });
+
+  it("should use text-only mode when searchMode is 'text'", async () => {
+    mockGenerateEmbedding.mockResolvedValue(makeFakeEmbedding());
+    const mockRows = [
+      { id: "mem-1", content: "Text only", memory_type: "semantic", bm25_score: 3 },
+    ];
+    mockQuery.mockResolvedValueOnce({ rows: mockRows, rowCount: 1 });
+
+    const result = await retrieveMemories({
+      userId: "allura-test",
+      query: "test",
+      searchMode: "text",
+    });
+
+    // Even though embedding succeeded, text mode should NOT call generateEmbedding
+    expect(mockGenerateEmbedding).not.toHaveBeenCalled();
+    expect(result.modesUsed).toEqual(["text"]);
+  });
+});
+
+// ── Hybrid Search Tests ─────────────────────────────────────────────────────
+
+describe("RuVector Bridge — retrieveMemories (hybrid search)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockQuery.mockReset();
+  });
+
+  it("should perform hybrid search with vector + BM25 and RRF fusion", async () => {
+    mockGenerateEmbedding.mockResolvedValue(makeFakeEmbedding());
+
+    // Mock: embedding check (has embeddings)
+    mockQuery.mockResolvedValueOnce({ rows: [{ "?column?": 1 }], rowCount: 1 });
+    // Mock: vector search results
+    mockQuery.mockResolvedValueOnce({
+      rows: [
+        { id: "mem-1", content: "Vector match A", memory_type: "episodic", vector_score: 0.95 },
+        { id: "mem-2", content: "Vector match B", memory_type: "semantic", vector_score: 0.85 },
+      ],
+      rowCount: 2,
+    });
+    // Mock: BM25 search results
+    mockQuery.mockResolvedValueOnce({
+      rows: [
+        { id: "mem-2", content: "Vector match B", memory_type: "semantic", bm25_score: 8 },
+        { id: "mem-3", content: "Text match C", memory_type: "procedural", bm25_score: 5 },
+      ],
+      rowCount: 2,
+    });
+
+    const result = await retrieveMemories({
+      userId: "allura-test",
+      query: "test hybrid",
+      limit: 10,
+      threshold: 0.0,
+    });
+
+    expect(result.modesUsed).toEqual(["vector", "text"]);
+    expect(result.memories.length).toBeGreaterThanOrEqual(1);
+
+    // mem-2 appears in both results → highest RRF score
+    // mem-1 appears only in vector → moderate RRF score
+    // mem-3 appears only in BM25 → lower RRF score
+    const mem2Idx = result.memories.findIndex((m) => m.id === "mem-2");
+    const mem1Idx = result.memories.findIndex((m) => m.id === "mem-1");
+    const mem3Idx = result.memories.findIndex((m) => m.id === "mem-3");
+    expect(mem2Idx).toBeLessThan(mem1Idx);
+    expect(mem2Idx).toBeLessThan(mem3Idx);
+  });
+
+  it("should skip vector search when no embeddings exist in table", async () => {
+    mockGenerateEmbedding.mockResolvedValue(makeFakeEmbedding());
+
+    // Mock: embedding check (no embeddings)
+    mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
+    // Mock: BM25 search results
+    mockQuery.mockResolvedValueOnce({
+      rows: [
+        { id: "mem-1", content: "Text result", memory_type: "semantic", bm25_score: 5 },
+      ],
+      rowCount: 1,
+    });
+
+    const result = await retrieveMemories({
+      userId: "allura-test",
+      query: "test",
+    });
+
+    expect(result.modesUsed).toEqual(["text"]);
+    expect(result.memories).toHaveLength(1);
+  });
+
+  it("should fall back to text-only when vector search query fails", async () => {
+    mockGenerateEmbedding.mockResolvedValue(makeFakeEmbedding());
+
+    // Mock: embedding check succeeds
+    mockQuery.mockResolvedValueOnce({ rows: [{ "?column?": 1 }], rowCount: 1 });
+    // Mock: vector search fails (function not available)
+    mockQuery.mockRejectedValueOnce(new Error('function "ruvector_cosine_distance" does not exist'));
+    // Mock: BM25 search results
+    mockQuery.mockResolvedValueOnce({
+      rows: [
+        { id: "mem-1", content: "Fallback text result", memory_type: "episodic", bm25_score: 3 },
+      ],
+      rowCount: 1,
+    });
+
+    const result = await retrieveMemories({
+      userId: "allura-test",
+      query: "test",
+    });
+
+    // Vector failed gracefully, fell back to text
+    expect(result.modesUsed).toEqual(["text"]);
+    expect(result.memories).toHaveLength(1);
+  });
+
+  it("should use vector-only mode when searchMode is 'vector'", async () => {
+    mockGenerateEmbedding.mockResolvedValue(makeFakeEmbedding());
+
+    // Mock: embedding check
+    mockQuery.mockResolvedValueOnce({ rows: [{ "?column?": 1 }], rowCount: 1 });
+    // Mock: vector search
+    mockQuery.mockResolvedValueOnce({
+      rows: [
+        { id: "mem-1", content: "Vector only", memory_type: "semantic", vector_score: 0.9 },
+      ],
+      rowCount: 1,
+    });
+
+    const result = await retrieveMemories({
+      userId: "allura-test",
+      query: "test",
+      searchMode: "vector",
+    });
+
+    expect(result.modesUsed).toEqual(["vector"]);
+    expect(result.memories).toHaveLength(1);
+    // Should NOT call BM25 query (total 2 calls: embedding check + vector)
+    expect(mockQuery).toHaveBeenCalledTimes(2);
+  });
+
+  it("should format query embedding as ruvector literal string", async () => {
+    const fakeEmbedding = makeFakeEmbedding();
+    mockGenerateEmbedding.mockResolvedValue(fakeEmbedding);
+
+    // Mock: embedding check
+    mockQuery.mockResolvedValueOnce({ rows: [{ "?column?": 1 }], rowCount: 1 });
+    // Mock: vector search
+    mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
+    // Mock: BM25 search
+    mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+    await retrieveMemories({
+      userId: "allura-test",
+      query: "test",
+    });
+
+    // Find the vector search call (second query call)
+    const vectorCall = mockQuery.mock.calls[1];
+    const embeddingParam = vectorCall[1][0];
+    expect(typeof embeddingParam).toBe("string");
+    expect(embeddingParam).toMatch(/^\[.*\]$/);
+    expect(embeddingParam).toContain(String(fakeEmbedding[0]));
+  });
+});
+
+// ── RRF Fusion Tests ────────────────────────────────────────────────────────
+
+describe("RuVector Bridge — RRF fusion correctness", () => {
+  // Import fuseResults for direct testing
+  // We test it indirectly through retrieveMemories, but also test the
+  // mathematical correctness of RRF scoring here.
+
+  it("should give higher RRF score to items appearing in both result sets", async () => {
+    mockGenerateEmbedding.mockResolvedValue(makeFakeEmbedding());
+
+    // Mock: embedding check
+    mockQuery.mockResolvedValueOnce({ rows: [{ "?column?": 1 }], rowCount: 1 });
+    // Mock: vector search — mem-A at rank 1
+    mockQuery.mockResolvedValueOnce({
+      rows: [
+        { id: "mem-A", content: "Both sources", memory_type: "episodic", vector_score: 0.9 },
+        { id: "mem-B", content: "Vector only", memory_type: "semantic", vector_score: 0.8 },
+      ],
+      rowCount: 2,
+    });
+    // Mock: BM25 search — mem-A at rank 1, mem-C at rank 2
+    mockQuery.mockResolvedValueOnce({
+      rows: [
+        { id: "mem-A", content: "Both sources", memory_type: "episodic", bm25_score: 10 },
+        { id: "mem-C", content: "Text only", memory_type: "procedural", bm25_score: 5 },
+      ],
+      rowCount: 2,
+    });
+
+    const result = await retrieveMemories({
+      userId: "allura-test",
+      query: "test",
+      threshold: 0.0,
+    });
+
+    // mem-A appears in both → RRF = 1/(60+1) + 1/(60+1) ≈ 0.0328
+    // mem-B appears in vector only (rank 2) → RRF = 1/(60+2) ≈ 0.0161
+    // mem-C appears in BM25 only (rank 2) → RRF = 1/(60+2) ≈ 0.0161
+    const memA = result.memories.find((m) => m.id === "mem-A");
+    const memB = result.memories.find((m) => m.id === "mem-B");
+    const memC = result.memories.find((m) => m.id === "mem-C");
+
+    expect(memA).toBeDefined();
+    expect(memB).toBeDefined();
+    expect(memC).toBeDefined();
+    expect(memA!.score).toBeGreaterThan(memB!.score);
+    expect(memA!.score).toBeGreaterThan(memC!.score);
+  });
+
+  it("should correctly deduplicate items appearing in both result sets", async () => {
+    mockGenerateEmbedding.mockResolvedValue(makeFakeEmbedding());
+
+    // Mock: embedding check
+    mockQuery.mockResolvedValueOnce({ rows: [{ "?column?": 1 }], rowCount: 1 });
+    // Mock: vector and BM25 both have mem-X
+    mockQuery.mockResolvedValueOnce({
+      rows: [
+        { id: "mem-X", content: "In both", memory_type: "semantic", vector_score: 0.95 },
+      ],
+      rowCount: 1,
+    });
+    mockQuery.mockResolvedValueOnce({
+      rows: [
+        { id: "mem-X", content: "In both", memory_type: "semantic", bm25_score: 8 },
+      ],
+      rowCount: 1,
+    });
+
+    const result = await retrieveMemories({
+      userId: "allura-test",
+      query: "test",
+      threshold: 0.0,
+    });
+
+    // Should only have one entry for mem-X (deduplicated)
+    const memXItems = result.memories.filter((m) => m.id === "mem-X");
+    expect(memXItems).toHaveLength(1);
+  });
+
+  it("should apply threshold to fused RRF scores", async () => {
+    mockGenerateEmbedding.mockResolvedValue(makeFakeEmbedding());
+
+    // Mock: embedding check
+    mockQuery.mockResolvedValueOnce({ rows: [{ "?column?": 1 }], rowCount: 1 });
+    // Mock: vector results
+    mockQuery.mockResolvedValueOnce({
+      rows: [
+        { id: "mem-1", content: "Top result", memory_type: "episodic", vector_score: 0.95 },
+      ],
+      rowCount: 1,
+    });
+    // Mock: BM25 results
+    mockQuery.mockResolvedValueOnce({
+      rows: [
+        { id: "mem-1", content: "Top result", memory_type: "episodic", bm25_score: 10 },
+      ],
+      rowCount: 1,
+    });
+
+    // With high threshold, some fused results may be filtered
+    const result = await retrieveMemories({
+      userId: "allura-test",
+      query: "test",
+      threshold: 0.5,
+    });
+
+    // mem-1 has highest possible RRF (rank 1 in both), should pass threshold
+    expect(result.memories.some((m) => m.id === "mem-1")).toBe(true);
   });
 });
 
@@ -630,7 +933,7 @@ describe("RuVector Bridge — Type compliance", () => {
     expect(params.metadata).toEqual({ key: "value" });
   });
 
-  it("RetrieveMemoriesParams should accept optional fields", () => {
+  it("RetrieveMemoriesParams should accept optional fields including searchMode", () => {
     const minimal: import("./types").RetrieveMemoriesParams = {
       userId: "allura-test",
       query: "search query",
@@ -641,11 +944,36 @@ describe("RuVector Bridge — Type compliance", () => {
       query: "search query",
       limit: 20,
       threshold: 0.7,
+      searchMode: "hybrid",
     };
 
     expect(minimal.limit).toBeUndefined();
+    expect(minimal.searchMode).toBeUndefined();
     expect(full.limit).toBe(20);
     expect(full.threshold).toBe(0.7);
+    expect(full.searchMode).toBe("hybrid");
+  });
+
+  it("RetrieveMemoriesParams searchMode should accept all three values", () => {
+    const hybrid: import("./types").RetrieveMemoriesParams = {
+      userId: "allura-test",
+      query: "test",
+      searchMode: "hybrid",
+    };
+    const vectorOnly: import("./types").RetrieveMemoriesParams = {
+      userId: "allura-test",
+      query: "test",
+      searchMode: "vector",
+    };
+    const textOnly: import("./types").RetrieveMemoriesParams = {
+      userId: "allura-test",
+      query: "test",
+      searchMode: "text",
+    };
+
+    expect(hybrid.searchMode).toBe("hybrid");
+    expect(vectorOnly.searchMode).toBe("vector");
+    expect(textOnly.searchMode).toBe("text");
   });
 
   it("PostFeedbackParams should accept optional usedMemoryIds", () => {
@@ -678,16 +1006,18 @@ describe("RuVector Bridge — Type compliance", () => {
     expect(result.status).toBe("stored_pending_embedding");
   });
 
-  it("RetrieveMemoriesResult should include trajectoryId", () => {
+  it("RetrieveMemoriesResult should include trajectoryId and modesUsed", () => {
     const result: import("./types").RetrieveMemoriesResult = {
       memories: [],
       total: 0,
       latencyMs: 5,
       trajectoryId: "traj-456",
+      modesUsed: ["vector", "text"],
     };
 
     expect(result.trajectoryId).toBeTruthy();
     expect(Array.isArray(result.memories)).toBe(true);
+    expect(result.modesUsed).toEqual(["vector", "text"]);
   });
 
   it("RuVectorMemoryType should allow all three types", () => {
