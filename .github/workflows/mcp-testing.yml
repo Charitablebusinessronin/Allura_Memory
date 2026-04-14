@@ -2,9 +2,9 @@ name: MCP Testing Suite
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, new-main]
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, new-main]
 
 jobs:
   static-analysis:
