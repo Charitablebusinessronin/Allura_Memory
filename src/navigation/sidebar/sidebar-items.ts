@@ -1,5 +1,7 @@
 import {
   Brain,
+  ClipboardList,
+  Database,
   type LucideIcon,
   Search,
   Settings,
@@ -51,6 +53,22 @@ export const sidebarItems: NavGroup[] = [
         url: "/dashboard/settings",
         icon: Settings,
         comingSoon: true,
+      },
+    ],
+  },
+  {
+    id: 2,
+    label: "Admin",
+    items: [
+      {
+        title: "Curator",
+        url: "/dashboard/curator",
+        icon: ClipboardList,
+      },
+      {
+        title: "Memories (Admin)",
+        url: "/dashboard/memories",
+        icon: Database,
       },
     ],
   },
