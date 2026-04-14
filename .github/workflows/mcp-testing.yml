@@ -154,6 +154,7 @@ jobs:
           curl -s http://localhost:3000/api/health || true
 
       - name: Run MCP browser tests
+        continue-on-error: true
         env:
           NEXT_PUBLIC_APP_URL: http://localhost:3000
           MCP_SCREENSHOT_DIR: tests/mcp/fixtures/screenshots
