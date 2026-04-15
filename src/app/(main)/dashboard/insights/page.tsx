@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { formatDistanceToNow } from "date-fns"
-import { ChevronDown, ChevronRight, Loader2, Lightbulb, RefreshCw, Filter, ArrowUpDown } from "lucide-react"
+import { ChevronDown, ChevronRight, Loader2, Lightbulb, RefreshCw, Filter, ArrowUpDown, History } from "lucide-react"
 
+import { APP_CONFIG } from "@/config/app-config"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -11,7 +12,9 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 
-const DEFAULT_GROUP_ID = "allura-roninmemory"
+const DEFAULT_GROUP_ID = APP_CONFIG.defaultGroupId
+
+type InsightStatus = "active" | "superseded" | "deprecated" | "reverted"
 
 interface InsightRecord {
   id: string
@@ -28,16 +31,28 @@ interface InsightRecord {
   metadata: Record<string, unknown>
 }
 
+interface VersionHistoryEntry {
+  insight: InsightRecord
+  superseded_by: InsightRecord | null
+  supersedes: InsightRecord | null
+}
+
 export default function InsightsPage() {
   const [insights, setInsights] = useState<InsightRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [totalCount, setTotalCount] = useState(0)
+  const [hasMore, setHasMore] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [versionHistory, setVersionHistory] = useState<VersionHistoryEntry[] | null>(null)
+  const [historyLoading, setHistoryLoading] = useState(false)
 
   // Filters
   const [status, setStatus] = useState<string>("active")
+  const [sourceType, setSourceType] = useState<string>("all")
+  const [confidence, setConfidence] = useState<string>("all")
   const [limit, setLimit] = useState(50)
+  const [offset, setOffset] = useState(0)
 
   const loadInsights = useCallback(async () => {
     setLoading(true)
@@ -47,9 +62,21 @@ export default function InsightsPage() {
       const params = new URLSearchParams({
         group_id: DEFAULT_GROUP_ID,
         limit: String(limit),
+        offset: String(offset),
       })
       if (status && status !== "all") {
         params.set("status", status)
+      }
+      if (sourceType && sourceType !== "all") {
+        params.set("source_type", sourceType)
+      }
+      if (confidence === "high") {
+        params.set("min_confidence", "0.85")
+      } else if (confidence === "medium") {
+        params.set("min_confidence", "0.6")
+        params.set("max_confidence", "0.85")
+      } else if (confidence === "low") {
+        params.set("max_confidence", "0.6")
       }
 
       const res = await fetch(`/api/memory/insights?${params.toString()}`)
@@ -57,18 +84,59 @@ export default function InsightsPage() {
         throw new Error(`Failed to fetch insights: ${res.status}`)
       }
       const data = await res.json()
-      setInsights(data.insights ?? [])
+      if (offset === 0) {
+        setInsights(data.insights ?? [])
+      } else {
+        setInsights((prev) => [...prev, ...(data.insights ?? [])])
+      }
       setTotalCount(data.total ?? 0)
+      setHasMore(data.has_more ?? false)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error")
     } finally {
       setLoading(false)
     }
-  }, [status, limit])
+  }, [status, sourceType, confidence, limit, offset])
 
+  const loadVersionHistory = useCallback(async (insightId: string) => {
+    setHistoryLoading(true)
+    try {
+      const res = await fetch(
+        `/api/memory/insights/${encodeURIComponent(insightId)}/history?group_id=${DEFAULT_GROUP_ID}`
+      )
+      if (!res.ok) {
+        setVersionHistory(null)
+        return
+      }
+      const data = await res.json()
+      setVersionHistory(data.history ?? [])
+    } catch {
+      setVersionHistory(null)
+    } finally {
+      setHistoryLoading(false)
+    }
+  }, [])
+
+  // Reload when filters change
   useEffect(() => {
+    setOffset(0)
+    setLoading(true)
     loadInsights()
-  }, [loadInsights])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, sourceType, confidence, limit])
+
+  // Load version history when an insight is expanded
+  useEffect(() => {
+    if (expandedId) {
+      const insight = insights.find((i) => i.id === expandedId)
+      if (insight) {
+        loadVersionHistory(insight.insight_id)
+      }
+    } else {
+      setVersionHistory(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expandedId])
 
   const statusColor = (s: string) => {
     switch (s) {
@@ -106,7 +174,15 @@ export default function InsightsPage() {
             Knowledge graph insights for {DEFAULT_GROUP_ID} — {totalCount} {status === "all" ? "total" : status}
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={loadInsights} disabled={loading}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setOffset(0)
+            loadInsights()
+          }}
+          disabled={loading}
+        >
           <RefreshCw className={`mr-1 size-3 ${loading ? "animate-spin" : ""}`} />
           Refresh
         </Button>
@@ -128,16 +204,44 @@ export default function InsightsPage() {
           </SelectContent>
         </Select>
 
-        <Select value={String(limit)} onValueChange={(v) => setLimit(Number(v))}>
-          <SelectTrigger className="w-[120px]">
-            <SelectValue placeholder="Limit" />
+        <Select value={sourceType} onValueChange={setSourceType}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Source" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="25">25</SelectItem>
-            <SelectItem value="50">50</SelectItem>
-            <SelectItem value="100">100</SelectItem>
+            <SelectItem value="all">All Sources</SelectItem>
+            <SelectItem value="trace">Trace</SelectItem>
+            <SelectItem value="manual">Manual</SelectItem>
+            <SelectItem value="promotion">Promotion</SelectItem>
+            <SelectItem value="import">Import</SelectItem>
           </SelectContent>
         </Select>
+
+        <Select value={confidence} onValueChange={setConfidence}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Confidence" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Confidence</SelectItem>
+            <SelectItem value="high">High (≥ 85%)</SelectItem>
+            <SelectItem value="medium">Medium (60-85%)</SelectItem>
+            <SelectItem value="low">Low (&lt; 60%)</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {(status !== "active" || sourceType !== "all" || confidence !== "all") && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setStatus("active")
+              setSourceType("all")
+              setConfidence("all")
+            }}
+          >
+            Clear filters
+          </Button>
+        )}
       </div>
 
       {/* Error state */}
@@ -205,7 +309,7 @@ export default function InsightsPage() {
         </Table>
       </div>
 
-      {/* Expanded detail panel */}
+      {/* Expanded detail panel with version history timeline */}
       {expandedId &&
         (() => {
           const insight = insights.find((i) => i.id === expandedId)
@@ -217,7 +321,7 @@ export default function InsightsPage() {
                   Insight Detail — {insight.insight_id} (v{insight.version})
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-4">
                 <div>
                   <p className="text-muted-foreground mb-1 text-xs font-medium uppercase">Content</p>
                   <p className="text-sm leading-relaxed">{insight.content}</p>
@@ -231,6 +335,74 @@ export default function InsightsPage() {
                     </span>
                   </div>
                 </div>
+
+                {/* Version history timeline */}
+                <div>
+                  <p className="text-muted-foreground mb-2 flex items-center gap-1 text-xs font-medium uppercase">
+                    <History className="size-3" />
+                    Version History ({insight.version} version
+                    {insight.version !== 1 ? "s" : ""})
+                  </p>
+                  {historyLoading ? (
+                    <div className="flex items-center gap-2 py-2">
+                      <Loader2 className="text-muted-foreground size-4 animate-spin" />
+                      <span className="text-muted-foreground text-sm">Loading history...</span>
+                    </div>
+                  ) : versionHistory && versionHistory.length > 0 ? (
+                    <div className="space-y-0">
+                      {versionHistory.map((entry, idx) => (
+                        <div key={entry.insight.id} className="flex items-start gap-3 pb-2">
+                          {/* Timeline dot and line */}
+                          <div className="flex flex-col items-center">
+                            <div
+                              className={`size-3 rounded-full border-2 ${
+                                entry.insight.status === "active"
+                                  ? "border-green-500 bg-green-500"
+                                  : entry.insight.status === "superseded"
+                                    ? "border-blue-500 bg-blue-500"
+                                    : entry.insight.status === "deprecated"
+                                      ? "border-yellow-500 bg-yellow-500"
+                                      : "border-red-500 bg-red-500"
+                              }`}
+                            />
+                            {idx < versionHistory.length - 1 && <div className="bg-border w-px flex-1" />}
+                          </div>
+                          {/* Version content */}
+                          <div className="min-w-0 flex-1 pb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold">v{entry.insight.version}</span>
+                              <Badge variant="outline" className={`text-[10px] ${statusColor(entry.insight.status)}`}>
+                                {entry.insight.status}
+                              </Badge>
+                              <span className="text-muted-foreground text-[10px]">
+                                {(entry.insight.confidence * 100).toFixed(0)}% confidence
+                              </span>
+                              {entry.insight.created_at && (
+                                <span className="text-muted-foreground text-[10px]">
+                                  {formatDistanceToNow(new Date(entry.insight.created_at), {
+                                    addSuffix: true,
+                                  })}
+                                </span>
+                              )}
+                            </div>
+                            {entry.insight.content !== insight.content && (
+                              <p className="text-muted-foreground mt-0.5 truncate text-xs">{entry.insight.content}</p>
+                            )}
+                            {entry.supersedes && (
+                              <span className="text-muted-foreground text-[10px]">
+                                ← supersedes v{entry.supersedes.version}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">Single version — no SUPERSEDES chain.</p>
+                  )}
+                </div>
+
+                {/* Full metadata */}
                 <div>
                   <p className="text-muted-foreground mb-1 text-xs font-medium uppercase">Full Metadata</p>
                   <pre className="bg-muted overflow-auto rounded-md p-3 text-xs">
@@ -247,6 +419,20 @@ export default function InsightsPage() {
         <div className="flex items-center justify-center py-8">
           <Loader2 className="text-muted-foreground mr-2 size-5 animate-spin" />
           <span className="text-muted-foreground text-sm">Loading insights...</span>
+        </div>
+      )}
+
+      {/* Load more */}
+      {hasMore && !loading && (
+        <div className="flex justify-center">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setOffset((prev) => prev + limit)
+            }}
+          >
+            Load more
+          </Button>
         </div>
       )}
 
