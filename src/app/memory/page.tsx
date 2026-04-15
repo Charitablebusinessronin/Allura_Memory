@@ -14,7 +14,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from '@/components/ui/dialog';
 
 interface Memory {
   id: string;
@@ -61,8 +61,9 @@ export default function MemoryViewerPage() {
   const [groupId, setGroupId] = useState(
     process.env.NEXT_PUBLIC_DEFAULT_GROUP_ID ?? 'allura-roninmemory'
   );
+  // FIX BUG-002: was 'load-test-vu-1' — caused load test data to appear on every fresh load
   const [userId, setUserId] = useState(
-    process.env.NEXT_PUBLIC_DEFAULT_USER_ID ?? 'load-test-vu-1'
+    process.env.NEXT_PUBLIC_DEFAULT_USER_ID ?? ''
   );
   const [allUsers, setAllUsers] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -72,7 +73,23 @@ export default function MemoryViewerPage() {
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Fetch memories on mount
+  // FIX BUG-004: debounced real-time search — no Enter key required
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      if (searchQuery.trim()) {
+        searchMemories();
+      } else {
+        fetchMemories();
+      }
+    }, 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [searchQuery]);
+
+  // Fetch memories on mount / when group/user changes
   useEffect(() => {
     fetchMemories();
   }, [groupId, userId, allUsers]);
@@ -81,7 +98,7 @@ export default function MemoryViewerPage() {
   const fetchMemories = async () => {
     setIsLoading(true);
     try {
-      const userParam = allUsers ? '' : `&user_id=${encodeURIComponent(userId)}`;
+      const userParam = allUsers ? '' : userId ? `&user_id=${encodeURIComponent(userId)}` : '';
       const response = await fetch(
         `/api/memory?group_id=${encodeURIComponent(groupId)}${userParam}&limit=50`
       );
@@ -104,7 +121,7 @@ export default function MemoryViewerPage() {
 
     setIsLoading(true);
     try {
-      const userParam = allUsers ? '' : `&user_id=${encodeURIComponent(userId)}`;
+      const userParam = allUsers ? '' : userId ? `&user_id=${encodeURIComponent(userId)}` : '';
       const response = await fetch(
         `/api/memory?query=${encodeURIComponent(searchQuery)}&group_id=${encodeURIComponent(groupId)}${userParam}&limit=50`
       );
@@ -117,7 +134,7 @@ export default function MemoryViewerPage() {
     }
   };
 
-  // Add memory manually
+  // Add memory (called from modal)
   const addMemory = async (content: string) => {
     try {
       const response = await fetch('/api/memory', {
@@ -148,14 +165,9 @@ export default function MemoryViewerPage() {
       );
       
       if (response.ok) {
-        // Add to recently deleted for undo
         setRecentlyDeleted((prev) => [memory, ...prev].slice(0, 10));
         setShowUndo(true);
-        
-        // Remove from list
         setMemories((prev) => prev.filter((m) => m.id !== memory.id));
-        
-        // Auto-hide undo after 30 seconds
         setTimeout(() => setShowUndo(false), 30000);
       }
     } catch (error) {
@@ -166,13 +178,8 @@ export default function MemoryViewerPage() {
   // Undo deletion
   const undoDelete = async () => {
     if (recentlyDeleted.length === 0) return;
-    
     const memory = recentlyDeleted[0];
-    
-    // Re-add the memory
     await addMemory(memory.content);
-    
-    // Remove from recently deleted
     setRecentlyDeleted((prev) => prev.slice(1));
     setShowUndo(false);
   };
@@ -193,11 +200,15 @@ export default function MemoryViewerPage() {
     return date.toLocaleDateString();
   };
 
-  // Handle key press
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      searchMemories();
-    }
+  // FIX BUG-003: native Add Memory modal state (replaces prompt())
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addContent, setAddContent] = useState('');
+
+  const handleAddSubmit = async () => {
+    if (!addContent.trim()) return;
+    await addMemory(addContent.trim());
+    setAddContent('');
+    setShowAddModal(false);
   };
 
   return (
@@ -224,12 +235,12 @@ export default function MemoryViewerPage() {
               className="w-32 text-sm"
             />
             <Button
-              variant={allUsers ? "default" : "outline"}
+              variant={allUsers ? 'default' : 'outline'}
               size="sm"
               onClick={() => setAllUsers((v) => !v)}
               className="text-xs whitespace-nowrap"
             >
-              {allUsers ? "All Users" : "All Users"}
+              {allUsers ? 'All Users ✓' : 'All Users'}
             </Button>
           </div>
         </div>
@@ -246,28 +257,19 @@ export default function MemoryViewerPage() {
               placeholder="Search your memories..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={handleKeyPress}
               className="pl-10"
             />
             {searchQuery && (
               <button
-                onClick={() => {
-                  setSearchQuery('');
-                  fetchMemories();
-                }}
+                onClick={() => setSearchQuery('')}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 ✕
               </button>
             )}
           </div>
-          <Button
-            variant="outline"
-            onClick={() => {
-              const content = prompt('Add a memory manually:');
-              if (content) addMemory(content);
-            }}
-          >
+          {/* FIX BUG-003: open modal instead of prompt() */}
+          <Button variant="outline" onClick={() => setShowAddModal(true)}>
             Add manually
           </Button>
         </div>
@@ -296,23 +298,18 @@ export default function MemoryViewerPage() {
         )}
 
         {isLoading ? (
-          <div className="text-center py-12 text-muted-foreground">
-            Loading...
-          </div>
+          <div className="text-center py-12 text-muted-foreground">Loading...</div>
         ) : memories.length === 0 ? (
           <div className="text-center py-12">
             {searchQuery ? (
               <div>
                 <p className="text-lg mb-2">
-                  Your AI hasn't learned anything about "{searchQuery}" yet.
+                  Your AI hasn't learned anything about &quot;{searchQuery}&quot; yet.
                 </p>
                 <p className="text-muted-foreground mb-4">
-                  Try: "{searchQuery.split(' ')[0]}", or related terms
+                  Try: &quot;{searchQuery.split(' ')[0]}&quot;, or related terms
                 </p>
-                <Button
-                  variant="outline"
-                  onClick={() => addMemory(searchQuery)}
-                >
+                <Button variant="outline" onClick={() => { setAddContent(searchQuery); setShowAddModal(true); }}>
                   Add this manually
                 </Button>
               </div>
@@ -351,9 +348,7 @@ export default function MemoryViewerPage() {
                             <span>{formatRelativeTime(memory.created_at)}</span>
                             <span>·</span>
                             <span>
-                              {memory.provenance === 'conversation'
-                                ? 'from conversation'
-                                : 'added manually'}
+                              {memory.provenance === 'conversation' ? 'from conversation' : 'added manually'}
                             </span>
                           </div>
                         </div>
@@ -365,9 +360,7 @@ export default function MemoryViewerPage() {
                           <span>{formatRelativeTime(memory.created_at)}</span>
                           <span>·</span>
                           <span>
-                            {memory.provenance === 'conversation'
-                              ? 'from conversation'
-                              : 'added manually'}
+                            {memory.provenance === 'conversation' ? 'from conversation' : 'added manually'}
                           </span>
                         </div>
                         <Separator className="my-3" />
@@ -408,6 +401,33 @@ export default function MemoryViewerPage() {
         </div>
       </div>
 
+      {/* FIX BUG-003: Add Memory Modal (replaces prompt()) */}
+      <AlertDialog open={showAddModal} onOpenChange={setShowAddModal}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Add a memory</AlertDialogTitle>
+            <AlertDialogDescription>
+              Manually teach your AI something new.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="px-1 py-2">
+            <Input
+              autoFocus
+              placeholder="e.g. I prefer TypeScript over JavaScript"
+              value={addContent}
+              onChange={(e) => setAddContent(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddSubmit()}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setAddContent(''); }}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleAddSubmit} disabled={!addContent.trim()}>
+              Add memory
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
@@ -421,9 +441,7 @@ export default function MemoryViewerPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                if (selectedMemory) {
-                  deleteMemory(selectedMemory);
-                }
+                if (selectedMemory) deleteMemory(selectedMemory);
                 setShowDeleteConfirm(false);
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
