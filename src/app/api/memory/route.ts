@@ -38,6 +38,7 @@ import {
 import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
 import { requireRole, forbiddenResponse, unauthorizedResponse } from "@/lib/auth/api-auth";
 import { captureException } from "@/lib/observability/sentry";
+import type { MemoryResponseMeta } from "@/lib/memory/canonical-contracts";
 
 // ── Error Handling ────────────────────────────────────────────────────────
 
@@ -141,7 +142,7 @@ export async function POST(request: NextRequest) {
     
     const response = await memory_add(addRequest);
     
-    return NextResponse.json(response);
+    return jsonWithDegradation(response);
   } catch (error) {
     return handleError(error, "/api/memory", "POST");
   }
@@ -198,7 +199,7 @@ export async function GET(request: NextRequest) {
       };
       
       const response = await memory_search(searchRequest);
-      return NextResponse.json(response);
+      return jsonWithDegradation(response);
     }
     
     // Otherwise, route to memory_list
@@ -213,8 +214,39 @@ export async function GET(request: NextRequest) {
 
     const response = await memory_list(listRequest);
     
-    return NextResponse.json(response);
+    return jsonWithDegradation(response);
   } catch (error) {
     return handleError(error, "/api/memory", "GET");
   }
+}
+
+// ── Degraded Response Helper ────────────────────────────────────────────────
+//
+// When a canonical tool returns partial data (e.g. Neo4j unavailable),
+// the response includes meta.degraded = true. We must NOT silently return
+// HTTP 200 — callers need to distinguish "complete results" from "partial results".
+//
+// Strategy:
+// - meta.degraded === true  → HTTP 206 Partial Content + Warning header
+// - meta.degraded === false → HTTP 200 OK (normal)
+// - no meta field           → HTTP 200 OK (backward compat)
+//
+// Issue #14: PostgreSQL errors now propagate as thrown exceptions (503/500).
+// Neo4j degraded mode returns partial data with meta.degraded = true (206).
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function jsonWithDegradation<T extends any = any>(
+  data: T & { meta?: MemoryResponseMeta },
+): NextResponse<T> {
+  const meta = data.meta;
+  if (meta?.degraded) {
+    const warning = meta.degraded_reason
+      ? `299 Allura "${meta.degraded_reason}"`
+      : '299 Allura "partial_data"';
+    return NextResponse.json(data, {
+      status: 206,
+      headers: { Warning: warning },
+    });
+  }
+  return NextResponse.json(data);
 }

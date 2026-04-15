@@ -18,6 +18,28 @@ import {
   DatabaseQueryError,
 } from "@/lib/errors/database-errors";
 import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
+import type { MemoryResponseMeta } from "@/lib/memory/canonical-contracts";
+
+// ── Degraded Response Helper ────────────────────────────────────────────────
+// See src/app/api/memory/route.ts for rationale (Issue #14).
+// When meta.degraded = true, return 206 + Warning header instead of silent 200.
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function jsonWithDegradation<T extends any = any>(
+  data: T & { meta?: MemoryResponseMeta },
+): NextResponse<T> {
+  const meta = data.meta;
+  if (meta?.degraded) {
+    const warning = meta.degraded_reason
+      ? `299 Allura "${meta.degraded_reason}"`
+      : '299 Allura "partial_data"';
+    return NextResponse.json(data, {
+      status: 206,
+      headers: { Warning: warning },
+    });
+  }
+  return NextResponse.json(data);
+}
 
 // ── GET /api/memory/[id] (memory_get) ──────────────────────────────────────
 
@@ -57,7 +79,7 @@ export async function GET(
     
     const response = await memory_get(getRequest);
     
-    return NextResponse.json(response);
+    return jsonWithDegradation(response);
   } catch (error) {
     if (error instanceof DatabaseUnavailableError) {
       return NextResponse.json(
@@ -134,7 +156,7 @@ export async function DELETE(
     
     const response = await memory_delete(deleteRequest);
     
-    return NextResponse.json(response);
+    return jsonWithDegradation(response);
   } catch (error) {
     if (error instanceof DatabaseUnavailableError) {
       return NextResponse.json(
