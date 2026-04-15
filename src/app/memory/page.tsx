@@ -64,6 +64,7 @@ export default function MemoryViewerPage() {
   const [userId, setUserId] = useState(
     process.env.NEXT_PUBLIC_DEFAULT_USER_ID ?? 'load-test-vu-1'
   );
+  const [allUsers, setAllUsers] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [recentlyDeleted, setRecentlyDeleted] = useState<Memory[]>([]);
@@ -74,14 +75,15 @@ export default function MemoryViewerPage() {
   // Fetch memories on mount
   useEffect(() => {
     fetchMemories();
-  }, [groupId, userId]);
+  }, [groupId, userId, allUsers]);
 
   // Fetch all memories for user
   const fetchMemories = async () => {
     setIsLoading(true);
     try {
+      const userParam = allUsers ? '' : `&user_id=${encodeURIComponent(userId)}`;
       const response = await fetch(
-        `/api/memory?group_id=${groupId}&user_id=${userId}&limit=50`
+        `/api/memory?group_id=${encodeURIComponent(groupId)}${userParam}&limit=50`
       );
       const data: ListResponse = await response.json();
       setMemories(data.memories || []);
@@ -102,8 +104,9 @@ export default function MemoryViewerPage() {
 
     setIsLoading(true);
     try {
+      const userParam = allUsers ? '' : `&user_id=${encodeURIComponent(userId)}`;
       const response = await fetch(
-        `/api/memory?query=${encodeURIComponent(searchQuery)}&group_id=${groupId}&user_id=${userId}&limit=50`
+        `/api/memory?query=${encodeURIComponent(searchQuery)}&group_id=${encodeURIComponent(groupId)}${userParam}&limit=50`
       );
       const data: SearchResponse = await response.json();
       setMemories(data.results || []);
@@ -216,9 +219,18 @@ export default function MemoryViewerPage() {
             <Input
               placeholder="user_id"
               value={userId}
-              onChange={(e) => setUserId(e.target.value)}
+              onChange={(e) => { setUserId(e.target.value); setAllUsers(false); }}
+              disabled={allUsers}
               className="w-32 text-sm"
             />
+            <Button
+              variant={allUsers ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAllUsers((v) => !v)}
+              className="text-xs whitespace-nowrap"
+            >
+              {allUsers ? "All Users" : "All Users"}
+            </Button>
           </div>
         </div>
       </div>

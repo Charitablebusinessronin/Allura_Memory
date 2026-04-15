@@ -274,9 +274,9 @@ export interface MemoryGetResponse {
 export interface MemoryListRequest {
   /** Required: Tenant namespace */
   group_id: GroupId;
-  
-  /** Required: User identifier */
-  user_id: UserId;
+
+  /** Optional: User identifier — omit to list all users in the tenant (admin view) */
+  user_id?: UserId;
   
   /** Optional: Maximum results (default: 50) */
   limit?: number;

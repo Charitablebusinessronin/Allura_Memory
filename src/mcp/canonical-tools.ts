@@ -1017,13 +1017,13 @@ export async function memory_list(request: MemoryListRequest): Promise<MemoryLis
                 created_at
          FROM events
          WHERE group_id = $1
-           AND metadata->>'user_id' = $2
+           AND ($2::text IS NULL OR metadata->>'user_id' = $2)
            AND event_type = 'memory_add'
          ORDER BY created_at DESC
          LIMIT $3 OFFSET $4`;
     const [episodicResults, semanticResults] = await Promise.all([
       // PostgreSQL — throw on failure, do NOT swallow
-      pg.query<EpisodicMemoryRow>(pgQuery, [groupId, request.user_id, limit, offset]),
+      pg.query<EpisodicMemoryRow>(pgQuery, [groupId, request.user_id ?? null, limit, offset]),
       
       // Neo4j
         (async () => {

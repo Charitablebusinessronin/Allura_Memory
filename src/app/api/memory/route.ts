@@ -29,6 +29,7 @@ import type {
   MemoryListRequest,
   MemoryDeleteRequest,
   GroupId,
+  UserId,
 } from "@/lib/memory/canonical-contracts";
 import {
   DatabaseUnavailableError,
@@ -201,21 +202,15 @@ export async function GET(request: NextRequest) {
     }
     
     // Otherwise, route to memory_list
+    const rawUserId = searchParams.get("user_id");
     const listRequest: MemoryListRequest = {
       group_id: validatedGroupId as GroupId,
-      user_id: searchParams.get("user_id") || "",
+      user_id: rawUserId ? (rawUserId as UserId) : undefined,
       limit: searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : 50,
       offset: searchParams.get("offset") ? parseInt(searchParams.get("offset")!) : 0,
       sort: (searchParams.get("sort") as "created_at_desc" | "created_at_asc" | "score_desc" | "score_asc") || "created_at_desc",
     };
-    
-    if (!listRequest.user_id) {
-      return NextResponse.json(
-        { error: "user_id is required" },
-        { status: 400 }
-      );
-    }
-    
+
     const response = await memory_list(listRequest);
     
     return NextResponse.json(response);
