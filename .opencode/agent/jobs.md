@@ -8,17 +8,6 @@ type: primary
 scope: harness
 platform: Both
 status: active
-permission:
-  edit: ask
-  bash: ask
-  webfetch: allow
-  skill:
-    "*": allow
-  task:
-    brooks-architect: allow
-    scout-recon: allow
-    explore: allow
-    general: allow
 ---
 
 ## INSTRUCTION BOUNDARY (CRITICAL)

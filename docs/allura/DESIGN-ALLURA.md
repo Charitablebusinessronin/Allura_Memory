@@ -20,6 +20,10 @@
 | Enterprise admin view separate | User | Two personas. Two doors. Same machine |
 | Mental model: Postgres = truth, Neo4j = speed | Wozniak | Stop saying "dual-database" like it's a feature |
 | "Forget" on delete button | Jobs (Brooks dissents) | The machine forgets. Use that word |
+| "Your AI's notebook" framing | Sarah (13-16-18 review) | Consumer mental model: personal, curated, intimate — not database |
+| No technical inputs in consumer view | Sarah (13-16-18 review) | `group_id` and `user_id` are developer concepts. Hide them. |
+| "Add a thought" not "Add manually" | Maya (16) | Manual sounds like work. Thought sounds like contribution. |
+| Youth culture validation required | Steve | 13-16-18 framework: if they don't get it, it's not ready |
 
 ---
 

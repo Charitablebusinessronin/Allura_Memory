@@ -37,6 +37,7 @@ Human-in-the-loop curation before facts enter the knowledge graph. Append-only P
 | **Correction Mechanism** | Edit existing memory | Create new node, link SUPERSEDES, mark old deprecated |
 | **Audit Trail** | Limited (post-hoc logs) | Complete (append-only PostgreSQL) |
 | **Recovery** | Depends on backup schedule | 30-day soft-delete window (always recoverable) |
+| **UX Validation** | Developer-focused | 13-16-18 youth culture framework (target: 0.85+ score) |
 
 ### Benchmarks
 
