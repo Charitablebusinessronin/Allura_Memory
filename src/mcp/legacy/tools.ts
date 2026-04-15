@@ -7,11 +7,22 @@
  * Kept for: openclaw-gateway HTTP surface, backward compatibility.
  * Removal target: after consumers are ported to canonical.
  * 
+ * Issue #7 fixes:
+ * - adasApproveDesign: replaced UPDATE with append-only INSERT to events
+ * - All handlers: throw errors instead of returning { error: String(error) }
+ * - group_id validation: Zod schemas already enforce ^allura- pattern
+ * 
  * Original file: src/mcp/tools.ts (moved to legacy/)
  */
 
 import { z } from "zod";
-import { getPool } from "../../lib/postgres/connection.js";
+import { getPool } from "@/lib/postgres/connection";
+import { randomUUID } from "crypto";
+import {
+  DatabaseUnavailableError,
+  DatabaseQueryError,
+  classifyPostgresError,
+} from "@/lib/errors/database-errors";
 
 // Tool schemas
 const MemorySearchRequest = z.object({
@@ -72,9 +83,15 @@ export async function memorySearch(args: unknown) {
       memories: result.rows,
     };
   } catch (error) {
-    return {
-      error: String(error),
-    };
+    // Issue #7: Propagate errors instead of swallowing them.
+    // Callers need to distinguish "empty result" from "DB is down".
+    if (error instanceof DatabaseUnavailableError || error instanceof DatabaseQueryError) {
+      throw error;
+    }
+    if (error instanceof Error && (error as Error & { code?: string }).code) {
+      throw classifyPostgresError(error, "memorySearch", "SELECT events ILIKE");
+    }
+    throw error;
   }
 }
 
@@ -95,9 +112,13 @@ export async function memoryStore(args: unknown) {
       message: `Memory stored: ${parsed.title}`,
     };
   } catch (error) {
-    return {
-      error: String(error),
-    };
+    if (error instanceof DatabaseUnavailableError || error instanceof DatabaseQueryError) {
+      throw error;
+    }
+    if (error instanceof Error && (error as Error & { code?: string }).code) {
+      throw classifyPostgresError(error, "memoryStore", "INSERT events");
+    }
+    throw error;
   }
 }
 
@@ -136,9 +157,13 @@ export async function adasGetProposals(args: unknown) {
       proposals: result.rows,
     };
   } catch (error) {
-    return {
-      error: String(error),
-    };
+    if (error instanceof DatabaseUnavailableError || error instanceof DatabaseQueryError) {
+      throw error;
+    }
+    if (error instanceof Error && (error as Error & { code?: string }).code) {
+      throw classifyPostgresError(error, "adasGetProposals", "SELECT promotion_candidates");
+    }
+    throw error;
   }
 }
 
@@ -147,24 +172,45 @@ export async function adasApproveDesign(args: unknown) {
   
   try {
     const pool = getPool();
+    const eventId = randomUUID();
+    const status = parsed.decision === "approve" ? "approved" : "rejected";
     
-    // Update proposal status
+    // Issue #7: Append-only — INSERT review event instead of UPDATE.
+    // The promotion_candidates row is NOT mutated. The review decision
+    // is recorded as a new event in the append-only events table.
+    // Consumers read the latest event for a given design_id to determine
+    // current status.
     await pool.query(
-      `UPDATE promotion_candidates 
-       SET status = $1, reviewed_at = NOW(), reviewed_by = $2
-       WHERE id = $3 AND group_id = $4`,
-      [parsed.decision === "approve" ? "approved" : "rejected", parsed.approvedBy, parsed.designId, parsed.group_id]
+      `INSERT INTO events (id, group_id, event_type, content, metadata, created_at)
+       VALUES ($1, $2, 'design_review', $3, $4, NOW())`,
+      [
+        eventId,
+        parsed.group_id,
+        `Design ${parsed.designId} ${status}`,
+        JSON.stringify({
+          design_id: parsed.designId,
+          decision: parsed.decision,
+          rationale: parsed.rationale,
+          reviewed_by: parsed.approvedBy,
+          status,
+        }),
+      ]
     );
     
     return {
       success: true,
       designId: parsed.designId,
       decision: parsed.decision,
-      message: `Design ${parsed.designId} ${parsed.decision}d`,
+      event_id: eventId,
+      message: `Design ${parsed.designId} ${status} (event: ${eventId})`,
     };
   } catch (error) {
-    return {
-      error: String(error),
-    };
+    if (error instanceof DatabaseUnavailableError || error instanceof DatabaseQueryError) {
+      throw error;
+    }
+    if (error instanceof Error && (error as Error & { code?: string }).code) {
+      throw classifyPostgresError(error, "adasApproveDesign", "INSERT events (design_review)");
+    }
+    throw error;
   }
 }
