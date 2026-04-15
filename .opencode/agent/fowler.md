@@ -8,18 +8,6 @@ type: specialist
 scope: harness
 platform: Both
 status: active
-permission:
-  edit: allow
-  bash:
-    "*": ask
-    "git diff*": allow
-    "git log*": allow
-    "bun vitest*": allow
-    "bun run lint*": allow
-    "bun run typecheck*": allow
-  webfetch: deny
-  skill:
-    "*": allow
 ---
 
 ## INSTRUCTION BOUNDARY (CRITICAL)
