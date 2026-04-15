@@ -55,6 +55,24 @@ interface ListResponse {
   has_more: boolean;
 }
 
+/** Normalize Neo4j DateTime objects to ISO strings (defensive client-side fix) */
+function normalizeCreatedAt(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object' && 'year' in (value as Record<string, unknown>)) {
+    const d = value as Record<string, { low: number; high?: number }>;
+    const get = (field: string): number => d[field]?.low ?? 0;
+    return new Date(
+      Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second'), Math.floor(get('nanosecond') / 1_000_000))
+    ).toISOString();
+  }
+  return String(value ?? new Date().toISOString());
+}
+
+/** Normalize a memory object's created_at from potential Neo4j DateTime */
+function normalizeMemory(m: Memory): Memory {
+  return { ...m, created_at: normalizeCreatedAt(m.created_at), content: m.content ?? '' };
+}
+
 export default function MemoryViewerPage() {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -86,7 +104,7 @@ export default function MemoryViewerPage() {
         `/api/memory?group_id=${encodeURIComponent(groupId)}${userParam}&limit=50`
       );
       const data: ListResponse = await response.json();
-      setMemories(data.memories || []);
+      setMemories((data.memories || []).map(normalizeMemory));
       setHasMore(data.has_more);
     } catch (error) {
       console.error('Failed to fetch memories:', error);
@@ -109,7 +127,7 @@ export default function MemoryViewerPage() {
         `/api/memory?query=${encodeURIComponent(searchQuery)}&group_id=${encodeURIComponent(groupId)}${userParam}&limit=50`
       );
       const data: SearchResponse = await response.json();
-      setMemories(data.results || []);
+      setMemories((data.results || []).map(normalizeMemory));
     } catch (error) {
       console.error('Failed to search:', error);
     } finally {
