@@ -18,9 +18,13 @@ if (typeof window !== "undefined") {
   throw new Error("memory() can only be used server-side");
 }
 
-import neo4j, { type Driver } from "neo4j-driver";
 import { randomUUID } from "crypto";
 import { validateGroupId } from "@/lib/validation/group-id";
+import {
+  readTransaction,
+  writeTransaction,
+  type ManagedTransaction,
+} from "@/lib/neo4j/connection";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -108,19 +112,10 @@ export interface MemoryAPI {
 }
 
 // ── Driver singleton ───────────────────────────────────────────────────────
-
-let _driver: Driver | null = null;
-
-function getDriver(): Driver {
-  if (!_driver) {
-    const uri = process.env.NEO4J_URI ?? "bolt://localhost:7687";
-    const user = process.env.NEO4J_USER ?? "neo4j";
-    const password = process.env.NEO4J_PASSWORD;
-    if (!password) throw new Error("Missing required env var: NEO4J_PASSWORD");
-    _driver = neo4j.driver(uri, neo4j.auth.basic(user, password));
-  }
-  return _driver;
-}
+// NOTE: Direct driver usage removed (Issue #13).
+// All Neo4j I/O now goes through readTransaction/writeTransaction in
+// src/lib/neo4j/connection.ts, which wraps errors in domain types
+// (Neo4jConnectionError, Neo4jQueryError) with structured logging.
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -160,10 +155,9 @@ function buildMemoryAPI(): MemoryAPI {
         updated_at: new Date().toISOString(),
       };
 
-      const session = getDriver().session();
-      try {
+      await writeTransaction(async (tx) => {
         // MERGE on node_id — idempotent, safe to call multiple times
-        await session.run(
+        await tx.run(
           `MERGE (n:${label} {node_id: $node_id}) SET n += $props`,
           { node_id, props: finalProps }
         );
@@ -189,16 +183,14 @@ function buildMemoryAPI(): MemoryAPI {
               ? `(target)-[:${rel.type}${relPropClause}]->(n)`
               : `(n)-[:${rel.type}${relPropClause}]->(target)`;
 
-          await session.run(
+          await tx.run(
             `MATCH (n:${label} {node_id: $node_id})
              MATCH (target:${rel.targetLabel} {${targetKey}: $targetId})
              MERGE ${pattern}`,
             params
           );
         }
-      } finally {
-        await session.close();
-      }
+      });
 
       return { node_id };
     },
@@ -217,26 +209,22 @@ function buildMemoryAPI(): MemoryAPI {
           ? " {" + propKeys.map((k) => `${k}: $${k}`).join(", ") + "}"
           : "";
 
-      const session = getDriver().session();
-      try {
-        await session.run(
+      await writeTransaction(async (tx) => {
+        await tx.run(
           `MATCH (from:${fromLabel} {node_id: $fromId})
            MATCH (to:${toLabel} {node_id: $toId})
            MERGE (from)-[:${type}${relPropClause}]->(to)`,
           { fromId, toId, ...(props ?? {}) }
         );
-      } finally {
-        await session.close();
-      }
+      });
     },
 
     async query<T = Record<string, unknown>>(
       cypher: string,
       params?: Record<string, unknown>
     ): Promise<T[]> {
-      const session = getDriver().session();
-      try {
-        const result = await session.run(cypher, params ?? {});
+      return readTransaction(async (tx) => {
+        const result = await tx.run(cypher, params ?? {});
         return result.records.map((r) => {
           const obj: Record<string, unknown> = {};
           for (const key of r.keys) {
@@ -245,9 +233,7 @@ function buildMemoryAPI(): MemoryAPI {
           }
           return obj as T;
         });
-      } finally {
-        await session.close();
-      }
+      });
     },
 
     async search<T = Record<string, unknown>>({
@@ -260,8 +246,7 @@ function buildMemoryAPI(): MemoryAPI {
       // Validate group_id
       const validatedGroupId = validateGroupId(group_id);
 
-      const session = getDriver().session();
-      try {
+      return readTransaction(async (tx) => {
         // Build WHERE clause for exact matches
         const exactMatchClauses: string[] = ["n.group_id = $group_id"];
         const params: Record<string, unknown> = { group_id: validatedGroupId };
@@ -295,14 +280,12 @@ function buildMemoryAPI(): MemoryAPI {
         `;
         params.limit = limit;
 
-        const result = await session.run(cypher, params);
+        const result = await tx.run(cypher, params);
         return result.records.map((r) => {
           const val = r.get("n");
           return (val?.properties ?? val) as T;
         });
-      } finally {
-        await session.close();
-      }
+      });
     },
   };
 }
