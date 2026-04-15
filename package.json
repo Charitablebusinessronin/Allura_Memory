@@ -58,6 +58,10 @@
     "backfill:embeddings:watch": "bun run src/curator/embedding-backfill-worker.ts --interval 30000",
     "load-test": "bash tests/load/run-load-test.sh"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Charitablebusinessronin/Allura_Memory.git"
+  },
   "engines": {
     "node": ">=20.0.0"
   },

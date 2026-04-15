@@ -67,13 +67,11 @@ export const sidebarItems: NavGroup[] = [
         title: "Traces",
         url: "/dashboard/traces",
         icon: ListChecks,
-        comingSoon: true,
       },
       {
         title: "Insights",
         url: "/dashboard/insights",
         icon: Lightbulb,
-        comingSoon: true,
       },
     ],
   },

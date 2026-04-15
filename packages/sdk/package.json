@@ -52,7 +52,7 @@
   "peerDependencies": {},
   "repository": {
     "type": "git",
-    "url": "https://github.com/roninmemory/allura-memory.git",
+    "url": "https://github.com/Charitablebusinessronin/Allura_Memory.git",
     "directory": "packages/sdk"
   },
   "engines": {
