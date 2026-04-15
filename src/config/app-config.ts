@@ -6,6 +6,8 @@ export const APP_CONFIG = {
   name: "Allura Memory",
   version: packageJson.version,
   copyright: `© ${currentYear}, Allura Memory.`,
+  /** Default group_id for the dashboard — used across all pages */
+  defaultGroupId: "allura-roninmemory",
   meta: {
     title: "Allura Memory — Dual-Database AI Memory Engine",
     description:

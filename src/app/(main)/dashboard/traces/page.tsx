@@ -11,7 +11,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-const DEFAULT_GROUP_ID = "allura-roninmemory"
+import { APP_CONFIG } from "@/config/app-config"
+
+const DEFAULT_GROUP_ID = APP_CONFIG.defaultGroupId
 
 interface TraceEvent {
   id: string

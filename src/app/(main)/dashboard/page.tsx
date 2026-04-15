@@ -15,7 +15,9 @@ import { Separator } from "@/components/ui/separator"
 import type { ComponentHealth, HealthResponse } from "@/app/api/health/route"
 import { HealthTable, RefreshButton } from "./_components/health-table"
 
-const DEFAULT_GROUP_ID = "allura-roninmemory"
+import { APP_CONFIG } from "@/config/app-config"
+
+const DEFAULT_GROUP_ID = APP_CONFIG.defaultGroupId
 
 async function fetchHealth(): Promise<HealthResponse | null> {
   try {

@@ -21,7 +21,7 @@ import "./globals.css"
 export const metadata: Metadata = {
   title: {
     default: APP_CONFIG.meta.title,
-    template: `%s | Allura Memory`,
+    template: `%s | ${APP_CONFIG.name}`,
   },
   description: APP_CONFIG.meta.description,
 }
