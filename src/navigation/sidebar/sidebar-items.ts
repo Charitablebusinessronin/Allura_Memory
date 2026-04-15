@@ -1,4 +1,4 @@
-import { Brain, ClipboardList, Database, type LucideIcon, Search, Settings, ListChecks, Lightbulb } from "lucide-react"
+import { Brain, ClipboardList, Database, type LucideIcon, Search, ListChecks, Lightbulb } from "lucide-react"
 
 export interface NavSubItem {
   title: string
@@ -40,12 +40,6 @@ export const sidebarItems: NavGroup[] = [
         title: "Search",
         url: "/memory?view=search",
         icon: Search,
-      },
-      {
-        title: "Settings",
-        url: "/dashboard/settings",
-        icon: Settings,
-        comingSoon: true,
       },
     ],
   },

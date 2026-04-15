@@ -21,7 +21,7 @@ const DEFAULT_GROUP_ID = APP_CONFIG.defaultGroupId
 
 async function fetchHealth(): Promise<HealthResponse | null> {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/health?detailed=true`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3100"}/api/health?detailed=true`, {
       cache: "no-store",
     })
     if (!res.ok) return null
@@ -34,7 +34,7 @@ async function fetchHealth(): Promise<HealthResponse | null> {
 async function fetchPendingCount(): Promise<number> {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/curator/proposals?group_id=${DEFAULT_GROUP_ID}&status=pending&limit=1`,
+      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3100"}/api/curator/proposals?group_id=${DEFAULT_GROUP_ID}&status=pending&limit=1000`,
       { cache: "no-store" }
     )
     if (!res.ok) return 0
@@ -48,12 +48,12 @@ async function fetchPendingCount(): Promise<number> {
 async function fetchTotalMemories(): Promise<number> {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/memory?group_id=${DEFAULT_GROUP_ID}&user_id=system&limit=1`,
+      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3100"}/api/memory/count?group_id=${DEFAULT_GROUP_ID}`,
       { cache: "no-store" }
     )
     if (!res.ok) return 0
     const data = await res.json()
-    return (data as { total?: number }).total ?? 0
+    return (data as { count?: number }).count ?? 0
   } catch {
     return 0
   }
