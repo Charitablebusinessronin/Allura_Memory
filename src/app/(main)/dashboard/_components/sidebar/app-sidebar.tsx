@@ -78,7 +78,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Link prefetch={false} href="/memory">
+              <Link prefetch={false} href="/dashboard">
                 <Command />
                 <span className="font-semibold text-base">{APP_CONFIG.name}</span>
               </Link>

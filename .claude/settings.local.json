@@ -40,7 +40,9 @@
       "Bash(ln -sf ../../.opencode/agent/core/brooks-architect.md .claude/agents/brooks.md)",
       "Bash(ln -sf ../../.opencode/agent/core/jobs-intent-gate.md .claude/agents/jobs.md)",
       "Bash(ln -sf ../../../.opencode/agent/subagents/code/bellard-diagnostics-perf.md .claude/agents/bellard.md)",
-      "Bash(ln -sf ../../../.opencode/agent/subagents/code/carmack-performance.md .claude/agents/carmack.md)"
+      "Bash(ln -sf ../../../.opencode/agent/subagents/code/carmack-performance.md .claude/agents/carmack.md)",
+      "Skill(architect)",
+      "Skill(architect:*)"
     ]
   },
   "enabledPlugins": {
