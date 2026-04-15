@@ -58,8 +58,8 @@ interface ListResponse {
 export default function MemoryViewerPage() {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [groupId, setGroupId] = useState('allura-default');
-  const [userId, setUserId] = useState('user-1');
+  const [groupId, setGroupId] = useState('allura-roninmemory');
+  const [userId, setUserId] = useState('load-test-vu-1');
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [recentlyDeleted, setRecentlyDeleted] = useState<Memory[]>([]);
