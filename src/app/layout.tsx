@@ -19,7 +19,10 @@ import { getPreference } from "@/server/server-actions"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: APP_CONFIG.meta.title,
+  title: {
+    default: APP_CONFIG.meta.title,
+    template: `%s | Allura Memory`,
+  },
   description: APP_CONFIG.meta.description,
 }
 

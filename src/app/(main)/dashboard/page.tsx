@@ -1,5 +1,11 @@
 import Link from "next/link"
+import type { Metadata } from "next"
 import { RefreshCw, AlertTriangle, Activity, Clock, CheckCircle, XCircle, MinusCircle } from "lucide-react"
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+  description: "System overview — health, pending approvals, and component status",
+}
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
