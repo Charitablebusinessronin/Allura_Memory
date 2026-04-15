@@ -78,6 +78,29 @@ import { shouldUseRuVector, searchWithFeedback } from "@/lib/ruvector/retrieval-
 
 config();
 
+// ── Neo4j DateTime → ISO string ──────────────────────────────────────────
+// Neo4j driver returns temporal types as neo4j.DateTime objects, not ISO strings.
+// Convert them so the API always returns plain strings.
+function neo4jDateToISO(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value && typeof value === "object" && "year" in value) {
+    // neo4j.DateTime — use the driver's toString() which produces ISO format
+    if (typeof (value as { toString?: () => string }).toString === "function") {
+      const str = (value as { toString: () => string }).toString();
+      const parsed = new Date(str);
+      if (!isNaN(parsed.getTime())) return parsed.toISOString();
+    }
+    // Fallback: manually construct from neo4j integer fields
+    const d = value as Record<string, { low: number; high?: number }>;
+    const get = (field: string): number => d[field]?.low ?? 0;
+    return new Date(
+      Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"), Math.floor(get("nanosecond") / 1_000_000))
+    ).toISOString();
+  }
+  // Last resort
+  return new Date(value as string | number).toISOString();
+}
+
 // ── Budget Enforcer & Circuit Breaker Setup ────────────────────────────────
 //
 // Fail-open design: if budget enforcer or circuit breaker can't initialize,
@@ -780,7 +803,7 @@ export async function memory_search(request: MemorySearchRequest): Promise<Memor
         content: record.get("content"),
         score: record.get("score"),
         provenance: toProvenance(record.get("provenance")),
-        created_at: record.get("created_at"),
+        created_at: neo4jDateToISO(record.get("created_at")),
         usage_count: record.get("usage_count")?.toNumber?.() || 0,
         relevance: record.get("relevance"),
       }));
@@ -941,7 +964,7 @@ export async function memory_get(request: MemoryGetRequest): Promise<MemoryGetRe
         source: "semantic",
         provenance: toProvenance(record.get("provenance")),
         user_id: record.get("user_id"),
-        created_at: record.get("created_at"),
+        created_at: neo4jDateToISO(record.get("created_at")),
         version: record.get("version")?.toNumber?.() || 1,
         usage_count: 0, // TODO: Track usage
         meta: getMeta,
@@ -1054,7 +1077,7 @@ export async function memory_list(request: MemoryListRequest): Promise<MemoryLis
               source: "semantic" as const,
               provenance: toProvenance(record.get("provenance")),
               user_id: record.get("user_id"),
-              created_at: record.get("created_at"),
+              created_at: neo4jDateToISO(record.get("created_at")),
               version: record.get("version")?.toNumber?.() || 1,
               usage_count: 0,
             }));
@@ -1556,7 +1579,7 @@ export async function memory_export(request: MemoryExportRequest): Promise<Memor
       source: "semantic" as const,
       provenance: toProvenance(record.get("provenance")),
       user_id: record.get("user_id"),
-      created_at: record.get("created_at"),
+      created_at: neo4jDateToISO(record.get("created_at")),
       version: record.get("version")?.toNumber?.() ?? 1,
       usage_count: 0,
       meta: baseMeta(["neo4j"]),

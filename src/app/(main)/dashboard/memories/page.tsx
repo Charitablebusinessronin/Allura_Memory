@@ -34,6 +34,30 @@ interface MemoryListResponse {
 
 type SortOrder = "created_at_desc" | "created_at_asc"
 
+interface SearchResponse {
+  results: Memory[]
+  count: number
+  latency_ms: number
+}
+
+/** Normalize Neo4j DateTime objects to ISO strings (defensive client-side fix) */
+function normalizeCreatedAt(value: unknown): string {
+  if (typeof value === "string") return value
+  if (value && typeof value === "object" && "year" in (value as Record<string, unknown>)) {
+    const d = value as Record<string, { low: number; high?: number }>
+    const get = (field: string): number => d[field]?.low ?? 0
+    return new Date(
+      Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"), Math.floor(get("nanosecond") / 1_000_000))
+    ).toISOString()
+  }
+  return String(value ?? new Date().toISOString())
+}
+
+/** Normalize a memory object's created_at from potential Neo4j DateTime */
+function normalizeMemory(m: Memory): Memory {
+  return { ...m, created_at: normalizeCreatedAt(m.created_at), content: m.content ?? "" }
+}
+
 async function fetchMemories(params: {
   groupId: string
   limit: number
@@ -54,7 +78,26 @@ async function fetchMemories(params: {
     const err = await res.json().catch(() => ({}))
     throw new Error((err as { error?: string }).error ?? "Failed to fetch memories")
   }
-  return res.json()
+  const data = await res.json()
+
+  // The API returns different shapes depending on whether a query is present:
+  // - No query  → memory_list  → { memories: [...] }
+  // - With query → memory_search → { results: [...] }
+  // Normalize both into MemoryListResponse so the component always works.
+  if (params.query && Array.isArray((data as SearchResponse).results)) {
+    const search = data as SearchResponse
+    return {
+      memories: search.results.map(normalizeMemory),
+      total: search.count,
+      has_more: false,
+    }
+  }
+
+  const list = data as MemoryListResponse
+  return {
+    ...list,
+    memories: (list.memories ?? []).map(normalizeMemory),
+  }
 }
 
 async function deleteMemory(id: string, groupId: string): Promise<void> {
@@ -139,8 +182,8 @@ function MemoryRow({ memory, groupId, onDelete, isDeleted }: MemoryRowProps) {
           <CopyButton text={memory.id} />
         </span>
         <span className="flex-1 truncate text-sm">
-          {memory.content.slice(0, 100)}
-          {memory.content.length > 100 ? "…" : ""}
+          {(memory.content ?? "").slice(0, 100)}
+          {(memory.content ?? "").length > 100 ? "…" : ""}
         </span>
         <span className="text-muted-foreground hidden shrink-0 text-xs md:block">{groupId}</span>
         <span className="text-muted-foreground hidden shrink-0 text-xs sm:block">
@@ -189,7 +232,7 @@ function MemoryRow({ memory, groupId, onDelete, isDeleted }: MemoryRowProps) {
         <div className="bg-muted/20 space-y-4 border-t px-4 py-4">
           <div>
             <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wide uppercase">Full Content</p>
-            <p className="text-sm whitespace-pre-wrap">{memory.content}</p>
+            <p className="text-sm whitespace-pre-wrap">{memory.content ?? ""}</p>
           </div>
           <div className="grid gap-3 text-xs sm:grid-cols-4">
             <div>
