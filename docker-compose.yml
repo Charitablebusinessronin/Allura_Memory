@@ -1,3 +1,15 @@
+# =============================================================================
+# PRIMARY docker-compose.yml — use this for all local development and production
+# =============================================================================
+# Other compose files in this repo:
+#   docker/docker-compose.yml              — DEPRECATED (legacy sandbox, do not use)
+#   docker-compose.enterprise.yml         — enterprise/multi-tenant overlay only
+#   archive/sovereign-memory-mvp/*        — archived MVP, historical reference only
+#
+# To start the full stack:
+#   docker compose up
+# =============================================================================
+
 services:
   postgres:
     image: postgres:16
