@@ -249,6 +249,36 @@ export default function AuditLogPage() {
     }
   }
 
+  const handleExportJson = async () => {
+    setExporting(true)
+
+    try {
+      const params = buildQueryParams(0, EXPORT_LIMIT)
+
+      const res = await fetch(`/api/audit/events?${params.toString()}`)
+      if (!res.ok) {
+        setError(`Failed to export JSON: HTTP ${res.status}`)
+        return
+      }
+
+      const data = await res.json()
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
+      const url = URL.createObjectURL(blob)
+
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `audit-events-${DEFAULT_GROUP_ID}.json`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to export JSON")
+    } finally {
+      setExporting(false)
+    }
+  }
+
   return (
     <div className="min-h-screen" style={{ backgroundImage: DURHAM_GRADIENTS.page }}>
       <div className="space-y-6 rounded-[28px] border border-white/70 bg-white/74 p-4 shadow-[--durham-shadow-base]/8 shadow-xl backdrop-blur sm:p-6">
@@ -287,6 +317,16 @@ export default function AuditLogPage() {
             >
               {exporting ? <Loader2 className="mr-1 size-3 animate-spin" /> : <Download className="mr-1 size-3" />}
               Export CSV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportJson}
+              disabled={exporting || loading}
+              className="border-[--durham-border-light] bg-white/90 text-[--durham-rich-navy] hover:bg-[--durham-hover-amber-bg]"
+            >
+              {exporting ? <Loader2 className="mr-1 size-3 animate-spin" /> : <Download className="mr-1 size-3" />}
+              Download JSON
             </Button>
           </div>
         </div>

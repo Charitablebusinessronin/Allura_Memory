@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import type { JSX } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Clock3, FileSearch, PencilLine, ShieldCheck, Sparkles } from "lucide-react"
+import { ArrowLeft, Clock3, FileSearch, PencilLine, ShieldCheck, Sparkles, History } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -454,6 +454,60 @@ export default function MemoryDetailPage(): JSX.Element | null {
                           {memory.user_id}
                         </p>
                       </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-[--durham-border] bg-white/92 shadow-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-2 text-sm font-medium text-[--durham-rich-navy]">
+                    <History className="size-4 text-[--durham-amber-ochre]" />
+                    Version history
+                  </div>
+
+                  <div className="mt-4 space-y-3 text-sm">
+                    {memory.version != null && memory.version > 1 ? (
+                      <>
+                        <div className="flex items-start gap-3">
+                          <div className="mt-1.5 size-2 shrink-0 rounded-full bg-[--durham-amber-ochre]" />
+                          <div>
+                            <p className="font-medium text-[--durham-deep-graphite]">Version 1</p>
+                            <p className="text-[--durham-muted-text]">
+                              Created on {new Date(memory.created_at).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="ml-1 h-4 w-px bg-[--durham-border]" />
+                        <div className="flex items-start gap-3">
+                          <div className="mt-1.5 size-2 shrink-0 rounded-full bg-[--durham-steel-blue]" />
+                          <div>
+                            <p className="font-medium text-[--durham-deep-graphite]">Version {memory.version}</p>
+                            <p className="text-[--durham-muted-text]">
+                              Replaced on {new Date(memory.created_at).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="leading-6 text-[--durham-muted-text]">
+                        This is the original version. It hasn&apos;t been edited yet.
+                      </p>
+                    )}
+
+                    {memory.superseded_by && (
+                      <>
+                        <Separator className="bg-[--durham-border]" />
+                        <div>
+                          <p className="text-[--durham-caption-text]">Newer version available</p>
+                          <button
+                            className="mt-1 text-sm font-medium text-[--durham-rich-navy] underline underline-offset-4"
+                            onClick={() => router.push(`/memory/${memory.superseded_by}`)}
+                          >
+                            Open version {typeof memory.version === "number" ? memory.version + 1 : "?"}
+                          </button>
+                        </div>
+                      </>
                     )}
                   </div>
                 </CardContent>
