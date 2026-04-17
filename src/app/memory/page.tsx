@@ -45,6 +45,7 @@ interface Memory {
   created_at: string
   usage_count?: number
   expanded?: boolean
+  tags?: string[]
 }
 
 interface SearchResponse {
@@ -437,6 +438,20 @@ export default function MemoryViewerPage() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <p className="text-sm">{memory.content}</p>
+                          {memory.tags && memory.tags.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              {memory.tags.slice(0, 4).map((tag) => (
+                                <Badge key={tag} variant="secondary" className="text-xs">
+                                  {tag}
+                                </Badge>
+                              ))}
+                              {memory.tags.length > 4 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{memory.tags.length - 4} more
+                                </Badge>
+                              )}
+                            </div>
+                          )}
                           <div className="text-muted-foreground mt-2 flex items-center gap-2 text-xs">
                             <span>{formatRelativeTime(memory.created_at)}</span>
                             <span>·</span>
@@ -447,6 +462,20 @@ export default function MemoryViewerPage() {
                     ) : (
                       <div>
                         <p className="mb-2 text-sm font-medium">{memory.content}</p>
+                        {memory.tags && memory.tags.length > 0 && (
+                          <div className="mb-2 flex flex-wrap gap-1">
+                            {memory.tags.slice(0, 4).map((tag) => (
+                              <Badge key={tag} variant="secondary" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                            {memory.tags.length > 4 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{memory.tags.length - 4} more
+                              </Badge>
+                            )}
+                          </div>
+                        )}
                         <div className="text-muted-foreground mb-3 flex items-center gap-2 text-xs">
                           <span>{formatRelativeTime(memory.created_at)}</span>
                           <span>·</span>
