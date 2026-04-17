@@ -5,6 +5,7 @@
 
 /* Theme preset styles: these override CSS variables based on the selected data-theme-preset */
 @import "../styles/presets/brutalist.css";
+@import "../styles/presets/durham.css";
 @import "../styles/presets/soft-pop.css";
 @import "../styles/presets/tangerine.css";
 
@@ -90,6 +91,14 @@ These serve as the fallback; there is no separate default.css file. */
   --font-mono: var(--font-geist-mono);
   --background: oklch(1 0 0);
   --foreground: oklch(0.148 0.004 228.8);
+  --brand-graphite: #1c232b;
+  --brand-warm-slate: #3a4a5b;
+  --brand-steel-blue: #4e6e8a;
+  --brand-rich-navy: #2c3e56;
+  --brand-amber-ochre: #b8893c;
+  --brand-soft-amber: #d4a84b;
+  --brand-mist: #e9eef2;
+  --brand-warm-mist: #f0eef2;
 }
 
 .dark {
@@ -124,6 +133,14 @@ These serve as the fallback; there is no separate default.css file. */
   --sidebar-accent-foreground: oklch(0.987 0.002 197.1);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.56 0.021 213.5);
+  --brand-graphite: #1c232b;
+  --brand-warm-slate: #3a4a5b;
+  --brand-steel-blue: #4e6e8a;
+  --brand-rich-navy: #2c3e56;
+  --brand-amber-ochre: #b8893c;
+  --brand-soft-amber: #d4a84b;
+  --brand-mist: #e9eef2;
+  --brand-warm-mist: #f0eef2;
 }
 
 @layer base {

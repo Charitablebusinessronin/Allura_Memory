@@ -29,34 +29,36 @@ export function SettingsSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right">
         <SheetHeader>
-          <SheetTitle>Settings</SheetTitle>
-          <SheetDescription>Configure your memory filters</SheetDescription>
+          <SheetTitle>View settings</SheetTitle>
+          <SheetDescription>Adjust which memories you are looking at without changing stored data.</SheetDescription>
         </SheetHeader>
         <div className="flex flex-col gap-4 px-4">
           <div className="flex flex-col gap-2">
             <label htmlFor="sheet-group-id" className="text-sm font-medium">
-              Group ID
+              Workspace scope
             </label>
             <Input
               id="sheet-group-id"
-              placeholder="group_id"
+              placeholder="allura-your-team"
               value={groupId}
               onChange={(e) => onGroupIdChange(e.target.value)}
               className="text-sm"
             />
+            <p className="text-muted-foreground text-xs">Technical key: group_id</p>
           </div>
           <div className="flex flex-col gap-2">
             <label htmlFor="sheet-user-id" className="text-sm font-medium">
-              User ID
+              Person filter
             </label>
             <Input
               id="sheet-user-id"
-              placeholder="user_id"
+              placeholder="Optional user ID"
               value={userId}
               onChange={(e) => onUserIdChange(e.target.value)}
               disabled={allUsers}
               className="text-sm"
             />
+            <p className="text-muted-foreground text-xs">Leave blank or switch to all people to widen the view.</p>
           </div>
         </div>
       </SheetContent>

@@ -1,4 +1,13 @@
-import { Brain, ClipboardList, Database, type LucideIcon, Search, ListChecks, Lightbulb } from "lucide-react"
+import {
+  Brain,
+  ClipboardList,
+  Database,
+  type LucideIcon,
+  Search,
+  ListChecks,
+  Lightbulb,
+  ScrollText,
+} from "lucide-react"
 
 export interface NavSubItem {
   title: string
@@ -61,6 +70,11 @@ export const sidebarItems: NavGroup[] = [
         title: "Traces",
         url: "/dashboard/traces",
         icon: ListChecks,
+      },
+      {
+        title: "Audit Log",
+        url: "/dashboard/audit",
+        icon: ScrollText,
       },
       {
         title: "Insights",

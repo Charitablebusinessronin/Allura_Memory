@@ -29,7 +29,7 @@ export function DeleteConfirmDialog({ open, onOpenChange, memory, onConfirm }: D
         <AlertDialogHeader>
           <AlertDialogTitle>Forget this memory?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will remove the memory from your AI&apos;s knowledge. You can undo this within 30 days.
+            This hides it from your AI&apos;s working memory. You can bring it back within 30 days.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

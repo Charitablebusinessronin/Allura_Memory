@@ -28,13 +28,15 @@ export function AddMemoryDialog({ open, onOpenChange, content, onContentChange, 
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Add a memory</AlertDialogTitle>
-          <AlertDialogDescription>Manually teach your AI something new.</AlertDialogDescription>
+          <AlertDialogTitle>What should your AI remember?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Write it in plain language and your AI will start using this immediately.
+          </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="px-1 py-2">
           <Input
             autoFocus
-            placeholder="e.g. I prefer TypeScript over JavaScript"
+            placeholder="e.g. Prefer Bun for scripts, not npm"
             value={content}
             onChange={(e) => onContentChange(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && onSubmit()}
@@ -43,7 +45,7 @@ export function AddMemoryDialog({ open, onOpenChange, content, onContentChange, 
         <AlertDialogFooter>
           <AlertDialogCancel onClick={() => onContentChange("")}>Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={onSubmit} disabled={!content.trim()}>
-            Add memory
+            Save memory
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

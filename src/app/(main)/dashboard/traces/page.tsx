@@ -11,9 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-import { APP_CONFIG } from "@/config/app-config"
-
-const DEFAULT_GROUP_ID = APP_CONFIG.defaultGroupId
+import { DEFAULT_GROUP_ID } from "@/lib/defaults/scope"
 
 interface TraceEvent {
   id: string
@@ -36,6 +34,8 @@ interface AgentOption {
   count: number
 }
 
+const LIMIT = 50
+
 export default function TracesPage() {
   const [traces, setTraces] = useState<TraceEvent[]>([])
   const [loading, setLoading] = useState(true)
@@ -50,8 +50,6 @@ export default function TracesPage() {
   const [agentId, setAgentId] = useState<string>("all")
   const [eventTypes, setEventTypes] = useState<EventTypeOption[]>([])
   const [agents, setAgents] = useState<AgentOption[]>([])
-
-  const LIMIT = 50
 
   const loadTraces = useCallback(
     async (resetOffset = false) => {

@@ -1,6 +1,12 @@
 -- SQL Migration File: 02_group_id_enforcement.sql
 -- Purpose: Enforce group_id format constraint for tenant isolation
 -- Design: All group_id values must match ^allura- pattern
+--
+-- NOTE (Migration 19): The loose '^allura-' constraints added below are
+-- superseded by stricter '^allura-[a-z0-9]([a-z0-9-]*[a-z0-9])?$' constraints
+-- in migration 19-group-id-check-constraints.sql. Migration 19 drops these
+-- loose constraints and replaces them. This file is kept for historical
+-- reference and clean-slate database initialization order.
 
 -- ============================================================================
 -- Add CHECK constraint for group_id format
