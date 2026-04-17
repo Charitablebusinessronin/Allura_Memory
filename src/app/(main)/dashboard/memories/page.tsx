@@ -9,9 +9,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 
-import { APP_CONFIG } from "@/config/app-config"
+import { DEFAULT_GROUP_ID } from "@/lib/defaults/scope"
+import { normalizeNeo4jTimestamp } from "@/lib/utils/date"
 
-const DEFAULT_GROUP_ID = APP_CONFIG.defaultGroupId
 const DEFAULT_USER_ID = "system"
 
 interface Memory {
@@ -40,22 +40,9 @@ interface SearchResponse {
   latency_ms: number
 }
 
-/** Normalize Neo4j DateTime objects to ISO strings (defensive client-side fix) */
-function normalizeCreatedAt(value: unknown): string {
-  if (typeof value === "string") return value
-  if (value && typeof value === "object" && "year" in (value as Record<string, unknown>)) {
-    const d = value as Record<string, { low: number; high?: number }>
-    const get = (field: string): number => d[field]?.low ?? 0
-    return new Date(
-      Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"), Math.floor(get("nanosecond") / 1_000_000))
-    ).toISOString()
-  }
-  return String(value ?? new Date().toISOString())
-}
-
 /** Normalize a memory object's created_at from potential Neo4j DateTime */
 function normalizeMemory(m: Memory): Memory {
-  return { ...m, created_at: normalizeCreatedAt(m.created_at), content: m.content ?? "" }
+  return { ...m, created_at: normalizeNeo4jTimestamp(m.created_at), content: m.content ?? "" }
 }
 
 async function fetchMemories(params: {
