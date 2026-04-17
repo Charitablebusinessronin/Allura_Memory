@@ -13,7 +13,6 @@ Invoke **Scout** (Grace Hopper persona) to search Allura Brain memory. Scout ret
 ## Query Patterns
 
 ### Pattern 1: Find ADRs and Decisions
-
 ```
 /scout "What ADRs exist for authentication?"
 /scout "Show me all database schema decisions"
@@ -21,7 +20,6 @@ Invoke **Scout** (Grace Hopper persona) to search Allura Brain memory. Scout ret
 ```
 
 ### Pattern 2: Trace Historical Context
-
 ```
 /scout "Who decided on the group_id enforcement?"
 /scout "When was the RuVix kernel integrated?"
@@ -29,7 +27,6 @@ Invoke **Scout** (Grace Hopper persona) to search Allura Brain memory. Scout ret
 ```
 
 ### Pattern 3: Identify Patterns and Blockers
-
 ```
 /scout "What patterns keep failing?"
 /scout "Show me all blocked tasks"
@@ -37,7 +34,6 @@ Invoke **Scout** (Grace Hopper persona) to search Allura Brain memory. Scout ret
 ```
 
 ### Pattern 4: Cross-Reference Knowledge
-
 ```
 /scout "What decisions reference Brooksian principles?"
 /scout "Show me all INTERFACE_DEFINED events"
@@ -54,7 +50,6 @@ Invoke **Scout** (Grace Hopper persona) to search Allura Brain memory. Scout ret
 ## Tool Access
 
 Scout uses read-only tools:
-
 - `mcp__MCP_DOCKER__query_database` — Natural language SQL
 - `mcp__MCP_DOCKER__execute_sql` — Raw SQL queries
 - `mcp__MCP_DOCKER__read_neo4j_cypher` — Neo4j graph queries
@@ -87,5 +82,6 @@ Scout uses read-only tools:
 
 ## See Also
 
-- Agent definition: `.opencode/agent/` (flat directory, scout.md)
-- Memory system: Allura Brain (PostgreSQL + Neo4j via MCP)
+- Agent definition: `.opencode/agent/subagents/scout.md`
+- Query patterns: Scout Agent "Query Patterns" section
+- Memory system: `.claude/README.md` § Memory System

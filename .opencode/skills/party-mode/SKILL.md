@@ -19,14 +19,16 @@ Launch multiple specialists simultaneously. The surgical team works together.
 
 When you invoke `party-mode`, you get:
 
+> **Source of truth:** `.opencode/agent/*.md` — 10 canonical agents. Personas derived from agent definitions.
+
 | Agent | Persona | Role | Parallel Task |
 |-------|---------|------|---------------|
-| **Brooks** | Rich Hickey | Orchestrator | Coordinates the party |
-| **Woz** | Fabrice Bellard | Deep Worker | Implementation |
-| **Pike** | Rob Pike | Consultant | Architecture review |
-| **Scout** | Julia Evans | Docs Search | External research |
-| **Scout** | Peter Bourgon | Codebase Grep | Pattern discovery |
-| **UX** | Sara Soueidan | Designer | Accessibility review |
+| **Brooks** | Frederick Brooks | Orchestrator | Coordinates the party |
+| **Woz** | Steve Wozniak | Primary Builder | Implementation |
+| **Pike** | Rob Pike | Simplicity Gate | Architecture review (read-only) |
+| **Scout** | (none) | Fast Discovery | External research + codebase search |
+| **Bellard** | Fabrice Bellard | Diagnostics + Perf | Performance measurement |
+| **Fowler** | Martin Fowler | Maintainability Gate | Refactoring review |
 
 ## Party Protocol
 

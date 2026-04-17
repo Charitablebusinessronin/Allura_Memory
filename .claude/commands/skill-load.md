@@ -36,6 +36,8 @@ Execute a skill by routing it to a specialist agent executor.
 | `scout-recon` | Codebase patterns | Read + grep tools |
 | `brooks-architect` | Todo coordination | Task + memory tools |
 | `brooks-architect` | Orchestration | All tools (planning only) |
+| `brooks-architect` | Skill creation & eval | All tools + subagents |
+| `woz-builder` | Skill implementation | Full read/write + scripts |
 
 ## Result
 
@@ -48,5 +50,18 @@ Execute a skill by routing it to a specialist agent executor.
   "permissions": ["read", "grep", "lsp"]
 }
 ```
+
+## Skill-Creator Integration
+
+When loading `skill-creator`, Brooks orchestrates the full workflow:
+
+```
+/skill-load skill-creator              # Full: draft → test → review → improve → optimize
+/skill-load skill-creator --improve     # Improve existing skill
+/skill-load skill-creator --eval        # Run evals + benchmark
+/skill-load skill-creator --optimize    # Description optimization only
+```
+
+See `/skill-create` for the complete skill-creator command.
 
 **Note:** Only Brooks can route to executors. See `/skill-propose` for skill details.

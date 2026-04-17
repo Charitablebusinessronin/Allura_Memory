@@ -9,77 +9,100 @@ Type these directly in your IDE for fast access to Allura Memory workflows.
 
 ## Session Commands
 
-| Command | Action | Equivalent |
-|---------|--------|------------|
-| `/start` | Start session | `start-session` |
-| `/end <summary>` | End session | `end-session` |
-| `/dash` | Dashboard | `dashboard` |
+| Command          | Action        | Equivalent      |
+| ---------------- | ------------- | --------------- |
+| `/start`         | Start session | `start-session` |
+| `/end <summary>` | End session   | `end-session`   |
+| `/dash`          | Dashboard     | `dashboard`     |
 
 ## Task Commands
 
-| Command | Action | Equivalent |
-|---------|--------|------------|
-| `/task <desc>` | Create task | `task-creator` |
-| `/promote` | HITL promotion | `curator-team-promote` |
-| `/review` | Code review | `code-review` |
+| Command        | Action         | Equivalent             |
+| -------------- | -------------- | ---------------------- |
+| `/task <desc>` | Create task    | `task-creator`         |
+| `/promote`     | HITL promotion | `curator-team-promote` |
+| `/review`      | Code review    | `code-review`          |
 
 ## Memory Commands
 
-| Command | Action | Equivalent |
-|---------|--------|------------|
-| `/query <term>` | Memory query | `mcp__MCP_DOCKER__search_memories` |
-| `/update <target>` | Quick update | `quick-update` |
-| `/party <task>` | Party mode | `party-mode` |
+| Command            | Action       | Equivalent                         |
+| ------------------ | ------------ | ---------------------------------- |
+| `/query <term>`    | Memory query | `mcp__MCP_DOCKER__search_memories` |
+| `/update <target>` | Quick update | `quick-update`                     |
+| `/party <task>`    | Party mode   | `party-mode`                       |
+
+## Skill Commands
+
+| Command                      | Action              | Equivalent             |
+| ---------------------------- | ------------------- | ---------------------- |
+| `/create <name>`             | Create new skill    | `skill-create`         |
+| `/create <name> --improve`   | Improve skill       | `skill-create --improve` |
+| `/create <name> --eval`      | Eval skill          | `skill-create --eval`  |
+| `/create <name> --optimize`  | Optimize triggering | `skill-create --optimize` |
+| `/propose <skill>`           | Propose skill route | `skill-propose`        |
+| `/load <skill>`              | Load & execute      | `skill-load`           |
 
 ## Agent Shortcuts
 
-| Shortcut | Agent | Persona |
-|----------|-------|---------|
-| `@brooks-architect` | Brooks | Rich Hickey |
-| `@brooks-architect` | Brooks | Gergely Orosz |
-| `@woz-builder` | Woz | Fabrice Bellard |
-| `@pike-interface-review` | Pike | Rob Pike |
-| `@scout-recon` | Scout | Julia Evans |
-| `@scout-recon` | Scout | Peter Bourgon |
-| `@fowler-refactor-gate` | Fowler | Martin Fowler |
-| `@ux` | UX | Sara Soueidan |
+| Shortcut                 | Agent  | Persona         |
+| ------------------------ | ------ | --------------- |
+| `@brooks-architect`      | Brooks | Rich Hickey     |
+| `@brooks-architect`      | Brooks | Gergely Orosz   |
+| `@woz-builder`           | Woz    | Fabrice Bellard |
+| `@pike-interface-review` | Pike   | Rob Pike        |
+| `@scout-recon`           | Scout  | Julia Evans     |
+| `@scout-recon`           | Scout  | Peter Bourgon   |
+| `@fowler-refactor-gate`  | Fowler | Martin Fowler   |
+| `@ux`                    | UX     | Sara Soueidan   |
 
 ## Usage Examples
 
 ### Start a Session
+
 ```
 /start
 ```
+
 Loads memory, verifies infrastructure, prepares tools.
 
 ### Create a Task
+
 ```
 /task Add OAuth2 authentication with Google provider
 ```
+
 Generates structured task file with memory links.
 
 ### Launch Party Mode
+
 ```
 /party Implement user dashboard with charts
 ```
+
 Spawns all agents in parallel for maximum throughput.
 
 ### Quick Update
+
 ```
 /update progress Added OAuth2 authentication
 ```
-Updates memory-bank/progress.md and logs to Allura Brain.
+
+Updates Allura Brain and logs to events.
 
 ### Query Memory
+
 ```
 /query authentication patterns
 ```
+
 Searches Allura Brain for relevant insights.
 
 ### Code Review
+
 ```
 /review
 ```
+
 Launches Pike, Scout, and UX in parallel for review.
 
 ---

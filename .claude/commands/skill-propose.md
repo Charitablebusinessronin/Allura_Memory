@@ -36,7 +36,10 @@ Propose a skill and see which specialist agent handles it.
 | `intelligence-sources`     | `@Scout`     | Intelligence source discovery and evaluation |
 | `multi-search`             | `@Scout`     | Multi-source research orchestration          |
 | `mcp-builder`              | `@Woz`       | MCP server construction                      |
-| `skill-creator`            | `@Brooks`    | OpenCode skill creation and maintenance      |
+| `skill-creator`            | `@Brooks`    | Skill creation, improvement, eval, and description optimization |
+| `skill-creator --improve`  | `@Brooks`    | Improve existing skill with eval loop       |
+| `skill-creator --eval`     | `@Brooks`    | Run evals and benchmark skill performance   |
+| `skill-creator --optimize` | `@Brooks`    | Optimize skill description for triggering   |
 | `github`                   | `@Woz`       | GitHub operations                            |
 | `mcp-docker`               | `@Hightower` | Docker-based MCP management                  |
 | `mcp-docker-memory-system` | `@Knuth`     | Memory system MCP operations                 |

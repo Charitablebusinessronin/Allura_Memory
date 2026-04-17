@@ -1,11 +1,11 @@
 ---
 name: superpowers-memory
-description: Add memory logging and hydration to Superpowers skills using Allura Brain MCP tools. Use at session start to retrieve context, at session end to log outcomes.
+description: Add memory logging and hydration to Superpowers skills. Use at session start to retrieve context, at session end to log outcomes.
 ---
 
 # Superpowers Memory Integration
 
-Add persistent memory logging and hydration to Superpowers skills using Allura Brain's canonical MCP tools.
+Add persistent memory logging and hydration to Superpowers skills using PostgreSQL (raw events) and Neo4j (curated insights).
 
 ## When to Use
 
@@ -17,85 +17,71 @@ Add persistent memory logging and hydration to Superpowers skills using Allura B
 
 ```
 Session Start:
-  1. memory_search for group_id + recent events
-  2. memory_search for related insights in Neo4j
+  1. SEARCH events for group_id + workflow_id (last 7 days)
+  2. SEARCH insights for related knowledge
   3. PRESENT summary to agent
 
 During Execution:
-  1. memory_add at each checkpoint (skill:start, decision, completion)
-  2. memory_promote for significant decisions or learnings
-  3. Log to PostgreSQL events for audit trail
+  1. LOG event at each checkpoint (skill:start, decision, completion)
+  2. CREATE insight for significant decisions or learnings
+  3. LINK insight to source events
 
 Session End:
-  1. memory_add outcome as event
-  2. memory_promote summary insight if valuable
+  1. LOG outcome event
+  2. CREATE summary insight if valuable
   3. VERIFY events were persisted
 ```
 
-## Canonical MCP Tools
+## Memory Logging Commands
 
-These are the **8 registered tools** in the canonical MCP server (`memory-server-canonical.ts`):
+### Log Event
 
-| Tool             | Purpose                                            | Key Params                                           |
-| ---------------- | -------------------------------------------------- | ---------------------------------------------------- |
-| `memory_add`     | Add a memory (episodic → score → promote/queue)    | group_id, user_id, content, metadata?, threshold?    |
-| `memory_search`  | Search memories (federated: PG + Neo4j + RuVector) | query, group_id, user_id?, limit?, min_score?        |
-| `memory_get`     | Get a single memory by ID                          | id, group_id                                         |
-| `memory_list`    | List all memories for a user                       | group_id, user_id, limit?, offset?, sort?            |
-| `memory_delete`  | Soft-delete a memory                               | id, group_id, user_id                                |
-| `memory_update`  | Append-only versioned update (SUPERSEDES)          | id, group_id, user_id, content, reason?              |
-| `memory_promote` | Request curator promotion (HITL)                   | id, group_id, user_id, curator_id?, rationale?       |
-| `memory_export`  | Export memories with canonical filter              | group_id, user_id?, canonical_only?, limit?, offset? |
+```typescript
+// At skill start
+await logEvent({
+  group_id: "roninmemory",
+  event_type: "skill:brainstorming:start",
+  agent_id: "roninmemory-agent",
+  workflow_id: "feature-123",
+  status: "pending",
+  metadata: { topic: "user request description" }
+});
 
-## Memory Logging Patterns
-
-### Session Start
-
-```javascript
-// Hydrate context from Brain
-const context = await memory_search({
-  query: "last session decisions blockers",
-  group_id: "allura-roninmemory",
-  limit: 10,
-})
-
-// Log session start as event
-mcp__MCP_DOCKER__execute_sql({
-  sql_query: `INSERT INTO events (event_type, agent_id, group_id, status, metadata, created_at)
-    VALUES ('session_start', $1, 'allura-roninmemory', 'pending', $2, NOW())`,
-  params: [agent_id, { topic: "user request description" }],
-})
+// At skill end
+await logEvent({
+  group_id: "roninmemory",
+  event_type: "skill:brainstorming:end",
+  agent_id: "roninmemory-agent",
+  workflow_id: "feature-123",
+  status: "completed",
+  metadata: { spec_path: "docs/superpowers/specs/YYYY-MM-DD-feature.md" }
+});
 ```
 
-### During Execution — Log Decision
+### Create Insight
 
-```javascript
-// Store via memory_add (Brain is source of truth)
-await memory_add({
-  group_id: "allura-roninmemory",
-  user_id: agent_id,
-  content: "Decision: Use RRF fusion for hybrid search",
-  metadata: { source: "manual", agent_id: "brooks" },
-})
+```typescript
+await createInsight({
+  title: "Design Decision: [Topic]",
+  content: "What was decided and why",
+  category: "Architecture", // or "Bugfix", "Refactor", "Performance"
+  tags: ["superpowers", "brainstorming", "design"],
+  sourceEventIds: [123, 124] // Link to events
+});
 ```
 
-### Session End
+### Search Context
 
-```javascript
-// Log outcome as event
-mcp__MCP_DOCKER__execute_sql({
-  sql_query: `INSERT INTO events (event_type, agent_id, group_id, status, metadata, created_at)
-    VALUES ('session_complete', $1, 'allura-roninmemory', 'completed', $2, NOW())`,
-  params: [agent_id, { spec_path: "docs/...", commit_sha: "abc123" }],
-})
+```typescript
+// Get recent events for this workflow
+const recentEvents = await searchEvents({
+  query: "roninmemory brainstorming feature-123"
+});
 
-// Promote valuable insight
-await memory_promote({
-  id: memory_id,
-  group_id: "allura-roninmemory",
-  user_id: agent_id,
-  rationale: "Key architecture decision",
-})
+// Get related insights
+const insights = await searchInsights({
+  query: "brainstorming design decisions"
+});
 ```
 
 ## Event Type Naming
@@ -107,15 +93,12 @@ Use consistent prefixes:
 - `skill:<name>:end` - Skill completion
 - `decision:<topic>` - Key decision made
 - `error:<category>` - Error or failure
-- `BLOCKER` - Critical blocker
-- `ARCHITECTURE_DECISION` - Architecture decision (Brooks protocol)
-- `ADR_CREATED` - ADR written
-- `INTERFACE_DEFINED` - Interface contract defined
+- `insight:created` - New insight created
+- `outcome:<result>` - Final outcome logged
 
 ## Status Values
 
 PostgreSQL events table constraint requires:
-
 - `pending` - Work in progress
 - `completed` - Successfully finished
 - `failed` - Error or failure
@@ -128,53 +111,143 @@ PostgreSQL events table constraint requires:
 ### Brainstorming Skill
 
 **Start:**
-
 - Log `skill:brainstorming:start`
-- `memory_search` for previous related work
+- Search for previous related work
 
 **During:**
-
 - Log `decision:approach` when approach is selected
-- `memory_add` the decision content
+- Log `decision:design` when design is approved
 
 **End:**
-
-- Log `skill:brainstorming:end`
-- `memory_promote` if decision is significant
+- Log `skill:brainstorming:end` with spec path
+- Create insight: "Design: [Feature Name]"
+- Link insight to all decision events
 
 ### Writing-Plans Skill
 
 **Start:**
-
 - Log `skill:writing-plans:start`
-- `memory_search` for spec from previous brainstorming
+- Load spec from previous brainstorming
 
 **End:**
-
-- Log `skill:writing-plans:end`
-- `memory_add` the plan content
+- Log `skill:writing-plans:end` with plan path
+- Create insight: "Implementation Plan: [Feature]"
 
 ### Executing-Plans Skill
 
 **Start:**
-
 - Log `skill:executing-plans:start`
-- `memory_search` for plan, extract tasks
+- Load plan, extract tasks
 
 **Per Task:**
-
-- Log `skill:executing-plans:task-start`
-- Log `skill:executing-plans:task-complete`
+- Log `skill:executing-plans:task-start` with task name
+- Log `skill:executing-plans:task-complete` with commit SHA
 
 **End:**
-
 - Log `skill:executing-plans:end`
-- `memory_promote` outcome insight
+- Create outcome insight
 
-## Key Invariants
+### Subagent-Driven-Development Skill
 
-- **group_id** always `allura-*` format (never `roninclaw-*` — that's deprecated drift)
-- **Append-only events** — no UPDATE/DELETE on PostgreSQL trace rows
-- **SUPERSEDES versioning** — never edit Neo4j nodes, always create new version
-- **HITL for promotion** — `memory_promote` routes through `canonical_proposals`, not direct Neo4j write
-- **Brain is source of truth** — no flat-file memory-bank/ reads or writes
+**Start:**
+- Log `skill:subagent-driven:start`
+- Load plan, create TodoWrite
+
+**Per Task:**
+- Log `skill:subagent:implementer-dispatch` with task ID
+- Log `skill:subagent:review-complete` with review results
+
+**End:**
+- Log `skill:subagent-driven:end`
+- Create insight: "Subagent Run: [Feature] - [N] tasks, [M] review loops"
+
+## Implementation Templates
+
+Add this block to each Superpowers skill SKILL.md:
+
+```markdown
+## Memory Integration
+
+At session start:
+1. Search events: `group_id={group}` AND `event_type LIKE 'skill:%'` (last 7 days)
+2. Search insights for related knowledge
+3. Summarize context for agent
+
+During execution:
+1. Log event at each checkpoint
+2. Create insight for significant decisions
+
+At session end:
+1. Log outcome event with results
+2. Create summary insight
+3. Verify database write
+```
+
+## MCP Tool Mapping
+
+| Action | MCP Tool |
+|--------|----------|
+| Log event | `MCP_DOCKER_insert_data` on `events` table |
+| Create insight | `MCP_DOCKER_create_entities` in Neo4j |
+| Link to events | `MCP_DOCKER_create_relations` |
+| Search events | `MCP_DOCKER_query_database` with SQL |
+| Search insights | `MCP_DOCKER_search_memories` |
+| Verify write | `MCP_DOCKER_query_database` by event ID |
+
+## Example: Complete Session Flow
+
+```typescript
+// === SESSION START ===
+// 1. Hydrate context
+const previousWork = await searchEvents({
+  query: "roninmemory feature-123 last-7-days"
+});
+
+// 2. Log session start
+const startEvent = await logEvent({
+  group_id: "roninmemory",
+  event_type: "skill:brainstorming:start",
+  agent_id: "roninmemory-agent",
+  workflow_id: "feature-123",
+  status: "pending",
+  metadata: { previous_work_count: previousWork.length }
+});
+
+// === DURING EXECUTION ===
+// Log checkpoint
+await logEvent({
+  group_id: "roninmemory",
+  event_type: "decision:approach",
+  agent_id: "roninmemory-agent",
+  workflow_id: "feature-123",
+  status: "completed",
+  metadata: { chosen_approach: "option-b", reason: "better testability" }
+});
+
+// === SESSION END ===
+// Log completion
+await logEvent({
+  group_id: "roninmemory",
+  event_type: "skill:brainstorming:end",
+  agent_id: "roninmemory-agent",
+  workflow_id: "feature-123",
+  status: "completed",
+  metadata: { 
+    spec_path: "docs/superpowers/specs/2024-01-15-feature-design.md",
+    start_event_id: startEvent.eventId
+  }
+});
+
+// Create insight
+await createInsight({
+  title: "Design: Feature 123 - Approach Selection",
+  content: "Chose option B for better testability...",
+  category: "Architecture",
+  tags: ["superpowers", "brainstorming", "design"],
+  group_id: "roninmemory"
+});
+
+// Verify
+const verify = await searchEvents({ query: "feature-123" });
+console.log(`Logged ${verify.length} events for this workflow`);
+```

@@ -17,12 +17,12 @@ Spawn a scout to load context:
 
 ```
 Agent(
-  subagent_type="Explore",
+  subagent_type="SCOUT_RECON",
   description="Scout context for task",
-  prompt="Search the allura-memory codebase for context relevant to: $ARGUMENTS.
-  Read memory-bank/activeContext.md, memory-bank/systemPatterns.md.
-  Find existing code patterns related to the task.
-  Return: relevant files, existing patterns, potential conflicts with invariants."
+  prompt="Search Allura Brain for context relevant to: $ARGUMENTS.
+  Query PostgreSQL events for recent activity and blockers.
+  Query Neo4j for architecture insights and decisions.
+  Return: relevant memories, existing patterns, potential conflicts with invariants."
 )
 ```
 
@@ -42,12 +42,12 @@ Based on scout results, design the approach:
 
 Delegate to specialists in sequence. Use the Agent tool for each:
 
-| Work type | Sub-agent prompt persona |
-|-----------|--------------------------|
-| Code implementation | "You are MemoryArchitect/MemoryBuilder. Task: [bounded objective]. Constraints: [invariants]. Context: [files]." |
-| Tests | "You are MemoryTester. Write Vitest tests for: [component]. Pattern: Arrange-Act-Assert, positive + negative cases." |
-| Documentation | "You are MemoryScribe. Document: [component]. Write to _bmad-output/planning-artifacts/ or update relevant PROJECT.md section." |
-| Infrastructure | "You are MemoryBuilder. Build/configure: [infra task]. Enforce group_id on all DB paths." |
+| Work type           | Sub-agent prompt persona                                                                                                         |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Code implementation | "You are MemoryArchitect/MemoryBuilder. Task: [bounded objective]. Constraints: [invariants]. Context: [files]."                 |
+| Tests               | "You are MemoryTester. Write Vitest tests for: [component]. Pattern: Arrange-Act-Assert, positive + negative cases."             |
+| Documentation       | "You are MemoryScribe. Document: [component]. Write to \_bmad-output/planning-artifacts/ or update relevant PROJECT.md section." |
+| Infrastructure      | "You are MemoryBuilder. Build/configure: [infra task]. Enforce group_id on all DB paths."                                        |
 
 ## Phase 4: Validate
 
@@ -63,10 +63,11 @@ Report results. If failures: diagnose root cause before retrying (invoke systema
 ## Phase 5: Summarize
 
 Report to user:
+
 - What was built
 - What tests cover it
 - What invariants were enforced
-- Memory bank files that should be updated
+- Brain events that should be updated
 
 ---
 

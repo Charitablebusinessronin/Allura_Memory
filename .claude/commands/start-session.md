@@ -1,6 +1,13 @@
 ---
 description: "Session initialization - run at the start of every session to load memory and verify system health"
-allowed-tools: ["Bash", "mcp__MCP_DOCKER__mcp-find", "mcp__MCP_DOCKER__mcp-config-set", "mcp__MCP_DOCKER__mcp-add", "mcp__MCP_DOCKER__notion-fetch"]
+allowed-tools:
+  [
+    "Bash",
+    "mcp__MCP_DOCKER__mcp-find",
+    "mcp__MCP_DOCKER__mcp-config-set",
+    "mcp__MCP_DOCKER__mcp-add",
+    "mcp__MCP_DOCKER__notion-fetch",
+  ]
 ---
 
 # Session Start Protocol
@@ -13,10 +20,10 @@ Use MCP tools to verify the memory systems are reachable — never `docker exec`
 
 ```javascript
 // Verify Neo4j is responsive
-mcp__MCP_DOCKER__mcp-exec({ name: "read_graph", arguments: {} })
+mcp__MCP_DOCKER__mcp - exec({ name: "read_graph", arguments: {} })
 
-// Verify Postgres is responsive  
-mcp__MCP_DOCKER__mcp-exec({ name: "query_database", arguments: { query: "SELECT 1" } })
+// Verify Postgres is responsive
+mcp__MCP_DOCKER__mcp - exec({ name: "query_database", arguments: { query: "SELECT 1" } })
 ```
 
 Report status. If either fails, warn the user before continuing.
@@ -35,26 +42,39 @@ mcp__MCP_DOCKER__find_memories_by_name({ names: ["Memory Master", "allura-memory
 
 Report: memories found, key insights, any critical blockers from last session.
 
-## Step 3: Read Memory Bank (in order)
+## Step 3: Brain Hydration
 
-1. `memory-bank/activeContext.md` — current focus and blockers
-2. `memory-bank/progress.md` — what has been done
-3. `memory-bank/systemPatterns.md` — architecture decisions
-4. `memory-bank/techContext.md` — tech stack details
+Search Allura Brain for current context and recent activity:
+
+```javascript
+// Search Brain for recent session context
+mcp__MCP_DOCKER__execute_sql({
+  sql_query: `SELECT event_type, agent_id, metadata, created_at
+    FROM events WHERE group_id = 'allura-roninmemory'
+    ORDER BY created_at DESC LIMIT 20`,
+})
+
+// Search for architecture insights
+mcp__MCP_DOCKER__search_memories({ query: "recent decisions blockers architecture" })
+```
+
+Report: memories found, key insights, any critical blockers from last session.
 
 ## Step 4: Log Session Start
 
 ```javascript
 mcp__MCP_DOCKER__create_entities({
-  entities: [{
-    name: "Session Start " + new Date().toISOString(),
-    type: "Event",
-    observations: [
-      "group_id: allura-roninmemory",
-      "event_type: session_start",
-      "timestamp: " + new Date().toISOString()
-    ]
-  }]
+  entities: [
+    {
+      name: "Session Start " + new Date().toISOString(),
+      type: "Event",
+      observations: [
+        "group_id: allura-roninmemory",
+        "event_type: session_start",
+        "timestamp: " + new Date().toISOString(),
+      ],
+    },
+  ],
 })
 ```
 

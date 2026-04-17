@@ -199,16 +199,20 @@ Type these directly in your IDE:
 
 ## Agent Shortcuts
 
-| Agent  | Shortcut                 | Persona         |
-| ------ | ------------------------ | --------------- |
-| Brooks | `@brooks-architect`      | Rich Hickey     |
-| Brooks | `@brooks-architect`      | Gergely Orosz   |
-| Woz    | `@woz-builder`           | Fabrice Bellard |
-| Pike   | `@pike-interface-review` | Rob Pike        |
-| Scout  | `@scout-recon`           | Julia Evans     |
-| Scout  | `@scout-recon`           | Peter Bourgon   |
-| Fowler | `@fowler-refactor-gate`  | Martin Fowler   |
-| UX     | `@ux`                    | Sara Soueidan   |
+> **Source of truth:** `.opencode/agent/*.md` — 10 canonical agents. This table is derived, not defining.
+
+| Agent      | Shortcut                 | Persona           | Role                        |
+| ---------- | ------------------------ | ----------------- | --------------------------- |
+| Brooks     | `@brooks-architect`      | Frederick Brooks  | Architect + Orchestrator    |
+| Jobs       | `@jobs-intent-gate`     | Steve Jobs        | Intent Gate + Scope Owner   |
+| Woz        | `@woz-builder`          | Steve Wozniak     | Primary Builder             |
+| Pike       | `@pike-interface-review` | Rob Pike          | Simplicity Gate (read-only) |
+| Scout      | `@scout-recon`          | (none)            | Fast Discovery (read-only)  |
+| Bellard    | `@bellard-diagnostics`  | Fabrice Bellard   | Diagnostics + Perf         |
+| Carmack    | `@carmack-perf`         | John Carmack      | Performance Specialist      |
+| Fowler     | `@fowler-refactor-gate` | Martin Fowler     | Maintainability Gate        |
+| Knuth      | `@knuth-data`           | Donald Knuth      | Data Architect              |
+| Hightower  | `@hightower-devops`     | Kelsey Hightower  | DevOps + Infrastructure     |
 
 ---
 
