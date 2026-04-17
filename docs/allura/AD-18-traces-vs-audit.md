@@ -3,7 +3,7 @@
 | Field          | Value                                                            |
 | -------------- | ---------------------------------------------------------------- |
 | **ID**         | AD-18                                                            |
-| **Status**     | Proposed                                                         |
+| **Status**     | Accepted                                                         |
 | **Date**       | 2026-04-17                                                       |
 | **Author**     | WOZ_BUILDER                                                      |
 | **Reviewers**  | _Pending — requires Brooks + Pike sign-off_                      |
