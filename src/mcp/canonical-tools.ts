@@ -1026,57 +1026,88 @@ export async function memory_get(request: MemoryGetRequest): Promise<MemoryGetRe
  *
  * List all memories for a user within a tenant.
  * Returns from both stores, merged and sorted.
+ *
+ * Pagination strategy: fetch all matching records from both stores,
+ * deduplicate by id, sort, then slice in application code.
+ * This produces correct total counts and non-overlapping pages,
+ * unlike per-store LIMIT/OFFSET which misses/duplicates promoted memories.
+ *
+ * TODO Phase 3: cursor-based pagination when total > 5000
  */
 export async function memory_list(request: MemoryListRequest): Promise<MemoryListResponse> {
   // Validate
   const groupId = validateGroupId(request.group_id)
   const limit = request.limit || 50
   const offset = request.offset || 0
+  const sort = request.sort || "created_at_desc"
 
   try {
     const { pg, neo4j: neo4jDriver } = await getConnections()
 
-    // Parallel query both stores
+    // Parallel query both stores — no LIMIT/OFFSET; we paginate in application code
     let listMeta = baseMeta(["postgres", "neo4j"])
-    const pgQuery = `SELECT metadata->>'memory_id' AS id, metadata->>'content' AS content,
-                 metadata->>'source' AS provenance,
-                 metadata->>'user_id' AS user_id,
-                 metadata->>'tags' AS tags,
-                 created_at
-          FROM events
-          WHERE group_id = $1
-            AND ($2::text IS NULL OR metadata->>'user_id' = $2)
-            AND event_type = 'memory_add'
-          ORDER BY created_at DESC
-          LIMIT $3 OFFSET $4`
-    const [episodicResults, semanticResults] = await Promise.all([
-      // PostgreSQL — throw on failure, do NOT swallow
-      pg.query<EpisodicMemoryRow>(pgQuery, [groupId, request.user_id ?? null, limit, offset]),
 
-      // Neo4j
+    // PG: fetch count + data (no LIMIT/OFFSET on data)
+    const [pgCountResult, episodicResults, semanticResults] = await Promise.all([
+      // Total count from PG
+      pg.query<{ total_count: string }>(
+        `SELECT COUNT(*) AS total_count
+         FROM events
+         WHERE group_id = $1
+           AND ($2::text IS NULL OR metadata->>'user_id' = $2)
+           AND event_type = 'memory_add'`,
+        [groupId, request.user_id ?? null]
+      ),
+
+      // PG data (no LIMIT/OFFSET — all rows for merge)
+      pg.query<EpisodicMemoryRow>(
+        `SELECT metadata->>'memory_id' AS id, metadata->>'content' AS content,
+                metadata->>'source' AS provenance,
+                metadata->>'user_id' AS user_id,
+                metadata->>'tags' AS tags,
+                created_at
+         FROM events
+         WHERE group_id = $1
+           AND ($2::text IS NULL OR metadata->>'user_id' = $2)
+           AND event_type = 'memory_add'
+         ORDER BY created_at DESC`,
+        [groupId, request.user_id ?? null]
+      ),
+
+      // Neo4j — fetch all + count in one pass
       (async () => {
         const session = neo4jDriver.session()
         try {
+          // Get total count from Neo4j
+          const countResult = await session.run(
+            `MATCH (m:Memory)
+             WHERE m.group_id = $groupId
+               AND ($userId IS NULL OR m.user_id = $userId)
+               AND NOT (m)<-[:SUPERSEDES]-()
+             RETURN count(m) AS total`,
+            { groupId, userId: request.user_id ?? null }
+          )
+          const neo4jTotal = countResult.records[0]?.get("total")?.toNumber?.() ?? 0
+
+          // Get all data (no SKIP/LIMIT — paginate in application code)
           const result = await session.run(
             `MATCH (m:Memory)
                  WHERE m.group_id = $groupId
                    AND ($userId IS NULL OR m.user_id = $userId)
                    AND NOT (m)<-[:SUPERSEDES]-()
-                RETURN m.id AS id,
-                       m.content AS content,
-                       m.score AS score,
-                       m.provenance AS provenance,
-                       m.user_id AS user_id,
-                       m.created_at AS created_at,
-                       m.version AS version,
-                       m.tags AS tags
-                ORDER BY created_at DESC
-                SKIP $offset
-                LIMIT $limit`,
-            { groupId, userId: request.user_id ?? null, limit: neo4j.int(limit), offset: neo4j.int(offset) }
+                 RETURN m.id AS id,
+                        m.content AS content,
+                        m.score AS score,
+                        m.provenance AS provenance,
+                        m.user_id AS user_id,
+                        m.created_at AS created_at,
+                        m.version AS version,
+                        m.tags AS tags
+                 ORDER BY m.created_at DESC`,
+            { groupId, userId: request.user_id ?? null }
           )
 
-          return result.records.map((record) => ({
+          const memories = result.records.map((record) => ({
             id: record.get("id") as MemoryId,
             content: record.get("content"),
             score: record.get("score"),
@@ -1088,17 +1119,19 @@ export async function memory_list(request: MemoryListRequest): Promise<MemoryLis
             usage_count: 0,
             tags: record.get("tags") || [],
           }))
+
+          return { memories, total: neo4jTotal }
         } catch (err) {
           console.warn("[degraded] Neo4j query error in memory_list:", err)
           listMeta = degradedMeta(["postgres"])
-          return []
+          return { memories: [], total: 0 }
         } finally {
           await session.close()
         }
       })(),
     ])
 
-    // Merge results
+    // Map PG rows to canonical shape
     const episodic = episodicResults.rows.map((row) => ({
       id: toMemoryId(row.id),
       content: row.content,
@@ -1111,14 +1144,36 @@ export async function memory_list(request: MemoryListRequest): Promise<MemoryLis
       tags: parseEpisodicTags(row.tags),
     }))
 
-    const memories = [...semanticResults, ...episodic]
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, limit)
+    // Deduplicate by id (promoted memories exist in both stores;
+    // when id collides, prefer semantic version which has score/version)
+    const seen = new Set<string>()
+    const deduped = [...semanticResults.memories, ...episodic].filter((m) => {
+      if (seen.has(m.id)) return false
+      seen.add(m.id)
+      return true
+    })
+
+    // Sort according to sort param
+    const sorted = sortDedupedMemories(deduped, sort)
+
+    // Compute total across both stores after dedup
+    const pgTotal = parseInt(pgCountResult.rows[0]?.total_count ?? "0", 10)
+    const neo4jTotal = semanticResults.total
+    // When both stores are up, total = deduped.length (most accurate).
+    // In degraded mode (one store failed), use the available store's count
+    // plus the other store's count as approximation.
+    const total = listMeta.degraded
+      ? pgTotal + neo4jTotal // approximate: can't dedup across failed store
+      : deduped.length
+
+    // Slice for requested page
+    const page = sorted.slice(offset, offset + limit)
+    const has_more = offset + limit < total
 
     return {
-      memories,
-      total: memories.length,
-      has_more: episodicResults.rows.length === limit || semanticResults.length === limit,
+      memories: page,
+      total,
+      has_more,
       meta: listMeta,
     }
   } catch (error) {
@@ -1133,6 +1188,26 @@ export async function memory_list(request: MemoryListRequest): Promise<MemoryLis
     }
     console.error("memory_list error:", error)
     throw error
+  }
+}
+
+/**
+ * Sort deduplicated memories according to the requested sort order.
+ */
+function sortDedupedMemories(
+  memories: MemoryGetResponse[],
+  sort: "created_at_desc" | "created_at_asc" | "score_desc" | "score_asc"
+): MemoryGetResponse[] {
+  switch (sort) {
+    case "created_at_asc":
+      return [...memories].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    case "score_desc":
+      return [...memories].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+    case "score_asc":
+      return [...memories].sort((a, b) => (a.score ?? 0) - (b.score ?? 0))
+    case "created_at_desc":
+    default:
+      return [...memories].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   }
 }
 
