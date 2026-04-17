@@ -228,6 +228,40 @@ The orchestrator for MCP servers and agent skills. Explicit approval flow. No au
 # → Logs SKILL_LOADED event; @Pike executes
    ```
 
+6. **Create Skill**: Build new skills with the iterative workflow
+   ```bash
+/skill-create pdf-extractor              # Create from scratch
+/skill-create code-review --improve     # Improve existing
+/skill-create mcp-builder --eval        # Run evals + benchmark
+/skill-create memory-client --optimize  # Optimize triggering
+   ```
+
+### Skill Creator
+
+The Anthropic skill-creator v2 enables iterative skill development with evaluation:
+
+```
+Draft → Test → Grade → Review → Improve → Optimize → Package
+```
+
+| Resource | Purpose |
+|----------|----------|
+| `scripts/init_skill.py` | Scaffold new skill from template |
+| `scripts/quick_validate.py` | Validate SKILL.md frontmatter |
+| `scripts/package_skill.py` | Package skill into `.skill` file |
+| `scripts/run_eval.py` | Test skill triggering accuracy |
+| `scripts/run_loop.py` | Description optimization loop |
+| `scripts/aggregate_benchmark.py` | Aggregate grading into benchmark stats |
+| `scripts/improve_description.py` | AI-powered description improvement |
+| `eval-viewer/generate_review.py` | Launch HTML review interface |
+| `agents/grader.md` | Subagent: evaluate assertions |
+| `agents/comparator.md` | Subagent: blind A/B comparison |
+| `agents/analyzer.md` | Subagent: benchmark analysis |
+| `references/schemas.md` | JSON schemas for evals, grading, benchmark |
+| `assets/eval_review.html` | Eval set review template |
+
+**Quick commands:** `/create <name>` (alias for `/skill-create`)
+
 ### Principles
 
 - **Explicit Approval**: No auto-discovery. Brooks approves before tools load.
@@ -419,6 +453,12 @@ See [CLAUDE.md](CLAUDE.md) for code conventions.
 - **[.opencode/HARNESS-TO-CLAUDE-CODE.md](.opencode/HARNESS-TO-CLAUDE-CODE.md)** — Claude Code integration roadmap
 - **[.opencode/HARNESS-COMPLETION-SUMMARY.md](.opencode/HARNESS-COMPLETION-SUMMARY.md)** — Phase 1 summary + metrics
 - **[.opencode/HARNESS-QUICKSTART.md](.opencode/HARNESS-QUICKSTART.md)** — Quick reference guide
+
+### Skill Creator
+
+- **[.opencode/skills/skill-creator/SKILL.md](.opencode/skills/skill-creator/SKILL.md)** — Full skill-creator workflow (Anthropic v2)
+- **[.opencode/command/skill-create.md](.opencode/command/skill-create.md)** — `/skill-create` command reference
+- **[.opencode/skills/skill-creator/references/schemas.md](.opencode/skills/skill-creator/references/schemas.md)** — JSON schemas for evals, grading, benchmark
 
 ---
 

@@ -36,6 +36,7 @@ A Memory is a unit of information an AI agent stores about a user, session, or c
 **States:** `episodic | semantic | deleted`
 
 **Key fields:**
+
 - `content` — the raw text of the memory
 - `user_id` — the owner (scoped within a `group_id`)
 - `group_id` — tenant namespace, must match `^allura-`
@@ -50,6 +51,7 @@ Every memory write lands here first. Append-only. Never mutated. Provides the ra
 **States:** `recorded` (terminal — no transitions)
 
 **Key fields:**
+
 - `event_type` — e.g. `memory_add`, `memory_delete`
 - `metadata` — JSONB payload (content, query, score, etc.)
 - `created_at` — immutable write timestamp
@@ -63,6 +65,7 @@ Promoted, curated knowledge. Versioned via `SUPERSEDES` relationships. Nodes are
 **States:** `active | deprecated`
 
 **Key fields:**
+
 - `id` — UUID
 - `group_id` — tenant namespace
 - `content` — memory content
@@ -81,30 +84,30 @@ The hard isolation boundary. Every read and write MUST include a valid `group_id
 
 ### Business Requirements
 
-| # | Requirement |
-|---|-------------|
-| B1 | Developers integrate Allura with a 5-tool API matching mem0's UX |
-| B2 | All memory is isolated by tenant (`group_id`) at the schema level |
-| B3 | Every write produces an immutable audit record in PostgreSQL |
-| B4 | Promoted knowledge is versioned and never mutated in Neo4j |
-| B5 | The system is deployable via a single `docker compose up` command |
-| B6 | Agents connect via MCP (Model Context Protocol) |
-| B7 | Operators choose between human-gated (SOC2) and auto-promotion modes |
-| B8 | Consumer memory viewer: no sidebar, search dominant, swipe to forget |
-| B9 | Every memory shows provenance: "from conversation" or "added manually" |
-| B10 | Memory usage indicator: "used N times this week" on expand |
-| B11 | Undo: recently forgotten memories recoverable within 30 days |
-| B12 | Enterprise admin view: tenant overview, SOC2 pending queue, audit log |
-| B13 | Audit log exportable as CSV for compliance |
-| B14 | TypeScript SDK (`@allura/sdk`) |
-| B15 | BYOK encryption |
-| B16 | Curator dashboard: three-tab approval workflow (Traces, Approved, Pending) |
+| #   | Requirement                                                                                  |
+| --- | -------------------------------------------------------------------------------------------- |
+| B1  | Developers integrate Allura with a 5-tool API matching mem0's UX                             |
+| B2  | All memory is isolated by tenant (`group_id`) at the schema level                            |
+| B3  | Every write produces an immutable audit record in PostgreSQL                                 |
+| B4  | Promoted knowledge is versioned and never mutated in Neo4j                                   |
+| B5  | The system is deployable via a single `docker compose up` command                            |
+| B6  | Agents connect via MCP (Model Context Protocol)                                              |
+| B7  | Operators choose between human-gated (SOC2) and auto-promotion modes                         |
+| B8  | Consumer memory viewer: no sidebar, search dominant, swipe to forget                         |
+| B9  | Every memory shows provenance: "from conversation" or "added manually"                       |
+| B10 | Memory usage indicator: "used N times this week" on expand                                   |
+| B11 | Undo: recently forgotten memories recoverable within 30 days                                 |
+| B12 | Enterprise admin view: tenant overview, SOC2 pending queue, audit log                        |
+| B13 | Audit log exportable as CSV for compliance                                                   |
+| B14 | TypeScript SDK (`@allura/sdk`)                                                               |
+| B15 | BYOK encryption                                                                              |
+| B16 | Curator dashboard: three-tab approval workflow (Traces, Approved, Pending)                   |
 | B17 | Curator sees confidence scores (60-100%) with one-sentence reasoning for uncertain proposals |
-| B18 | Approve/reject decisions logged to audit trail with curator ID and timestamp |
-| B19 | Auto-promote proposals >85% confidence without curator review (configurable) |
-| B20 | Dashboard deployable on Vercel with backend engine in user's VPC/cloud |
-| B21 | Curator authentication via Clerk (SSO, RBAC) |
-| B22 | Error tracking via Sentry; curator alerted on engine failures |
+| B18 | Approve/reject decisions logged to audit trail with curator ID and timestamp                 |
+| B19 | Auto-promote proposals >85% confidence without curator review (configurable)                 |
+| B20 | Dashboard deployable on Vercel with backend engine in user's VPC/cloud                       |
+| B21 | Curator authentication via Clerk (SSO, RBAC)                                                 |
+| B22 | Error tracking via Sentry; curator alerted on engine failures                                |
 
 ---
 
@@ -112,48 +115,48 @@ The hard isolation boundary. Every read and write MUST include a valid `group_id
 
 #### Memory Operations
 
-| # | Requirement |
-|---|-------------|
-| F1 | `memory_add(content, userId, metadata?)` — writes to Postgres; conditionally promotes to Neo4j |
-| F2 | `memory_search(query, userId, limit?)` — federated search across Postgres + Neo4j, merged by relevance |
-| F3 | `memory_get(memoryId)` — returns a single memory record by ID |
-| F4 | `memory_list(userId)` — returns all memories for a user within the tenant |
-| F5 | `memory_delete(memoryId)` — soft-delete: appends a deletion event to Postgres, marks Neo4j node deprecated |
+| #   | Requirement                                                                                                |
+| --- | ---------------------------------------------------------------------------------------------------------- |
+| F1  | `memory_add(content, userId, metadata?)` — writes to Postgres; conditionally promotes to Neo4j             |
+| F2  | `memory_search(query, userId, limit?)` — federated search across Postgres + Neo4j, merged by relevance     |
+| F3  | `memory_get(memoryId)` — returns a single memory record by ID                                              |
+| F4  | `memory_list(userId)` — returns all memories for a user within the tenant                                  |
+| F5  | `memory_delete(memoryId)` — soft-delete: appends a deletion event to Postgres, marks Neo4j node deprecated |
 
 #### Governance
 
-| # | Requirement |
-|---|-------------|
-| F6 | `PROMOTION_MODE=soc2` — score ≥ threshold queues for human approval; no autonomous Neo4j write |
-| F7 | `PROMOTION_MODE=auto` — score ≥ `AUTO_APPROVAL_THRESHOLD` promotes immediately to Neo4j |
-| F8 | `group_id` CHECK constraint blocks writes with invalid tenant namespaces |
-| F9 | `SUPERSEDES` relationship created on every Neo4j node update |
+| #   | Requirement                                                                                    |
+| --- | ---------------------------------------------------------------------------------------------- |
+| F6  | `PROMOTION_MODE=soc2` — score ≥ threshold queues for human approval; no autonomous Neo4j write |
+| F7  | `PROMOTION_MODE=auto` — score ≥ `AUTO_APPROVAL_THRESHOLD` promotes immediately to Neo4j        |
+| F8  | `group_id` CHECK constraint blocks writes with invalid tenant namespaces                       |
+| F9  | `SUPERSEDES` relationship created on every Neo4j node update                                   |
 
 #### Curator Dashboard
 
-| # | Requirement |
-|---|-------------|
-| F10 | `POST /api/curator/score` — scores proposal, returns {confidence, reasoning, tier} |
+| #   | Requirement                                                                                         |
+| --- | --------------------------------------------------------------------------------------------------- |
+| F10 | `POST /api/curator/score` — scores proposal, returns {confidence, reasoning, tier}                  |
 | F11 | `POST /api/curator/approve` — moves proposal to approved knowledge, promotes to Neo4j if tier ≥ 85% |
-| F12 | `POST /api/curator/reject` — archives proposal to 7-day undo, logs to audit trail |
-| F13 | `GET /api/curator/proposals` — returns pending proposals (emerging + adoption tiers only) |
-| F14 | Curator dashboard shows three tabs: Traces (raw), Approved (knowledge), Pending (decisions) |
-| F15 | Pending tab sorts by confidence (descending); shows confidence badge + reasoning + buttons |
-| F16 | Approved tab shows all approved knowledge (human + auto-promoted); sortable by date/confidence |
-| F17 | Tab 1 restricted to authenticated users with `admin` role (engineers only) |
-| F18 | Audit log endpoint: `GET /api/audit/events` — returns curator decisions with timestamps |
-| F19 | Dashboard integrates Clerk for authentication and RBAC (curator, admin, viewer roles) |
+| F12 | `POST /api/curator/reject` — archives proposal to 7-day undo, logs to audit trail                   |
+| F13 | `GET /api/curator/proposals` — returns pending proposals (emerging + adoption tiers only)           |
+| F14 | Curator dashboard shows three tabs: Traces (raw), Approved (knowledge), Pending (decisions)         |
+| F15 | Pending tab sorts by confidence (descending); shows confidence badge + reasoning + buttons          |
+| F16 | Approved tab shows all approved knowledge (human + auto-promoted); sortable by date/confidence      |
+| F17 | Tab 1 restricted to authenticated users with `admin` role (engineers only)                          |
+| F18 | Audit log endpoint: `GET /api/audit/events` — returns curator decisions with timestamps             |
+| F19 | Dashboard integrates Clerk for authentication and RBAC (curator, admin, viewer roles)               |
 
 #### Infrastructure
 
-| # | Requirement |
-|---|-------------|
-| F20 | MCP server exposes all 5 memory tools over stdio transport |
-| F21 | `docker compose up` starts Postgres, Neo4j, and MCP server |
-| F22 | Memory viewer UI at `/memory` lists, searches, and deletes memories |
+| #   | Requirement                                                                                 |
+| --- | ------------------------------------------------------------------------------------------- |
+| F20 | MCP server exposes all 5 memory tools over stdio transport                                  |
+| F21 | `docker compose up` starts Postgres, Neo4j, and MCP server                                  |
+| F22 | Memory viewer UI at `/memory` lists, searches, and deletes memories                         |
 | F23 | Curator dashboard deployed on Vercel; calls backend engine via `CURATOR_ENGINE_URL` env var |
-| F24 | Vercel Functions (`/api/curator/*`) call Docker engine in VPC/cloud via HTTPS |
-| F25 | Error tracking: unhandled exceptions sent to Sentry; curator notified via email/Slack |
+| F24 | Vercel Functions (`/api/curator/*`) call Docker engine in VPC/cloud via HTTPS               |
+| F25 | Error tracking: unhandled exceptions sent to Sentry; curator notified via email/Slack       |
 
 ---
 
@@ -161,20 +164,20 @@ The hard isolation boundary. Every read and write MUST include a valid `group_id
 
 ### Components
 
-| Component | Responsibility | Notes |
-|-----------|---------------|-------|
-| MCP Server | Exposes 5 memory tools to AI agents | `src/mcp/memory-server.ts` |
-| Next.js API | REST endpoints for dashboard + curator APIs | `src/app/api/memory/`, `src/app/api/curator/` |
-| Memory Engine | Core read/write/score/route logic | `src/lib/memory/` |
-| Curator Scorer | Computes confidence (60-100%) + reasoning | `src/lib/curator/score.ts` (rule-based or Claude) |
-| Dedup Engine | Prevents duplicate Neo4j promotions | `src/lib/dedup/` |
-| Budget + Circuit Breaker | Prevents runaway agent writes | `src/lib/budget/`, `src/lib/circuit-breaker/` |
-| PostgreSQL 16 | Episodic memory + audit trail + proposals | Docker service |
-| Neo4j 5.26 | Semantic memory — versioned knowledge graph | Docker service |
-| Memory Viewer | `/memory` page — list, search, delete | `src/app/memory/page.tsx` |
-| Curator Dashboard | `/curator` page — three-tab HITL governance UI | `src/app/curator/page.tsx` |
-| Clerk Auth | Multi-tenant authentication + RBAC | SaaS (vercel.com) |
-| Sentry Monitor | Error tracking + alerts | SaaS (sentry.io) |
+| Component                | Responsibility                                 | Notes                                             |
+| ------------------------ | ---------------------------------------------- | ------------------------------------------------- |
+| MCP Server               | Exposes 5 memory tools to AI agents            | `src/mcp/memory-server.ts`                        |
+| Next.js API              | REST endpoints for dashboard + curator APIs    | `src/app/api/memory/`, `src/app/api/curator/`     |
+| Memory Engine            | Core read/write/score/route logic              | `src/lib/memory/`                                 |
+| Curator Scorer           | Computes confidence (60-100%) + reasoning      | `src/lib/curator/score.ts` (rule-based or Claude) |
+| Dedup Engine             | Prevents duplicate Neo4j promotions            | `src/lib/dedup/`                                  |
+| Budget + Circuit Breaker | Prevents runaway agent writes                  | `src/lib/budget/`, `src/lib/circuit-breaker/`     |
+| PostgreSQL 16            | Episodic memory + audit trail + proposals      | Docker service                                    |
+| Neo4j 5.26               | Semantic memory — versioned knowledge graph    | Docker service                                    |
+| Memory Viewer            | `/memory` page — list, search, delete          | `src/app/memory/page.tsx`                         |
+| Curator Dashboard        | `/curator` page — three-tab HITL governance UI | `src/app/curator/page.tsx`                        |
+| Clerk Auth               | Multi-tenant authentication + RBAC             | SaaS (vercel.com)                                 |
+| Sentry Monitor           | Error tracking + alerts                        | SaaS (sentry.io)                                  |
 
 ---
 
@@ -300,26 +303,26 @@ erDiagram
 
 The primary append-only log. Every memory operation produces a row here. No UPDATE or DELETE ever.
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `id` | bigserial | Yes | Auto-increment primary key |
-| `group_id` | varchar(255) | Yes | Tenant identifier. CHECK: `group_id ~ '^allura-'` |
-| `event_type` | varchar(100) | Yes | `memory_add` · `memory_search` · `memory_delete` · `memory_get` |
-| `agent_id` | varchar(255) | Yes | Source agent or user identifier |
-| `workflow_id` | varchar(255) | No | Optional workflow grouping |
-| `status` | varchar(50) | Yes | Default: `completed` |
-| `metadata` | jsonb | No | Content, query, score, result count, etc. |
-| `created_at` | timestamptz | Yes | Immutable. DEFAULT NOW() |
+| Field         | Type         | Required | Description                                                     |
+| ------------- | ------------ | -------- | --------------------------------------------------------------- |
+| `id`          | bigserial    | Yes      | Auto-increment primary key                                      |
+| `group_id`    | varchar(255) | Yes      | Tenant identifier. CHECK: `group_id ~ '^allura-'`               |
+| `event_type`  | varchar(100) | Yes      | `memory_add` · `memory_search` · `memory_delete` · `memory_get` |
+| `agent_id`    | varchar(255) | Yes      | Source agent or user identifier                                 |
+| `workflow_id` | varchar(255) | No       | Optional workflow grouping                                      |
+| `status`      | varchar(50)  | Yes      | Default: `completed`                                            |
+| `metadata`    | jsonb        | No       | Content, query, score, result count, etc.                       |
+| `created_at`  | timestamptz  | Yes      | Immutable. DEFAULT NOW()                                        |
 
 **`event_type` values**
 
-| Value | Description |
-|-------|-------------|
-| `memory_add` | A memory was written |
-| `memory_search` | A search was performed |
-| `memory_get` | A single memory was fetched |
-| `memory_list` | All memories for a user were listed |
-| `memory_delete` | A memory was soft-deleted |
+| Value           | Description                         |
+| --------------- | ----------------------------------- |
+| `memory_add`    | A memory was written                |
+| `memory_search` | A search was performed              |
+| `memory_get`    | A single memory was fetched         |
+| `memory_list`   | All memories for a user were listed |
+| `memory_delete` | A memory was soft-deleted           |
 
 ---
 
@@ -327,20 +330,20 @@ The primary append-only log. Every memory operation produces a row here. No UPDA
 
 Promoted, curated knowledge. Immutable after creation. Versioning via SUPERSEDES.
 
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
-| `id` | string (UUID) | Yes | Unique identifier |
-| `group_id` | string | Yes | Tenant namespace. Must match `^allura-` |
-| `user_id` | string | Yes | Memory owner |
-| `content` | string | Yes | The memory content |
-| `score` | float | Yes | Confidence score (0–1) |
-| `deprecated` | boolean | Yes | True when a newer version supersedes this node |
-| `created_at` | datetime | Yes | Creation timestamp |
+| Property     | Type          | Required | Description                                    |
+| ------------ | ------------- | -------- | ---------------------------------------------- |
+| `id`         | string (UUID) | Yes      | Unique identifier                              |
+| `group_id`   | string        | Yes      | Tenant namespace. Must match `^allura-`        |
+| `user_id`    | string        | Yes      | Memory owner                                   |
+| `content`    | string        | Yes      | The memory content                             |
+| `score`      | float         | Yes      | Confidence score (0–1)                         |
+| `deprecated` | boolean       | Yes      | True when a newer version supersedes this node |
+| `created_at` | datetime      | Yes      | Creation timestamp                             |
 
 **Relationships**
 
-| Relationship | Pattern | Description |
-|---|---|---|
+| Relationship | Pattern                    | Description                                     |
+| ------------ | -------------------------- | ----------------------------------------------- |
 | `SUPERSEDES` | `(v2)-[:SUPERSEDES]->(v1)` | v1 is marked `deprecated: true`. Never edit v1. |
 
 ---
@@ -384,35 +387,35 @@ Before any Neo4j write, search for an existing node with matching `content` + `g
 
 ### MCP Tools (Agent Interface)
 
-| Tool | Description |
-|------|-------------|
-| `memory_add` | Add a memory for a user |
+| Tool            | Description                        |
+| --------------- | ---------------------------------- |
+| `memory_add`    | Add a memory for a user            |
 | `memory_search` | Semantic search across both stores |
-| `memory_get` | Fetch a single memory by ID |
-| `memory_list` | List all memories for a user |
-| `memory_delete` | Soft-delete a memory |
+| `memory_get`    | Fetch a single memory by ID        |
+| `memory_list`   | List all memories for a user       |
+| `memory_delete` | Soft-delete a memory               |
 
 ### REST API (Dashboard Interface)
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/memory` | Add a memory |
-| `GET` | `/api/memory?userId=&groupId=` | List memories |
-| `GET` | `/api/memory/[id]` | Get memory by ID |
-| `DELETE` | `/api/memory/[id]` | Soft-delete a memory |
-| `GET` | `/api/memory/search?q=&userId=` | Search memories |
-| `GET` | `/api/health` | System health check |
+| Method   | Path                            | Description          |
+| -------- | ------------------------------- | -------------------- |
+| `POST`   | `/api/memory`                   | Add a memory         |
+| `GET`    | `/api/memory?userId=&groupId=`  | List memories        |
+| `GET`    | `/api/memory/[id]`              | Get memory by ID     |
+| `DELETE` | `/api/memory/[id]`              | Soft-delete a memory |
+| `GET`    | `/api/memory/search?q=&userId=` | Search memories      |
+| `GET`    | `/api/health`                   | System health check  |
 
 ---
 
 ## 9) Logging & Audit
 
-| What | Where stored | Notes |
-|------|-------------|-------|
-| Every memory operation | `events` (Postgres) | Append-only, permanent |
-| Promotion decisions | `events` (Postgres) | `event_type: memory_promoted` or `promotion_failed` |
-| Search queries | `events` (Postgres) | Includes result count in metadata |
-| Neo4j node versions | Neo4j SUPERSEDES chain | Full lineage preserved |
+| What                   | Where stored           | Notes                                               |
+| ---------------------- | ---------------------- | --------------------------------------------------- |
+| Every memory operation | `events` (Postgres)    | Append-only, permanent                              |
+| Promotion decisions    | `events` (Postgres)    | `event_type: memory_promoted` or `promotion_failed` |
+| Search queries         | `events` (Postgres)    | Includes result count in metadata                   |
+| Neo4j node versions    | Neo4j SUPERSEDES chain | Full lineage preserved                              |
 
 **Redacted fields:** passwords, API keys, raw credentials must never appear in `metadata` JSONB.
 
@@ -478,11 +481,13 @@ Paperclip UI    Memory Dashboard
 ```
 
 **Three Layers:**
+
 1. **Agent Layer:** OpenClaw, Claude Code, Cursor — any MCP-compatible agent
 2. **Memory Layer:** PostgreSQL (episodic) + Neo4j (semantic)
 3. **Governance Layer:** Optional curator dashboard for human approval
 
 **Core Workflows:**
+
 - Agent Task → Automatic Logging → PostgreSQL
 - Claude Code Memory Commands → MCP retrieval → Merged results
 - Manual Insight Proposal → Pending queue → Neo4j (if approved)
@@ -498,20 +503,20 @@ This section defines the single authority map between Notion templates/policy an
 1. **Policy and templates are upstream in Notion.**
 2. **Implementation canon is downstream in `docs/allura/` (exactly six files).**
 3. **Agents do not auto-write repo content back to Notion template pages.**
-4. **Residue** (reports, deliverables, ADR standalones, validation snapshots, benchmarks, prompts) goes to `docs/archive/allura/`, `memory-bank`, or Allura Brain.
+4. **Residue** (reports, deliverables, ADR standalones, validation snapshots, benchmarks, prompts) goes to `docs/archive/allura/` or Allura Brain.
 
 ### Authority Map
 
-| Notion Page | Repo Counterpart | Authority Direction | Who Edits |
-|---|---|---|---|
-| Allura Blueprint | `docs/allura/BLUEPRINT.md` | Notion → repo | Edit Notion, sync to repo |
-| Solution Architecture: Allura | `docs/allura/SOLUTION-ARCHITECTURE.md` | Notion → repo | Edit Notion, sync to repo |
-| ✨ AI Guidelines: Documentation Standards | `docs/AI-GUIDELINES.md` + `.opencode/AI-GUIDELINES.md` | Notion → repo | Edit Notion, patch both repo files |
-| Design | `docs/allura/DESIGN-ALLURA.md` | Repo canonical (no Notion twin) | Edit repo directly |
-| Requirements Matrix | `docs/allura/REQUIREMENTS-MATRIX.md` | Repo canonical (no Notion twin) | Edit repo directly |
-| Risks & Decisions | `docs/allura/RISKS-AND-DECISIONS.md` | Repo canonical (no Notion twin) | Edit repo directly |
-| Data Dictionary | `docs/allura/DATA-DICTIONARY.md` | Repo canonical (no Notion twin) | Edit repo directly |
-| BROOKS_ARCHITECT persona | `.claude/agents/brooks.md` | Notion → repo | Edit Notion persona, sync to agent file |
+| Notion Page                               | Repo Counterpart                                       | Authority Direction             | Who Edits                               |
+| ----------------------------------------- | ------------------------------------------------------ | ------------------------------- | --------------------------------------- |
+| Allura Blueprint                          | `docs/allura/BLUEPRINT.md`                             | Notion → repo                   | Edit Notion, sync to repo               |
+| Solution Architecture: Allura             | `docs/allura/SOLUTION-ARCHITECTURE.md`                 | Notion → repo                   | Edit Notion, sync to repo               |
+| ✨ AI Guidelines: Documentation Standards | `docs/AI-GUIDELINES.md` + `.opencode/AI-GUIDELINES.md` | Notion → repo                   | Edit Notion, patch both repo files      |
+| Design                                    | `docs/allura/DESIGN-ALLURA.md`                         | Repo canonical (no Notion twin) | Edit repo directly                      |
+| Requirements Matrix                       | `docs/allura/REQUIREMENTS-MATRIX.md`                   | Repo canonical (no Notion twin) | Edit repo directly                      |
+| Risks & Decisions                         | `docs/allura/RISKS-AND-DECISIONS.md`                   | Repo canonical (no Notion twin) | Edit repo directly                      |
+| Data Dictionary                           | `docs/allura/DATA-DICTIONARY.md`                       | Repo canonical (no Notion twin) | Edit repo directly                      |
+| BROOKS_ARCHITECT persona                  | `.claude/agents/brooks.md`                             | Notion → repo                   | Edit Notion persona, sync to agent file |
 
 ### Preflight Gate (mandatory before doc writes)
 
@@ -531,6 +536,7 @@ For Claude Code integration, Allura exposes three core tools via MCP:
 **Purpose:** Search for memories
 
 **Returns:**
+
 ```typescript
 {
   episodic: string[],  // Raw traces from PostgreSQL
@@ -555,4 +561,4 @@ For Claude Code integration, Allura exposes three core tools via MCP:
 
 ---
 
-*See [SOLUTION-ARCHITECTURE.md](./SOLUTION-ARCHITECTURE.md) for implementation phases and deployment scenarios.*
+_See [SOLUTION-ARCHITECTURE.md](./SOLUTION-ARCHITECTURE.md) for implementation phases and deployment scenarios._
