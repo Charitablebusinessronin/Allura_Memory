@@ -994,7 +994,7 @@ export async function memory_get(request: MemoryGetRequest): Promise<MemoryGetRe
     )
 
     if (result.rows.length === 0) {
-      throw new Error(`Memory not found: ${request.id}`)
+      throw new MemoryNotFoundError(request.id)
     }
 
     const row = result.rows[0]

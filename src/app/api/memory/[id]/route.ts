@@ -17,6 +17,7 @@ import type {
   UserId,
 } from "@/lib/memory/canonical-contracts"
 import { DatabaseUnavailableError, DatabaseQueryError } from "@/lib/errors/database-errors"
+import { MemoryNotFoundError } from "@/lib/memory/canonical-contracts"
 import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id"
 import type { MemoryResponseMeta } from "@/lib/memory/canonical-contracts"
 
@@ -68,6 +69,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return jsonWithDegradation(response)
   } catch (error) {
+    if (error instanceof MemoryNotFoundError) {
+      return NextResponse.json({ error: error.message }, { status: 404 })
+    }
+
     if (error instanceof DatabaseUnavailableError) {
       return NextResponse.json(
         { error: `Service temporarily unavailable: ${error.operation}`, operation: error.operation },
@@ -138,6 +143,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     return jsonWithDegradation(response)
   } catch (error) {
+    if (error instanceof MemoryNotFoundError) {
+      return NextResponse.json({ error: error.message }, { status: 404 })
+    }
+
     if (error instanceof DatabaseUnavailableError) {
       return NextResponse.json(
         { error: `Service temporarily unavailable: ${error.operation}`, operation: error.operation },
