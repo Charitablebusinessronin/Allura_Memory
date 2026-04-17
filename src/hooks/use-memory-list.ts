@@ -3,6 +3,10 @@
  *
  * Extracts all fetch logic, state, and CRUD operations from page.tsx.
  * Pure rendering stays in the page; this hook owns the data.
+ *
+ * Supports two views:
+ * - "active" (default): normal memory listing
+ * - "deleted": recently forgotten memories (30-day recovery window)
  */
 
 import { useState, useEffect, useRef, useCallback } from "react"
@@ -21,6 +25,20 @@ interface Memory {
   tags?: string[]
 }
 
+interface DeletedMemory {
+  id: string
+  content: string
+  score: number
+  source: "episodic" | "semantic" | "both"
+  provenance: "conversation" | "manual"
+  user_id: string
+  created_at: string
+  deleted_at: string
+  recovery_days_remaining: number
+  tags?: string[]
+  version?: number
+}
+
 interface SearchResponse {
   results: Memory[]
   count: number
@@ -33,6 +51,14 @@ interface ListResponse {
   has_more: boolean
 }
 
+interface DeletedListResponse {
+  memories: DeletedMemory[]
+  total: number
+  has_more: boolean
+}
+
+type MemoryViewStatus = "active" | "deleted"
+
 interface UseMemoryListOptions {
   groupId: string
   userId?: string
@@ -43,11 +69,16 @@ interface UseMemoryListOptions {
 interface UseMemoryListReturn {
   // Data
   memories: Memory[]
+  deletedMemories: DeletedMemory[]
   hasMore: boolean
 
   // Loading states
   isLoading: boolean
   isLoadingMore: boolean
+
+  // View mode
+  viewStatus: MemoryViewStatus
+  setViewStatus: (status: MemoryViewStatus) => void
 
   // Search
   searchQuery: string
@@ -65,6 +96,7 @@ interface UseMemoryListReturn {
   loadMore: () => Promise<void>
   deleteMemory: (memory: Memory) => Promise<void>
   addMemory: (content: string) => Promise<boolean>
+  restoreMemory: (memoryId: string) => Promise<boolean>
   refresh: () => void
   toggleExpand: (id: string) => void
 
@@ -77,11 +109,21 @@ interface UseMemoryListReturn {
   formatRelativeTime: (dateString: string) => string
 }
 
-export type { Memory, UseMemoryListOptions, UseMemoryListReturn }
+export type { Memory, DeletedMemory, MemoryViewStatus, UseMemoryListOptions, UseMemoryListReturn }
 
 /** Normalize a memory object's created_at from potential Neo4j DateTime */
 function normalizeMemory(m: Memory): Memory {
   return { ...m, created_at: normalizeNeo4jTimestamp(m.created_at), content: m.content ?? "" }
+}
+
+/** Normalize a deleted memory object's timestamps */
+function normalizeDeletedMemory(m: DeletedMemory): DeletedMemory {
+  return {
+    ...m,
+    created_at: normalizeNeo4jTimestamp(m.created_at),
+    deleted_at: normalizeNeo4jTimestamp(m.deleted_at),
+    content: m.content ?? "",
+  }
 }
 
 export function useMemoryList({
@@ -91,6 +133,7 @@ export function useMemoryList({
   limit = 20,
 }: UseMemoryListOptions): UseMemoryListReturn {
   const [memories, setMemories] = useState<Memory[]>([])
+  const [deletedMemories, setDeletedMemories] = useState<DeletedMemory[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [groupId, setGroupId] = useState(initialGroupId)
   const [userId, setUserId] = useState(initialUserId)
@@ -101,6 +144,7 @@ export function useMemoryList({
   const [offset, setOffset] = useState(0)
   const [recentlyDeleted, setRecentlyDeleted] = useState<Memory[]>([])
   const [showUndo, setShowUndo] = useState(false)
+  const [viewStatus, setViewStatus] = useState<MemoryViewStatus>("active")
 
   const PAGE_LIMIT = limit
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -153,6 +197,27 @@ export function useMemoryList({
     [groupId, userId, allUsers, PAGE_LIMIT]
   )
 
+  // Fetch deleted memories (Recently Forgotten)
+  const fetchDeletedMemories = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const userParam = allUsers ? "" : userId ? `&user_id=${encodeURIComponent(userId)}` : ""
+      const response = await fetch(
+        `/api/memory?group_id=${encodeURIComponent(groupId)}${userParam}&status=deleted&limit=50`
+      )
+      const data: DeletedListResponse = await response.json()
+      if (!mountedRef.current) return
+      setDeletedMemories((data.memories || []).map(normalizeDeletedMemory))
+      setHasMore(data.has_more)
+    } catch (error) {
+      console.error("Failed to fetch deleted memories:", error)
+    } finally {
+      if (mountedRef.current) {
+        setIsLoading(false)
+      }
+    }
+  }, [groupId, userId, allUsers])
+
   // Search memories
   const searchMemories = useCallback(async () => {
     if (!searchQuery.trim()) {
@@ -184,6 +249,7 @@ export function useMemoryList({
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
+      if (viewStatus !== "active") return // No search in deleted view
       if (searchQuery.trim()) {
         searchMemories()
       } else {
@@ -193,12 +259,16 @@ export function useMemoryList({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
-  }, [searchQuery, fetchMemories, searchMemories])
+  }, [searchQuery, fetchMemories, searchMemories, viewStatus])
 
-  // Fetch memories on mount / when group/user changes
+  // Fetch memories on mount / when group/user changes or view switches
   useEffect(() => {
-    fetchMemories()
-  }, [groupId, userId, allUsers, fetchMemories])
+    if (viewStatus === "active") {
+      fetchMemories()
+    } else {
+      fetchDeletedMemories()
+    }
+  }, [groupId, userId, allUsers, viewStatus, fetchMemories, fetchDeletedMemories])
 
   // Add memory (called from modal)
   const addMemory = useCallback(
@@ -254,7 +324,40 @@ export function useMemoryList({
     [groupId, userId]
   )
 
-  // Undo deletion
+  // Restore memory (within 30-day recovery window)
+  const restoreMemory = useCallback(
+    async (memoryId: string): Promise<boolean> => {
+      try {
+        const response = await fetch(
+          `/api/memory/${encodeURIComponent(memoryId)}/restore?group_id=${encodeURIComponent(groupId)}&user_id=${encodeURIComponent(userId)}`,
+          { method: "POST" }
+        )
+
+        if (response.ok) {
+          toast.success("Memory restored")
+          // Remove from deleted list and refresh
+          setDeletedMemories((prev) => prev.filter((m) => m.id !== memoryId))
+          // Also refresh active list since the memory is back
+          if (viewStatus === "active") {
+            fetchMemories()
+          }
+          return true
+        }
+
+        const data = await response.json().catch(() => ({}))
+        const errorMsg = (data as { error?: string }).error ?? "Failed to restore memory"
+        toast.error(errorMsg)
+        return false
+      } catch (error) {
+        console.error("Failed to restore memory:", error)
+        toast.error("Failed to restore memory")
+        return false
+      }
+    },
+    [groupId, userId, viewStatus, fetchMemories]
+  )
+
+  // Undo deletion (local re-add shortcut)
   const undoDelete = useCallback(async () => {
     if (recentlyDeleted.length === 0) return
     const memory = recentlyDeleted[0]
@@ -271,8 +374,12 @@ export function useMemoryList({
 
   // Refresh (reset and refetch)
   const refresh = useCallback(() => {
-    fetchMemories()
-  }, [fetchMemories])
+    if (viewStatus === "active") {
+      fetchMemories()
+    } else {
+      fetchDeletedMemories()
+    }
+  }, [viewStatus, fetchMemories, fetchDeletedMemories])
 
   // Toggle expanded state for a memory card
   const toggleExpand = useCallback((id: string) => {
@@ -282,11 +389,16 @@ export function useMemoryList({
   return {
     // Data
     memories,
+    deletedMemories,
     hasMore,
 
     // Loading states
     isLoading,
     isLoadingMore,
+
+    // View mode
+    viewStatus,
+    setViewStatus,
 
     // Search
     searchQuery,
@@ -304,6 +416,7 @@ export function useMemoryList({
     loadMore,
     deleteMemory,
     addMemory,
+    restoreMemory,
     refresh,
     toggleExpand,
 

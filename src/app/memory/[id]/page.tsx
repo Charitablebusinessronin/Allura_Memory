@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import type { JSX } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Clock3, FileSearch, PencilLine, ShieldCheck, Sparkles, History } from "lucide-react"
+import { ArrowLeft, Clock3, FileSearch, PencilLine, ShieldCheck, Sparkles, History, RotateCcw } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +36,27 @@ interface MemoryDetail {
   version?: number
   superseded_by?: string
   usage_count?: number
+  /** How many times this memory was retrieved/searched in the last 30 days. null = no tracking data. */
+  recent_usage_count?: number | null
+  /** Whether this memory has been soft-deleted (forgotten) */
+  deleted?: boolean
+  /** When this memory was soft-deleted, if applicable */
+  deleted_at?: string
+}
+
+/** Shape of a deleted-memory item from the list-deleted API */
+interface DeletedMemoryItem {
+  id: string
+  content: string
+  deleted_at: string
+  recovery_days_remaining: number
+  created_at: string
+  score: number
+  source: "episodic" | "semantic" | "both"
+  provenance: "conversation" | "manual"
+  user_id: string
+  tags?: string[]
+  version?: number
 }
 
 interface MemoryUpdateResult {
@@ -56,11 +77,12 @@ function toStoreLabel(source: MemoryDetail["source"]): string {
   return "Stored in the semantic memory store"
 }
 
-function toUsageMessage(usageCount?: number): string {
-  if (usageCount == null) return "No usage signal is available for this memory yet."
-  if (usageCount <= 0) return "This memory has not been called on recently."
-  if (usageCount === 1) return "This memory has been used once recently."
-  return `This memory has been used ${usageCount} times recently.`
+function toUsageMessage(recentUsageCount?: number | null): string | null {
+  // If we have no tracking data, return null so the UI hides the indicator entirely
+  if (recentUsageCount == null) return null
+  if (recentUsageCount === 0) return "This memory has not been called on in the last 30 days."
+  if (recentUsageCount === 1) return "Used once in the last 30 days."
+  return `Used ${recentUsageCount} times in the last 30 days.`
 }
 
 export default function MemoryDetailPage(): JSX.Element | null {
@@ -76,6 +98,9 @@ export default function MemoryDetailPage(): JSX.Element | null {
   const [isSaving, setIsSaving] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isDeleted, setIsDeleted] = useState(false)
+  const [deletedAt, setDeletedAt] = useState<string | null>(null)
+  const [isRestoring, setIsRestoring] = useState(false)
 
   const groupId = DEFAULT_GROUP_ID
   const userId = DEFAULT_USER_ID
@@ -91,6 +116,40 @@ export default function MemoryDetailPage(): JSX.Element | null {
 
       if (!response.ok) {
         if (response.status === 404) {
+          // Memory not found in active view — check if it was recently deleted
+          try {
+            const deletedResponse = await fetch(
+              `/api/memory?group_id=${encodeURIComponent(groupId)}&status=deleted&limit=100`
+            )
+            if (deletedResponse.ok) {
+              const deletedData = await deletedResponse.json()
+              const deletedMemories: DeletedMemoryItem[] = deletedData.memories ?? []
+              const deletedMemory = deletedMemories.find((m: DeletedMemoryItem) => m.id === memoryId)
+              if (deletedMemory) {
+                // This memory was soft-deleted — show it with a "forgotten" banner
+                setMemory({
+                  id: deletedMemory.id,
+                  content: deletedMemory.content,
+                  score: deletedMemory.score,
+                  source: deletedMemory.source,
+                  provenance: deletedMemory.provenance,
+                  user_id: deletedMemory.user_id,
+                  created_at: normalizeNeo4jTimestamp(deletedMemory.created_at),
+                  version: deletedMemory.version,
+                  usage_count: 0,
+                  deleted: true,
+                  deleted_at: normalizeNeo4jTimestamp(deletedMemory.deleted_at),
+                })
+                setIsDeleted(true)
+                setDeletedAt(deletedMemory.deleted_at)
+                setIsLoading(false)
+                return
+              }
+            }
+          } catch {
+            // Ignore errors when checking deleted status — fall through to 404
+          }
+
           setError("This memory could not be found. It may have been removed or replaced.")
         } else {
           const data = await response.json().catch(() => ({}))
@@ -193,6 +252,36 @@ export default function MemoryDetailPage(): JSX.Element | null {
     } finally {
       setIsDeleting(false)
       setShowDeleteConfirm(false)
+    }
+  }
+
+  const restoreMemory = async (): Promise<void> => {
+    if (!memory) return
+    setIsRestoring(true)
+
+    try {
+      const response = await fetch(
+        `/api/memory/${encodeURIComponent(memoryId)}/restore?group_id=${encodeURIComponent(groupId)}&user_id=${encodeURIComponent(userId)}`,
+        { method: "POST" }
+      )
+
+      if (response.ok) {
+        toast.success("Memory restored")
+        // Navigate back to the memory list — the memory is now active again
+        router.push("/memory")
+        return
+      }
+
+      const data = await response.json().catch(() => ({}))
+      const message = (data as { error?: string }).error ?? "Failed to restore memory"
+      setError(message)
+      toast.error(message)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to restore memory"
+      setError(message)
+      toast.error(message)
+    } finally {
+      setIsRestoring(false)
     }
   }
 
@@ -301,6 +390,29 @@ export default function MemoryDetailPage(): JSX.Element | null {
             </div>
           </div>
 
+          {isDeleted && deletedAt && (
+            <div className="mt-6 rounded-2xl border border-[--durham-status-failed-border] bg-[--durham-status-failed-bg] p-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-medium text-[--durham-status-failed-text]">
+                    This memory was forgotten on {new Date(deletedAt).toLocaleDateString()}
+                  </p>
+                  <p className="mt-1 text-sm text-[--durham-muted-text]">
+                    It is in the 30-day recovery window and can be restored to active use.
+                  </p>
+                </div>
+                <Button
+                  onClick={restoreMemory}
+                  disabled={isRestoring}
+                  className="bg-[--durham-rich-navy] text-[--durham-warm-mist] hover:bg-[--durham-hover-navy]"
+                >
+                  <RotateCcw className="mr-2 size-4" />
+                  {isRestoring ? "Restoring…" : "Restore memory"}
+                </Button>
+              </div>
+            </div>
+          )}
+
           {error && memory && (
             <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
               {error}
@@ -381,15 +493,17 @@ export default function MemoryDetailPage(): JSX.Element | null {
                         <p className="mt-3 text-sm text-[--durham-muted-text]">{toStoreLabel(memory.source)}</p>
                       </div>
 
-                      <div className="rounded-[22px] border border-[--durham-border] bg-[--durham-panel-subtle] p-5">
-                        <div className="flex items-center gap-2 text-sm font-medium text-[--durham-rich-navy]">
-                          <Clock3 className="size-4 text-[--durham-amber-ochre]" />
-                          Usage
+                      {toUsageMessage(memory.recent_usage_count) != null && (
+                        <div className="rounded-[22px] border border-[--durham-border] bg-[--durham-panel-subtle] p-5">
+                          <div className="flex items-center gap-2 text-sm font-medium text-[--durham-rich-navy]">
+                            <Clock3 className="size-4 text-[--durham-amber-ochre]" />
+                            Usage
+                          </div>
+                          <p className="mt-3 text-sm leading-6 text-[--durham-warm-slate]">
+                            {toUsageMessage(memory.recent_usage_count)}
+                          </p>
                         </div>
-                        <p className="mt-3 text-sm leading-6 text-[--durham-warm-slate]">
-                          {toUsageMessage(memory.usage_count)}
-                        </p>
-                      </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -420,9 +534,13 @@ export default function MemoryDetailPage(): JSX.Element | null {
                     <div>
                       <p className="text-[--durham-caption-text]">Status</p>
                       <p className="mt-1 font-medium text-[--durham-deep-graphite]">
-                        {memory.superseded_by ? "A newer version exists" : "Current version in view"}
+                        {isDeleted
+                          ? "Forgotten — in recovery window"
+                          : memory.superseded_by
+                            ? "A newer version exists"
+                            : "Current version in view"}
                       </p>
-                      {memory.superseded_by && (
+                      {memory.superseded_by && !isDeleted && (
                         <button
                           className="mt-2 text-sm font-medium text-[--durham-rich-navy] underline underline-offset-4"
                           onClick={() => router.push(`/memory/${memory.superseded_by}`)}
@@ -514,20 +632,33 @@ export default function MemoryDetailPage(): JSX.Element | null {
               </Card>
 
               <div className="flex flex-wrap gap-2">
-                <Button
-                  onClick={startEditing}
-                  variant="outline"
-                  className="border-[--durham-border-light] bg-white text-[--durham-rich-navy] hover:bg-[--durham-hover-amber-bg]"
-                >
-                  Edit wording
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="text-red-700 hover:bg-red-50 hover:text-red-800"
-                  onClick={() => setShowDeleteConfirm(true)}
-                >
-                  Forget memory
-                </Button>
+                {!isDeleted && (
+                  <Button
+                    onClick={startEditing}
+                    variant="outline"
+                    className="border-[--durham-border-light] bg-white text-[--durham-rich-navy] hover:bg-[--durham-hover-amber-bg]"
+                  >
+                    Edit wording
+                  </Button>
+                )}
+                {isDeleted ? (
+                  <Button
+                    onClick={restoreMemory}
+                    disabled={isRestoring}
+                    className="bg-[--durham-rich-navy] text-[--durham-warm-mist] hover:bg-[--durham-hover-navy]"
+                  >
+                    <RotateCcw className="mr-2 size-4" />
+                    {isRestoring ? "Restoring…" : "Restore memory"}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    className="text-red-700 hover:bg-red-50 hover:text-red-800"
+                    onClick={() => setShowDeleteConfirm(true)}
+                  >
+                    Forget memory
+                  </Button>
+                )}
               </div>
             </div>
           </div>
