@@ -43,7 +43,7 @@
  *     Notion Synced — checkbox
  */
 
-import { getPool, closePool } from "../lib/postgres/connection";
+import { getPool, closePool } from "../lib/postgres/connection"
 import {
   insertDlqEntry,
   getRetryableEntries,
@@ -53,31 +53,31 @@ import {
   getDlqStats,
   type DlqEntry,
   type InsertDlqEntryParams,
-} from "./notion-sync-dlq";
+} from "./notion-sync-dlq"
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
 export interface NotionSyncEvent {
-  id: string;
-  group_id: string;
-  event_type: string;
-  agent_id: string;
-  status: string;
-  metadata: Record<string, unknown>;
-  created_at: string;
+  id: string
+  group_id: string
+  event_type: string
+  agent_id: string
+  status: string
+  metadata: Record<string, unknown>
+  created_at: string
 }
 
 export interface PendingProposal {
-  proposal_id: string;
-  content: string;
-  score: number;
-  tier: string;
-  status: "approved" | "rejected";
-  curator_id: string;
-  rationale?: string;
-  decided_at: string;
-  data_source_id: string;
-  group_id: string;
+  proposal_id: string
+  content: string
+  score: number
+  tier: string
+  status: "approved" | "rejected"
+  curator_id: string
+  rationale?: string
+  decided_at: string
+  data_source_id: string
+  group_id: string
 }
 
 // ── Tier to Type Mapping ────────────────────────────────────────────────────
@@ -86,7 +86,7 @@ const TIER_TO_TYPE: Record<string, string> = {
   emerging: "insight",
   adoption: "pattern",
   mainstream: "decision",
-};
+}
 
 // ── Core Functions ───────────────────────────────────────────────────────────
 
@@ -94,7 +94,7 @@ const TIER_TO_TYPE: Record<string, string> = {
  * Fetch pending notion_sync_pending events from PostgreSQL.
  */
 export async function getPendingEvents(): Promise<NotionSyncEvent[]> {
-  const pool = getPool();
+  const pool = getPool()
 
   const result = await pool.query(
     `SELECT id, group_id, event_type, agent_id, status, metadata, created_at
@@ -103,36 +103,51 @@ export async function getPendingEvents(): Promise<NotionSyncEvent[]> {
        AND status = 'pending'
      ORDER BY created_at ASC
      LIMIT 10`
-  );
+  )
 
-  return result.rows;
+  return result.rows
 }
 
 /**
- * Mark event as completed.
+ * Mark event as completed by appending a completion event.
+ *
+ * Instead of mutating the original event row (which would violate the
+ * append-only invariant), we INSERT a new event that references the
+ * original via `metadata.supersedes_id`.
  */
-async function markEventCompleted(eventId: string, notionPageUrl?: string): Promise<void> {
-  const pool = getPool();
+async function markEventCompleted(
+  eventId: string,
+  groupId: string,
+  agentId: string,
+  notionPageUrl?: string
+): Promise<void> {
+  const pool = getPool()
+  const now = new Date().toISOString()
 
   await pool.query(
-    `UPDATE events
-     SET status = 'completed',
-         metadata = jsonb_set(
-           COALESCE(metadata, '{}'::jsonb),
-           '{notion_page_url}',
-           $1::jsonb
-         )
-     WHERE id = $2`,
-    [notionPageUrl ? `"${notionPageUrl}"` : "null", eventId]
-  );
+    `INSERT INTO events (group_id, event_type, agent_id, status, metadata, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [
+      groupId,
+      "notion_sync_completed",
+      agentId,
+      "completed",
+      JSON.stringify({
+        supersedes_id: eventId,
+        notion_page_url: notionPageUrl || null,
+      }),
+      now,
+    ]
+  )
 }
 
 /**
  * Mark event as failed and route to DLQ for retry.
  *
- * Instead of silently dropping the event, we:
- * 1. Update the events table status to 'failed'
- * 2. Insert into notion_sync_dlq for exponential backoff retry
+ * Instead of mutating the original event row (which would violate the
+ * append-only invariant), we INSERT a new event that references the
+ * original via `metadata.supersedes_id` with status 'failed'.
+ * The event is also routed to the DLQ for exponential backoff retry.
  *
  * This ensures 0% event drop rate — every failure is tracked and retried.
  */
@@ -142,59 +157,58 @@ async function markEventFailed(
   groupId: string,
   metadata: Record<string, unknown>
 ): Promise<void> {
-  const pool = getPool();
+  const pool = getPool()
+  const now = new Date().toISOString()
 
-  // 1. Update events table status (append-only safe — we UPDATE status, not the row)
+  // 1. Append a failure event (append-only — no UPDATE on events table)
   await pool.query(
-    `UPDATE events
-     SET status = 'failed',
-         metadata = jsonb_set(
-           COALESCE(metadata, '{}'::jsonb),
-           '{error}',
-           $1::jsonb
-         )
-     WHERE id = $2`,
-    [`"${error.replace(/"/g, '\\"')}"`, eventId]
-  );
+    `INSERT INTO events (group_id, event_type, agent_id, status, metadata, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [
+      groupId,
+      "notion_sync_failed",
+      "notion-sync-worker",
+      "failed",
+      JSON.stringify({
+        supersedes_id: eventId,
+        error,
+        ...metadata,
+      }),
+      now,
+    ]
+  )
 
   // 2. Route to DLQ for retry
-  const proposalId = metadata.proposal_id as string | undefined;
+  const proposalId = metadata.proposal_id as string | undefined
   const dlqResult = await insertDlqEntry(pool, {
     groupId,
     originalEventId: parseInt(eventId, 10),
     proposalId,
     originalMetadata: metadata,
     errorMessage: error,
-  });
+  })
 
   if (!dlqResult.success) {
-    console.error(
-      `[NotionSyncWorker] CRITICAL: Failed to insert DLQ entry for event ${eventId}: ${dlqResult.error}`
-    );
-    // The event is still marked as failed in the events table,
+    console.error(`[NotionSyncWorker] CRITICAL: Failed to insert DLQ entry for event ${eventId}: ${dlqResult.error}`)
+    // The failure event is still recorded in the events table,
     // but we couldn't queue it for retry. This should trigger an alert.
   } else {
-    console.log(
-      `[NotionSyncWorker] Event ${eventId} routed to DLQ (dlq_id=${dlqResult.dlqId}) for retry`
-    );
+    console.log(`[NotionSyncWorker] Event ${eventId} routed to DLQ (dlq_id=${dlqResult.dlqId}) for retry`)
   }
 }
 
 /**
  * Write Notion page URL back to canonical_proposals.
  */
-async function writeNotionUrlToProposal(
-  proposalId: string,
-  notionPageUrl: string
-): Promise<void> {
-  const pool = getPool();
+async function writeNotionUrlToProposal(proposalId: string, notionPageUrl: string): Promise<void> {
+  const pool = getPool()
 
   await pool.query(
     `UPDATE canonical_proposals
      SET rationale = COALESCE(rationale, '') || $1
      WHERE id = $2`,
     [`\n[notion-page:${notionPageUrl}]`, proposalId]
-  );
+  )
 }
 
 /**
@@ -215,17 +229,17 @@ function buildProposalContent(proposal: PendingProposal): string {
     `### Content`,
     ``,
     proposal.content,
-  ];
+  ]
 
   if (proposal.rationale) {
-    lines.push("", "### Rationale", "", proposal.rationale);
+    lines.push("", "### Rationale", "", proposal.rationale)
   }
 
   if (proposal.status === "rejected") {
-    lines.push("", "---", "", `> ⚠️ This proposal was **rejected** by ${proposal.curator_id}.`);
+    lines.push("", "---", "", `> ⚠️ This proposal was **rejected** by ${proposal.curator_id}.`)
   }
 
-  return lines.join("\n");
+  return lines.join("\n")
 }
 
 /**
@@ -237,9 +251,7 @@ function buildProposalContent(proposal: PendingProposal): string {
  * @param proposal - Proposal data from the event
  * @returns Notion page ID and URL
  */
-async function createNotionPage(
-  proposal: PendingProposal
-): Promise<{ pageId: string; pageUrl: string }> {
+async function createNotionPage(proposal: PendingProposal): Promise<{ pageId: string; pageUrl: string }> {
   // This is a placeholder — the actual MCP call happens in the agent context
   // The agent (you) will call mcp__MCP_DOCKER__notion-create-pages directly
   //
@@ -257,9 +269,8 @@ async function createNotionPage(
   // Then you update the event status and write the URL back.
 
   throw new Error(
-    "createNotionPage must be called by the agent via MCP Docker tools. " +
-      "The worker only prepares the event data."
-  );
+    "createNotionPage must be called by the agent via MCP Docker tools. " + "The worker only prepares the event data."
+  )
 }
 
 /**
@@ -285,9 +296,9 @@ export async function processNotionSyncEvent(
     decided_at: event.metadata.decided_at as string,
     data_source_id: event.metadata.data_source_id as string,
     group_id: event.group_id,
-  };
+  }
 
-  const notionType = TIER_TO_TYPE[proposal.tier] || "insight";
+  const notionType = TIER_TO_TYPE[proposal.tier] || "insight"
 
   // Build properties for Notion page
   const properties: Record<string, string | number> = {
@@ -296,17 +307,17 @@ export async function processNotionSyncEvent(
     Type: notionType,
     "Group ID": event.group_id,
     "date:Proposed At:start": proposal.decided_at.slice(0, 10),
-  };
-
-  if (proposal.rationale) {
-    properties["Notes"] = `Decision: ${proposal.status} by ${proposal.curator_id}\nRationale: ${proposal.rationale}`;
-  } else {
-    properties["Notes"] = `Decision: ${proposal.status} by ${proposal.curator_id}`;
   }
 
-  properties["Notion Synced"] = "__YES__";
+  if (proposal.rationale) {
+    properties["Notes"] = `Decision: ${proposal.status} by ${proposal.curator_id}\nRationale: ${proposal.rationale}`
+  } else {
+    properties["Notes"] = `Decision: ${proposal.status} by ${proposal.curator_id}`
+  }
 
-  const content = buildProposalContent(proposal);
+  properties["Notion Synced"] = "__YES__"
+
+  const content = buildProposalContent(proposal)
 
   return {
     success: true,
@@ -314,7 +325,7 @@ export async function processNotionSyncEvent(
     // The agent needs to call mcp__MCP_DOCKER__notion-create-pages with:
     //   parent: { data_source_id: proposal.data_source_id }
     //   pages: [{ properties, content }]
-  };
+  }
 }
 
 /**
@@ -327,11 +338,8 @@ export async function processNotionSyncEvent(
  * @param error - The error message from the failed Notion call
  * @returns DLQ entry ID if successfully routed, null otherwise
  */
-export async function handleNotionSyncFailure(
-  event: NotionSyncEvent,
-  error: string
-): Promise<number | null> {
-  const pool = getPool();
+export async function handleNotionSyncFailure(event: NotionSyncEvent, error: string): Promise<number | null> {
+  const pool = getPool()
 
   // Route to DLQ
   const dlqResult = await insertDlqEntry(pool, {
@@ -340,23 +348,19 @@ export async function handleNotionSyncFailure(
     proposalId: event.metadata.proposal_id as string | undefined,
     originalMetadata: event.metadata as Record<string, unknown>,
     errorMessage: error,
-  });
+  })
 
   if (!dlqResult.success) {
-    console.error(
-      `[NotionSyncWorker] CRITICAL: Failed to route event ${event.id} to DLQ: ${dlqResult.error}`
-    );
-    return null;
+    console.error(`[NotionSyncWorker] CRITICAL: Failed to route event ${event.id} to DLQ: ${dlqResult.error}`)
+    return null
   }
 
-  console.log(
-    `[NotionSyncWorker] Event ${event.id} routed to DLQ (dlq_id=${dlqResult.dlqId})`
-  );
+  console.log(`[NotionSyncWorker] Event ${event.id} routed to DLQ (dlq_id=${dlqResult.dlqId})`)
 
   // Also mark the original event as failed
-  await markEventFailed(String(event.id), error, event.group_id, event.metadata as Record<string, unknown>);
+  await markEventFailed(String(event.id), error, event.group_id, event.metadata as Record<string, unknown>)
 
-  return dlqResult.dlqId ?? null;
+  return dlqResult.dlqId ?? null
 }
 
 /**
@@ -373,45 +377,39 @@ export async function processDlqRetries(
   groupId: string,
   processFn: (entry: DlqEntry) => Promise<{ success: boolean; pageId?: string; pageUrl?: string; error?: string }>
 ): Promise<{ processed: number; succeeded: number; failed: number; permanentlyFailed: number }> {
-  const pool = getPool();
-  const entries = await getRetryableEntries(pool, groupId);
+  const pool = getPool()
+  const entries = await getRetryableEntries(pool, groupId)
 
-  let succeeded = 0;
-  let failed = 0;
-  let permanentlyFailed = 0;
+  let succeeded = 0
+  let failed = 0
+  let permanentlyFailed = 0
 
   for (const entry of entries) {
     // Mark as retrying
-    const retryResult = await markEntryRetrying(pool, entry.id, groupId);
+    const retryResult = await markEntryRetrying(pool, entry.id, groupId)
     if (!retryResult.success) {
-      console.error(`[NotionSyncWorker] Failed to mark DLQ entry ${entry.id} as retrying: ${retryResult.error}`);
-      continue;
+      console.error(`[NotionSyncWorker] Failed to mark DLQ entry ${entry.id} as retrying: ${retryResult.error}`)
+      continue
     }
 
     try {
-      const result = await processFn(entry);
+      const result = await processFn(entry)
 
       if (result.success) {
         // Mark as completed in DLQ
-        await markEntryCompleted(
-          pool,
-          entry.id,
-          groupId,
-          result.pageId ?? "",
-          result.pageUrl ?? ""
-        );
+        await markEntryCompleted(pool, entry.id, groupId, result.pageId ?? "", result.pageUrl ?? "")
 
-        // Also mark the original event as completed
+        // Also append a completion event referencing the original
         if (entry.original_event_id) {
-          await markEventCompleted(String(entry.original_event_id), result.pageUrl);
+          await markEventCompleted(String(entry.original_event_id), groupId, "notion-sync-worked", result.pageUrl)
         }
 
         // Write Notion URL back to proposal
         if (entry.proposal_id && result.pageUrl) {
-          await writeNotionUrlToProposal(entry.proposal_id, result.pageUrl);
+          await writeNotionUrlToProposal(entry.proposal_id, result.pageUrl)
         }
 
-        succeeded++;
+        succeeded++
       } else {
         // Mark as failed in DLQ (schedules next retry or permanent failure)
         const failResult = await markEntryFailed(
@@ -419,99 +417,99 @@ export async function processDlqRetries(
           entry.id,
           groupId,
           result.error ?? "Unknown error during DLQ retry"
-        );
+        )
 
         if (!failResult.success) {
-          console.error(`[NotionSyncWorker] Failed to update DLQ entry ${entry.id}: ${failResult.error}`);
+          console.error(`[NotionSyncWorker] Failed to update DLQ entry ${entry.id}: ${failResult.error}`)
         }
 
         // Check if this was the last retry
         if (entry.retry_count + 1 >= entry.max_retries) {
-          permanentlyFailed++;
+          permanentlyFailed++
           console.error(
             `[NotionSyncWorker] DLQ entry ${entry.id} permanently failed after ${entry.max_retries} attempts`
-          );
+          )
         }
 
-        failed++;
+        failed++
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
+      const errorMessage = err instanceof Error ? err.message : String(err)
 
       // Mark as failed in DLQ
-      await markEntryFailed(pool, entry.id, groupId, errorMessage);
+      await markEntryFailed(pool, entry.id, groupId, errorMessage)
 
       if (entry.retry_count + 1 >= entry.max_retries) {
-        permanentlyFailed++;
+        permanentlyFailed++
       }
 
-      failed++;
-      console.error(`[NotionSyncWorker] DLQ retry ${entry.id} threw: ${errorMessage}`);
+      failed++
+      console.error(`[NotionSyncWorker] DLQ retry ${entry.id} threw: ${errorMessage}`)
     }
   }
 
-  return { processed: entries.length, succeeded, failed, permanentlyFailed };
+  return { processed: entries.length, succeeded, failed, permanentlyFailed }
 }
 
 // ── CLI Mode ────────────────────────────────────────────────────────────────
 
-const isMainModule = process.argv[1]?.includes("notion-sync-worker.ts");
+const isMainModule = process.argv[1]?.includes("notion-sync-worker.ts")
 
 if (isMainModule) {
   async function main() {
-    console.log("[NotionSyncWorker] Starting...");
-    console.log("[NotionSyncWorker] Fetching pending notion_sync_pending events...");
+    console.log("[NotionSyncWorker] Starting...")
+    console.log("[NotionSyncWorker] Fetching pending notion_sync_pending events...")
 
-    const events = await getPendingEvents();
-    console.log(`[NotionSyncWorker] Found ${events.length} pending events`);
+    const events = await getPendingEvents()
+    console.log(`[NotionSyncWorker] Found ${events.length} pending events`)
 
     for (const event of events) {
-      console.log(`[NotionSyncWorker] Processing event ${event.id}...`);
-      console.log(`[NotionSyncWorker] Proposal: ${event.metadata.proposal_id}`);
-      console.log(`[NotionSyncWorker] Status: ${event.metadata.status}`);
-      console.log(`[NotionSyncWorker] Tier: ${event.metadata.tier}`);
+      console.log(`[NotionSyncWorker] Processing event ${event.id}...`)
+      console.log(`[NotionSyncWorker] Proposal: ${event.metadata.proposal_id}`)
+      console.log(`[NotionSyncWorker] Status: ${event.metadata.status}`)
+      console.log(`[NotionSyncWorker] Tier: ${event.metadata.tier}`)
 
       // Prepare the data for MCP call
-      const result = await processNotionSyncEvent(event);
+      const result = await processNotionSyncEvent(event)
 
       if (result.success) {
-        console.log(`[NotionSyncWorker] Event prepared for MCP call`);
-        console.log(`[NotionSyncWorker] Agent must call mcp__MCP_DOCKER__notion-create-pages`);
+        console.log(`[NotionSyncWorker] Event prepared for MCP call`)
+        console.log(`[NotionSyncWorker] Agent must call mcp__MCP_DOCKER__notion-create-pages`)
       } else {
-        console.error(`[NotionSyncWorker] Failed to prepare event: ${result.error}`);
+        console.error(`[NotionSyncWorker] Failed to prepare event: ${result.error}`)
         // Route to DLQ for retry
-        const dlqId = await handleNotionSyncFailure(event, result.error ?? "Unknown error");
+        const dlqId = await handleNotionSyncFailure(event, result.error ?? "Unknown error")
         if (dlqId) {
-          console.log(`[NotionSyncWorker] Event routed to DLQ (dlq_id=${dlqId})`);
+          console.log(`[NotionSyncWorker] Event routed to DLQ (dlq_id=${dlqId})`)
         }
       }
     }
 
     // Process DLQ retries
-    console.log("[NotionSyncWorker] Processing DLQ retries...");
-    const dlqStats = await getDlqStats(getPool(), "allura-roninmemory");
-    console.log(`[NotionSyncWorker] DLQ stats: ${JSON.stringify(dlqStats)}`);
+    console.log("[NotionSyncWorker] Processing DLQ retries...")
+    const dlqStats = await getDlqStats(getPool(), "allura-roninmemory")
+    console.log(`[NotionSyncWorker] DLQ stats: ${JSON.stringify(dlqStats)}`)
 
     if (dlqStats.pending_retry > 0) {
       console.log(
         `[NotionSyncWorker] ${dlqStats.pending_retry} entries pending retry — ` +
-        `run processDlqRetries() with MCP Notion tools to process them`
-      );
+          `run processDlqRetries() with MCP Notion tools to process them`
+      )
     }
 
     if (dlqStats.permanently_failed > 0) {
       console.error(
         `[NotionSyncWorker] ⚠️ ${dlqStats.permanently_failed} entries permanently failed — ` +
-        `human intervention required`
-      );
+          `human intervention required`
+      )
     }
 
-    console.log("[NotionSyncWorker] Done.");
-    await closePool();
+    console.log("[NotionSyncWorker] Done.")
+    await closePool()
   }
 
   main().catch((err) => {
-    console.error("[NotionSyncWorker] Fatal error:", err);
-    process.exit(1);
-  });
+    console.error("[NotionSyncWorker] Fatal error:", err)
+    process.exit(1)
+  })
 }
