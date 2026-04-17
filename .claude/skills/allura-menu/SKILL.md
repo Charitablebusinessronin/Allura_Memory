@@ -34,9 +34,10 @@ Interactive menu for common Allura Memory workflows.
 **Trigger:** `start-session`
 
 **What it does:**
+
 - Verifies Neo4j and PostgreSQL connectivity
-- Hydrates context from Allura Brain
-- Reads memory-bank files in order
+- Hydrates context from Allura Brain via Scout
+- Searches recent events and insights for blockers and decisions
 - Logs session start
 
 **Equivalent command:** `/start-session`
@@ -48,6 +49,7 @@ Interactive menu for common Allura Memory workflows.
 **Trigger:** `task-creator`
 
 **What it does:**
+
 - Gathers context from Allura Brain
 - Generates structured task file
 - Links to memory insights
@@ -62,6 +64,7 @@ Interactive menu for common Allura Memory workflows.
 **Trigger:** `party-mode`
 
 **What it does:**
+
 - Launches all agents in parallel
 - Each agent works independently
 - Brooks synthesizes results
@@ -76,9 +79,10 @@ Interactive menu for common Allura Memory workflows.
 **Trigger:** `quick-update`
 
 **What it does:**
-- Updates memory-bank files
-- Syncs with Allura Brain
-- Logs changes
+
+- Stores updates to Allura Brain via MCP tools
+- Syncs with canonical docs in docs/allura/
+- Logs changes to events
 - Maintains consistency
 
 **Equivalent skill:** `quick-update <target> <changes>`
@@ -90,6 +94,7 @@ Interactive menu for common Allura Memory workflows.
 **Trigger:** `code-review`
 
 **What it does:**
+
 - Pike reviews architecture
 - Scout finds patterns
 - UX reviews accessibility
@@ -104,6 +109,7 @@ Interactive menu for common Allura Memory workflows.
 **Trigger:** `dashboard`
 
 **What it does:**
+
 - Shows system status
 - Displays active tasks
 - Lists recent insights
@@ -118,6 +124,7 @@ Interactive menu for common Allura Memory workflows.
 **Trigger:** `memory-query`
 
 **What it does:**
+
 - Searches Allura Brain
 - Returns relevant insights
 - Links to related entities
@@ -132,6 +139,7 @@ Interactive menu for common Allura Memory workflows.
 **Trigger:** `curator-team-promote`
 
 **What it does:**
+
 - Proposes promotion from PostgreSQL to Neo4j
 - Runs curator team workflow
 - Requires HITL approval
@@ -148,6 +156,7 @@ Interactive menu for common Allura Memory workflows.
 **Trigger:** `end-session`
 
 **What it does:**
+
 - Persists session reflection to Neo4j
 - Logs completion to PostgreSQL
 - Archives temporary files
@@ -162,6 +171,7 @@ Interactive menu for common Allura Memory workflows.
 **Trigger:** `help`
 
 **What it does:**
+
 - Shows this menu
 - Lists available skills
 - Shows current context
@@ -173,32 +183,36 @@ Interactive menu for common Allura Memory workflows.
 
 Type these directly in your IDE:
 
-| Prompt | Action |
-|--------|--------|
-| `start` | Start session |
-| `task <desc>` | Create task |
-| `party <task>` | Launch party mode |
-| `update <target>` | Quick update |
-| `review` | Code review |
-| `dash` | Dashboard |
-| `query <term>` | Memory query |
-| `promote` | HITL promotion |
-| `end <summary>` | End session |
+| Prompt            | Action            |
+| ----------------- | ----------------- |
+| `start`           | Start session     |
+| `task <desc>`     | Create task       |
+| `party <task>`    | Launch party mode |
+| `update <target>` | Quick update      |
+| `review`          | Code review       |
+| `dash`            | Dashboard         |
+| `query <term>`    | Memory query      |
+| `promote`         | HITL promotion    |
+| `end <summary>`   | End session       |
 
 ---
 
 ## Agent Shortcuts
 
-| Agent | Shortcut | Persona |
-|-------|----------|---------|
-| Brooks | `@brooks-architect` | Rich Hickey |
-| Brooks | `@brooks-architect` | Gergely Orosz |
-| Woz | `@woz-builder` | Fabrice Bellard |
-| Pike | `@pike-interface-review` | Rob Pike |
-| Scout | `@scout-recon` | Julia Evans |
-| Scout | `@scout-recon` | Peter Bourgon |
-| Fowler | `@fowler-refactor-gate` | Martin Fowler |
-| UX | `@ux` | Sara Soueidan |
+> **Source of truth:** `.opencode/agent/*.md` — 10 canonical agents. This table is derived, not defining.
+
+| Agent      | Shortcut                 | Persona           | Role                        |
+| ---------- | ------------------------ | ----------------- | --------------------------- |
+| Brooks     | `@brooks-architect`      | Frederick Brooks  | Architect + Orchestrator    |
+| Jobs       | `@jobs-intent-gate`     | Steve Jobs        | Intent Gate + Scope Owner   |
+| Woz        | `@woz-builder`          | Steve Wozniak     | Primary Builder             |
+| Pike       | `@pike-interface-review` | Rob Pike          | Simplicity Gate (read-only) |
+| Scout      | `@scout-recon`          | (none)            | Fast Discovery (read-only)  |
+| Bellard    | `@bellard-diagnostics`  | Fabrice Bellard   | Diagnostics + Perf         |
+| Carmack    | `@carmack-perf`         | John Carmack      | Performance Specialist      |
+| Fowler     | `@fowler-refactor-gate` | Martin Fowler     | Maintainability Gate        |
+| Knuth      | `@knuth-data`           | Donald Knuth      | Data Architect              |
+| Hightower  | `@hightower-devops`     | Kelsey Hightower  | DevOps + Infrastructure     |
 
 ---
 
