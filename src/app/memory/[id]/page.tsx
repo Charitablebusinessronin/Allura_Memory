@@ -30,6 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -210,8 +211,11 @@ export default function MemoryDetailPage(): JSX.Element | null {
       await fetchMemory()
       setIsEditing(false)
       setEditContent("")
+      toast.success("Memory updated")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save changes")
+      const msg = err instanceof Error ? err.message : "Failed to save changes"
+      setError(msg)
+      toast.error(msg)
     } finally {
       setIsSaving(false)
     }
@@ -229,14 +233,19 @@ export default function MemoryDetailPage(): JSX.Element | null {
       )
 
       if (response.ok) {
+        toast.success("Memory forgotten")
         router.push("/memory")
         return
       }
 
       const data = await response.json().catch(() => ({}))
-      setError((data as { error?: string }).error ?? "Failed to delete memory")
+      const errorMsg = (data as { error?: string }).error ?? "Failed to delete memory"
+      setError(errorMsg)
+      toast.error(errorMsg)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete memory")
+      const errorMsg = err instanceof Error ? err.message : "Failed to delete memory"
+      setError(errorMsg)
+      toast.error(errorMsg)
     } finally {
       setIsDeleting(false)
       setShowDeleteConfirm(false)
