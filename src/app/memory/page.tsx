@@ -32,7 +32,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Settings } from "lucide-react"
+import { BrainCircuit, Search, Settings } from "lucide-react"
+import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia, EmptyContent } from "@/components/ui/empty"
+import { toast } from "sonner"
 
 interface Memory {
   id: string
@@ -172,10 +174,12 @@ export default function MemoryViewerPage() {
       })
 
       if (response.ok) {
+        toast.success("Saved to memory")
         fetchMemories()
       }
     } catch (error) {
       console.error("Failed to add memory:", error)
+      toast.error("Failed to save memory")
     }
   }
 
@@ -187,6 +191,7 @@ export default function MemoryViewerPage() {
       })
 
       if (response.ok) {
+        toast.success("Memory forgotten")
         setRecentlyDeleted((prev) => [memory, ...prev].slice(0, 10))
         setShowUndo(true)
         setMemories((prev) => prev.filter((m) => m.id !== memory.id))
@@ -194,6 +199,7 @@ export default function MemoryViewerPage() {
       }
     } catch (error) {
       console.error("Failed to delete memory:", error)
+      toast.error("Failed to forget memory")
     }
   }
 
@@ -204,6 +210,7 @@ export default function MemoryViewerPage() {
     await addMemory(memory.content)
     setRecentlyDeleted((prev) => prev.slice(1))
     setShowUndo(false)
+    toast.success("Memory restored")
   }
 
   // Format relative time
@@ -373,13 +380,16 @@ export default function MemoryViewerPage() {
         {isLoading ? (
           <div className="text-muted-foreground py-12 text-center">Loading...</div>
         ) : memories.length === 0 ? (
-          <div className="py-12 text-center">
-            {searchQuery ? (
-              <div>
-                <p className="mb-2 text-lg">Your AI hasn't learned anything about &quot;{searchQuery}&quot; yet.</p>
-                <p className="text-muted-foreground mb-4">
-                  Try: &quot;{searchQuery.split(" ")[0]}&quot;, or related terms
-                </p>
+          searchQuery ? (
+            <Empty>
+              <EmptyMedia variant="icon">
+                <Search className="text-muted-foreground h-12 w-12" />
+              </EmptyMedia>
+              <EmptyHeader>
+                <EmptyTitle>No results for &quot;{searchQuery}&quot;</EmptyTitle>
+                <EmptyDescription>Your AI hasn&apos;t learned anything about this yet.</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -387,16 +397,26 @@ export default function MemoryViewerPage() {
                     setShowAddModal(true)
                   }}
                 >
-                  Add this manually
+                  Add manually
                 </Button>
-              </div>
-            ) : (
-              <div>
-                <p className="mb-2 text-lg">No memories yet.</p>
-                <p className="text-muted-foreground">Start a conversation with your AI to build memory.</p>
-              </div>
-            )}
-          </div>
+              </EmptyContent>
+            </Empty>
+          ) : (
+            <Empty>
+              <EmptyMedia variant="icon">
+                <BrainCircuit className="text-muted-foreground h-12 w-12" />
+              </EmptyMedia>
+              <EmptyHeader>
+                <EmptyTitle>Your memory is blank — for now.</EmptyTitle>
+                <EmptyDescription>
+                  Allura captures what matters. Start a conversation or add your first memory.
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button onClick={() => setShowAddModal(true)}>Add your first memory</Button>
+              </EmptyContent>
+            </Empty>
+          )
         ) : (
           <ScrollArea className="h-[calc(100vh-300px)]">
             <div className="space-y-2">
