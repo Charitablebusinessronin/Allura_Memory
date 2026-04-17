@@ -94,7 +94,10 @@ export default function MemoryViewerPage() {
   const [userId, setUserId] = useState(process.env.NEXT_PUBLIC_DEFAULT_USER_ID ?? "")
   const [allUsers, setAllUsers] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(false)
+  const [offset, setOffset] = useState(0)
+  const PAGE_LIMIT = 20
   const [recentlyDeleted, setRecentlyDeleted] = useState<Memory[]>([])
   const [showUndo, setShowUndo] = useState(false)
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null)
@@ -123,18 +126,36 @@ export default function MemoryViewerPage() {
   }, [groupId, userId, allUsers])
 
   // Fetch all memories for user
-  const fetchMemories = async () => {
-    setIsLoading(true)
+  const fetchMemories = async (appendOffset?: number) => {
+    const isAppend = appendOffset !== undefined
+    if (isAppend) {
+      setIsLoadingMore(true)
+    } else {
+      setIsLoading(true)
+    }
     try {
+      const currentOffset = isAppend ? appendOffset : 0
       const userParam = allUsers ? "" : userId ? `&user_id=${encodeURIComponent(userId)}` : ""
-      const response = await fetch(`/api/memory?group_id=${encodeURIComponent(groupId)}${userParam}&limit=50`)
+      const response = await fetch(
+        `/api/memory?group_id=${encodeURIComponent(groupId)}${userParam}&limit=${PAGE_LIMIT}&offset=${currentOffset}`
+      )
       const data: ListResponse = await response.json()
-      setMemories((data.memories || []).map(normalizeMemory))
+      const newMemories = (data.memories || []).map(normalizeMemory)
+      if (isAppend) {
+        setMemories((prev) => [...prev, ...newMemories])
+      } else {
+        setMemories(newMemories)
+      }
       setHasMore(data.has_more)
+      setOffset(currentOffset + newMemories.length)
     } catch (error) {
       console.error("Failed to fetch memories:", error)
     } finally {
-      setIsLoading(false)
+      if (isAppend) {
+        setIsLoadingMore(false)
+      } else {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -153,6 +174,8 @@ export default function MemoryViewerPage() {
       )
       const data: SearchResponse = await response.json()
       setMemories((data.results || []).map(normalizeMemory))
+      setHasMore(false)
+      setOffset(0)
     } catch (error) {
       console.error("Failed to search:", error)
     } finally {
@@ -515,7 +538,11 @@ export default function MemoryViewerPage() {
         {/* Footer */}
         <div className="text-muted-foreground mt-4 flex items-center justify-between border-t py-4 text-sm">
           <span>{memories.length} memories</span>
-          {hasMore && <Button variant="ghost">Load more</Button>}
+          {hasMore && (
+            <Button variant="ghost" onClick={() => fetchMemories(offset)} disabled={isLoadingMore}>
+              {isLoadingMore ? "Loading..." : "Load more"}
+            </Button>
+          )}
         </div>
       </div>
 
