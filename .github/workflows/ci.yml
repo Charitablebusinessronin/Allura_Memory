@@ -48,10 +48,18 @@ jobs:
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -U postgres; do
+            echo "Waiting for postgres..."
+            sleep 1
+          done
+
       - name: Run database migrations
         env:
           PGPASSWORD: postgres
         run: |
+          set -e
           for f in $(ls -1v docker/postgres-init/*.sql); do
             echo "▶ Applying $f..."
             psql -h localhost -U postgres -d memory -f "$f"
@@ -64,9 +72,10 @@ jobs:
         run: bun run lint
 
       - name: Run unit tests
-        run: bun test
+        run: bun run test
         continue-on-error: true
         env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/memory
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
           POSTGRES_DB: memory
