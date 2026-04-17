@@ -14,7 +14,6 @@ const shouldRunE2E = process.env.RUN_E2E_TESTS === "true"
 describe.skipIf(!shouldRunE2E)("StateHydrator", () => {
   let hydrator: StateHydrator
   const testStateDir = ".opencode/state/sessions-test"
-  const testMemoryBankDir = "memory-bank-test"
   const testPlanningDir = "_bmad-output/planning-artifacts-test"
   const sessionId = "00000000-0000-4000-8000-000000000001"
   const groupId = "allura-test"
@@ -30,7 +29,6 @@ describe.skipIf(!shouldRunE2E)("StateHydrator", () => {
     // Create test directories
     await fs.mkdir(testStateDir, { recursive: true })
     await fs.mkdir(path.join(testStateDir, "sessions"), { recursive: true })
-    await fs.mkdir(testMemoryBankDir, { recursive: true })
     await fs.mkdir(testPlanningDir, { recursive: true })
   })
 
@@ -38,7 +36,6 @@ describe.skipIf(!shouldRunE2E)("StateHydrator", () => {
     // Cleanup test directories
     try {
       await fs.rm(testStateDir, { recursive: true, force: true })
-      await fs.rm(testMemoryBankDir, { recursive: true, force: true })
       await fs.rm(testPlanningDir, { recursive: true, force: true })
     } catch {
       // Directories may not exist
@@ -46,10 +43,7 @@ describe.skipIf(!shouldRunE2E)("StateHydrator", () => {
   })
 
   describe("hydrate", () => {
-    // Pre-Phase-4 baseline — tracked in docs/deferred/pre-existing-failures.md
-    // Reason: hydrate() falls back to reading project-root memory-bank files,
-    // so loadedFrom is 'memory-bank' instead of 'none' — test expectation mismatch
-    it.skip("should return default state when no state exists", async () => {
+    it("should return default state when no state exists", async () => {
       const state = await hydrator.hydrate(sessionId, groupId)
 
       expect(state.sessionId).toBe(sessionId)
@@ -92,16 +86,6 @@ describe.skipIf(!shouldRunE2E)("StateHydrator", () => {
 
       const loadedState = await hydrator.hydrate(sessionId, groupId)
       expect(loadedState.phase).toBe("CODE_REVIEW")
-    })
-
-    it("should fall back to memory bank when files unavailable", async () => {
-      // Create a minimal memory bank file
-      await fs.writeFile(path.join(testMemoryBankDir, "activeContext.md"), "# Active Context\n\nTest context", "utf8")
-
-      const state = await hydrator.hydrate(sessionId, groupId)
-
-      expect(state.loadedFrom).toBe("memory-bank")
-      expect(state.groupId).toBe(groupId)
     })
   })
 
@@ -250,10 +234,7 @@ describe.skipIf(!shouldRunE2E)("StateHydrator", () => {
   })
 
   describe("error handling", () => {
-    // Pre-Phase-4 baseline — tracked in docs/deferred/pre-existing-failures.md
-    // Reason: hydrate() reads project-root memory-bank fallback, returning
-    // loadedFrom='memory-bank' instead of expected 'none'
-    it.skip("should handle file read errors gracefully", async () => {
+    it("should handle file read errors gracefully", async () => {
       // Try to hydrate when state file doesn't exist
       const state = await hydrator.hydrate("non-existent-session", groupId)
 
@@ -261,9 +242,7 @@ describe.skipIf(!shouldRunE2E)("StateHydrator", () => {
       expect(state.loadedFrom).toBe("none")
     })
 
-    // Pre-Phase-4 baseline — tracked in docs/deferred/pre-existing-failures.md
-    // Reason: same as above — hydrate() reads project-root memory-bank fallback
-    it.skip("should handle invalid JSON in state file", async () => {
+    it("should handle invalid JSON in state file", async () => {
       const stateFile = path.join(testStateDir, "sessions", `${sessionId}.json`)
       await fs.writeFile(stateFile, "invalid json", "utf8")
 
