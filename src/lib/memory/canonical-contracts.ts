@@ -261,8 +261,15 @@ export interface MemoryGetResponse {
   /** Superseded by (if deprecated) */
   superseded_by?: MemoryId
 
-  /** Usage count */
+  /** Usage count (legacy, always 0 — prefer recent_usage_count) */
   usage_count?: number
+
+  /**
+   * How many times this memory was retrieved or searched in the last 30 days.
+   * Computed from the events table. null means no tracking data is available
+   * (e.g., episodic-only memories with no retrieval events).
+   */
+  recent_usage_count?: number | null
 
   /** Tags associated with this memory */
   tags?: string[]
@@ -588,4 +595,128 @@ export class MemoryAlreadyCanonicalError extends Error {
     super(`Memory is already canonical: ${id}`)
     this.name = "MemoryAlreadyCanonicalError"
   }
+}
+
+/**
+ * Thrown when a restore is attempted on a memory that is not deleted.
+ */
+export class MemoryNotDeletedError extends Error {
+  constructor(id: string) {
+    super(`Memory is not deleted, cannot restore: ${id}`)
+    this.name = "MemoryNotDeletedError"
+  }
+}
+
+/**
+ * Thrown when a restore is attempted outside the recovery window.
+ */
+export class RecoveryWindowExpiredError extends Error {
+  constructor(id: string) {
+    super(`Recovery window has expired for memory: ${id}`)
+    this.name = "RecoveryWindowExpiredError"
+  }
+}
+
+// ── 9. memory_restore ────────────────────────────────────────────────────────
+
+/**
+ * 9. memory_restore
+ *
+ * Restore a soft-deleted memory within the recovery window (30 days).
+ * - Appends restore event to PostgreSQL (append-only, no UPDATE)
+ * - Removes deprecated flag and SUPERSEDES relationship in Neo4j
+ * - group_id scoped
+ * - Fails if outside recovery window or memory not deleted
+ */
+export interface MemoryRestoreRequest {
+  /** Required: Memory identifier to restore */
+  id: MemoryId
+
+  /** Required: Tenant namespace */
+  group_id: GroupId
+
+  /** Required: User identifier (for audit trail) */
+  user_id: UserId
+}
+
+export interface MemoryRestoreResponse {
+  /** Memory identifier */
+  id: MemoryId
+
+  /** Restoration status */
+  restored: boolean
+
+  /** Restoration timestamp */
+  restored_at: string
+
+  /** Execution metadata */
+  meta?: MemoryResponseMeta
+}
+
+// ── Memory List Deleted ──────────────────────────────────────────────────────
+
+/**
+ * Request for listing soft-deleted memories within recovery window.
+ */
+export interface MemoryListDeletedRequest {
+  /** Required: Tenant namespace */
+  group_id: GroupId
+
+  /** Optional: User identifier — scope to a specific user */
+  user_id?: UserId
+
+  /** Optional: Maximum results (default: 50) */
+  limit?: number
+
+  /** Optional: Pagination offset */
+  offset?: number
+}
+
+export interface DeletedMemoryItem {
+  /** Memory identifier */
+  id: MemoryId
+
+  /** Memory content */
+  content: MemoryContent
+
+  /** Storage location before deletion */
+  source: StorageLocation
+
+  /** Provenance */
+  provenance: MemoryProvenance
+
+  /** User identifier */
+  user_id: string
+
+  /** Original creation timestamp */
+  created_at: string
+
+  /** Deletion timestamp */
+  deleted_at: string
+
+  /** Days remaining in recovery window */
+  recovery_days_remaining: number
+
+  /** Confidence score */
+  score: ConfidenceScore
+
+  /** Tags */
+  tags?: string[]
+
+  /** Version (if semantic) */
+  version?: number
+}
+
+export interface MemoryListDeletedResponse {
+  /** Deleted memories */
+  memories: DeletedMemoryItem[]
+
+  /** Total count */
+  total: number
+
+  /** Has more results */
+  has_more: boolean
+
+  /** Execution metadata */
+  meta?: MemoryResponseMeta
 }

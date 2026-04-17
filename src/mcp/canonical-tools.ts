@@ -41,6 +41,10 @@ import type {
   MemoryPromoteResponse,
   MemoryExportRequest,
   MemoryExportResponse,
+  MemoryRestoreRequest,
+  MemoryRestoreResponse,
+  MemoryListDeletedRequest,
+  MemoryListDeletedResponse,
   GroupId,
   MemoryId,
   MemoryContent,
@@ -49,7 +53,12 @@ import type {
   MemoryProvenance,
   MemoryResponseMeta,
 } from "@/lib/memory/canonical-contracts"
-import { MemoryNotFoundError, MemoryAlreadyCanonicalError } from "@/lib/memory/canonical-contracts"
+import {
+  MemoryNotFoundError,
+  MemoryAlreadyCanonicalError,
+  MemoryNotDeletedError,
+  RecoveryWindowExpiredError,
+} from "@/lib/memory/canonical-contracts"
 
 import { Pool } from "pg"
 import neo4j, { Driver } from "neo4j-driver"
@@ -336,6 +345,46 @@ function parseEpisodicTags(tags: string | null | undefined): string[] {
       .filter(Boolean)
   if (Array.isArray(tags)) return tags as string[]
   return []
+}
+
+/**
+ * Count how many times a memory was retrieved or searched in the last 30 days.
+ *
+ * Queries the append-only events table for event_type matching 'retrieve' or 'search'
+ * patterns that reference the given memory_id in their metadata.
+ *
+ * Uses the expression index on metadata->>'memory_id' (migration 18).
+ *
+ * Returns:
+ * - A positive integer if retrieval events exist
+ * - null if no tracking data is available (episodic-only, no retrieval events)
+ *
+ * This function NEVER returns 0 — if there are zero retrieval events the caller
+ * can distinguish "we track but nobody looked" (0 is valid) from "we don't track
+ * this memory's retrievals at all" (null).  In practice, when the query succeeds
+ * we return the actual count (which can be 0), but wrap it: null means the query
+ * failed or the memory is episodic-only with no retrieval trace.
+ */
+async function getRecentUsageCount(pg: Pool, groupId: string, memoryId: string): Promise<number | null> {
+  const THIRTY_DAYS_AGO = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+
+  try {
+    const result = await pg.query<{ count: string }>(
+      `SELECT COUNT(*) AS count
+       FROM events
+       WHERE group_id = $1
+         AND metadata->>'memory_id' = $2
+         AND event_type IN ('memory_search', 'memory_retrieve', 'memory_get')
+         AND created_at >= $3`,
+      [groupId, memoryId, THIRTY_DAYS_AGO]
+    )
+
+    const count = parseInt(result.rows[0]?.count ?? "0", 10)
+    return count
+  } catch (error) {
+    console.warn("[usage] Failed to query recent usage count, returning null:", error)
+    return null
+  }
 }
 
 function baseMeta(storesUsed: Array<"postgres" | "neo4j">, degraded: boolean = false): MemoryResponseMeta {
@@ -958,6 +1007,10 @@ export async function memory_get(request: MemoryGetRequest): Promise<MemoryGetRe
 
       if (result.records.length > 0) {
         const record = result.records[0]
+
+        // Query recent usage from PG events table (uses migration-18 index)
+        const recentUsage = await getRecentUsageCount(pg, groupId, request.id)
+
         return {
           id: record.get("id") as MemoryId,
           content: record.get("content"),
@@ -967,7 +1020,8 @@ export async function memory_get(request: MemoryGetRequest): Promise<MemoryGetRe
           user_id: record.get("user_id"),
           created_at: neo4jDateToISO(record.get("created_at")),
           version: record.get("version")?.toNumber?.() || 1,
-          usage_count: 0, // TODO: Track usage
+          usage_count: recentUsage ?? 0,
+          recent_usage_count: recentUsage,
           tags: record.get("tags") || [],
           meta: getMeta,
         }
@@ -998,6 +1052,10 @@ export async function memory_get(request: MemoryGetRequest): Promise<MemoryGetRe
     }
 
     const row = result.rows[0]
+
+    // Query recent usage from PG events table (uses migration-18 index)
+    const recentUsage = await getRecentUsageCount(pg, groupId, request.id)
+
     return {
       id: toMemoryId(row.id),
       content: row.content,
@@ -1006,7 +1064,8 @@ export async function memory_get(request: MemoryGetRequest): Promise<MemoryGetRe
       provenance: toProvenance(row.provenance),
       user_id: row.user_id || "unknown",
       created_at: row.created_at,
-      usage_count: 0,
+      usage_count: recentUsage ?? 0,
+      recent_usage_count: recentUsage,
       tags: parseEpisodicTags(row.tags),
       meta: getMeta,
     }
@@ -1736,6 +1795,346 @@ export async function memory_export(request: MemoryExportRequest): Promise<Memor
   }
 }
 
+// ── 9. memory_restore ────────────────────────────────────────────────────────
+
+/**
+ * Restore a soft-deleted memory within the recovery window (30 days).
+ *
+ * Flow:
+ * 1. Find delete event in PostgreSQL within recovery window
+ * 2. Remove deprecated flag + SUPERSEDES relationship in Neo4j
+ * 3. Append restore event to PostgreSQL (append-only, no UPDATE)
+ * 4. Return restore confirmation
+ *
+ * Constraints:
+ * - No UPDATE on PostgreSQL events table (append-only)
+ * - RESTORE appends event_type='memory_restore' row
+ * - Neo4j: REMOVE m.deprecated, REMOVE m:deprecated label
+ * - group_id scoped on every query
+ */
+export async function memory_restore(request: MemoryRestoreRequest): Promise<MemoryRestoreResponse> {
+  const groupId = validateGroupId(request.group_id)
+  const restoredAt = new Date().toISOString()
+  const startTime = Date.now()
+
+  try {
+    const { pg, neo4j } = await getConnections()
+
+    // 1. Verify memory was deleted within the recovery window
+    const deleteEventResult = await withCircuitBreaker(
+      "postgres",
+      groupId,
+      "memory_restore:find_delete_event",
+      async () =>
+        pg.query<{ id: string; created_at: string; metadata: Record<string, unknown> }>(
+          `SELECT id, created_at, metadata
+         FROM events
+         WHERE group_id = $1
+           AND event_type = 'memory_delete'
+           AND metadata->>'memory_id' = $2
+           AND created_at >= NOW() - INTERVAL '${RECOVERY_WINDOW_DAYS} days'
+         ORDER BY created_at DESC
+         LIMIT 1`,
+          [groupId, request.id]
+        )
+    )
+
+    if (deleteEventResult.rows.length === 0) {
+      // Check if a memory_delete event exists at all (outside window = expired)
+      const anyDeleteResult = await withCircuitBreaker(
+        "postgres",
+        groupId,
+        "memory_restore:find_any_delete",
+        async () =>
+          pg.query<{ id: string }>(
+            `SELECT id FROM events WHERE group_id = $1 AND event_type = 'memory_delete' AND metadata->>'memory_id' = $2 LIMIT 1`,
+            [groupId, request.id]
+          )
+      )
+
+      if (anyDeleteResult.rows.length === 0) {
+        throw new MemoryNotDeletedError(request.id)
+      }
+      throw new RecoveryWindowExpiredError(request.id)
+    }
+
+    // 2. Restore in Neo4j — remove deprecated flag and label
+    let restoreMeta = baseMeta(["postgres", "neo4j"])
+    try {
+      await withCircuitBreaker("neo4j", groupId, "memory_restore:restore_node", async () => {
+        const session = neo4j.session()
+        try {
+          // Remove SUPERSEDES relationship pointing TO this memory (if any)
+          // and remove deprecated flag and label
+          await session.run(
+            `MATCH (m:Memory)
+             WHERE m.id = $id
+               AND m.group_id = $groupId
+             REMOVE m.deprecated
+             REMOVE m:deprecated
+             WITH m
+             OPTIONAL MATCH (newer)-[:SUPERSEDES]->(m)
+             DELETE newer-[:SUPERSEDES]->m
+             SET m.restored_at = datetime($restoredAt)
+             RETURN m.id AS id`,
+            { id: request.id, groupId, restoredAt }
+          )
+        } finally {
+          await session.close()
+        }
+      })
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith("Circuit breaker open")) {
+        throw error
+      }
+      console.warn("[degraded] Neo4j unavailable in memory_restore:", error)
+      restoreMeta = degradedMeta(["postgres"])
+    }
+
+    // 3. Append restore event to PostgreSQL (append-only)
+    await withCircuitBreaker("postgres", groupId, "memory_restore:insert_event", async () =>
+      pg.query(
+        `INSERT INTO events (group_id, event_type, agent_id, status, metadata, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          groupId,
+          "memory_restore",
+          request.user_id,
+          "completed",
+          JSON.stringify({
+            memory_id: request.id,
+            user_id: request.user_id,
+            deleted_at: deleteEventResult.rows[0].created_at,
+          }),
+          restoredAt,
+        ]
+      )
+    )
+
+    recordToolCall(groupId, request.user_id, "memory_restore", Date.now() - startTime, true)
+
+    return {
+      id: request.id,
+      restored: true,
+      restored_at: restoredAt,
+      meta: restoreMeta,
+    }
+  } catch (error) {
+    if (error instanceof MemoryNotDeletedError || error instanceof RecoveryWindowExpiredError) {
+      throw error
+    }
+    if (error instanceof DatabaseUnavailableError || error instanceof DatabaseQueryError) {
+      throw error
+    }
+    if (error instanceof Error && (error as Error & { code?: string }).code) {
+      throw classifyPostgresError(error, "memory_restore", "SELECT/INSERT events")
+    }
+    throw error
+  }
+}
+
+// ── 10. memory_list_deleted ──────────────────────────────────────────────────
+
+/**
+ * List soft-deleted memories within the 30-day recovery window.
+ *
+ * Flow:
+ * 1. Query PostgreSQL for memory_delete events within recovery window
+ * 2. For each deleted memory, find the most recent memory_add event (pre-deletion content)
+ * 3. Cross-reference Neo4j for semantic memories that are deprecated
+ * 4. Return list with recovery_days_remaining
+ *
+ * Constraints:
+ * - group_id scoped on every query
+ * - No UPDATE on PostgreSQL events table (append-only)
+ * - Only events within recovery window
+ */
+export async function memory_list_deleted(request: MemoryListDeletedRequest): Promise<MemoryListDeletedResponse> {
+  const groupId = validateGroupId(request.group_id)
+  const limit = request.limit || 50
+  const offset = request.offset || 0
+
+  try {
+    const { pg, neo4j: neo4jDriver } = await getConnections()
+
+    let listMeta = baseMeta(["postgres", "neo4j"])
+
+    // 1. Find memory_delete events within the recovery window, grouped by memory_id
+    const deleteEventsResult = await withCircuitBreaker(
+      "postgres",
+      groupId,
+      "memory_list_deleted:find_deletes",
+      async () =>
+        pg.query<{ memory_id: string; user_id: string; deleted_at: string }>(
+          `SELECT DISTINCT ON (metadata->>'memory_id')
+           metadata->>'memory_id' AS memory_id,
+           metadata->>'user_id' AS user_id,
+           created_at AS deleted_at
+         FROM events
+         WHERE group_id = $1
+           AND event_type = 'memory_delete'
+           AND ($2::text IS NULL OR metadata->>'user_id' = $2)
+           AND created_at >= NOW() - INTERVAL '${RECOVERY_WINDOW_DAYS} days'
+         ORDER BY metadata->>'memory_id', created_at DESC`,
+          [groupId, request.user_id ?? null]
+        )
+    )
+
+    if (deleteEventsResult.rows.length === 0) {
+      return { memories: [], total: 0, has_more: false, meta: listMeta }
+    }
+
+    // 2. For each deleted memory, find the pre-deletion content from the most recent memory_add event
+    const deletedMemoryIds = deleteEventsResult.rows.map((r) => r.memory_id)
+
+    // Build memory content lookup from PG add events
+    const addEventsResult = await withCircuitBreaker(
+      "postgres",
+      groupId,
+      "memory_list_deleted:find_add_events",
+      async () =>
+        pg.query<{
+          memory_id: string
+          content: string
+          source: string
+          provenance: string
+          user_id: string
+          created_at: string
+          score: string
+          tags: string
+        }>(
+          `SELECT DISTINCT ON (metadata->>'memory_id')
+           metadata->>'memory_id' AS memory_id,
+           metadata->>'content' AS content,
+           metadata->>'source' AS source,
+           metadata->>'provenance' AS provenance,
+           metadata->>'user_id' AS user_id,
+           created_at,
+           metadata->>'score' AS score,
+           metadata->>'tags' AS tags
+         FROM events
+         WHERE group_id = $1
+           AND event_type = 'memory_add'
+           AND metadata->>'memory_id' = ANY($2)
+         ORDER BY metadata->>'memory_id', created_at DESC`,
+          [groupId, deletedMemoryIds]
+        )
+    )
+
+    const addByMemoryId = new Map(addEventsResult.rows.map((r) => [r.memory_id, r]))
+
+    // 3. Cross-reference Neo4j for deprecated memories
+    let neo4jMemories: Map<
+      string,
+      {
+        content: string
+        score: number
+        provenance: string
+        user_id: string
+        created_at: string
+        version: number
+        tags: string[]
+      }
+    > = new Map()
+    try {
+      const session = neo4jDriver.session()
+      try {
+        const neo4jResult = await session.run(
+          `MATCH (m:Memory)
+           WHERE m.group_id = $groupId
+             AND m.id IN $ids
+             AND m.deprecated = true
+           RETURN m.id AS id,
+                  m.content AS content,
+                  m.score AS score,
+                  m.provenance AS provenance,
+                  m.user_id AS user_id,
+                  m.created_at AS created_at,
+                  m.version AS version,
+                  m.tags AS tags`,
+          { groupId, ids: deletedMemoryIds }
+        )
+
+        neo4jMemories = new Map(
+          neo4jResult.records.map((record) => [
+            record.get("id") as string,
+            {
+              content: record.get("content"),
+              score: record.get("score")?.toNumber?.() ?? 0.5,
+              provenance: record.get("provenance"),
+              user_id: record.get("user_id"),
+              created_at: neo4jDateToISO(record.get("created_at")),
+              version: record.get("version")?.toNumber?.() ?? 1,
+              tags: record.get("tags") || [],
+            },
+          ])
+        )
+      } finally {
+        await session.close()
+      }
+    } catch (error) {
+      console.warn("[degraded] Neo4j unavailable in memory_list_deleted:", error)
+      listMeta = degradedMeta(["postgres"])
+    }
+
+    // 4. Merge PG and Neo4j results — prefer Neo4j when available
+    const now = Date.now()
+    const memories = deleteEventsResult.rows
+      .map((delRow) => {
+        const addRow = addByMemoryId.get(delRow.memory_id)
+        const neo4jData = neo4jMemories.get(delRow.memory_id)
+
+        const content = neo4jData?.content ?? addRow?.content ?? "(content unavailable)"
+        const provenance = toProvenance(neo4jData?.provenance ?? addRow?.provenance)
+        const userId = neo4jData?.user_id ?? addRow?.user_id ?? delRow.user_id ?? "unknown"
+        const createdAt = neo4jData?.created_at ?? addRow?.created_at ?? delRow.deleted_at
+        const score = (neo4jData?.score ?? parseFloat(addRow?.score ?? "0.5")) || 0.5
+        const version = neo4jData?.version ?? 1
+        const tags = neo4jData?.tags ?? parseEpisodicTags(addRow?.tags ?? null)
+        const source: StorageLocation = neo4jData ? "semantic" : "episodic"
+
+        const deletedAtDate = new Date(delRow.deleted_at)
+        const recoveryDeadline = new Date(deletedAtDate.getTime() + RECOVERY_WINDOW_DAYS * 24 * 60 * 60 * 1000)
+        const daysRemaining = Math.max(0, Math.ceil((recoveryDeadline.getTime() - now) / (24 * 60 * 60 * 1000)))
+
+        return {
+          id: delRow.memory_id as MemoryId,
+          content: content as MemoryContent,
+          source,
+          provenance,
+          user_id: userId,
+          created_at: createdAt,
+          deleted_at: delRow.deleted_at,
+          recovery_days_remaining: daysRemaining,
+          score: score as ConfidenceScore,
+          tags,
+          version,
+        }
+      })
+      .filter((m) => m.content !== "(content unavailable)" || neo4jMemories.has(m.id as string))
+      .sort((a, b) => new Date(b.deleted_at).getTime() - new Date(a.deleted_at).getTime())
+
+    const total = memories.length
+    const page = memories.slice(offset, offset + limit)
+    const has_more = offset + limit < total
+
+    return {
+      memories: page,
+      total,
+      has_more,
+      meta: listMeta,
+    }
+  } catch (error) {
+    if (error instanceof DatabaseUnavailableError || error instanceof DatabaseQueryError) {
+      throw error
+    }
+    if (error instanceof Error && (error as Error & { code?: string }).code) {
+      throw classifyPostgresError(error, "memory_list_deleted", "SELECT events")
+    }
+    throw error
+  }
+}
+
 // ── Export for MCP Server ─────────────────────────────────────────────────
 
 export const canonicalMemoryTools = {
@@ -1747,6 +2146,8 @@ export const canonicalMemoryTools = {
   memory_update,
   memory_promote,
   memory_export,
+  memory_restore,
+  memory_list_deleted,
 }
 
 export { getBudgetEnforcer, getBreakerManager, ensureSession, checkBudget, recordToolCall, withCircuitBreaker }

@@ -15,13 +15,21 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { memory_add, memory_search, memory_get, memory_list, memory_delete } from "@/mcp/canonical-tools"
+import {
+  memory_add,
+  memory_search,
+  memory_get,
+  memory_list,
+  memory_delete,
+  memory_list_deleted,
+} from "@/mcp/canonical-tools"
 import type {
   MemoryAddRequest,
   MemorySearchRequest,
   MemoryGetRequest,
   MemoryListRequest,
   MemoryDeleteRequest,
+  MemoryListDeletedRequest,
   GroupId,
   UserId,
 } from "@/lib/memory/canonical-contracts"
@@ -168,6 +176,20 @@ export async function GET(request: NextRequest) {
       }
 
       const response = await memory_search(searchRequest)
+      return jsonWithDegradation(response)
+    }
+
+    // Check if this is a deleted-memory list request
+    const status = searchParams.get("status")
+    if (status === "deleted") {
+      const listDeletedRequest: MemoryListDeletedRequest = {
+        group_id: validatedGroupId as GroupId,
+        user_id: searchParams.get("user_id") || undefined,
+        limit: searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : 50,
+        offset: searchParams.get("offset") ? parseInt(searchParams.get("offset")!) : 0,
+      }
+
+      const response = await memory_list_deleted(listDeletedRequest)
       return jsonWithDegradation(response)
     }
 
