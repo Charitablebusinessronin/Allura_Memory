@@ -8,10 +8,10 @@
  * 4. Memory Bank - Fallback documentation
  */
 
-import fs from 'fs/promises';
-import path from 'path';
-import { z } from 'zod';
-import type { CheckpointState } from './checkpoint-manager';
+import fs from "fs/promises"
+import path from "path"
+import { z } from "zod"
+import type { CheckpointState } from "./checkpoint-manager"
 
 /**
  * Session state schema
@@ -26,7 +26,7 @@ export const SessionStateSchema = z.object({
   /** Current story ID */
   currentStory: z.string().optional(),
   /** Phase of development loop */
-  phase: z.enum(['DEV', 'CODE_REVIEW', 'CORRECT_COURSE', 'BLOOD_LOOP', 'RETROSPECTIVE', 'WAITING']),
+  phase: z.enum(["DEV", "CODE_REVIEW", "CORRECT_COURSE", "BLOOD_LOOP", "RETROSPECTIVE", "WAITING"]),
   /** Memory bank context */
   memoryBankContext: z.record(z.string(), z.unknown()).optional(),
   /** Planning artifacts */
@@ -36,19 +36,18 @@ export const SessionStateSchema = z.object({
   /** Checkpoint reference */
   checkpointId: z.string().uuid().optional(),
   /** Loaded from source */
-  loadedFrom: z.enum(['database', 'serialization', 'files', 'memory-bank', 'none']),
-});
+  loadedFrom: z.enum(["database", "serialization", "files", "none"]),
+})
 
-export type SessionState = z.infer<typeof SessionStateSchema>;
+export type SessionState = z.infer<typeof SessionStateSchema>
 
 /**
  * State source priority (4-layer encoding)
  */
 export enum StateSource {
-  DATABASE = 1,      // PostgreSQL - highest priority
+  DATABASE = 1, // PostgreSQL - highest priority
   SERIALIZATION = 2, // Neo4j
-  FILES = 3,         // .opencode/state
-  MEMORY_BANK = 4,   // memory-bank/ fallback
+  FILES = 3, // .opencode/state
 }
 
 /**
@@ -56,24 +55,21 @@ export enum StateSource {
  */
 export interface StateHydratorConfig {
   /** State directory */
-  stateDir: string;
-  /** Memory bank directory */
-  memoryBankDir: string;
+  stateDir: string
   /** Planning artifacts directory */
-  planningArtifactsDir: string;
+  planningArtifactsDir: string
   /** Enable database hydration */
-  enableDbHydration: boolean;
+  enableDbHydration: boolean
   /** Enable Neo4j hydration */
-  enableNeo4jHydration: boolean;
+  enableNeo4jHydration: boolean
 }
 
 const DEFAULT_CONFIG: StateHydratorConfig = {
-  stateDir: '.opencode/state',
-  memoryBankDir: 'memory-bank',
-  planningArtifactsDir: '_bmad-output/planning-artifacts',
+  stateDir: ".opencode/state",
+  planningArtifactsDir: "_bmad-output/planning-artifacts",
   enableDbHydration: true,
   enableNeo4jHydration: true,
-};
+}
 
 /**
  * State Hydrator
@@ -82,10 +78,10 @@ const DEFAULT_CONFIG: StateHydratorConfig = {
  * Prioritizes freshness and completeness.
  */
 export class StateHydrator {
-  private config: StateHydratorConfig;
+  private config: StateHydratorConfig
 
   constructor(config?: Partial<StateHydratorConfig>) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this.config = { ...DEFAULT_CONFIG, ...config }
   }
 
   /**
@@ -95,52 +91,43 @@ export class StateHydrator {
   async hydrate(sessionId: string, groupId: string): Promise<SessionState> {
     // Try database first (PostgreSQL)
     if (this.config.enableDbHydration) {
-      const dbState = await this.tryHydrateFromDatabase(sessionId, groupId);
+      const dbState = await this.tryHydrateFromDatabase(sessionId, groupId)
       if (dbState) {
-        return { ...dbState, loadedFrom: 'database' };
+        return { ...dbState, loadedFrom: "database" }
       }
     }
 
     // Try serialization (Neo4j)
     if (this.config.enableNeo4jHydration) {
-      const neo4jState = await this.tryHydrateFromNeo4j(sessionId, groupId);
+      const neo4jState = await this.tryHydrateFromNeo4j(sessionId, groupId)
       if (neo4jState) {
-        return { ...neo4jState, loadedFrom: 'serialization' };
+        return { ...neo4jState, loadedFrom: "serialization" }
       }
     }
 
     // Try files (.opencode/state)
-    const fileState = await this.tryHydrateFromFiles(sessionId, groupId);
+    const fileState = await this.tryHydrateFromFiles(sessionId, groupId)
     if (fileState) {
-      return { ...fileState, loadedFrom: 'files' };
-    }
-
-    // Fallback to memory bank
-    const memoryBankState = await this.tryHydrateFromMemoryBank(groupId);
-    if (memoryBankState) {
-      return { ...memoryBankState, sessionId, loadedFrom: 'memory-bank' };
+      return { ...fileState, loadedFrom: "files" }
     }
 
     // No state found - return initial state
     return {
       sessionId,
       groupId,
-      phase: 'WAITING',
-      loadedFrom: 'none',
-    };
+      phase: "WAITING",
+      loadedFrom: "none",
+    }
   }
 
   /**
    * Try to hydrate from PostgreSQL database
    */
-  private async tryHydrateFromDatabase(
-    sessionId: string,
-    groupId: string
-  ): Promise<SessionState | null> {
+  private async tryHydrateFromDatabase(sessionId: string, groupId: string): Promise<SessionState | null> {
     // TODO: Implement PostgreSQL hydration
     // This will be implemented when we have the Postgres client available
-    console.log(`[Hydrator] Database hydration not yet implemented for session ${sessionId}`);
-    return null;
+    console.log(`[Hydrator] Database hydration not yet implemented for session ${sessionId}`)
+    return null
 
     // Example implementation:
     // const result = await postgresClient.query(
@@ -161,14 +148,11 @@ export class StateHydrator {
   /**
    * Try to hydrate from Neo4j
    */
-  private async tryHydrateFromNeo4j(
-    sessionId: string,
-    groupId: string
-  ): Promise<SessionState | null> {
+  private async tryHydrateFromNeo4j(sessionId: string, groupId: string): Promise<SessionState | null> {
     // TODO: Implement Neo4j hydration
     // This will be implemented when we have the Neo4j client available
-    console.log(`[Hydrator] Neo4j hydration not yet implemented for session ${sessionId}`);
-    return null;
+    console.log(`[Hydrator] Neo4j hydration not yet implemented for session ${sessionId}`)
+    return null
 
     // Example implementation:
     // const result = await neo4jClient.run(
@@ -187,128 +171,69 @@ export class StateHydrator {
   /**
    * Try to hydrate from files (.opencode/state)
    */
-  private async tryHydrateFromFiles(
-    sessionId: string,
-    groupId: string
-  ): Promise<SessionState | null> {
+  private async tryHydrateFromFiles(sessionId: string, groupId: string): Promise<SessionState | null> {
     try {
-      const sessionsDir = path.join(this.config.stateDir, 'sessions');
-      const sessionFile = path.join(sessionsDir, `${sessionId}.json`);
+      const sessionsDir = path.join(this.config.stateDir, "sessions")
+      const sessionFile = path.join(sessionsDir, `${sessionId}.json`)
 
-      const content = await fs.readFile(sessionFile, 'utf8');
-      const parsed = JSON.parse(content);
-      const validated = SessionStateSchema.parse(parsed);
+      const content = await fs.readFile(sessionFile, "utf8")
+      const parsed = JSON.parse(content)
+      const validated = SessionStateSchema.parse(parsed)
 
       // Verify group ID matches
       if (validated.groupId !== groupId) {
-        console.warn(`[Hydrator] Group ID mismatch in file state: expected ${groupId}, got ${validated.groupId}`);
-        return null;
+        console.warn(`[Hydrator] Group ID mismatch in file state: expected ${groupId}, got ${validated.groupId}`)
+        return null
       }
 
-      return validated;
+      return validated
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-        return null;
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        return null
       }
-      console.error('[Hydrator] Failed to hydrate from files:', error);
-      return null;
+      console.error("[Hydrator] Failed to hydrate from files:", error)
+      return null
     }
-  }
-
-  /**
-   * Try to hydrate from memory bank (fallback)
-   */
-  private async tryHydrateFromMemoryBank(groupId: string): Promise<SessionState | null> {
-    try {
-      const memoryBankContext = await this.loadMemoryBankContext();
-      const planningArtifacts = await this.loadPlanningArtifacts();
-
-      return {
-        sessionId: crypto.randomUUID(),
-        groupId,
-        phase: 'WAITING',
-        memoryBankContext,
-        planningArtifacts,
-        loadedFrom: 'memory-bank',
-      };
-    } catch (error) {
-      console.error('[Hydrator] Failed to hydrate from memory bank:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Load memory bank context
-   */
-  private async loadMemoryBankContext(): Promise<Record<string, unknown>> {
-    const context: Record<string, unknown> = {};
-
-    const memoryBankFiles = [
-      'activeContext.md',
-      'progress.md',
-      'systemPatterns.md',
-      'techContext.md',
-      'productContext.md',
-      'projectbrief.md',
-    ];
-
-    for (const file of memoryBankFiles) {
-      const filePath = path.join(this.config.memoryBankDir, file);
-      try {
-        const content = await fs.readFile(filePath, 'utf8');
-        const key = file.replace('.md', '');
-        context[key] = content;
-      } catch {
-        // File doesn't exist or can't be read - skip
-        console.warn(`[Hydrator] Could not load memory bank file: ${file}`);
-      }
-    }
-
-    return context;
   }
 
   /**
    * Load planning artifacts
    */
   private async loadPlanningArtifacts(): Promise<Record<string, unknown>> {
-    const artifacts: Record<string, unknown> = {};
+    const artifacts: Record<string, unknown> = {}
 
-    const planningFiles = [
-      'epics.md',
-      'source-of-truth.md',
-      'tech-spec-*.md',
-    ];
+    const planningFiles = ["epics.md", "source-of-truth.md", "tech-spec-*.md"]
 
     for (const pattern of planningFiles) {
       try {
-        if (pattern.includes('*')) {
+        if (pattern.includes("*")) {
           // Handle glob patterns
           // For now, just log that we'd handle this
-          console.log(`[Hydrator] Would handle glob pattern: ${pattern}`);
+          console.log(`[Hydrator] Would handle glob pattern: ${pattern}`)
         } else {
-          const filePath = path.join(this.config.planningArtifactsDir, pattern);
-          const content = await fs.readFile(filePath, 'utf8');
-          const key = pattern.replace('.md', '');
-          artifacts[key] = content;
+          const filePath = path.join(this.config.planningArtifactsDir, pattern)
+          const content = await fs.readFile(filePath, "utf8")
+          const key = pattern.replace(".md", "")
+          artifacts[key] = content
         }
       } catch {
         // File doesn't exist or can't be read - skip
-        console.warn(`[Hydrator] Could not load planning file: ${pattern}`);
+        console.warn(`[Hydrator] Could not load planning file: ${pattern}`)
       }
     }
 
-    return artifacts;
+    return artifacts
   }
 
   /**
    * Save state to files
    */
   async saveState(state: SessionState): Promise<void> {
-    const sessionsDir = path.join(this.config.stateDir, 'sessions');
-    await fs.mkdir(sessionsDir, { recursive: true });
+    const sessionsDir = path.join(this.config.stateDir, "sessions")
+    await fs.mkdir(sessionsDir, { recursive: true })
 
-    const sessionFile = path.join(sessionsDir, `${state.sessionId}.json`);
-    await fs.writeFile(sessionFile, JSON.stringify(state, null, 2), 'utf8');
+    const sessionFile = path.join(sessionsDir, `${state.sessionId}.json`)
+    await fs.writeFile(sessionFile, JSON.stringify(state, null, 2), "utf8")
   }
 
   /**
@@ -320,7 +245,7 @@ export class StateHydrator {
       ...update,
       // Ensure loadedFrom is never changed
       loadedFrom: current.loadedFrom,
-    });
+    })
   }
 
   /**
@@ -329,25 +254,25 @@ export class StateHydrator {
   async validateState(state: SessionState): Promise<boolean> {
     try {
       // Validate schema
-      SessionStateSchema.parse(state);
+      SessionStateSchema.parse(state)
 
       // Validate groupId format (allura-*)
-      if (!state.groupId.startsWith('allura-') && state.groupId !== 'roninmemory') {
-        console.warn(`[Hydrator] Invalid groupId format: ${state.groupId}`);
-        return false;
+      if (!state.groupId.startsWith("allura-") && state.groupId !== "roninmemory") {
+        console.warn(`[Hydrator] Invalid groupId format: ${state.groupId}`)
+        return false
       }
 
       // Validate phase
-      const validPhases = ['DEV', 'CODE_REVIEW', 'CORRECT_COURSE', 'BLOOD_LOOP', 'RETROSPECTIVE', 'WAITING'];
+      const validPhases = ["DEV", "CODE_REVIEW", "CORRECT_COURSE", "BLOOD_LOOP", "RETROSPECTIVE", "WAITING"]
       if (!validPhases.includes(state.phase)) {
-        console.warn(`[Hydrator] Invalid phase: ${state.phase}`);
-        return false;
+        console.warn(`[Hydrator] Invalid phase: ${state.phase}`)
+        return false
       }
 
-      return true;
+      return true
     } catch (error) {
-      console.error('[Hydrator] State validation failed:', error);
-      return false;
+      console.error("[Hydrator] State validation failed:", error)
+      return false
     }
   }
 
@@ -368,7 +293,7 @@ export class StateHydrator {
         budgetState: state.budgetState,
       },
       lastCheckpointId: state.checkpointId,
-    };
+    }
   }
 
   /**
@@ -385,21 +310,19 @@ export class StateHydrator {
       planningArtifacts: checkpoint.stateData?.planningArtifacts as Record<string, unknown> | undefined,
       budgetState: checkpoint.stateData?.budgetState as Record<string, unknown> | undefined,
       checkpointId: checkpoint.lastCheckpointId,
-      loadedFrom: 'files',
-    };
+      loadedFrom: "files",
+    }
   }
 }
 
 /**
  * Factory function to create state hydrator
  */
-export function createStateHydrator(
-  config?: Partial<StateHydratorConfig>
-): StateHydrator {
-  return new StateHydrator(config);
+export function createStateHydrator(config?: Partial<StateHydratorConfig>): StateHydrator {
+  return new StateHydrator(config)
 }
 
 /**
  * Default export
  */
-export default StateHydrator;
+export default StateHydrator

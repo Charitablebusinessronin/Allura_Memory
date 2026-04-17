@@ -21,17 +21,17 @@
 
 // Server-only guard
 if (typeof window !== "undefined") {
-  throw new Error("RuVector bridge module can only be used server-side");
+  throw new Error("RuVector bridge module can only be used server-side")
 }
 
-import { randomUUID } from "node:crypto";
-import type { Pool, QueryResult } from "pg";
+import { randomUUID } from "node:crypto"
+import type { Pool, QueryResult } from "pg"
 
-import { getRuVectorPool, isRuVectorEnabled, checkRuVectorHealth } from "./connection";
-import { validateGroupId } from "../validation/group-id";
-import { GroupIdValidationError } from "../validation/group-id";
-import { DatabaseUnavailableError, DatabaseQueryError, classifyPostgresError } from "../errors/database-errors";
-import { generateEmbedding } from "./embedding-service";
+import { getRuVectorPool, isRuVectorEnabled, checkRuVectorHealth } from "./connection"
+import { validateGroupId } from "../validation/group-id"
+import { GroupIdValidationError } from "../validation/group-id"
+import { DatabaseUnavailableError, DatabaseQueryError, classifyPostgresError } from "../errors/database-errors"
+import { generateEmbedding } from "./embedding-service"
 import type {
   StoreMemoryParams,
   StoreMemoryResult,
@@ -42,7 +42,7 @@ import type {
   RuVectorReadinessResult,
   RuVectorMemoryType,
   AlluraMemoryRow,
-} from "./types";
+} from "./types"
 
 // ── Bridge-Specific Errors ───────────────────────────────────────────────────
 
@@ -52,31 +52,31 @@ import type {
  * "bad input" (400) from "query failed" (500).
  */
 export class RuVectorBridgeValidationError extends Error {
-  public readonly field: string;
+  public readonly field: string
 
   constructor(field: string, message: string) {
-    super(message);
-    this.name = "RuVectorBridgeValidationError";
-    this.field = field;
+    super(message)
+    this.name = "RuVectorBridgeValidationError"
+    this.field = field
   }
 }
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
 /** Default retrieval limit */
-const DEFAULT_LIMIT = 10;
+const DEFAULT_LIMIT = 10
 
 /** Default minimum similarity threshold */
-const DEFAULT_THRESHOLD = 0.5;
+const DEFAULT_THRESHOLD = 0.5
 
 /** Table name for memories */
-const MEMORIES_TABLE = "allura_memories";
+const MEMORIES_TABLE = "allura_memories"
 
 /** Table name for SONA feedback */
-const FEEDBACK_TABLE = "allura_feedback";
+const FEEDBACK_TABLE = "allura_feedback"
 
 /** Standard RRF constant (k=60 is the widely-adopted default) */
-const RRF_K = 60;
+const RRF_K = 60
 
 // ── RRF Fusion ────────────────────────────────────────────────────────────────
 
@@ -84,20 +84,20 @@ const RRF_K = 60;
  * Row shape returned from vector ANN query.
  */
 interface VectorSearchRow {
-  id: string;
-  content: string;
-  memory_type: RuVectorMemoryType;
-  vector_score: number;
+  id: string
+  content: string
+  memory_type: RuVectorMemoryType
+  vector_score: number
 }
 
 /**
  * Row shape returned from BM25 text search query.
  */
 interface BM25SearchRow {
-  id: string;
-  content: string;
-  memory_type: RuVectorMemoryType;
-  bm25_score: number;
+  id: string
+  content: string
+  memory_type: RuVectorMemoryType
+  bm25_score: number
 }
 
 /**
@@ -120,54 +120,54 @@ interface BM25SearchRow {
 function fuseResults(
   vectorResults: VectorSearchRow[],
   bm25Results: BM25SearchRow[],
-  threshold: number,
+  threshold: number
 ): RetrievedMemory[] {
-  const rrfScores = new Map<string, number>();
-  const contentMap = new Map<string, { content: string; memoryType: RuVectorMemoryType }>();
+  const rrfScores = new Map<string, number>()
+  const contentMap = new Map<string, { content: string; memoryType: RuVectorMemoryType }>()
 
   // Vector ranks (1-indexed)
   vectorResults.forEach((r, i) => {
-    const rank = i + 1;
-    rrfScores.set(r.id, 1 / (RRF_K + rank));
-    contentMap.set(r.id, { content: r.content, memoryType: r.memory_type });
-  });
+    const rank = i + 1
+    rrfScores.set(r.id, 1 / (RRF_K + rank))
+    contentMap.set(r.id, { content: r.content, memoryType: r.memory_type })
+  })
 
   // BM25 ranks (1-indexed) — add to existing scores
   bm25Results.forEach((r, i) => {
-    const rank = i + 1;
-    const existing = rrfScores.get(r.id) || 0;
-    rrfScores.set(r.id, existing + 1 / (RRF_K + rank));
+    const rank = i + 1
+    const existing = rrfScores.get(r.id) || 0
+    rrfScores.set(r.id, existing + 1 / (RRF_K + rank))
     // Only add content if not already present (vector result takes precedence)
     if (!contentMap.has(r.id)) {
-      contentMap.set(r.id, { content: r.content, memoryType: r.memory_type });
+      contentMap.set(r.id, { content: r.content, memoryType: r.memory_type })
     }
-  });
+  })
 
   // Max possible RRF score for normalization:
   // A result at rank 1 in both lists: 2/(k+1)
-  const maxPossibleScore = 2 / (RRF_K + 1);
+  const maxPossibleScore = 2 / (RRF_K + 1)
 
   // Build result array, normalize scores to 0-1, filter by threshold
-  const fused: RetrievedMemory[] = [];
+  const fused: RetrievedMemory[] = []
   for (const [id, rawScore] of rrfScores) {
-    const normalizedScore = rawScore / maxPossibleScore;
+    const normalizedScore = rawScore / maxPossibleScore
     if (normalizedScore >= threshold) {
-      const entry = contentMap.get(id);
+      const entry = contentMap.get(id)
       if (entry) {
         fused.push({
           id,
           content: entry.content,
           memoryType: entry.memoryType,
           score: normalizedScore,
-        });
+        })
       }
     }
   }
 
   // Sort by score descending
-  fused.sort((a, b) => b.score - a.score);
+  fused.sort((a, b) => b.score - a.score)
 
-  return fused;
+  return fused
 }
 
 // ── storeMemory ─────────────────────────────────────────────────────────────
@@ -185,52 +185,50 @@ function fuseResults(
  * @throws DatabaseUnavailableError if RuVector is unreachable
  * @throws DatabaseQueryError if the insert fails
  */
-export async function storeMemory(
-  params: StoreMemoryParams
-): Promise<StoreMemoryResult> {
-  const { userId, sessionId, content, memoryType = "episodic", metadata = {} } = params;
+export async function storeMemory(params: StoreMemoryParams): Promise<StoreMemoryResult> {
+  const { userId, sessionId, content, memoryType = "episodic", metadata = {} } = params
 
   // Validate group_id (userId maps to group_id per ARCH-001)
-  const groupId = validateGroupId(userId);
+  const groupId = validateGroupId(userId)
 
   // Validate content is non-empty
   if (!content || content.trim().length === 0) {
-    throw new RuVectorBridgeValidationError("content", "content must be a non-empty string");
+    throw new RuVectorBridgeValidationError("content", "content must be a non-empty string")
   }
 
   // Validate sessionId is non-empty
   if (!sessionId || sessionId.trim().length === 0) {
-    throw new RuVectorBridgeValidationError("sessionId", "sessionId must be a non-empty string");
+    throw new RuVectorBridgeValidationError("sessionId", "sessionId must be a non-empty string")
   }
 
   // Generate embedding before DB insert (graceful degradation if Ollama is down)
-  const embedding: number[] | null = await generateEmbedding(content);
+  const embedding: number[] | null = await generateEmbedding(content)
 
   if (embedding === null) {
     console.info(
       `[RuVector Bridge] Embedding generation failed for memory in session ${sessionId} — storing without vector (status: stored_pending_embedding)`
-    );
+    )
   }
 
-  let pool: Pool;
+  let pool: Pool
   try {
-    pool = getRuVectorPool();
+    pool = getRuVectorPool()
   } catch (error) {
     throw new DatabaseUnavailableError(
       "storeMemory: failed to get RuVector pool",
       error instanceof Error ? error : undefined
-    );
+    )
   }
 
   // NOTE(ARCH-001): In Allura's tenant model, userId IS the group_id (tenant).
   // Both user_id and group_id columns receive the same validated value.
   // A future iteration may separate these when per-user isolation within a
   // tenant is needed. Until then: user_id = group_id = validated groupId.
-  let result: QueryResult;
+  let result: QueryResult
   try {
     // Format embedding for ruvector type: must be string '[0.1,0.2,...]' or null
     // The pg driver sends JS arrays as PG arrays, but ruvector expects vector literal syntax
-    const embeddingValue = embedding ? `[${embedding.join(",")}]` : null;
+    const embeddingValue = embedding ? `[${embedding.join(",")}]` : null
 
     result = await pool.query(
       `INSERT INTO ${MEMORIES_TABLE}
@@ -238,31 +236,31 @@ export async function storeMemory(
        VALUES ($1, $2, $3, $4, $5::ruvector, $6::jsonb, $7)
        RETURNING id, created_at`,
       [
-        groupId,  // user_id — same as group_id per ARCH-001 tenant model
+        groupId, // user_id — same as group_id per ARCH-001 tenant model
         sessionId,
         content,
         memoryType,
         embeddingValue, // formatted as ruvector literal or null
         JSON.stringify(metadata),
-        groupId,  // group_id — validated ^allura-[a-z0-9-]+$
+        groupId, // group_id — validated ^allura-[a-z0-9-]+$
       ]
-    );
+    )
   } catch (error) {
     const classified = classifyPostgresError(
       error instanceof Error ? error : new Error(String(error)),
       "storeMemory",
       `INSERT INTO ${MEMORIES_TABLE}`
-    );
-    throw classified;
+    )
+    throw classified
   }
 
-  const row = result.rows[0];
+  const row = result.rows[0]
   return {
     id: String(row.id),
     status: embedding ? "stored" : "stored_pending_embedding",
     createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
     groupId,
-  };
+  }
 }
 
 // ── retrieveMemories ─────────────────────────────────────────────────────────
@@ -289,66 +287,56 @@ export async function storeMemory(
  * @throws DatabaseUnavailableError if RuVector is unreachable
  * @throws DatabaseQueryError if the query fails
  */
-export async function retrieveMemories(
-  params: RetrieveMemoriesParams
-): Promise<RetrieveMemoriesResult> {
-  const {
-    userId,
-    query,
-    limit = DEFAULT_LIMIT,
-    threshold = DEFAULT_THRESHOLD,
-    searchMode = "hybrid",
-  } = params;
+export async function retrieveMemories(params: RetrieveMemoriesParams): Promise<RetrieveMemoriesResult> {
+  const { userId, query, limit = DEFAULT_LIMIT, threshold = DEFAULT_THRESHOLD, searchMode = "hybrid" } = params
 
   // Validate group_id (userId maps to group_id per ARCH-001)
-  const groupId = validateGroupId(userId);
+  const groupId = validateGroupId(userId)
 
   // Validate query is non-empty
   if (!query || query.trim().length === 0) {
-    throw new RuVectorBridgeValidationError("query", "query must be a non-empty string");
+    throw new RuVectorBridgeValidationError("query", "query must be a non-empty string")
   }
 
   // Validate limit bounds
   if (limit < 1 || limit > 100) {
-    throw new RuVectorBridgeValidationError("limit", "limit must be between 1 and 100");
+    throw new RuVectorBridgeValidationError("limit", "limit must be between 1 and 100")
   }
 
   // Validate threshold bounds
   if (threshold < 0 || threshold > 1) {
-    throw new RuVectorBridgeValidationError("threshold", "threshold must be between 0.0 and 1.0");
+    throw new RuVectorBridgeValidationError("threshold", "threshold must be between 0.0 and 1.0")
   }
 
-  const trajectoryId = randomUUID();
-  const startTime = Date.now();
-  const modesUsed: Array<"vector" | "text"> = [];
+  const trajectoryId = randomUUID()
+  const startTime = Date.now()
+  const modesUsed: Array<"vector" | "text"> = []
 
-  let pool: Pool;
+  let pool: Pool
   try {
-    pool = getRuVectorPool();
+    pool = getRuVectorPool()
   } catch (error) {
     throw new DatabaseUnavailableError(
       "retrieveMemories: failed to get RuVector pool",
       error instanceof Error ? error : undefined
-    );
+    )
   }
 
   // Attempt to generate query embedding for vector search
-  let queryEmbedding: number[] | null = null;
+  let queryEmbedding: number[] | null = null
   if (searchMode !== "text") {
-    queryEmbedding = await generateEmbedding(query);
+    queryEmbedding = await generateEmbedding(query)
     if (queryEmbedding === null) {
-      console.info(
-        `[RuVector Bridge] Query embedding generation failed for session — falling back to text-only search`
-      );
+      console.info(`[RuVector Bridge] Query embedding generation failed for session — falling back to text-only search`)
     }
   }
 
   // Determine effective mode: only use vector if we have an embedding
-  const canUseVector = queryEmbedding !== null && searchMode !== "text";
-  const canUseText = searchMode !== "vector";
+  const canUseVector = queryEmbedding !== null && searchMode !== "text"
+  const canUseText = searchMode !== "vector"
 
   // ── Pass 1: Vector ANN search ──────────────────────────────────────────
-  let vectorResults: VectorSearchRow[] = [];
+  let vectorResults: VectorSearchRow[] = []
   if (canUseVector) {
     try {
       // Check if any embeddings exist in the table for this user
@@ -357,12 +345,12 @@ export async function retrieveMemories(
          WHERE user_id = $1 AND embedding IS NOT NULL AND deleted_at IS NULL
          LIMIT 1`,
         [groupId]
-      );
+      )
 
       if (embeddingCheck.rows.length > 0) {
         // Format query vector as ruvector literal string '[0.1,0.2,...]'
         // The pg driver cannot send JS arrays to ruvector columns (parser error in vector.rs)
-        const embeddingValue = `[${queryEmbedding!.join(",")}]`;
+        const embeddingValue = `[${queryEmbedding!.join(",")}]`
 
         const vectorResult = await pool.query(
           `SELECT
@@ -377,27 +365,32 @@ export async function retrieveMemories(
            ORDER BY ruvector_cosine_distance(embedding, $1::ruvector) ASC
            LIMIT $3`,
           [embeddingValue, groupId, limit]
-        );
+        )
 
-        vectorResults = vectorResult.rows as VectorSearchRow[];
-        modesUsed.push("vector");
+        vectorResults = vectorResult.rows as VectorSearchRow[]
+        modesUsed.push("vector")
       } else {
-        console.info(
-          `[RuVector Bridge] No embeddings found in table for user ${groupId} — skipping vector pass`
-        );
+        console.info(`[RuVector Bridge] No embeddings found in table for user ${groupId} — skipping vector pass`)
       }
     } catch (error) {
-      // Graceful degradation: if vector search fails, log and fall back to text
-      const errMsg = error instanceof Error ? error.message : String(error);
-      console.warn(
-        `[RuVector Bridge] Vector search failed — falling back to text-only: ${errMsg}`
-      );
-      vectorResults = [];
+      // Graceful degradation: classify the error, log appropriately, fall back to text-only
+      const classified = classifyPostgresError(
+        error instanceof Error ? error : new Error(String(error)),
+        "retrieveMemories",
+        `SELECT from ${MEMORIES_TABLE} (vector ANN)`
+      )
+      if (classified instanceof DatabaseUnavailableError) {
+        // Connection-level failure in vector pass — rethrow; DB is down, text pass will also fail
+        throw classified
+      }
+      // Query-level failure in vector pass — log and fall back to text-only
+      console.warn(`[RuVector Bridge] Vector search failed — falling back to text-only: ${classified.message}`)
+      vectorResults = []
     }
   }
 
   // ── Pass 2: BM25 text search ───────────────────────────────────────────
-  let bm25Results: BM25SearchRow[] = [];
+  let bm25Results: BM25SearchRow[] = []
   if (canUseText) {
     try {
       const bm25Result = await pool.query(
@@ -414,31 +407,29 @@ export async function retrieveMemories(
          ORDER BY bm25_score DESC
          LIMIT $3`,
         [query, groupId, limit]
-      );
+      )
 
-      bm25Results = bm25Result.rows as BM25SearchRow[];
-      modesUsed.push("text");
+      bm25Results = bm25Result.rows as BM25SearchRow[]
+      modesUsed.push("text")
     } catch (error) {
       const classified = classifyPostgresError(
         error instanceof Error ? error : new Error(String(error)),
         "retrieveMemories",
         `SELECT from ${MEMORIES_TABLE} (BM25)`
-      );
-      throw classified;
+      )
+      throw classified
     }
   }
 
   // ── Fuse or convert results ────────────────────────────────────────────
-  let memories: RetrievedMemory[];
+  let memories: RetrievedMemory[]
 
   if (modesUsed.includes("vector") && modesUsed.includes("text")) {
     // Hybrid: fuse with RRF
-    memories = fuseResults(vectorResults, bm25Results, threshold);
+    memories = fuseResults(vectorResults, bm25Results, threshold)
   } else if (modesUsed.includes("vector")) {
     // Vector-only: normalize vector scores and filter
-    const maxScore = vectorResults.length > 0
-      ? Math.max(...vectorResults.map((r) => r.vector_score), 1)
-      : 1;
+    const maxScore = vectorResults.length > 0 ? Math.max(...vectorResults.map((r) => r.vector_score), 1) : 1
     memories = vectorResults
       .map((row) => ({
         id: row.id,
@@ -446,12 +437,10 @@ export async function retrieveMemories(
         memoryType: row.memory_type,
         score: row.vector_score / maxScore,
       }))
-      .filter((m) => m.score >= threshold);
+      .filter((m) => m.score >= threshold)
   } else {
     // Text-only (BM25): normalize scores and filter (original behavior)
-    const maxScore = bm25Results.length > 0
-      ? Math.max(...bm25Results.map((r) => r.bm25_score), 1)
-      : 1;
+    const maxScore = bm25Results.length > 0 ? Math.max(...bm25Results.map((r) => r.bm25_score), 1) : 1
     memories = bm25Results
       .map((row) => ({
         id: row.id,
@@ -459,16 +448,17 @@ export async function retrieveMemories(
         memoryType: row.memory_type,
         score: row.bm25_score / maxScore,
       }))
-      .filter((m) => m.score >= threshold);
+      .filter((m) => m.score >= threshold)
   }
 
-  const total = modesUsed.includes("vector") && modesUsed.includes("text")
-    ? new Set([...vectorResults, ...bm25Results].map((r) => r.id)).size
-    : modesUsed.includes("vector")
-      ? vectorResults.length
-      : bm25Results.length;
+  const total =
+    modesUsed.includes("vector") && modesUsed.includes("text")
+      ? new Set([...vectorResults, ...bm25Results].map((r) => r.id)).size
+      : modesUsed.includes("vector")
+        ? vectorResults.length
+        : bm25Results.length
 
-  const latencyMs = Date.now() - startTime;
+  const latencyMs = Date.now() - startTime
 
   return {
     memories,
@@ -476,7 +466,7 @@ export async function retrieveMemories(
     latencyMs,
     trajectoryId,
     modesUsed,
-  };
+  }
 }
 
 // ── postFeedback ─────────────────────────────────────────────────────────────
@@ -495,29 +485,27 @@ export async function retrieveMemories(
  * @throws DatabaseUnavailableError if RuVector is unreachable
  * @throws DatabaseQueryError if the feedback insert fails
  */
-export async function postFeedback(
-  params: PostFeedbackParams
-): Promise<void> {
-  const { trajectoryId, relevanceScores, usedMemoryIds = [], userId } = params;
+export async function postFeedback(params: PostFeedbackParams): Promise<void> {
+  const { trajectoryId, relevanceScores, usedMemoryIds = [], userId } = params
 
   // Guard: don't fire feedback if no memories were used
   if (usedMemoryIds.length === 0) {
-    console.info("[RuVector Bridge] Skipping feedback: no memories were used");
-    return;
+    console.info("[RuVector Bridge] Skipping feedback: no memories were used")
+    return
   }
 
   // Validate group_id (userId maps to group_id per ARCH-001)
-  const groupId = validateGroupId(userId);
+  const groupId = validateGroupId(userId)
 
   // Validate trajectoryId is non-empty
   if (!trajectoryId || trajectoryId.trim().length === 0) {
-    throw new RuVectorBridgeValidationError("trajectoryId", "trajectoryId must be a non-empty string");
+    throw new RuVectorBridgeValidationError("trajectoryId", "trajectoryId must be a non-empty string")
   }
 
   // Validate relevanceScores has values in 0.0-1.0 range
   for (const score of relevanceScores) {
     if (typeof score !== "number" || score < 0 || score > 1) {
-      throw new RuVectorBridgeValidationError("relevanceScores", "relevanceScores must be numbers between 0.0 and 1.0");
+      throw new RuVectorBridgeValidationError("relevanceScores", "relevanceScores must be numbers between 0.0 and 1.0")
     }
   }
 
@@ -527,25 +515,25 @@ export async function postFeedback(
     throw new RuVectorBridgeValidationError(
       "relevanceScores",
       `relevanceScores length (${relevanceScores.length}) must match usedMemoryIds length (${usedMemoryIds.length}). ` +
-      "Provide one score per memory that was used."
-    );
+        "Provide one score per memory that was used."
+    )
   }
 
-  const feedbackId = randomUUID();
-  const createdAt = new Date().toISOString();
+  const feedbackId = randomUUID()
+  const createdAt = new Date().toISOString()
 
   // Partition IDs into relevant (used) and irrelevant (not used)
-  const relevantIds = usedMemoryIds;
-  const irrelevantIds: string[] = [];
+  const relevantIds = usedMemoryIds
+  const irrelevantIds: string[] = []
 
-  let pool: Pool;
+  let pool: Pool
   try {
-    pool = getRuVectorPool();
+    pool = getRuVectorPool()
   } catch (error) {
     throw new DatabaseUnavailableError(
       "postFeedback: failed to get RuVector pool",
       error instanceof Error ? error : undefined
-    );
+    )
   }
 
   try {
@@ -554,41 +542,28 @@ export async function postFeedback(
       `INSERT INTO ${FEEDBACK_TABLE}
          (id, trajectory_id, relevance_scores, relevant_ids, irrelevant_ids, created_at, group_id)
        VALUES ($1, $2, $3::jsonb, $4::text[], $5::text[], $6, $7)`,
-      [
-        feedbackId,
-        trajectoryId,
-        JSON.stringify(relevanceScores),
-        relevantIds,
-        irrelevantIds,
-        createdAt,
-        groupId,
-      ]
-    );
+      [feedbackId, trajectoryId, JSON.stringify(relevanceScores), relevantIds, irrelevantIds, createdAt, groupId]
+    )
   } catch (error) {
     const classified = classifyPostgresError(
       error instanceof Error ? error : new Error(String(error)),
       "postFeedback",
       `INSERT INTO ${FEEDBACK_TABLE}`
-    );
-    throw classified;
+    )
+    throw classified
   }
 
   // Attempt SONA learning if RuVector functions are available.
   // This is best-effort — if the function doesn't exist yet, we log and continue.
   try {
-    await pool.query("SELECT ruvector_sona_learn()");
+    await pool.query("SELECT ruvector_sona_learn()")
   } catch (error) {
-    const errMsg = error instanceof Error ? error.message : String(error);
+    const errMsg = error instanceof Error ? error.message : String(error)
     // SONA learning is best-effort; log but don't fail the feedback recording
     if (errMsg.includes("does not exist") || errMsg.includes("could not find")) {
-      console.info(
-        "[RuVector Bridge] ruvector_sona_learn() not available — feedback recorded but learning deferred"
-      );
+      console.info("[RuVector Bridge] ruvector_sona_learn() not available — feedback recorded but learning deferred")
     } else {
-      console.warn(
-        "[RuVector Bridge] ruvector_sona_learn() failed — feedback still recorded",
-        { error: errMsg }
-      );
+      console.warn("[RuVector Bridge] ruvector_sona_learn() failed — feedback still recorded", { error: errMsg })
     }
   }
 }
@@ -610,24 +585,24 @@ export async function isRuVectorReady(): Promise<RuVectorReadinessResult> {
     return {
       ready: false,
       reason: "RUVECTOR_ENABLED is not set to 'true'",
-    };
+    }
   }
 
   // Attempt health ping
   try {
-    const health = await checkRuVectorHealth();
+    const health = await checkRuVectorHealth()
     if (health.status === "healthy") {
-      return { ready: true };
+      return { ready: true }
     }
 
     return {
       ready: false,
       reason: `RuVector health check failed: status=${health.status} latency=${health.latencyMs}ms`,
-    };
+    }
   } catch (error) {
     return {
       ready: false,
       reason: `RuVector health check error: ${error instanceof Error ? error.message : String(error)}`,
-    };
+    }
   }
 }

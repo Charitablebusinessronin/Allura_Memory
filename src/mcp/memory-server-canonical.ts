@@ -1,25 +1,25 @@
 #!/usr/bin/env node
 /**
  * Allura Memory MCP Server - Canonical Interface
- * 
- * Exposes the 5 canonical memory operations via MCP:
+ *
+ * Exposes the 8 canonical memory operations via MCP:
  * 1. memory_add - Add a memory (episodic → score → promote/queue)
  * 2. memory_search - Search memories (federated: Postgres + Neo4j)
  * 3. memory_get - Get a single memory by ID
  * 4. memory_list - List all memories for a user
  * 5. memory_delete - Soft-delete a memory
- * 
+ * 6. memory_update - Append-only versioned update
+ * 7. memory_promote - Request curator promotion
+ * 8. memory_export - Export memories
+ *
  * Reference: docs/allura/BLUEPRINT.md
- * 
+ *
  * Usage: bun run src/mcp/memory-server-canonical.ts
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
+import { Server } from "@modelcontextprotocol/sdk/server/index.js"
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
+import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js"
 
 import {
   memory_add,
@@ -27,7 +27,10 @@ import {
   memory_get,
   memory_list,
   memory_delete,
-} from "./canonical-tools.js";
+  memory_update,
+  memory_promote,
+  memory_export,
+} from "./canonical-tools.js"
 
 // Server setup
 const server = new Server(
@@ -40,7 +43,7 @@ const server = new Server(
       tools: {},
     },
   }
-);
+)
 
 // List available tools
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -48,7 +51,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "memory_add",
-        description: "Add a memory for a user. Writes to PostgreSQL (episodic), scores content, and conditionally promotes to Neo4j (semantic) based on PROMOTION_MODE.",
+        description:
+          "Add a memory for a user. Writes to PostgreSQL (episodic), scores content, and conditionally promotes to Neo4j (semantic) based on PROMOTION_MODE.",
         inputSchema: {
           type: "object",
           properties: {
@@ -90,7 +94,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "memory_search",
-        description: "Search memories across both stores (PostgreSQL + Neo4j). Federated search with results merged by relevance.",
+        description:
+          "Search memories across both stores (PostgreSQL + Neo4j). Federated search with results merged by relevance.",
         inputSchema: {
           type: "object",
           properties: {
@@ -193,18 +198,127 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["id", "group_id", "user_id"],
         },
       },
+      {
+        name: "memory_update",
+        description:
+          "Append-only versioned update. Creates new version in Neo4j with SUPERSEDES relationship, marks old version deprecated. Audit event always written to PostgreSQL.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            id: {
+              type: "string",
+              description: "Required: Memory identifier to update",
+            },
+            group_id: {
+              type: "string",
+              description: "Required: Tenant namespace (format: allura-*)",
+            },
+            user_id: {
+              type: "string",
+              description: "Required: User identifier",
+            },
+            content: {
+              type: "string",
+              description: "Required: Updated memory content",
+            },
+            reason: {
+              type: "string",
+              description: "Optional: Reason for update",
+            },
+            metadata: {
+              type: "object",
+              description: "Optional: Additional metadata",
+              properties: {
+                agent_id: {
+                  type: "string",
+                },
+                conversation_id: {
+                  type: "string",
+                },
+                source: {
+                  type: "string",
+                  enum: ["conversation", "manual"],
+                },
+              },
+            },
+          },
+          required: ["id", "group_id", "user_id", "content"],
+        },
+      },
+      {
+        name: "memory_promote",
+        description:
+          "Request curator promotion for an episodic memory. Never auto-promotes — always routes through canonical_proposals for HITL approval. Idempotent: returns existing proposal_id if already queued.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            id: {
+              type: "string",
+              description: "Required: Episodic memory identifier to promote",
+            },
+            group_id: {
+              type: "string",
+              description: "Required: Tenant namespace (format: allura-*)",
+            },
+            user_id: {
+              type: "string",
+              description: "Required: User identifier",
+            },
+            curator_id: {
+              type: "string",
+              description: "Optional: Curator identifier for HITL",
+            },
+            rationale: {
+              type: "string",
+              description: "Optional: Reason for promotion",
+            },
+          },
+          required: ["id", "group_id", "user_id"],
+        },
+      },
+      {
+        name: "memory_export",
+        description:
+          "Export memories filtered by group_id and optional canonical status. canonical_only=true returns only Neo4j (semantic) memories; canonical_only=false returns both stores merged and deduplicated.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            group_id: {
+              type: "string",
+              description: "Required: Tenant namespace (format: allura-*)",
+            },
+            user_id: {
+              type: "string",
+              description: "Optional: User identifier filter",
+            },
+            canonical_only: {
+              type: "boolean",
+              description: "Optional: Export only canonical (Neo4j) memories (default: false)",
+            },
+            limit: {
+              type: "number",
+              description: "Optional: Maximum memories to export (default: 1000, max: 10000)",
+            },
+            offset: {
+              type: "number",
+              description: "Optional: Pagination offset",
+            },
+          },
+          required: ["group_id"],
+        },
+      },
     ],
-  };
-});
+  }
+})
 
 // Tool execution
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
+  const { name, arguments: args } = request.params
 
   try {
     switch (name) {
       case "memory_add": {
-        const result = await memory_add(args as any);
+        const result = await memory_add(args as any)
         return {
           content: [
             {
@@ -212,11 +326,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               text: JSON.stringify(result, null, 2),
             },
           ],
-        };
+        }
       }
 
       case "memory_search": {
-        const result = await memory_search(args as any);
+        const result = await memory_search(args as any)
         return {
           content: [
             {
@@ -224,11 +338,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               text: JSON.stringify(result, null, 2),
             },
           ],
-        };
+        }
       }
 
       case "memory_get": {
-        const result = await memory_get(args as any);
+        const result = await memory_get(args as any)
         return {
           content: [
             {
@@ -236,11 +350,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               text: JSON.stringify(result, null, 2),
             },
           ],
-        };
+        }
       }
 
       case "memory_list": {
-        const result = await memory_list(args as any);
+        const result = await memory_list(args as any)
         return {
           content: [
             {
@@ -248,11 +362,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               text: JSON.stringify(result, null, 2),
             },
           ],
-        };
+        }
       }
 
       case "memory_delete": {
-        const result = await memory_delete(args as any);
+        const result = await memory_delete(args as any)
         return {
           content: [
             {
@@ -260,7 +374,43 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               text: JSON.stringify(result, null, 2),
             },
           ],
-        };
+        }
+      }
+
+      case "memory_update": {
+        const result = await memory_update(args as any)
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        }
+      }
+
+      case "memory_promote": {
+        const result = await memory_promote(args as any)
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        }
+      }
+
+      case "memory_export": {
+        const result = await memory_export(args as any)
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        }
       }
 
       default:
@@ -272,10 +422,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             },
           ],
           isError: true,
-        };
+        }
     }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error)
     return {
       content: [
         {
@@ -284,18 +434,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         },
       ],
       isError: true,
-    };
+    }
   }
-});
+})
 
 // Start server
 async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error("Allura Memory MCP Server (Canonical) running on stdio");
+  const transport = new StdioServerTransport()
+  await server.connect(transport)
+  console.error("Allura Memory MCP Server (Canonical) running on stdio")
 }
 
 main().catch((error) => {
-  console.error("Fatal error:", error);
-  process.exit(1);
-});
+  console.error("Fatal error:", error)
+  process.exit(1)
+})
