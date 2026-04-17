@@ -2,7 +2,7 @@
 
 > [!IMPORTANT]
 > This document provides guidelines for using AI assistance (e.g., GitHub Copilot) effectively within this repository. It captures the documentation patterns, required artifacts, and quality standards that every contributor — human or AI-assisted — must follow.
-> 
+>
 > **AI-Assisted Documentation**
 > Portions of this document were drafted with the assistance of an AI language model.
 > Content has been reviewed against Brooksian architectural principles and should be kept in sync with source-of-truth docs.
@@ -12,24 +12,29 @@
 
 ## Architectural Philosophy (Brooksian Lens)
 
-Before generating any documentation with AI assistance, understand these principles from *The Mythical Man-Month*:
+Before generating any documentation with AI assistance, understand these principles from _The Mythical Man-Month_:
 
 ### Conceptual Integrity Above All
+
 Documentation, like code, must have **one consistent vision**. A slightly inferior design applied consistently beats a patchwork of conflicting "best" ideas. AI can draft, but **one architect** (human) must own the conceptual integrity.
 
 ### Separation of Architecture from Implementation
-- **Architecture** (the *what*) → Blueprint, Solution Architecture, Design docs
-- **Implementation** (the *how*) → Code, schemas, configurations
+
+- **Architecture** (the _what_) → Blueprint, Solution Architecture, Design docs
+- **Implementation** (the _how_) → Code, schemas, configurations
 
 AI should assist implementation docs, but **must not decide architecture alone**.
 
 ### No Silver Bullet
-AI assistance addresses **accidental complexity** (typing, formatting, cross-referencing) — not **essential complexity** (what the system actually does, why it exists, what constraints govern it). 
+
+AI assistance addresses **accidental complexity** (typing, formatting, cross-referencing) — not **essential complexity** (what the system actually does, why it exists, what constraints govern it).
 
 > "There is no single development, in either technology or management technique, which by itself promises even one order-of-magnitude improvement within a decade in productivity, reliability, or simplicity." — Frederick P. Brooks Jr.
 
 ### The Surgical Team
+
 Not every contributor writes core architecture. Some are:
+
 - **Toolsmiths** → maintain templates, schemas, diagram generators
 - **Language lawyers** → naming conventions, style guides
 - **Testers** → validation scripts, completeness checkers
@@ -38,6 +43,7 @@ Not every contributor writes core architecture. Some are:
 The **architect decides what gets built**. The team executes how.
 
 ### Plan to Throw One Away
+
 Your first AI-drafted document will be wrong. Design for revision. Expect to rewrite after human review.
 
 ---
@@ -89,25 +95,25 @@ AI assistance (GitHub Copilot, LLMs, etc.) is encouraged for drafting these docu
 **File:** `BLUEPRINT.md`  
 **Template:** [`guidelines/templates/BLUEPRINT.template.md`](templates/BLUEPRINT.template.md)
 
-The Blueprint is the **single source of design intent** for the service. It must exist before any Design-* documents are written. All other documents trace back to it.
+The Blueprint is the **single source of design intent** for the service. It must exist before any Design-\* documents are written. All other documents trace back to it.
 
 A complete Blueprint must include:
 
-| Section | Purpose |
-|---------|---------|
-| **Summary** | One-paragraph description of what the service does and who uses it |
-| **Core Concepts** | Domain entities with plain-language definitions |
-| **Business Requirements** | Operator/user-facing goals, labeled `B1`, `B2`, … |
-| **Functional Requirements** | Grouped by domain area, labeled `F1`, `F2`, …; each maps to one or more `B#` |
-| **Architecture** | Named components and their responsibilities |
-| **Diagrams** | Component overview, execution/data flow, ER diagram (see [§5](#5-diagrams)) |
-| **Data Model** | Per-entity table with field names, types, and descriptions |
-| **Execution Rules** | Ordering, eligibility, failure semantics, retry, cancellation |
-| **Concurrency Rules** | Global constraints on parallel execution |
-| **API Surface** | High-level endpoint listing grouped by resource |
-| **Logging & Audit** | What is persisted, what is redacted, how it is surfaced |
-| **Event-Driven Architecture** | Event types, producers, consumers (if applicable) |
-| **References** | Links to all Design-*, JSON schemas, and external resources |
+| Section                       | Purpose                                                                      |
+| ----------------------------- | ---------------------------------------------------------------------------- |
+| **Summary**                   | One-paragraph description of what the service does and who uses it           |
+| **Core Concepts**             | Domain entities with plain-language definitions                              |
+| **Business Requirements**     | Operator/user-facing goals, labeled `B1`, `B2`, …                            |
+| **Functional Requirements**   | Grouped by domain area, labeled `F1`, `F2`, …; each maps to one or more `B#` |
+| **Architecture**              | Named components and their responsibilities                                  |
+| **Diagrams**                  | Component overview, execution/data flow, ER diagram (see [§5](#5-diagrams))  |
+| **Data Model**                | Per-entity table with field names, types, and descriptions                   |
+| **Execution Rules**           | Ordering, eligibility, failure semantics, retry, cancellation                |
+| **Concurrency Rules**         | Global constraints on parallel execution                                     |
+| **API Surface**               | High-level endpoint listing grouped by resource                              |
+| **Logging & Audit**           | What is persisted, what is redacted, how it is surfaced                      |
+| **Event-Driven Architecture** | Event types, producers, consumers (if applicable)                            |
+| **References**                | Links to all Design-\*, JSON schemas, and external resources                 |
 
 > **Why this matters for AI:** An LLM generating code or config without a Blueprint will hallucinate domain rules. The Blueprint gives the AI the bounded context it needs to produce accurate, consistent output.
 
@@ -122,15 +128,15 @@ The Solution Architecture document describes **how the system is structured from
 
 A complete Solution Architecture document must include:
 
-| Section | Purpose |
-|---------|--------|
-| **Architectural Positioning** | What role this service plays (control plane, data plane, etc.) and a consumer class table listing all external actors |
-| **System Boundary and External Actors** | Mermaid diagram showing all actors and their interaction channels |
-| **Logical Topologies** | One sub-section per distinct interaction class (e.g., control plane, onboarding pipeline, runtime request path, enforcement, event-driven); each with a sequence diagram and key constraints list |
-| **Interface Catalogue** | Table of all integration points: direction, channel, payload, and references to governing AD/RK entries |
-| **Risk-Architecture Traceability** | Mapping of each topology section to the AD/RK entries in `RISKS-AND-DECISIONS.md` that it addresses |
-| **Key Architectural Constraints** | Cross-cutting `MUST`/`MUST NOT` constraints that apply to all integrations |
-| **References** | Links to Blueprint, RISKS-AND-DECISIONS.md, Requirements Matrix, and applicable DESIGN-*.md documents |
+| Section                                 | Purpose                                                                                                                                                                                           |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Architectural Positioning**           | What role this service plays (control plane, data plane, etc.) and a consumer class table listing all external actors                                                                             |
+| **System Boundary and External Actors** | Mermaid diagram showing all actors and their interaction channels                                                                                                                                 |
+| **Logical Topologies**                  | One sub-section per distinct interaction class (e.g., control plane, onboarding pipeline, runtime request path, enforcement, event-driven); each with a sequence diagram and key constraints list |
+| **Interface Catalogue**                 | Table of all integration points: direction, channel, payload, and references to governing AD/RK entries                                                                                           |
+| **Risk-Architecture Traceability**      | Mapping of each topology section to the AD/RK entries in `RISKS-AND-DECISIONS.md` that it addresses                                                                                               |
+| **Key Architectural Constraints**       | Cross-cutting `MUST`/`MUST NOT` constraints that apply to all integrations                                                                                                                        |
+| **References**                          | Links to Blueprint, RISKS-AND-DECISIONS.md, Requirements Matrix, and applicable DESIGN-\*.md documents                                                                                            |
 
 > **Why this matters for AI:** Without a topology document, AI will flatten all interactions into a single synchronous request model and miss async, caching, and federation patterns entirely. The topology sections give the AI the interaction boundaries it needs to generate correct integration code and avoid putting the service on the hot path.
 
@@ -143,15 +149,15 @@ Each Design document **deep-dives on one functional area**. It translates Bluepr
 
 A complete Design document must include:
 
-| Section | Purpose |
-|---------|---------|
-| **Overview** | What this area does and its relationship to other areas |
-| **Functional Requirements** | Table tracing each `F#` ID to the specific implementation detail |
-| **API Reference** | Full endpoint details: method, path, request body, response, errors |
-| **State Machine** | Allowed states, transition triggers, and side effects (if stateful) |
-| **Business Rules / Constraints** | Invariants, validations, and edge-case handling |
-| **Use Cases** | Label-indexed scenarios that verify the design covers intended workflows |
-| **Important Constraints** | Hard limits, security considerations, performance notes |
+| Section                          | Purpose                                                                  |
+| -------------------------------- | ------------------------------------------------------------------------ |
+| **Overview**                     | What this area does and its relationship to other areas                  |
+| **Functional Requirements**      | Table tracing each `F#` ID to the specific implementation detail         |
+| **API Reference**                | Full endpoint details: method, path, request body, response, errors      |
+| **State Machine**                | Allowed states, transition triggers, and side effects (if stateful)      |
+| **Business Rules / Constraints** | Invariants, validations, and edge-case handling                          |
+| **Use Cases**                    | Label-indexed scenarios that verify the design covers intended workflows |
+| **Important Constraints**        | Hard limits, security considerations, performance notes                  |
 
 Each Design document must link back to the Blueprint section it satisfies and forward-link to related Design documents.
 
@@ -168,13 +174,14 @@ The Requirements Matrix is the **coverage map** for the entire project. It trace
 
 A complete Requirements Matrix must include:
 
-| Section | Purpose |
-|---------|---------|
-| **B → F mapping table** | Each Business Requirement row links to its Functional Requirement IDs and Use Case labels |
-| **Functional Requirements Detail** | Grouped `| ID \| Requirement \| Satisfied by |` tables (3-column). The **Satisfied by** column combines the API routes that implement the requirement with links to the `DESIGN-*.md` section (and `RISKS-AND-DECISIONS.md` entry, if applicable) that specifies it. Use `·` as a separator between multiple routes or document links within the same cell. |
-| **Use Case Index** | All use cases grouped by domain area with ID labels (e.g., `SVC-UC1`) |
+| Section                            | Purpose                                                                                   |
+| ---------------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **B → F mapping table**            | Each Business Requirement row links to its Functional Requirement IDs and Use Case labels |
+| **Functional Requirements Detail** | Grouped `                                                                                 | ID \| Requirement \| Satisfied by | `tables (3-column). The **Satisfied by** column combines the API routes that implement the requirement with links to the`DESIGN-\*.md`section (and`RISKS-AND-DECISIONS.md`entry, if applicable) that specifies it. Use`·` as a separator between multiple routes or document links within the same cell. |
+| **Use Case Index**                 | All use cases grouped by domain area with ID labels (e.g., `SVC-UC1`)                     |
 
 Rules:
+
 - Every `F#` ID must appear in exactly one design document section.
 - Every `B#` must map to at least one `F#`.
 - Every use case label must be findable in a Design document's **Use Cases** section.
@@ -189,17 +196,18 @@ Rules:
 **File:** `RISKS-AND-DECISIONS.md`  
 **Template:** [`guidelines/templates/RISKS-AND-DECISIONS.template.md`](templates/RISKS-AND-DECISIONS.template.md)
 
-The Risks & Decisions Matrix captures **every significant architectural decision and known risk** in the system. It answers *why* the design is the way it is, what alternatives were evaluated, what operators must watch out for, and who owns each mitigation.
+The Risks & Decisions Matrix captures **every significant architectural decision and known risk** in the system. It answers _why_ the design is the way it is, what alternatives were evaluated, what operators must watch out for, and who owns each mitigation.
 
 A complete Risks & Decisions Matrix must include:
 
-| Section | Purpose |
-|---------|--------|
-| **Architectural Decisions (AD-##)** | One entry per decision; fields: Status, Decision, Rationale, Alternatives considered, Consequences (optional), Owner (optional), References |
-| **Risk Summary Table** | A compact overview table at the top of the Risks section with one row per RK entry listing ID, title, severity, and status (`✅ Mitigated` / `🔴 Open`) |
-| **Risk Entries (RK-##)** | One entry per risk; fields: Severity, Likelihood, Status, Description, Mitigation, Owner, Related decision |
+| Section                             | Purpose                                                                                                                                                 |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Architectural Decisions (AD-##)** | One entry per decision; fields: Status, Decision, Rationale, Alternatives considered, Consequences (optional), Owner (optional), References             |
+| **Risk Summary Table**              | A compact overview table at the top of the Risks section with one row per RK entry listing ID, title, severity, and status (`✅ Mitigated` / `🔴 Open`) |
+| **Risk Entries (RK-##)**            | One entry per risk; fields: Severity, Likelihood, Status, Description, Mitigation, Owner, Related decision                                              |
 
 Rules:
+
 - Every AD entry must have a `Status` value: `Decided`, `Proposed`, `Superseded`, or `Deferred`.
 - Every RK entry must appear in the summary table and carry a `Status` of `✅ Mitigated` or `🔴 Open`.
 - When a new API change, schema change, or design decision is made, this document must be updated in the same PR.
@@ -217,15 +225,16 @@ The Data Dictionary is the **canonical field-level reference** for every entity,
 
 A complete Data Dictionary must include:
 
-| Section | Purpose |
-|---------|---------|
-| **One section per entity/table** | Field table with: name, type, required flag, description |
-| **Enum value tables** | Every enum field must have its own sub-table listing each value and its meaning |
-| **Relationship notes** | Foreign key targets, cardinality (per entity section) |
-| **JSON Schema links** | Each entity section links to its corresponding `json-schema/*.schema.json` file |
-| **Events section** | If event-driven: event names, producer, consumer, payload fields |
+| Section                          | Purpose                                                                         |
+| -------------------------------- | ------------------------------------------------------------------------------- |
+| **One section per entity/table** | Field table with: name, type, required flag, description                        |
+| **Enum value tables**            | Every enum field must have its own sub-table listing each value and its meaning |
+| **Relationship notes**           | Foreign key targets, cardinality (per entity section)                           |
+| **JSON Schema links**            | Each entity section links to its corresponding `json-schema/*.schema.json` file |
+| **Events section**               | If event-driven: event names, producer, consumer, payload fields                |
 
 Rules:
+
 - Field names in the dictionary must exactly match field names in JSON schemas and Go/code models.
 - Enum values documented here must exactly match values accepted by the API and stored in the database.
 - Any field marked `Required: Yes` must also be `required` in the JSON schema.
@@ -280,12 +289,12 @@ Remove this notice only after a full human review has been completed and signed 
 
 ### Accuracy & Source of Truth
 
-| If a conflict exists between… | Defer to… |
-|-------------------------------|-----------|
-| A document and the JSON schema | JSON schema |
-| A document and the Go model | Go model |
-| Two documents | The Blueprint, then team consensus |
-| An AI suggestion and any of the above | The source of truth |
+| If a conflict exists between…         | Defer to…                          |
+| ------------------------------------- | ---------------------------------- |
+| A document and the JSON schema        | JSON schema                        |
+| A document and the Go model           | Go model                           |
+| Two documents                         | The Blueprint, then team consensus |
+| An AI suggestion and any of the above | The source of truth                |
 
 ### Cross-Referencing
 
@@ -293,14 +302,14 @@ Every document must link to related documents using relative Markdown links. Do 
 
 Required links per document type:
 
-| Document | Must link to |
-|----------|--------------|
-| Blueprint | All DESIGN-*.md files, `SOLUTION-ARCHITECTURE.md`, `RISKS-AND-DECISIONS.md`, all JSON schemas |
-| SOLUTION-ARCHITECTURE.md | `BLUEPRINT.md`, `RISKS-AND-DECISIONS.md`, `REQUIREMENTS-MATRIX.md`, applicable DESIGN-*.md |
-| DESIGN-*.md | `BLUEPRINT.md` (requirement IDs), related DESIGN-*.md, JSON schemas |
-| REQUIREMENTS-MATRIX.md | `BLUEPRINT.md`, all DESIGN-*.md files, `RISKS-AND-DECISIONS.md` (for F# entries that reference AD/RK entries) |
-| RISKS-AND-DECISIONS.md | `BLUEPRINT.md`, applicable DESIGN-*.md, `REQUIREMENTS-MATRIX.md` |
-| DATA-DICTIONARY.md | All JSON schema files |
+| Document                 | Must link to                                                                                                   |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| Blueprint                | All DESIGN-\*.md files, `SOLUTION-ARCHITECTURE.md`, `RISKS-AND-DECISIONS.md`, all JSON schemas                 |
+| SOLUTION-ARCHITECTURE.md | `BLUEPRINT.md`, `RISKS-AND-DECISIONS.md`, `REQUIREMENTS-MATRIX.md`, applicable DESIGN-\*.md                    |
+| DESIGN-\*.md             | `BLUEPRINT.md` (requirement IDs), related DESIGN-\*.md, JSON schemas                                           |
+| REQUIREMENTS-MATRIX.md   | `BLUEPRINT.md`, all DESIGN-\*.md files, `RISKS-AND-DECISIONS.md` (for F# entries that reference AD/RK entries) |
+| RISKS-AND-DECISIONS.md   | `BLUEPRINT.md`, applicable DESIGN-\*.md, `REQUIREMENTS-MATRIX.md`                                              |
+| DATA-DICTIONARY.md       | All JSON schema files                                                                                          |
 
 ---
 
@@ -325,14 +334,14 @@ Before merging a documentation PR, verify:
 
 ### When Diagrams Are Required
 
-| Diagram Type | Required In | Condition |
-|---|---|---|
-| Component overview | Blueprint | Always |
-| Data flow / execution flow | Blueprint | Whenever the system processes multi-step operations |
-| Sequence diagram | Blueprint or Design doc | Whenever async or multi-party interaction exists |
-| ER diagram | Blueprint | Whenever there are two or more related entities |
-| State machine diagram | DESIGN-*.md | Whenever an entity has state transitions |
-| Event flow diagram | Blueprint | Whenever event-driven architecture is used |
+| Diagram Type               | Required In             | Condition                                           |
+| -------------------------- | ----------------------- | --------------------------------------------------- |
+| Component overview         | Blueprint               | Always                                              |
+| Data flow / execution flow | Blueprint               | Whenever the system processes multi-step operations |
+| Sequence diagram           | Blueprint or Design doc | Whenever async or multi-party interaction exists    |
+| ER diagram                 | Blueprint               | Whenever there are two or more related entities     |
+| State machine diagram      | DESIGN-\*.md            | Whenever an entity has state transitions            |
+| Event flow diagram         | Blueprint               | Whenever event-driven architecture is used          |
 
 ### Diagram Types & Tools
 
@@ -340,13 +349,13 @@ This repository uses **Mermaid** diagrams embedded in Markdown. All diagrams mus
 
 Supported and recommended diagram types:
 
-| Mermaid Type | Use For |
-|---|---|
-| `graph TD` / `graph LR` | Component overviews, dependency graphs |
-| `sequenceDiagram` | Request/response flows, async interactions |
-| `erDiagram` | Data model entity-relationship diagrams |
-| `stateDiagram-v2` | State machines (session states, task states) |
-| `flowchart TD` | Execution logic, decision trees |
+| Mermaid Type            | Use For                                      |
+| ----------------------- | -------------------------------------------- |
+| `graph TD` / `graph LR` | Component overviews, dependency graphs       |
+| `sequenceDiagram`       | Request/response flows, async interactions   |
+| `erDiagram`             | Data model entity-relationship diagrams      |
+| `stateDiagram-v2`       | State machines (session states, task states) |
+| `flowchart TD`          | Execution logic, decision trees              |
 
 Example:
 
@@ -362,17 +371,17 @@ erDiagram
 
 ## 6. Naming & File Conventions
 
-| Artifact | File Name Pattern | Location |
-|---|---|---|
-| Blueprint | `BLUEPRINT.md` | `docs/allura/` |
-| Solution Architecture | `SOLUTION-ARCHITECTURE.md` | `docs/allura/` |
-| Design document | `DESIGN-<AREA>.md` (uppercase, hyphenated) | `docs/allura/` |
-| Requirements Matrix | `REQUIREMENTS-MATRIX.md` | `docs/allura/` |
-| Risks & Decisions Matrix | `RISKS-AND-DECISIONS.md` | `docs/allura/` |
-| Data Dictionary | `DATA-DICTIONARY.md` | `docs/allura/` |
-| JSON Schema | `<entity>.schema.json` (lowercase, hyphenated) | `json-schema/` |
-| AI Guidelines | `guidelines/AI-GUIDELINES.md` | `guidelines/` |
-| Document templates | `guidelines/templates/*.template.md` | `guidelines/templates/` |
+| Artifact                 | File Name Pattern                              | Location                |
+| ------------------------ | ---------------------------------------------- | ----------------------- |
+| Blueprint                | `BLUEPRINT.md`                                 | `docs/allura/`          |
+| Solution Architecture    | `SOLUTION-ARCHITECTURE.md`                     | `docs/allura/`          |
+| Design document          | `DESIGN-<AREA>.md` (uppercase, hyphenated)     | `docs/allura/`          |
+| Requirements Matrix      | `REQUIREMENTS-MATRIX.md`                       | `docs/allura/`          |
+| Risks & Decisions Matrix | `RISKS-AND-DECISIONS.md`                       | `docs/allura/`          |
+| Data Dictionary          | `DATA-DICTIONARY.md`                           | `docs/allura/`          |
+| JSON Schema              | `<entity>.schema.json` (lowercase, hyphenated) | `json-schema/`          |
+| AI Guidelines            | `guidelines/AI-GUIDELINES.md`                  | `guidelines/`           |
+| Document templates       | `guidelines/templates/*.template.md`           | `guidelines/templates/` |
 
 ---
 
@@ -387,7 +396,7 @@ No new file may be added to `docs/allura/` unless it is one of the six canonical
 - `RISKS-AND-DECISIONS.md`
 - `DATA-DICTIONARY.md`
 
-All other output — reports, deliverables, ADR standalones, validation snapshots, benchmarks, prompts — goes to `docs/archive/allura/`, `memory-bank`, or Allura Brain.
+All other output — reports, deliverables, ADR standalones, validation snapshots, benchmarks, prompts — goes to `docs/archive/allura/` or Allura Brain.
 
 This rule applies to human contributors and AI agents equally.
 
@@ -397,14 +406,14 @@ This rule applies to human contributors and AI agents equally.
 
 Ready-to-use document templates are provided in [`guidelines/templates/`](templates/):
 
-| Template | Description |
-|---|---|
-| [`BLUEPRINT.template.md`](templates/BLUEPRINT.template.md) | Full Blueprint scaffold with all required sections |
+| Template                                                                           | Description                                                                                       |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| [`BLUEPRINT.template.md`](templates/BLUEPRINT.template.md)                         | Full Blueprint scaffold with all required sections                                                |
 | [`SOLUTION-ARCHITECTURE.template.md`](templates/SOLUTION-ARCHITECTURE.template.md) | Solution Architecture scaffold with topology, interface catalogue, and risk traceability sections |
-| [`DESIGN.template.md`](templates/DESIGN.template.md) | Design document scaffold for any functional area |
-| [`REQUIREMENTS-MATRIX.template.md`](templates/REQUIREMENTS-MATRIX.template.md) | Requirements traceability matrix scaffold with 3-column Satisfied by format |
-| [`RISKS-AND-DECISIONS.template.md`](templates/RISKS-AND-DECISIONS.template.md) | Architectural decisions and risk register scaffold with summary table and Status fields |
-| [`DATA-DICTIONARY.template.md`](templates/DATA-DICTIONARY.template.md) | Data dictionary scaffold with entity and event sections |
+| [`DESIGN.template.md`](templates/DESIGN.template.md)                               | Design document scaffold for any functional area                                                  |
+| [`REQUIREMENTS-MATRIX.template.md`](templates/REQUIREMENTS-MATRIX.template.md)     | Requirements traceability matrix scaffold with 3-column Satisfied by format                       |
+| [`RISKS-AND-DECISIONS.template.md`](templates/RISKS-AND-DECISIONS.template.md)     | Architectural decisions and risk register scaffold with summary table and Status fields           |
+| [`DATA-DICTIONARY.template.md`](templates/DATA-DICTIONARY.template.md)             | Data dictionary scaffold with entity and event sections                                           |
 
 To start a new document, copy the relevant template and replace all `<!-- placeholders -->` and `[AREA]` tokens with project-specific content.
 

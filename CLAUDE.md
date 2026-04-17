@@ -61,12 +61,14 @@ bun run brooks:start / brooks:status / brooks:end
 
 ## Session Start Protocol
 
-At the start of each session, read these files in order:
+At the start of each session, dispatch Scout to hydrate from Allura Brain:
 
-1. `memory-bank/activeContext.md` — current focus and blockers
-2. `memory-bank/progress.md` — what has been done
-3. `memory-bank/systemPatterns.md` — architecture decisions
-4. `memory-bank/techContext.md` — tech stack details
+1. **Scout Recon** — Search PostgreSQL events for recent activity (agent_id='brooks', ORDER BY created_at DESC LIMIT 5)
+2. **Blocker Query** — Search events WHERE event_type IN ('BLOCKER', 'ARCHITECTURE_DECISION')
+3. **Insight Search** — Query Neo4j for recent insights matching 'allura-roninmemory.\*'
+4. **Synthesize** — Scout returns: what's active, what's blocking, what was decided last session
+
+Invoke skill `memory-client` at session start for Brain connectivity. Invoke `memory-client` skill at session end to write reflection to Neo4j knowledge graph.
 
 ## Architecture
 
@@ -74,11 +76,11 @@ Allura is a **dual-database AI memory engine** exposed via MCP — a self-hosted
 
 ### Data Layers
 
-| Layer | Store | Role |
-|-------|-------|------|
-| Episodic | PostgreSQL 16 (`src/integrations/postgres.client.ts`) | Append-only raw execution traces. **Never mutate historical rows.** |
-| Semantic | Neo4j 5.26 (`src/integrations/neo4j.client.ts`) | Versioned knowledge graph. All updates use `SUPERSEDES` — never edit nodes. |
-| Vector | RuVector PG (port 5433) (`src/lib/ruvector/`) | 768d embeddings via Ollama (nomic-embed-text). Hybrid search: vector ANN + BM25 RRF. |
+| Layer    | Store                                                 | Role                                                                                 |
+| -------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Episodic | PostgreSQL 16 (`src/integrations/postgres.client.ts`) | Append-only raw execution traces. **Never mutate historical rows.**                  |
+| Semantic | Neo4j 5.26 (`src/integrations/neo4j.client.ts`)       | Versioned knowledge graph. All updates use `SUPERSEDES` — never edit nodes.          |
+| Vector   | RuVector PG (port 5433) (`src/lib/ruvector/`)         | 768d embeddings via Ollama (nomic-embed-text). Hybrid search: vector ANN + BM25 RRF. |
 
 ### Key Subsystems
 
@@ -97,6 +99,7 @@ Allura is a **dual-database AI memory engine** exposed via MCP — a self-hosted
 ### Hybrid Search (RuVector)
 
 `retrieveMemories()` in `src/lib/ruvector/bridge.ts` runs two-pass RRF fusion:
+
 - Vector pass: `ruvector_cosine_distance()` ANN
 - Text pass: `ts_rank` on `content_tsv` generated column
 - Fusion: `score = 1/(60+rank_v) + 1/(60+rank_t)`
@@ -115,6 +118,7 @@ Allura is a **dual-database AI memory engine** exposed via MCP — a self-hosted
 ## Code Conventions
 
 **TypeScript:**
+
 - `strict: true`; explicit return types on exported functions; `unknown` over `any`
 - `import type` for type-only imports
 - Zod validation at external boundaries (env vars, user input, API responses)
@@ -135,36 +139,36 @@ Allura is a **dual-database AI memory engine** exposed via MCP — a self-hosted
 1. Notion — Allura Memory Control Center
 2. `docs/allura/` — canonical six: BLUEPRINT, SOLUTION-ARCHITECTURE, DESIGN, REQUIREMENTS-MATRIX, RISKS-AND-DECISIONS, DATA-DICTIONARY
 3. `docs/` — project-specific docs (one `PROJECT.md` per initiative)
-4. `docs/archive/` or `memory-bank/` — session context and historical reference
+4. `docs/archive/` — session context and historical reference
 
 Do not create net-new files in `docs/allura/` beyond the canonical six. Route reports, benchmarks, and snapshots to `docs/archive/` or Allura Brain.
 
 ## Slash Commands (`.claude/commands/`)
 
-| Command | Purpose |
-|---------|---------|
-| `/start-session` | Health check + memory hydration |
-| `/end-session <summary>` | Persist session reflection to Neo4j |
-| `/validate-repo` | Typecheck + lint + tests + invariant checks |
-| `/commit` | Conventional commit with emoji, auto-push |
-| `/define-goal <idea>` | Turn idea into goal + success criteria |
-| `/debug <issue>` | 5-phase systematic debugging |
-| `/orchestrate <task>` | Brooks Architect persona — plan + delegate |
-| `/architect <task>` | MemoryArchitect persona — design + ADR |
+| Command                  | Purpose                                     |
+| ------------------------ | ------------------------------------------- |
+| `/start-session`         | Health check + memory hydration             |
+| `/end-session <summary>` | Persist session reflection to Neo4j         |
+| `/validate-repo`         | Typecheck + lint + tests + invariant checks |
+| `/commit`                | Conventional commit with emoji, auto-push   |
+| `/define-goal <idea>`    | Turn idea into goal + success criteria      |
+| `/debug <issue>`         | 5-phase systematic debugging                |
+| `/orchestrate <task>`    | Brooks Architect persona — plan + delegate  |
+| `/architect <task>`      | MemoryArchitect persona — design + ADR      |
 
 ## Team RAM — Agent Routing
 
-| Agent | Persona | Use When |
-|-------|---------|----------|
-| **Brooks** | Frederick Brooks | Task planning, architecture, delegation |
-| **Jobs** | Steve Jobs | Scope control, acceptance criteria |
-| **Woz** | Steve Wozniak | Autonomous implementation |
-| **Pike** | Rob Pike | Read-only architecture consultation |
-| **Scout** | — | Fast codebase search |
-| **Bellard** | Fabrice Bellard | Performance, measurement |
-| **Fowler** | Martin Fowler | Refactoring, maintainability |
-| **Knuth** | Donald Knuth | Schema design, query optimization |
-| **Hightower** | Kelsey Hightower | CI/CD, infrastructure |
+| Agent         | Persona          | Use When                                |
+| ------------- | ---------------- | --------------------------------------- |
+| **Brooks**    | Frederick Brooks | Task planning, architecture, delegation |
+| **Jobs**      | Steve Jobs       | Scope control, acceptance criteria      |
+| **Woz**       | Steve Wozniak    | Autonomous implementation               |
+| **Pike**      | Rob Pike         | Read-only architecture consultation     |
+| **Scout**     | —                | Fast codebase search                    |
+| **Bellard**   | Fabrice Bellard  | Performance, measurement                |
+| **Fowler**    | Martin Fowler    | Refactoring, maintainability            |
+| **Knuth**     | Donald Knuth     | Schema design, query optimization       |
+| **Hightower** | Kelsey Hightower | CI/CD, infrastructure                   |
 
 Full routing rules: `.claude/rules/agent-routing.md`
 

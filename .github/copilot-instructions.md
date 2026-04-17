@@ -43,18 +43,19 @@ Canonical location: `docs/allura/`
 
 - **BLUEPRINT.md** — Service purpose, concepts, requirements
 - **SOLUTION-ARCHITECTURE.md** — Design decisions, trade-offs
-- **DESIGN-ALLURA.md** (or approved **DESIGN-*.md**) — Component-level designs
+- **DESIGN-ALLURA.md** (or approved **DESIGN-\*.md**) — Component-level designs
 - **REQUIREMENTS-MATRIX.md** — B# → code mapping
 - **RISKS-AND-DECISIONS.md** — Architectural decisions and tradeoffs
 - **DATA-DICTIONARY.md** — All entities and fields
 
-Canonical surface rule: Do not create net-new files in `docs/allura/` beyond the canonical six. Route reports, deliverables, prompts, validation snapshots, and benchmarks to `docs/archive/allura/`, `memory-bank`, or Allura Brain.
+Canonical surface rule: Do not create net-new files in `docs/allura/` beyond the canonical six. Route reports, deliverables, prompts, validation snapshots, and benchmarks to `docs/archive/allura/` or Allura Brain.
 
 See `AI-GUIDELINES.md` for complete guidance.
 
 ## Review & Sign-Off
 
 Every AI-assisted document requires:
+
 1. PR review (human eyes on output)
 2. Architectural sign-off (architect approves design intent)
 3. Disclosure removal (only after sign-off)
@@ -64,19 +65,35 @@ Copilot output is a draft, not a final specification.
 ## Agent Harness Integration
 
 This repository uses three AI harnesses:
+
 - **Claude Code** (primary) — `.claude/` configuration
 - **GitHub Copilot** — This file
 - **OpenCode** — `.opencode/` configuration
 
 All harnesses must reference AI-GUIDELINES.md and enforce disclosure requirements.
 
-## Memory Bank
+## Allura Brain
 
-This project uses a **Memory Bank** for persistent context. See memory-bank/ for details.
+This project uses **Allura Brain** (PostgreSQL + Neo4j) for persistent context. The Brain is the source of truth — not flat files.
+
+### Startup Protocol
+
+At session start:
+
+1. Dispatch Scout to search PostgreSQL events for recent activity and blockers
+2. Query Neo4j for architecture insights and decisions
+3. Synthesize: what's active, what's blocking, what was decided
+
+### Data Stores
+
+- **PostgreSQL** — Append-only events, temporal traces
+- **Neo4j** — Versioned insights, SUPERSEDES relationships, knowledge graph
+- **RuVector** — 768d embeddings for semantic search (optional, port 5433)
 
 ## Brooks as Architect
 
 Frederick Brooks (the persona) serves as the architectural authority:
+
 - Reviews all AI-assisted architecture decisions
 - Maintains conceptual integrity across harnesses
 - Approves removal of disclosure blocks
@@ -87,19 +104,25 @@ When in doubt, defer to Brooks.
 ## Key Patterns to Follow
 
 ### Steel Frame Versioning
+
 All Insights are immutable. Create new versions with SUPERSEDES relationships:
+
 ```
 (v2-insight)-[:SUPERSEDES]->(v1-insight:deprecated)
 ```
 
 ### group_id Enforcement
+
 Every node MUST have a `group_id` property. Schema constraint rejects nodes without it.
 
 ### HITL Knowledge Promotion
+
 Agents CANNOT autonomously promote to Neo4j/Notion. Human approval required.
 
 ### ADR 5-Layer Framework
+
 Every architectural decision captured with:
+
 1. Action Logging
 2. Decision Context
 3. Reasoning Chain
@@ -108,13 +131,12 @@ Every architectural decision captured with:
 
 ## Memory Retrieval Order
 
-When working on this project, read in this order:
+When working on this project, dispatch Scout to hydrate from Allura Brain:
 
-1. `memory-bank/activeContext.md` - Current focus and blockers
-2. `memory-bank/progress.md` - What's been done
-3. `memory-bank/systemPatterns.md` - How things are built
-4. `memory-bank/techContext.md` - Tools and constraints
-5. `docs/allura/` — canonical architecture and design docs
+1. Scout recon on PostgreSQL events — recent activity and blockers
+2. Query Neo4j for architecture insights and decisions
+3. Synthesize: what's active, what's blocking, what was decided
+4. `docs/allura/` — canonical architecture and design docs
 
 ## Project-Specific Rules
 
@@ -129,11 +151,10 @@ When working on this project, read in this order:
 
 ## Important Files
 
-| File | Purpose |
-|------|---------|
-| `docker-compose.yml` | PostgreSQL and Neo4j containers |
-| `docs/allura/` | Canonical architecture, design, and requirements docs |
-| `memory-bank/activeContext.md` | Current session focus and blockers |
+| File                 | Purpose                                               |
+| -------------------- | ----------------------------------------------------- |
+| `docker-compose.yml` | PostgreSQL and Neo4j containers                       |
+| `docs/allura/`       | Canonical architecture, design, and requirements docs |
 
 ## Verification Commands
 
