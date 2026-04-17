@@ -5,7 +5,7 @@ allowed-tools: ["Write", "Read", "Grep", "mcp__MCP_DOCKER__*"]
 
 # Quick Update Command
 
-Quickly update documentation with insights from Allura Brain.
+Quickly update Allura Brain and canonical docs with insights from the current session.
 
 ## Usage
 
@@ -15,57 +15,59 @@ Quickly update documentation with insights from Allura Brain.
 
 ## Targets
 
-| Target | File | Purpose |
-|--------|------|---------|
-| `activeContext` | `memory-bank/activeContext.md` | Current focus and blockers |
-| `progress` | `memory-bank/progress.md` | What has been done |
-| `systemPatterns` | `memory-bank/systemPatterns.md` | Architecture decisions |
-| `techContext` | `memory-bank/techContext.md` | Tech stack details |
+| Target          | Destination                                    | Purpose               |
+| --------------- | ---------------------------------------------- | --------------------- |
+| `decision`      | Allura Brain (memory_add)                      | Architecture decision |
+| `blocker`       | Allura Brain (memory_add)                      | Critical blocker      |
+| `insight`       | Allura Brain (memory_add)                      | General insight       |
+| `blueprint`     | `docs/allura/BLUEPRINT.md` + Brain             | System blueprint      |
+| `solution-arch` | `docs/allura/SOLUTION-ARCHITECTURE.md` + Brain | Architecture          |
+| `design`        | `docs/allura/DESIGN-ALLURA.md` + Brain         | Design contracts      |
+| `requirements`  | `docs/allura/REQUIREMENTS-MATRIX.md` + Brain   | Requirements          |
+| `risks`         | `docs/allura/RISKS-AND-DECISIONS.md` + Brain   | ADRs and risks        |
+| `data-dict`     | `docs/allura/DATA-DICTIONARY.md` + Brain       | Schema reference      |
 
 ## Protocol
 
-### Phase 1: Gather Context
+### Phase 1: Write to Brain
 
 ```javascript
-// Search Allura Brain
-mcp__MCP_DOCKER__search_memories({ query: "<topic>" })
-
-// Read current doc
-Read({ path: `memory-bank/${target}.md` })
-```
-
-### Phase 2: Update Document
-
-```javascript
-// Write updated content
-Write({
-  path: `memory-bank/${target}.md`,
-  content: updatedContent
+// Store to Allura Brain (source of truth)
+mcp__MCP_DOCKER__memory_add({
+  group_id: "allura-roninmemory",
+  user_id: agent_id,
+  content: "<change description>",
+  metadata: { source: "manual", update_target: target },
 })
 ```
 
-### Phase 3: Log to Memory
+### Phase 2: Sync Canonical Doc (if applicable)
 
 ```javascript
-// Log the update
-mcp__MCP_DOCKER__create_entities({
-  entities: [{
-    name: `Doc Update ${target}`,
-    entity_type: "doc_update",
-    observations: [...]
-  }]
+// Only for docs/allura/ targets
+Read({ path: `docs/allura/${targetFile}.md` })
+Write({ path: `docs/allura/${targetFile}.md`, content: updatedContent })
+```
+
+### Phase 3: Log Event
+
+```javascript
+mcp__MCP_DOCKER__execute_sql({
+  sql_query: `INSERT INTO events (event_type, agent_id, group_id, status, metadata, created_at)
+    VALUES ('DOC_UPDATE', 'brooks', 'allura-roninmemory', 'completed', $1, NOW())`,
+  params: [{ target, changeSummary }],
 })
 ```
 
 ## Example
 
 ```
-User: /update progress Added OAuth2 authentication
+User: /update decision Decided to use RRF fusion for hybrid search
 
 Updates:
-- memory-bank/progress.md
-- Logs to Allura Brain
-- Updates activeContext if needed
+- memory_add → Brain stores the decision
+- RISKS-AND-DECISIONS.md gets ADR entry (if target='risks')
+- Events logged for audit
 ```
 
 ---
