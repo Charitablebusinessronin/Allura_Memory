@@ -226,53 +226,83 @@ export default function TracesPage() {
         </div>
       )}
 
-      {/* Table */}
-      <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[40px]" />
-              <TableHead>Type</TableHead>
-              <TableHead>Agent</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Time</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {traces.length === 0 && !loading && (
+      {/* Desktop: table view */}
+      <div className="hidden sm:block">
+        <div className="rounded-lg border">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={5} className="text-muted-foreground py-8 text-center">
-                  No trace events found
-                </TableCell>
+                <TableHead className="w-[40px]" />
+                <TableHead>Type</TableHead>
+                <TableHead>Agent</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Time</TableHead>
               </TableRow>
-            )}
-            {traces.map((trace) => (
-              <TableRow
-                key={trace.id}
-                className="cursor-pointer"
-                onClick={() => setExpandedId(expandedId === trace.id ? null : trace.id)}
-              >
-                <TableCell>
-                  {expandedId === trace.id ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="font-mono text-xs">
-                    {trace.event_type}
-                  </Badge>
-                </TableCell>
-                <TableCell className="font-mono text-sm">{trace.agent_id}</TableCell>
-                <TableCell>
-                  <Badge className={statusColor(trace.status)}>{trace.status}</Badge>
-                </TableCell>
-                <TableCell className="text-muted-foreground text-sm">
-                  {formatDistanceToNow(new Date(trace.created_at), {
-                    addSuffix: true,
-                  })}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {traces.length === 0 && !loading && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-muted-foreground py-8 text-center">
+                    No trace events found
+                  </TableCell>
+                </TableRow>
+              )}
+              {traces.map((trace) => (
+                <TableRow
+                  key={trace.id}
+                  className="cursor-pointer"
+                  onClick={() => setExpandedId(expandedId === trace.id ? null : trace.id)}
+                >
+                  <TableCell>
+                    {expandedId === trace.id ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="font-mono text-xs">
+                      {trace.event_type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">{trace.agent_id}</TableCell>
+                  <TableCell>
+                    <Badge className={statusColor(trace.status)}>{trace.status}</Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {formatDistanceToNow(new Date(trace.created_at), {
+                      addSuffix: true,
+                    })}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* Mobile: card list */}
+      <div className="space-y-3 sm:hidden">
+        {traces.length === 0 && !loading && (
+          <Card className="p-4 text-center">
+            <p className="text-muted-foreground text-sm">No trace events found</p>
+          </Card>
+        )}
+        {traces.map((trace) => (
+          <Card
+            key={trace.id}
+            className="cursor-pointer p-4"
+            onClick={() => setExpandedId(expandedId === trace.id ? null : trace.id)}
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline" className="font-mono text-xs">
+                {trace.event_type}
+              </Badge>
+              <Badge className={statusColor(trace.status)}>{trace.status}</Badge>
+            </div>
+            <p className="mt-2 font-mono text-sm">{trace.agent_id}</p>
+            <p className="text-muted-foreground mt-1 truncate text-xs">{trace.group_id}</p>
+            <p className="text-muted-foreground mt-1 text-xs">
+              {formatDistanceToNow(new Date(trace.created_at), { addSuffix: true })}
+            </p>
+          </Card>
+        ))}
       </div>
 
       {/* Expanded metadata panel */}
