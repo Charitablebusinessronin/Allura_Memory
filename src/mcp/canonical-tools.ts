@@ -311,6 +311,7 @@ interface EpisodicMemoryRow {
   provenance: string | null
   user_id: string | null
   created_at: string
+  tags?: string | null
 }
 
 function toMemoryId(value: string): MemoryId {
@@ -319,6 +320,22 @@ function toMemoryId(value: string): MemoryId {
 
 function toProvenance(value: string | null | undefined): MemoryProvenance {
   return value === "manual" ? "manual" : "conversation"
+}
+
+/**
+ * Parse tags from a PG metadata text column.
+ * Tags are stored as comma-separated strings in metadata->>'tags'.
+ * Returns empty array if null/undefined.
+ */
+function parseEpisodicTags(tags: string | null | undefined): string[] {
+  if (!tags) return []
+  if (typeof tags === "string")
+    return tags
+      .split(",")
+      .map((t: string) => t.trim())
+      .filter(Boolean)
+  if (Array.isArray(tags)) return tags as string[]
+  return []
 }
 
 function baseMeta(storesUsed: Array<"postgres" | "neo4j">, degraded: boolean = false): MemoryResponseMeta {
@@ -730,6 +747,7 @@ export async function memory_search(request: MemorySearchRequest): Promise<Memor
     const episodicResults = await pg.query<EpisodicMemoryRow>(
       `SELECT metadata->>'memory_id' AS id, metadata->>'content' AS content, 
             metadata->>'source' AS provenance,
+            metadata->>'tags' AS tags,
             created_at
       FROM events
      WHERE group_id = $1
@@ -749,6 +767,7 @@ export async function memory_search(request: MemorySearchRequest): Promise<Memor
       created_at: string
       usage_count: number
       relevance: number
+      tags: string[]
     }> = []
     let searchMeta = baseMeta(["postgres", "neo4j"])
 
@@ -766,6 +785,7 @@ export async function memory_search(request: MemorySearchRequest): Promise<Memor
                 m.provenance AS provenance,
                 m.created_at AS created_at,
                 m.usage_count AS usage_count,
+                m.tags AS tags,
                 score AS relevance
          ORDER BY relevance DESC, m.score DESC
          LIMIT $limit`,
@@ -783,6 +803,7 @@ export async function memory_search(request: MemorySearchRequest): Promise<Memor
           provenance: toProvenance(record.get("provenance")),
           created_at: neo4jDateToISO(record.get("created_at")),
           usage_count: record.get("usage_count")?.toNumber?.() || 0,
+          tags: record.get("tags") || [],
           relevance: record.get("relevance"),
         }))
       } finally {
@@ -831,6 +852,7 @@ export async function memory_search(request: MemorySearchRequest): Promise<Memor
       provenance: toProvenance(row.provenance),
       created_at: row.created_at,
       usage_count: 0,
+      tags: parseEpisodicTags(row.tags),
     }))
 
     const semantic = semanticResults.map((item) => ({
@@ -841,6 +863,7 @@ export async function memory_search(request: MemorySearchRequest): Promise<Memor
       provenance: item.provenance,
       created_at: item.created_at,
       usage_count: item.usage_count,
+      tags: item.tags,
     }))
 
     // Map RuVector results into canonical shape
@@ -852,6 +875,7 @@ export async function memory_search(request: MemorySearchRequest): Promise<Memor
       provenance: "conversation" as MemoryProvenance,
       created_at: new Date().toISOString(), // RuVector doesn't return created_at in retrieveMemories
       usage_count: 0,
+      tags: [] as string[],
     }))
 
     // Combine and sort by score
@@ -927,6 +951,7 @@ export async function memory_get(request: MemoryGetRequest): Promise<MemoryGetRe
               m.user_id AS user_id,
               m.created_at AS created_at,
               m.version AS version,
+              m.tags AS tags,
               m.deprecated AS deprecated`,
         { id: request.id, groupId }
       )
@@ -943,6 +968,7 @@ export async function memory_get(request: MemoryGetRequest): Promise<MemoryGetRe
           created_at: neo4jDateToISO(record.get("created_at")),
           version: record.get("version")?.toNumber?.() || 1,
           usage_count: 0, // TODO: Track usage
+          tags: record.get("tags") || [],
           meta: getMeta,
         }
       }
@@ -958,6 +984,7 @@ export async function memory_get(request: MemoryGetRequest): Promise<MemoryGetRe
       `SELECT metadata->>'memory_id' AS id, metadata->>'content' AS content,
             metadata->>'source' AS provenance,
             metadata->>'user_id' AS user_id,
+            metadata->>'tags' AS tags,
             created_at
      FROM events
      WHERE metadata->>'memory_id' = $1
@@ -980,6 +1007,7 @@ export async function memory_get(request: MemoryGetRequest): Promise<MemoryGetRe
       user_id: row.user_id || "unknown",
       created_at: row.created_at,
       usage_count: 0,
+      tags: parseEpisodicTags(row.tags),
       meta: getMeta,
     }
   } catch (error) {
@@ -1011,15 +1039,16 @@ export async function memory_list(request: MemoryListRequest): Promise<MemoryLis
     // Parallel query both stores
     let listMeta = baseMeta(["postgres", "neo4j"])
     const pgQuery = `SELECT metadata->>'memory_id' AS id, metadata->>'content' AS content,
-                metadata->>'source' AS provenance,
-                metadata->>'user_id' AS user_id,
-                created_at
-         FROM events
-         WHERE group_id = $1
-           AND ($2::text IS NULL OR metadata->>'user_id' = $2)
-           AND event_type = 'memory_add'
-         ORDER BY created_at DESC
-         LIMIT $3 OFFSET $4`
+                 metadata->>'source' AS provenance,
+                 metadata->>'user_id' AS user_id,
+                 metadata->>'tags' AS tags,
+                 created_at
+          FROM events
+          WHERE group_id = $1
+            AND ($2::text IS NULL OR metadata->>'user_id' = $2)
+            AND event_type = 'memory_add'
+          ORDER BY created_at DESC
+          LIMIT $3 OFFSET $4`
     const [episodicResults, semanticResults] = await Promise.all([
       // PostgreSQL — throw on failure, do NOT swallow
       pg.query<EpisodicMemoryRow>(pgQuery, [groupId, request.user_id ?? null, limit, offset]),
@@ -1079,7 +1108,7 @@ export async function memory_list(request: MemoryListRequest): Promise<MemoryLis
       user_id: row.user_id || "unknown",
       created_at: row.created_at,
       usage_count: 0,
-      tags: [] as string[],
+      tags: parseEpisodicTags(row.tags),
     }))
 
     const memories = [...semanticResults, ...episodic]
@@ -1536,7 +1565,8 @@ export async function memory_export(request: MemoryExportRequest): Promise<Memor
               m.provenance AS provenance,
               m.user_id AS user_id,
               m.created_at AS created_at,
-              m.version AS version
+              m.version AS version,
+              m.tags AS tags
        ORDER BY m.created_at DESC
        SKIP $offset
        LIMIT $limit`,
@@ -1558,6 +1588,7 @@ export async function memory_export(request: MemoryExportRequest): Promise<Memor
       created_at: neo4jDateToISO(record.get("created_at")),
       version: record.get("version")?.toNumber?.() ?? 1,
       usage_count: 0,
+      tags: record.get("tags") || [],
       meta: baseMeta(["neo4j"]),
     }))
   } catch (error) {
@@ -1590,6 +1621,7 @@ export async function memory_export(request: MemoryExportRequest): Promise<Memor
             metadata->>'content' AS content,
             metadata->>'source' AS provenance,
             metadata->>'user_id' AS user_id,
+            metadata->>'tags' AS tags,
             created_at
      FROM events
      WHERE group_id = $1
@@ -1613,6 +1645,7 @@ export async function memory_export(request: MemoryExportRequest): Promise<Memor
       created_at: row.created_at,
       version: 1,
       usage_count: 0,
+      tags: parseEpisodicTags(row.tags),
     }))
 
   const allMemories = [...canonicalMemories, ...episodicMemories]
