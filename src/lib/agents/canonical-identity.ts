@@ -21,7 +21,7 @@ const agentRegistry: Record<string, { name: string; aliases?: string[] }> = {
   "knuth": { name: "Donald Knuth", aliases: ["deep-worker", "algorithm"] },
   // Legacy aliases preserved for backward compatibility with older events
   "turing": { name: "Alan Turing", aliases: ["architect"] },
-  "berners-lee": { name: "Tim Berners-Lee", aliases: ["librarian"] },
+   "berners-lee": { name: "Tim Berners-Lee", aliases: [] },
   "hopper": { name: "Grace Hopper", aliases: ["explorer"] },
   "cerf": { name: "Vint Cerf", aliases: ["coordinator"] },
   "torvalds": { name: "Linus Torvalds", aliases: ["pragmatist"] },

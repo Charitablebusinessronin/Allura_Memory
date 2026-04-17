@@ -1,38 +1,29 @@
 /**
  * Memory Get Functions
- * 
+ *
  * Retrieve specific memories from Neo4j knowledge graph
  * with optional history and evidence linkage.
  */
 
-import {
-  GetMemoryRequest,
-  GetMemoryResponse,
-  MemorySearchResult,
-} from "./types";
-import { readTransaction } from "../neo4j/connection";
+import { GetMemoryRequest, GetMemoryResponse, MemorySearchResult } from "./types"
+import { readTransaction } from "../neo4j/connection"
+import { Neo4jConnectionError, Neo4jQueryError } from "../errors/neo4j-errors"
 
 /**
  * Get a specific memory by topic_key
- * 
+ *
  * @param request - Get parameters
  * @returns Memory with optional history
+ * @throws {Neo4jConnectionError} if Neo4j is unreachable
+ * @throws {Neo4jQueryError} if the Cypher query fails
  */
-export async function getMemory(
-  request: GetMemoryRequest
-): Promise<GetMemoryResponse | null> {
-  const {
-    topic_key,
-    group_id,
-    version,
-    include_history = false,
-    include_evidence = false,
-  } = request;
+export async function getMemory(request: GetMemoryRequest): Promise<GetMemoryResponse | null> {
+  const { topic_key, group_id, version, include_history = false, include_evidence = false } = request
 
   // Build the main query
-  let versionFilter = "";
+  let versionFilter = ""
   if (version !== undefined) {
-    versionFilter = " AND m.version = $version";
+    versionFilter = " AND m.version = $version"
   }
 
   // Get current version (not superseded)
@@ -58,20 +49,20 @@ export async function getMemory(
            m.tags AS tags,
            m.metadata AS metadata
     LIMIT 1
-  `;
+  `
 
   const mainResult = await readTransaction(async (tx) => {
     const result = await tx.run(mainCypher, {
       topic_key,
       group_id,
       version: version || null,
-    });
+    })
 
     if (result.records.length === 0) {
-      return null;
+      return null
     }
 
-    const record = result.records[0];
+    const record = result.records[0]
     return {
       id: record.get("topic_key"),
       type: record.get("type"),
@@ -89,16 +80,16 @@ export async function getMemory(
       trace_ref: record.get("trace_ref") || undefined,
       tags: record.get("tags") || [],
       metadata: record.get("metadata") || {},
-    } as MemorySearchResult;
-  });
+    } as MemorySearchResult
+  })
 
   if (!mainResult) {
-    return null;
+    return null
   }
 
   const response: GetMemoryResponse = {
     current: mainResult,
-  };
+  }
 
   // Get history if requested
   if (include_history) {
@@ -120,10 +111,10 @@ export async function getMemory(
              old.tags AS tags
       ORDER BY old.version DESC
       LIMIT 10
-    `;
+    `
 
     const historyResult = await readTransaction(async (tx) => {
-      const result = await tx.run(historyCypher, { topic_key, group_id });
+      const result = await tx.run(historyCypher, { topic_key, group_id })
       return result.records.map((record) => ({
         id: record.get("topic_key"),
         type: record.get("type"),
@@ -140,59 +131,59 @@ export async function getMemory(
         superseded_by: topic_key,
         trace_ref: record.get("trace_ref") || undefined,
         tags: record.get("tags") || [],
-      })) as MemorySearchResult[];
-    });
+      })) as MemorySearchResult[]
+    })
 
-    response.history = historyResult;
+    response.history = historyResult
   }
 
   // Get evidence if requested and trace_ref exists
   if (include_evidence && mainResult.trace_ref) {
     // This would query PostgreSQL for trace evidence
     // For now, we'll return a placeholder
-    response.evidence = [{
-      id: mainResult.trace_ref,
-      type: "trace",
-      timestamp: mainResult.created_at,
-      summary: "Evidence linked via trace_ref",
-    }];
+    response.evidence = [
+      {
+        id: mainResult.trace_ref,
+        type: "trace",
+        timestamp: mainResult.created_at,
+        summary: "Evidence linked via trace_ref",
+      },
+    ]
   }
 
-  return response;
+  return response
 }
 
 /**
  * Get current active version of a memory
- * 
+ *
  * @param topic_key - Memory identifier
  * @param group_id - Tenant/group identifier
  * @returns Current memory or null
+ * @throws {Neo4jConnectionError} if Neo4j is unreachable
+ * @throws {Neo4jQueryError} if the Cypher query fails
  */
-export async function getCurrentMemory(
-  topic_key: string,
-  group_id: string
-): Promise<MemorySearchResult | null> {
+export async function getCurrentMemory(topic_key: string, group_id: string): Promise<MemorySearchResult | null> {
   const response = await getMemory({
     topic_key,
     group_id,
     include_history: false,
     include_evidence: false,
-  });
+  })
 
-  return response?.current || null;
+  return response?.current || null
 }
 
 /**
  * Get memory history (all versions)
- * 
+ *
  * @param topic_key - Memory identifier
  * @param group_id - Tenant/group identifier
  * @returns Array of historical versions
+ * @throws {Neo4jConnectionError} if Neo4j is unreachable
+ * @throws {Neo4jQueryError} if the Cypher query fails
  */
-export async function getMemoryHistory(
-  topic_key: string,
-  group_id: string
-): Promise<MemorySearchResult[]> {
+export async function getMemoryHistory(topic_key: string, group_id: string): Promise<MemorySearchResult[]> {
   const cypher = `
     MATCH (m {topic_key: $topic_key})
     WHERE m.group_id = $group_id OR m.group_id = 'global'
@@ -211,10 +202,10 @@ export async function getMemoryHistory(
            m.tags AS tags
     ORDER BY m.version DESC
     LIMIT 20
-  `;
+  `
 
   const results = await readTransaction(async (tx) => {
-    const result = await tx.run(cypher, { topic_key, group_id });
+    const result = await tx.run(cypher, { topic_key, group_id })
     return result.records.map((record) => ({
       id: record.get("topic_key"),
       type: record.get("type"),
@@ -231,33 +222,32 @@ export async function getMemoryHistory(
       superseded_by: undefined,
       trace_ref: record.get("trace_ref") || undefined,
       tags: record.get("tags") || [],
-    }));
-  });
+    }))
+  })
 
-  return results as MemorySearchResult[];
+  return results as MemorySearchResult[]
 }
 
 /**
  * Check if a topic_key exists
- * 
+ *
  * @param topic_key - Memory identifier
  * @param group_id - Tenant/group identifier
  * @returns True if memory exists
+ * @throws {Neo4jConnectionError} if Neo4j is unreachable
+ * @throws {Neo4jQueryError} if the Cypher query fails
  */
-export async function memoryExists(
-  topic_key: string,
-  group_id: string
-): Promise<boolean> {
+export async function memoryExists(topic_key: string, group_id: string): Promise<boolean> {
   const cypher = `
     MATCH (m {topic_key: $topic_key})
     WHERE m.group_id = $group_id OR m.group_id = 'global'
     RETURN count(m) > 0 AS exists
-  `;
+  `
 
   const result = await readTransaction(async (tx) => {
-    const res = await tx.run(cypher, { topic_key, group_id });
-    return res.records[0]?.get("exists") || false;
-  });
+    const res = await tx.run(cypher, { topic_key, group_id })
+    return res.records[0]?.get("exists") || false
+  })
 
-  return Boolean(result);
+  return Boolean(result)
 }
