@@ -5,38 +5,27 @@
 **Project:** Allura Memory — AI Memory Engine
 **Date:** 2026-04-17
 **Priority:** P1 — blocks two features and three refinement items
+**Requested response format:** **Docker PNGs + Markdown + Notion updates** (preferred over Figma-first delivery)
 **Deadline:** 2026-04-25 (1 week)
 **Notion Project:** [Allura Memory Control Center](https://www.notion.so/Allura-memory-33b1d9be65b38045b6b0fa8c48dbc17b)
-**Design Review Method:** Playwright visual regression tests + Docker live preview (no Figma)
+**Durham-side doc:** `06_team-durham-ui-checklist.md` + `08_team-ram_design-spec-request.md`
 
 ---
 
-## Design Review Method — Playwright + Docker
+## Design Review Method — Docker + PNG + Markdown
 
 We do not use Figma. Design review happens through:
 
 1. **Live preview** — `docker compose up && bun run dev` → browser at `http://localhost:3100/memory`
-2. **Playwright screenshots** — automated visual tests that capture each screen state and diff against approved baselines
+2. **Playwright screenshots** — automated visual captures of each screen state
 3. **PR review** — every UI change includes a Playwright screenshot diff in the PR description
-4. **Storybook components** — (if added later) isolated component review
 
-For each blocker below, we will:
+For each blocker below, Team Durham can:
 
-- Ship the current implementation to `new-main`
-- Generate Playwright screenshots of the current state
-- Post screenshots to the Notion project page for review
-- Team Durham reviews in browser or by screenshot, annotates changes
-- We implement revisions, regenerate screenshots, and post for approval
-
-**How to review right now:**
-
-```bash
-docker compose up -d          # postgres + neo4j + ruvector + mcp
-bun run dev                   # next.js on port 3100
-# Open http://localhost:3100/memory
-# Open http://localhost:3100/memory/[any-id]
-# Open http://localhost:3100/dashboard/audit
-```
+- Review the live app at `localhost:3100`
+- Annotate the Playwright screenshots in `docs/screenshots/`
+- Provide PNG captures or Docker-served screenshots of preferred alternatives
+- Respond in Markdown, Notion, or directly on the checklist
 
 ---
 
@@ -205,24 +194,26 @@ Items 4 and 5 can follow later. Items 1–3 unblock shipping.
 
 ## Reference Materials
 
-| Asset                     | Location                                                                                             |
-| ------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Brand overview            | `06_team-durham-ui-images/01-brand-overview-v2.png`                                                  |
-| Logo chooser              | `06_team-durham-ui-images/02-logo-chooser-v2.png`                                                    |
-| Color system              | `06_team-durham-ui-images/03-color-system-v2.png`                                                    |
-| Typography                | `06_team-durham-ui-images/04-typography-v2.png`                                                      |
-| Applications              | `06_team-durham-ui-images/05-applications-v2.png`                                                    |
-| Homepage variants (×3)    | `06_team-durham-ui-images/homepage-*.png`                                                            |
-| R4 app/website hero       | `06_team-durham-ui-images/r4-app-website-hero.png`                                                   |
-| R4 logo primary           | `06_team-durham-ui-images/r4-logo-primary.png`                                                       |
-| R4 system patterns        | `06_team-durham-ui-images/r4-system-patterns.png`                                                    |
-| Durham UI checklist       | `06_team-durham-ui-checklist.md`                                                                     |
-| Wireframe spec            | `docs/allura/DESIGN-ALLURA.md`                                                                       |
-| Notion project page       | [Allura Memory Control Center](https://www.notion.so/Allura-memory-33b1d9be65b38045b6b0fa8c48dbc17b) |
-| Live app                  | `http://localhost:3100/memory` (run `bun run dev`)                                                   |
-| **Screenshots (current)** | `docs/screenshots/01-memory-page-desktop.png` — memory list, desktop                                 |
-|                           | `docs/screenshots/02-memory-page-mobile.png` — memory list, mobile (375px)                           |
-|                           | `docs/screenshots/03-audit-page-desktop.png` — audit log, desktop                                    |
+| Asset                           | Location                                                                                             |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Brand overview                  | `06_team-durham-ui-images/01-brand-overview-v2.png`                                                  |
+| Logo chooser                    | `06_team-durham-ui-images/02-logo-chooser-v2.png`                                                    |
+| Color system                    | `06_team-durham-ui-images/03-color-system-v2.png`                                                    |
+| Typography                      | `06_team-durham-ui-images/04-typography-v2.png`                                                      |
+| Applications                    | `06_team-durham-ui-images/05-applications-v2.png`                                                    |
+| Homepage variants (×3)          | `06_team-durham-ui-images/homepage-*.png`                                                            |
+| R4 app/website hero             | `06_team-durham-ui-images/r4-app-website-hero.png`                                                   |
+| R4 logo primary                 | `06_team-durham-ui-images/r4-logo-primary.png`                                                       |
+| R4 system patterns              | `06_team-durham-ui-images/r4-system-patterns.png`                                                    |
+| Durham UI checklist             | `06_team-durham-ui-checklist.md`                                                                     |
+| Wireframe spec                  | `docs/allura/DESIGN-ALLURA.md`                                                                       |
+| This request doc                | `08_team-ram_design-spec-request.md` (Durham-side copy)                                              |
+| Durham UI checklist             | `06_team-durham-ui-checklist.md`                                                                     |
+| Notion project page             | [Allura Memory Control Center](https://www.notion.so/Allura-memory-33b1d9be65b38045b6b0fa8c48dbc17b) |
+| Live app                        | `http://localhost:3100/memory` (run `bun run dev`)                                                   |
+| **Screenshots (current state)** | `docs/screenshots/01-memory-page-desktop.png`                                                        |
+|                                 | `docs/screenshots/02-memory-page-mobile.png`                                                         |
+|                                 | `docs/screenshots/03-audit-page-desktop.png`                                                         |
 
 ---
 
@@ -241,11 +232,15 @@ Items 4 and 5 can follow later. Items 1–3 unblock shipping.
 For each blocker, Team Durham can respond with:
 
 - ✅ **Approved** — current implementation ships as-is
-- 🔄 **Revised** — annotate Playwright screenshot or describe changes, we implement
-- ❌ **Rejected** — annotate screenshot or describe replacement, we rebuild
-- ⏳ **Deferred** — we keep current and revisit in a future sprint
+- 🔄 **Revised** — provide **PNG screenshot / Docker capture** + approved copy in Markdown or Notion
+- ❌ **Rejected** — provide **PNG screenshot / Docker capture** + approved copy in Markdown or Notion
+- ⏳ **Deferred** — keep current implementation and revisit later
 
-Please return responses to the Notion project page or directly to this document.
+Preferred delivery channels:
+
+- **Markdown** inside the project workspace
+- **PNG screenshots / Docker-served captures** for layout direction
+- **Notion updates** on the Allura Memory project page for sign-off / visibility
 
 ---
 
