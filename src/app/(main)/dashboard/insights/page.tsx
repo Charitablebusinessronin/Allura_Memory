@@ -251,62 +251,98 @@ export default function InsightsPage() {
         </div>
       )}
 
-      {/* Insights table */}
-      <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[40px]" />
-              <TableHead>Insight ID</TableHead>
-              <TableHead>Content</TableHead>
-              <TableHead>Confidence</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Source</TableHead>
-              <TableHead>Version</TableHead>
-              <TableHead>Time</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {insights.length === 0 && !loading && (
+      {/* Desktop: table view */}
+      <div className="hidden sm:block">
+        <div className="rounded-lg border">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={8} className="text-muted-foreground py-8 text-center">
-                  No insights found
-                </TableCell>
+                <TableHead className="w-[40px]" />
+                <TableHead>Insight ID</TableHead>
+                <TableHead>Content</TableHead>
+                <TableHead>Confidence</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Source</TableHead>
+                <TableHead>Version</TableHead>
+                <TableHead>Time</TableHead>
               </TableRow>
-            )}
-            {insights.map((insight) => (
-              <TableRow
-                key={insight.id}
-                className="cursor-pointer"
-                onClick={() => setExpandedId(expandedId === insight.id ? null : insight.id)}
-              >
-                <TableCell>
-                  {expandedId === insight.id ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
-                </TableCell>
-                <TableCell className="font-mono text-xs">{insight.insight_id.slice(0, 12)}...</TableCell>
-                <TableCell className="max-w-[300px] truncate text-sm">{insight.content}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Progress value={insight.confidence * 100} className="h-2 w-16" />
-                    <span className={`text-xs font-medium ${confidenceColor(insight.confidence)}`}>
-                      {(insight.confidence * 100).toFixed(0)}%
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge className={statusColor(insight.status)}>{insight.status}</Badge>
-                </TableCell>
-                <TableCell className="text-muted-foreground text-sm">{insight.source_type}</TableCell>
-                <TableCell className="text-sm">v{insight.version}</TableCell>
-                <TableCell className="text-muted-foreground text-sm">
-                  {formatDistanceToNow(new Date(insight.created_at), {
-                    addSuffix: true,
-                  })}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {insights.length === 0 && !loading && (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-muted-foreground py-8 text-center">
+                    No insights found
+                  </TableCell>
+                </TableRow>
+              )}
+              {insights.map((insight) => (
+                <TableRow
+                  key={insight.id}
+                  className="cursor-pointer"
+                  onClick={() => setExpandedId(expandedId === insight.id ? null : insight.id)}
+                >
+                  <TableCell>
+                    {expandedId === insight.id ? (
+                      <ChevronDown className="size-4" />
+                    ) : (
+                      <ChevronRight className="size-4" />
+                    )}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs">{insight.insight_id.slice(0, 12)}...</TableCell>
+                  <TableCell className="max-w-[300px] truncate text-sm">{insight.content}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Progress value={insight.confidence * 100} className="h-2 w-16" />
+                      <span className={`text-xs font-medium ${confidenceColor(insight.confidence)}`}>
+                        {(insight.confidence * 100).toFixed(0)}%
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={statusColor(insight.status)}>{insight.status}</Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">{insight.source_type}</TableCell>
+                  <TableCell className="text-sm">v{insight.version}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {formatDistanceToNow(new Date(insight.created_at), {
+                      addSuffix: true,
+                    })}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* Mobile: card list */}
+      <div className="space-y-3 sm:hidden">
+        {insights.length === 0 && !loading && (
+          <Card className="p-4 text-center">
+            <p className="text-muted-foreground text-sm">No insights found</p>
+          </Card>
+        )}
+        {insights.map((insight) => (
+          <Card
+            key={insight.id}
+            className="cursor-pointer p-4"
+            onClick={() => setExpandedId(expandedId === insight.id ? null : insight.id)}
+          >
+            <p className="line-clamp-3 text-sm leading-relaxed">{insight.content}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <Badge className={statusColor(insight.status)}>{insight.status}</Badge>
+              <Badge variant="outline" className="text-xs">
+                {(insight.confidence * 100).toFixed(0)}% {confidenceLabel(insight.confidence)}
+              </Badge>
+              <Badge variant="outline" className="text-xs">
+                {insight.source_type}
+              </Badge>
+            </div>
+            <p className="text-muted-foreground mt-2 text-xs">
+              {formatDistanceToNow(new Date(insight.created_at), { addSuffix: true })}
+            </p>
+          </Card>
+        ))}
       </div>
 
       {/* Expanded detail panel with version history timeline */}
