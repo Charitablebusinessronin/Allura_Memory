@@ -54,7 +54,7 @@ jobs:
         run: |
           for f in $(ls -1v docker/postgres-init/*.sql); do
             echo "▶ Applying $f..."
-            psql -h localhost -U postgres -d memory -f "$f" 2>&1 | tail -1
+            psql -h localhost -U postgres -d memory -f "$f"
           done
 
       - name: Run type check
