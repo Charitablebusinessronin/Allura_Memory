@@ -76,40 +76,40 @@ L5: Paperclip (Next.js UI) + OpenClaw (MCP gateway)
 
 **Key entrypoints:**
 
-| Path | Purpose |
-|------|---------|
-| `src/mcp/memory-server-canonical.ts` | MCP tool server (store/retrieve/delete/list/propose_insight) |
-| `src/mcp/canonical-http-gateway.ts` | HTTP wrapper for MCP server |
-| `src/curator/index.ts` | HITL promotion pipeline CLI |
-| `src/curator/embedding-backfill-worker.ts` | Ollama embed worker (batches of 10) |
-| `src/lib/ruvector/bridge.ts` | Hybrid search: RRF fusion of vector ANN + BM25 |
-| `src/kernel/ruvix.ts` | Proof-gated mutation engine |
-| `src/middleware.ts` | Route protection + RBAC (Clerk or DevAuthProvider) |
-| `src/server/server-actions.ts` | Server actions for persistence |
-| `src/config/app-config.ts` | App metadata |
-| `packages/sdk/` | Standalone SDK package (separate build) |
+| Path                                       | Purpose                                                      |
+| ------------------------------------------ | ------------------------------------------------------------ |
+| `src/mcp/memory-server-canonical.ts`       | MCP tool server (store/retrieve/delete/list/propose_insight) |
+| `src/mcp/canonical-http-gateway.ts`        | HTTP wrapper for MCP server                                  |
+| `src/curator/index.ts`                     | HITL promotion pipeline CLI                                  |
+| `src/curator/embedding-backfill-worker.ts` | Ollama embed worker (batches of 10)                          |
+| `src/lib/ruvector/bridge.ts`               | Hybrid search: RRF fusion of vector ANN + BM25               |
+| `src/kernel/ruvix.ts`                      | Proof-gated mutation engine                                  |
+| `src/middleware.ts`                        | Route protection + RBAC (Clerk or DevAuthProvider)           |
+| `src/server/server-actions.ts`             | Server actions for persistence                               |
+| `src/config/app-config.ts`                 | App metadata                                                 |
+| `packages/sdk/`                            | Standalone SDK package (separate build)                      |
 
 ## 5) Directory Ownership
 
-| Directory | What Lives Here |
-|-----------|----------------|
-| `src/mcp/` | MCP servers (canonical + legacy) |
-| `src/curator/` | HITL promotion pipeline + notion sync + embedding backfill |
-| `src/kernel/` | RuVix proof-gated mutation |
-| `src/lib/ruvector/` | Hybrid search bridge + embedding service |
-| `src/lib/auth/` | Clerk RBAC + DevAuthProvider |
-| `src/lib/budget/`, `circuit-breaker/` | Agent runaway prevention |
-| `src/lib/adr/` | 5-layer architectural decision records |
-| `src/server/` | Server actions for persistence |
-| `src/stores/` | Zustand client state |
-| `src/app/` | Next.js App Router (Server Components by default) |
-| `src/__tests__/` | Integration tests |
-| `tests/` | Fixture, load, MCP browser tests |
-| `packages/sdk/` | Standalone SDK (separate tsconfig, build, tests) |
-| `.opencode/agent/` | Team RAM agent files (sole canonical source, flat 10 files) |
-| `.opencode/skills/` | OpenCode skill definitions |
-| `_bmad-output/` | Retired — gitignored, do not re-add |
-| `docs/allura/` | Human canon — canonical six only |
+| Directory                             | What Lives Here                                             |
+| ------------------------------------- | ----------------------------------------------------------- |
+| `src/mcp/`                            | MCP servers (canonical + legacy)                            |
+| `src/curator/`                        | HITL promotion pipeline + notion sync + embedding backfill  |
+| `src/kernel/`                         | RuVix proof-gated mutation                                  |
+| `src/lib/ruvector/`                   | Hybrid search bridge + embedding service                    |
+| `src/lib/auth/`                       | Clerk RBAC + DevAuthProvider                                |
+| `src/lib/budget/`, `circuit-breaker/` | Agent runaway prevention                                    |
+| `src/lib/adr/`                        | 5-layer architectural decision records                      |
+| `src/server/`                         | Server actions for persistence                              |
+| `src/stores/`                         | Zustand client state                                        |
+| `src/app/`                            | Next.js App Router (Server Components by default)           |
+| `src/__tests__/`                      | Integration tests                                           |
+| `tests/`                              | Fixture, load, MCP browser tests                            |
+| `packages/sdk/`                       | Standalone SDK (separate tsconfig, build, tests)            |
+| `.opencode/agent/`                    | Team RAM agent files (sole canonical source, flat 10 files) |
+| `.opencode/skills/`                   | OpenCode skill definitions                                  |
+| `_bmad-output/`                       | Retired — gitignored, do not re-add                         |
+| `docs/allura/`                        | Human canon — canonical six only                            |
 
 ## 6) Conventions
 
@@ -120,8 +120,9 @@ L5: Paperclip (Next.js UI) + OpenClaw (MCP gateway)
 **Imports:** External packages first → `@/*` aliases → relative imports. Use `@/*` for cross-feature; relative for sibling modules.
 
 **Server-only modules** must include:
+
 ```ts
-if (typeof window !== "undefined") throw new Error("server-side only");
+if (typeof window !== "undefined") throw new Error("server-side only")
 ```
 
 **Next.js:** Default Server Components. Add `"use client"` only where needed. Server actions in `src/server/`.
@@ -157,15 +158,29 @@ curl -s http://localhost:7474 | jq .neo4j_version    # Neo4j health
 - MCP: container `allura-memory-mcp`, depends on postgres + neo4j health checks
 - Dozzle: port 8088, container log viewer
 
-## 10) Session Start Protocol
+## 10) Integration Tests
 
-Read in order:
-1. `memory-bank/activeContext.md` — current focus and blockers
-2. `memory-bank/progress.md` — what has been done
-3. `memory-bank/systemPatterns.md` — architecture patterns
-4. `memory-bank/techContext.md` — tech stack details
+DB integration tests are skipped by default. To run:
 
-Invoke skill `allura-memory-context` at session start. Invoke `memory-client` skill at session end to write reflection to Neo4j knowledge graph.
+```bash
+RUN_DB_INTEGRATION=true bun test
+```
+
+Requires a live DB connection (postgres + neo4j via `docker compose up`). Tests use
+isolated `group_id` values (`allura-test-*`) and clean up after themselves
+via `afterEach`/`afterAll`. Do NOT run against production without verifying
+`DATABASE_URL` target.
+
+## 11) Session Start Protocol
+
+Hydrate from Allura Brain (not flat files):
+
+1. **Scout Recon** — Dispatch Scout subagent to search Brain for current context
+2. **PostgreSQL** — Query recent events for blockers, decisions, last session activity
+3. **Neo4j** — Search insights for architecture patterns and decisions
+4. **Synthesize** — Scout returns: what's active, what's blocking, what was decided
+
+Invoke skill `memory-client` at session start for Brain connectivity. Invoke `memory-client` skill at session end to write reflection to Neo4j knowledge graph.
 
 ## 11) Debugging Protocol
 
@@ -178,7 +193,7 @@ Before proposing any fix, invoke the `systematic-debugging-memory` skill. If 3+ 
 1. Notion — Allura Memory Control Center
 2. `docs/allura/` — canonical six: BLUEPRINT, SOLUTION-ARCHITECTURE, DESIGN, REQUIREMENTS-MATRIX, RISKS-AND-DECISIONS, DATA-DICTIONARY
 3. `docs/` — project-specific docs (one `PROJECT.md` per initiative)
-4. `docs/archive/` or `memory-bank/` — session context and historical reference
+4. `docs/archive/` — session context and historical reference
 
 Do not create net-new files in `docs/allura/` beyond the canonical six. Keep requirement and decision IDs consistent (`B#`, `F#`, `AD-##`, `RK-##`).
 

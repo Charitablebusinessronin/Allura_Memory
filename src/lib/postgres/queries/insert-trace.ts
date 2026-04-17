@@ -1,10 +1,11 @@
-import type { Pool } from "pg";
-import { getPool } from "../connection";
+import type { Pool } from "pg"
+import { getPool } from "../connection"
+import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id"
 
 /**
  * Event status values
  */
-export type EventStatus = "pending" | "completed" | "failed" | "cancelled";
+export type EventStatus = "pending" | "completed" | "failed" | "cancelled"
 
 /**
  * Event insert payload
@@ -12,53 +13,53 @@ export type EventStatus = "pending" | "completed" | "failed" | "cancelled";
  */
 export interface EventInsert {
   /** Required: Tenant isolation identifier */
-  group_id: string;
+  group_id: string
   /** Required: Type of event (e.g., 'workflow_step', 'agent_action') */
-  event_type: string;
+  event_type: string
   /** Required: Agent or system that generated this event */
-  agent_id: string;
+  agent_id: string
   /** Optional: Workflow this event belongs to */
-  workflow_id?: string;
+  workflow_id?: string
   /** Optional: Step within workflow */
-  step_id?: string;
+  step_id?: string
   /** Optional: Parent event for execution chains */
-  parent_event_id?: number;
+  parent_event_id?: number
   /** Optional: Structured metadata */
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, unknown>
   /** Optional: Outcome payload */
-  outcome?: Record<string, unknown>;
+  outcome?: Record<string, unknown>
   /** Status (defaults to 'pending') */
-  status?: EventStatus;
+  status?: EventStatus
   /** Optional: Error message (for failed events) */
-  error_message?: string;
+  error_message?: string
   /** Optional: Error code (for failed events) */
-  error_code?: string;
+  error_code?: string
   /** Optional: Confidence score (0.0 to 1.0) for knowledge promotion */
-  confidence?: number;
+  confidence?: number
   /** Optional: Evidence reference (file path, URL, document ID) */
-  evidence_ref?: string;
+  evidence_ref?: string
 }
 
 /**
  * Event record as stored in database
  */
 export interface EventRecord {
-  id: number;
-  group_id: string;
-  event_type: string;
-  created_at: Date;
-  agent_id: string;
-  workflow_id: string | null;
-  step_id: string | null;
-  parent_event_id: number | null;
-  metadata: Record<string, unknown>;
-  outcome: Record<string, unknown>;
-  status: EventStatus;
-  error_message: string | null;
-  error_code: string | null;
-  inserted_at: Date;
-  confidence: number | null;
-  evidence_ref: string | null;
+  id: number
+  group_id: string
+  event_type: string
+  created_at: Date
+  agent_id: string
+  workflow_id: string | null
+  step_id: string | null
+  parent_event_id: number | null
+  metadata: Record<string, unknown>
+  outcome: Record<string, unknown>
+  status: EventStatus
+  error_message: string | null
+  error_code: string | null
+  inserted_at: Date
+  confidence: number | null
+  evidence_ref: string | null
 }
 
 /**
@@ -66,28 +67,28 @@ export interface EventRecord {
  */
 export interface OutcomeInsert {
   /** Required: Tenant isolation (must match parent event's group_id) */
-  group_id: string;
+  group_id: string
   /** Required: Parent event this outcome belongs to */
-  event_id: number;
+  event_id: number
   /** Required: Type of outcome (e.g., 'analysis_result', 'decision') */
-  outcome_type: string;
+  outcome_type: string
   /** Optional: Confidence score (0.0 to 1.0) */
-  confidence?: number;
+  confidence?: number
   /** Optional: Structured outcome data */
-  data?: Record<string, unknown>;
+  data?: Record<string, unknown>
 }
 
 /**
  * Outcome record as stored in database
  */
 export interface OutcomeRecord {
-  id: number;
-  group_id: string;
-  event_id: number;
-  outcome_type: string;
-  confidence: number | null;
-  data: Record<string, unknown>;
-  created_at: Date;
+  id: number
+  group_id: string
+  event_id: number
+  outcome_type: string
+  confidence: number | null
+  data: Record<string, unknown>
+  created_at: Date
 }
 
 /**
@@ -95,8 +96,8 @@ export interface OutcomeRecord {
  */
 export class ValidationError extends Error {
   constructor(message: string) {
-    super(message);
-    this.name = "ValidationError";
+    super(message)
+    this.name = "ValidationError"
   }
 }
 
@@ -105,22 +106,30 @@ export class ValidationError extends Error {
  * Ensures all required fields are present and valid
  */
 function validateEventInsert(event: EventInsert): void {
-  const errors: string[] = [];
+  const errors: string[] = []
 
-  if (!event.group_id || event.group_id.trim().length === 0) {
-    errors.push("group_id is required and cannot be empty");
+  // Group ID validation - uses canonical validateGroupId for defense-in-depth
+  // This enforces ^allura-[a-z0-9-]+$ pattern, NFR11 (lowercase-only), length bounds
+  try {
+    validateGroupId(event.group_id)
+  } catch (e) {
+    if (e instanceof GroupIdValidationError) {
+      errors.push(e.message)
+    } else {
+      errors.push(`group_id validation failed: ${e instanceof Error ? e.message : String(e)}`)
+    }
   }
 
   if (!event.event_type || event.event_type.trim().length === 0) {
-    errors.push("event_type is required and cannot be empty");
+    errors.push("event_type is required and cannot be empty")
   }
 
   if (!event.agent_id || event.agent_id.trim().length === 0) {
-    errors.push("agent_id is required and cannot be empty");
+    errors.push("agent_id is required and cannot be empty")
   }
 
   if (errors.length > 0) {
-    throw new ValidationError(`Event validation failed: ${errors.join("; ")}`);
+    throw new ValidationError(`Event validation failed: ${errors.join("; ")}`)
   }
 }
 
@@ -128,22 +137,22 @@ function validateEventInsert(event: EventInsert): void {
  * Validate outcome insert payload
  */
 function validateOutcomeInsert(outcome: OutcomeInsert): void {
-  const errors: string[] = [];
+  const errors: string[] = []
 
   if (!outcome.group_id || outcome.group_id.trim().length === 0) {
-    errors.push("group_id is required and cannot be empty");
+    errors.push("group_id is required and cannot be empty")
   }
 
   if (!outcome.outcome_type || outcome.outcome_type.trim().length === 0) {
-    errors.push("outcome_type is required and cannot be empty");
+    errors.push("outcome_type is required and cannot be empty")
   }
 
   if (outcome.confidence !== undefined && (outcome.confidence < 0 || outcome.confidence > 1)) {
-    errors.push("confidence must be between 0 and 1");
+    errors.push("confidence must be between 0 and 1")
   }
 
   if (errors.length > 0) {
-    throw new ValidationError(`Outcome validation failed: ${errors.join("; ")}`);
+    throw new ValidationError(`Outcome validation failed: ${errors.join("; ")}`)
   }
 }
 
@@ -157,9 +166,9 @@ function validateOutcomeInsert(outcome: OutcomeInsert): void {
  */
 export async function insertEvent(event: EventInsert): Promise<EventRecord> {
   // Validate required fields
-  validateEventInsert(event);
+  validateEventInsert(event)
 
-  const pool = getPool();
+  const pool = getPool()
 
   const query = `
     INSERT INTO events (
@@ -178,7 +187,7 @@ export async function insertEvent(event: EventInsert): Promise<EventRecord> {
       evidence_ref
     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
     RETURNING *
-  `;
+  `
 
   const values = [
     event.group_id,
@@ -194,11 +203,11 @@ export async function insertEvent(event: EventInsert): Promise<EventRecord> {
     event.error_code ?? null,
     event.confidence ?? null,
     event.evidence_ref ?? null,
-  ];
+  ]
 
-  const result = await pool.query<EventRecord>(query, values);
+  const result = await pool.query<EventRecord>(query, values)
 
-  return result.rows[0];
+  return result.rows[0]
 }
 
 /**
@@ -211,9 +220,9 @@ export async function insertEvent(event: EventInsert): Promise<EventRecord> {
  */
 export async function insertOutcome(outcome: OutcomeInsert): Promise<OutcomeRecord> {
   // Validate required fields
-  validateOutcomeInsert(outcome);
+  validateOutcomeInsert(outcome)
 
-  const pool = getPool();
+  const pool = getPool()
 
   const query = `
     INSERT INTO outcomes (
@@ -224,7 +233,7 @@ export async function insertOutcome(outcome: OutcomeInsert): Promise<OutcomeReco
       data
     ) VALUES ($1, $2, $3, $4, $5)
     RETURNING *
-  `;
+  `
 
   const values = [
     outcome.group_id,
@@ -232,11 +241,11 @@ export async function insertOutcome(outcome: OutcomeInsert): Promise<OutcomeReco
     outcome.outcome_type,
     outcome.confidence ?? null,
     JSON.stringify(outcome.data ?? {}),
-  ];
+  ]
 
-  const result = await pool.query<OutcomeRecord>(query, values);
+  const result = await pool.query<OutcomeRecord>(query, values)
 
-  return result.rows[0];
+  return result.rows[0]
 }
 
 /**
@@ -250,18 +259,18 @@ export async function insertOutcome(outcome: OutcomeInsert): Promise<OutcomeReco
 export async function insertEvents(events: EventInsert[]): Promise<EventRecord[]> {
   // Validate all events first
   for (const event of events) {
-    validateEventInsert(event);
+    validateEventInsert(event)
   }
 
-  const pool = getPool();
-  const results: EventRecord[] = [];
+  const pool = getPool()
+  const results: EventRecord[] = []
 
   // For now, use individual inserts within a transaction
   // Can be optimized with COPY or multi-row INSERT if needed
-  const client = await pool.connect();
+  const client = await pool.connect()
 
   try {
-    await client.query("BEGIN");
+    await client.query("BEGIN")
 
     for (const event of events) {
       const query = `
@@ -279,7 +288,7 @@ export async function insertEvents(events: EventInsert[]): Promise<EventRecord[]
           error_code
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING *
-      `;
+      `
 
       const values = [
         event.group_id,
@@ -293,18 +302,18 @@ export async function insertEvents(events: EventInsert[]): Promise<EventRecord[]
         event.status ?? "pending",
         event.error_message ?? null,
         event.error_code ?? null,
-      ];
+      ]
 
-      const result = await client.query<EventRecord>(query, values);
-      results.push(result.rows[0]);
+      const result = await client.query<EventRecord>(query, values)
+      results.push(result.rows[0])
     }
 
-    await client.query("COMMIT");
-    return results;
+    await client.query("COMMIT")
+    return results
   } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
+    await client.query("ROLLBACK")
+    throw error
   } finally {
-    client.release();
+    client.release()
   }
 }
