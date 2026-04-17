@@ -1,11 +1,11 @@
 /**
  * Canonical Memory API Contracts (Allura v1)
- * 
+ *
  * These are the authoritative TypeScript interfaces for the 5 canonical memory operations.
  * All implementations (MCP, REST, internal) MUST conform to these contracts.
- * 
+ *
  * Reference: docs/allura/BLUEPRINT.md
- * 
+ *
  * Invariants:
  * - group_id is REQUIRED on every operation (enforced by schema)
  * - group_id MUST match ^allura- (CHECK constraint)
@@ -20,28 +20,28 @@
  * Tenant namespace - enforced by PostgreSQL CHECK constraint
  * Must match pattern: ^allura-.*
  */
-export type GroupId = string & { readonly __brand: unique symbol };
+export type GroupId = string & { readonly __brand: unique symbol }
 
 /**
  * Memory identifier - UUID v4
  */
-export type MemoryId = string & { readonly __brand: unique symbol };
+export type MemoryId = string & { readonly __brand: unique symbol }
 
 /**
  * User identifier within a tenant
  */
-export type UserId = string;
+export type UserId = string
 
 /**
  * Memory content - the actual text stored
  */
-export type MemoryContent = string;
+export type MemoryContent = string
 
 /**
  * Confidence score (0.0 to 1.0)
  * Determines promotion eligibility (threshold: 0.85 by default)
  */
-export type ConfidenceScore = number;
+export type ConfidenceScore = number
 
 /**
  * Storage location indicator
@@ -49,49 +49,49 @@ export type ConfidenceScore = number;
  * - 'semantic': Neo4j (promoted knowledge)
  * - 'both': Both stores (promoted in auto mode)
  */
-export type StorageLocation = 'episodic' | 'semantic' | 'both';
+export type StorageLocation = "episodic" | "semantic" | "both"
 
 /**
  * Promotion mode
  * - 'auto': Promote immediately if score >= threshold
  * - 'soc2': Queue for human approval before promotion
  */
-export type PromotionMode = 'auto' | 'soc2';
+export type PromotionMode = "auto" | "soc2"
 
 /**
  * Memory provenance
  * - 'conversation': Learned from agent interaction
  * - 'manual': Added by user
  */
-export type MemoryProvenance = 'conversation' | 'manual';
+export type MemoryProvenance = "conversation" | "manual"
 
 /**
  * Memory status in Neo4j
  * - 'active': Current version
  * - 'deprecated': Superseded by newer version
  */
-export type MemoryStatus = 'active' | 'deprecated';
+export type MemoryStatus = "active" | "deprecated"
 
 export interface MemoryResponseMeta {
-  contract_version: 'v1';
-  degraded: boolean;
-  degraded_reason?: 'neo4j_unavailable';
-  stores_used: Array<'postgres' | 'neo4j' | 'ruvector'>;
-  stores_attempted: Array<'postgres' | 'neo4j'>;
-  warnings?: string[];
+  contract_version: "v1"
+  degraded: boolean
+  degraded_reason?: "neo4j_unavailable"
+  stores_used: Array<"postgres" | "neo4j" | "ruvector">
+  stores_attempted: Array<"postgres" | "neo4j">
+  warnings?: string[]
   /** RuVector trajectory ID for evidence-gated feedback (present when RuVector was used) */
-  ruvector_trajectory_id?: string;
+  ruvector_trajectory_id?: string
   /** Number of results returned from RuVector (present when RuVector was used) */
-  ruvector_count?: number;
+  ruvector_count?: number
 }
 
 // ── Request/Response Contracts ───────────────────────────────────────────
 
 /**
  * 1. memory_add
- * 
+ *
  * Add a memory for a user.
- * 
+ *
  * Flow:
  * 1. Validate group_id and content
  * 2. Write to PostgreSQL (events table, append-only)
@@ -103,208 +103,214 @@ export interface MemoryResponseMeta {
  */
 export interface MemoryAddRequest {
   /** Required: Tenant namespace (format: allura-*) */
-  group_id: GroupId;
-  
+  group_id: GroupId
+
   /** Required: User identifier within tenant */
-  user_id: UserId;
-  
+  user_id: UserId
+
   /** Required: Memory content text */
-  content: MemoryContent;
-  
+  content: MemoryContent
+
   /** Optional: Metadata (source, context, etc.) */
   metadata?: {
-    source?: MemoryProvenance;
-    conversation_id?: string;
-    agent_id?: string;
-    [key: string]: unknown;
-  };
-  
+    source?: MemoryProvenance
+    conversation_id?: string
+    agent_id?: string
+    [key: string]: unknown
+  }
+
   /** Optional: Override promotion threshold (default: 0.85) */
-  threshold?: number;
+  threshold?: number
 }
 
 export interface MemoryAddResponse {
   /** Memory identifier */
-  id: MemoryId;
-  
+  id: MemoryId
+
   /** Where the memory was stored */
-  stored: StorageLocation;
-  
+  stored: StorageLocation
+
   /** Confidence score (0.0 to 1.0) */
-  score: ConfidenceScore;
-  
+  score: ConfidenceScore
+
   /** Whether memory is pending human review (soc2 mode only) */
-  pending_review?: boolean;
-  
+  pending_review?: boolean
+
   /** Timestamp */
-  created_at: string;
+  created_at: string
 
   /** Execution metadata */
-  meta?: MemoryResponseMeta;
+  meta?: MemoryResponseMeta
 
   /** Whether this proposal was a near-duplicate of an existing one */
-  duplicate?: boolean;
+  duplicate?: boolean
 
   /** ID of the existing proposal this duplicates (when duplicate=true) */
-  duplicate_of?: string;
+  duplicate_of?: string
 
   /** Similarity score with the existing proposal (when duplicate=true) */
-  similarity?: number;
+  similarity?: number
 }
 
 /**
  * 2. memory_search
- * 
+ *
  * Search memories across both stores.
  * Federated search: PostgreSQL (episodic) + Neo4j (semantic).
  * Results merged by relevance score.
  */
 export interface MemorySearchRequest {
   /** Required: Search query */
-  query: string;
-  
+  query: string
+
   /** Required: Tenant namespace */
-  group_id: GroupId;
-  
+  group_id: GroupId
+
   /** Optional: User identifier (scope to user) */
-  user_id?: UserId;
-  
+  user_id?: UserId
+
   /** Optional: Maximum results (default: 10) */
-  limit?: number;
-  
+  limit?: number
+
   /** Optional: Minimum confidence filter */
-  min_score?: ConfidenceScore;
-  
+  min_score?: ConfidenceScore
+
   /** Optional: Include global memories (default: true) */
-  include_global?: boolean;
+  include_global?: boolean
 }
 
 export interface MemorySearchResult {
   /** Memory identifier */
-  id: MemoryId;
-  
+  id: MemoryId
+
   /** Memory content */
-  content: MemoryContent;
-  
+  content: MemoryContent
+
   /** Confidence score */
-  score: ConfidenceScore;
-  
+  score: ConfidenceScore
+
   /** Storage location */
-  source: StorageLocation;
-  
+  source: StorageLocation
+
   /** Provenance */
-  provenance: MemoryProvenance;
-  
+  provenance: MemoryProvenance
+
   /** Timestamp */
-  created_at: string;
-  
+  created_at: string
+
   /** Usage count (how many times retrieved) */
-  usage_count?: number;
+  usage_count?: number
+
+  /** Tags associated with this memory */
+  tags?: string[]
 }
 
 export interface MemorySearchResponse {
   /** Search results */
-  results: MemorySearchResult[];
-  
+  results: MemorySearchResult[]
+
   /** Total count */
-  count: number;
-  
+  count: number
+
   /** Query execution time (ms) */
-  latency_ms: number;
+  latency_ms: number
 
   /** Execution metadata */
-  meta?: MemoryResponseMeta;
+  meta?: MemoryResponseMeta
 }
 
 /**
  * 3. memory_get
- * 
+ *
  * Retrieve a single memory by ID.
  * Returns memory from either store (episodic or semantic).
  */
 export interface MemoryGetRequest {
   /** Required: Memory identifier */
-  id: MemoryId;
-  
+  id: MemoryId
+
   /** Required: Tenant namespace (for isolation) */
-  group_id: GroupId;
+  group_id: GroupId
 }
 
 export interface MemoryGetResponse {
   /** Memory identifier */
-  id: MemoryId;
-  
+  id: MemoryId
+
   /** Memory content */
-  content: MemoryContent;
-  
+  content: MemoryContent
+
   /** Confidence score */
-  score: ConfidenceScore;
-  
+  score: ConfidenceScore
+
   /** Storage location */
-  source: StorageLocation;
-  
+  source: StorageLocation
+
   /** Provenance */
-  provenance: MemoryProvenance;
-  
+  provenance: MemoryProvenance
+
   /** User identifier */
-  user_id: UserId;
-  
+  user_id: UserId
+
   /** Timestamp */
-  created_at: string;
-  
+  created_at: string
+
   /** Version history (if semantic) */
-  version?: number;
-  
+  version?: number
+
   /** Superseded by (if deprecated) */
-  superseded_by?: MemoryId;
-  
+  superseded_by?: MemoryId
+
   /** Usage count */
-  usage_count?: number;
+  usage_count?: number
+
+  /** Tags associated with this memory */
+  tags?: string[]
 
   /** Execution metadata */
-  meta?: MemoryResponseMeta;
+  meta?: MemoryResponseMeta
 }
 
 /**
  * 4. memory_list
- * 
+ *
  * List all memories for a user within a tenant.
  * Returns from both stores, merged and sorted.
  */
 export interface MemoryListRequest {
   /** Required: Tenant namespace */
-  group_id: GroupId;
+  group_id: GroupId
 
   /** Optional: User identifier — omit to list all users in the tenant (admin view) */
-  user_id?: UserId;
-  
+  user_id?: UserId
+
   /** Optional: Maximum results (default: 50) */
-  limit?: number;
-  
+  limit?: number
+
   /** Optional: Pagination offset */
-  offset?: number;
-  
+  offset?: number
+
   /** Optional: Sort order (default: 'created_at_desc') */
-  sort?: 'created_at_desc' | 'created_at_asc' | 'score_desc' | 'score_asc';
+  sort?: "created_at_desc" | "created_at_asc" | "score_desc" | "score_asc"
 }
 
 export interface MemoryListResponse {
   /** Memories */
-  memories: MemoryGetResponse[];
-  
+  memories: MemoryGetResponse[]
+
   /** Total count */
-  total: number;
-  
+  total: number
+
   /** Has more results */
-  has_more: boolean;
+  has_more: boolean
 
   /** Execution metadata */
-  meta?: MemoryResponseMeta;
+  meta?: MemoryResponseMeta
 }
 
 /**
  * 5. memory_delete
- * 
+ *
  * Soft-delete a memory.
  * - Appends deletion event to PostgreSQL (append-only)
  * - Marks Neo4j node as deprecated (if promoted)
@@ -312,30 +318,30 @@ export interface MemoryListResponse {
  */
 export interface MemoryDeleteRequest {
   /** Required: Memory identifier */
-  id: MemoryId;
-  
+  id: MemoryId
+
   /** Required: Tenant namespace */
-  group_id: GroupId;
-  
+  group_id: GroupId
+
   /** Required: User identifier (for authorization) */
-  user_id: UserId;
+  user_id: UserId
 }
 
 export interface MemoryDeleteResponse {
   /** Memory identifier */
-  id: MemoryId;
-  
+  id: MemoryId
+
   /** Deletion status */
-  deleted: boolean;
-  
+  deleted: boolean
+
   /** Deletion timestamp */
-  deleted_at: string;
-  
+  deleted_at: string
+
   /** Recovery window (days) */
-  recovery_days: number;
+  recovery_days: number
 
   /** Execution metadata */
-  meta?: MemoryResponseMeta;
+  meta?: MemoryResponseMeta
 }
 
 /**
@@ -345,32 +351,32 @@ export interface MemoryDeleteResponse {
  */
 export interface MemoryUpdateRequest {
   /** Required: Memory identifier to update */
-  id: MemoryId;
+  id: MemoryId
   /** Required: Tenant namespace */
-  group_id: GroupId;
+  group_id: GroupId
   /** Required: User identifier */
-  user_id: UserId;
+  user_id: UserId
   /** Required: New memory content */
-  content: MemoryContent;
+  content: MemoryContent
   /** Optional: Reason for update (audit trail) */
-  reason?: string;
+  reason?: string
   /** Optional: Additional metadata */
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, unknown>
 }
 
 export interface MemoryUpdateResponse {
   /** New version's memory identifier */
-  id: MemoryId;
+  id: MemoryId
   /** Superseded version's identifier */
-  previous_id: MemoryId;
+  previous_id: MemoryId
   /** Where the updated memory is stored */
-  stored: StorageLocation;
+  stored: StorageLocation
   /** Version number (incremented) */
-  version: number;
+  version: number
   /** Update timestamp */
-  updated_at: string;
+  updated_at: string
   /** Execution metadata */
-  meta?: MemoryResponseMeta;
+  meta?: MemoryResponseMeta
 }
 
 /**
@@ -380,28 +386,28 @@ export interface MemoryUpdateResponse {
  */
 export interface MemoryPromoteRequest {
   /** Required: Memory identifier to promote */
-  id: MemoryId;
+  id: MemoryId
   /** Required: Tenant namespace */
-  group_id: GroupId;
+  group_id: GroupId
   /** Required: User identifier */
-  user_id: UserId;
+  user_id: UserId
   /** Optional: Rationale for promotion request */
-  rationale?: string;
+  rationale?: string
   /** Optional: Who is requesting promotion */
-  curator_id?: string;
+  curator_id?: string
 }
 
 export interface MemoryPromoteResponse {
   /** Memory identifier */
-  id: MemoryId;
+  id: MemoryId
   /** Created proposal identifier */
-  proposal_id: string;
+  proposal_id: string
   /** 'queued' = new proposal created; 'already_canonical' = already in Neo4j */
-  status: 'queued' | 'already_canonical';
+  status: "queued" | "already_canonical"
   /** Timestamp when queued */
-  queued_at: string;
+  queued_at: string
   /** Execution metadata */
-  meta?: MemoryResponseMeta;
+  meta?: MemoryResponseMeta
 }
 
 /**
@@ -411,32 +417,32 @@ export interface MemoryPromoteResponse {
  */
 export interface MemoryExportRequest {
   /** Required: Tenant namespace */
-  group_id: GroupId;
+  group_id: GroupId
   /** Optional: Filter by user */
-  user_id?: UserId;
+  user_id?: UserId
   /** Optional: true = Neo4j canonical only; false/undefined = all stores */
-  canonical_only?: boolean;
+  canonical_only?: boolean
   /** Optional: Output format (json only for now) */
-  format?: 'json';
+  format?: "json"
   /** Optional: Maximum results (default 1000, max 10000) */
-  limit?: number;
+  limit?: number
   /** Optional: Pagination offset */
-  offset?: number;
+  offset?: number
 }
 
 export interface MemoryExportResponse {
   /** Exported memories */
-  memories: MemoryGetResponse[];
+  memories: MemoryGetResponse[]
   /** Total exported count */
-  count: number;
+  count: number
   /** Export timestamp */
-  exported_at: string;
+  exported_at: string
   /** How many are canonical (from Neo4j) */
-  canonical_count: number;
+  canonical_count: number
   /** How many are episodic-only (from PostgreSQL) */
-  episodic_count: number;
+  episodic_count: number
   /** Execution metadata */
-  meta?: MemoryResponseMeta;
+  meta?: MemoryResponseMeta
 }
 
 // ── Governance Contracts (Curator Workflow) ───────────────────────────────
@@ -444,38 +450,38 @@ export interface MemoryExportResponse {
 /**
  * Proposal status in curator queue
  */
-export type ProposalStatus = 'pending' | 'approved' | 'rejected';
+export type ProposalStatus = "pending" | "approved" | "rejected"
 
 /**
  * Curator proposal (soc2 mode only)
  */
 export interface CuratorProposal {
   /** Proposal identifier */
-  id: string;
-  
+  id: string
+
   /** Tenant namespace */
-  group_id: GroupId;
-  
+  group_id: GroupId
+
   /** Memory content */
-  content: MemoryContent;
-  
+  content: MemoryContent
+
   /** Confidence score */
-  score: ConfidenceScore;
-  
+  score: ConfidenceScore
+
   /** Reasoning for score */
-  reasoning: string;
-  
+  reasoning: string
+
   /** Tier classification */
-  tier: 'emerging' | 'adoption' | 'mainstream';
-  
+  tier: "emerging" | "adoption" | "mainstream"
+
   /** Status */
-  status: ProposalStatus;
-  
+  status: ProposalStatus
+
   /** Trace reference (PostgreSQL event ID) */
-  trace_ref: string;
-  
+  trace_ref: string
+
   /** Timestamp */
-  created_at: string;
+  created_at: string
 }
 
 /**
@@ -483,30 +489,30 @@ export interface CuratorProposal {
  */
 export interface CuratorApproveRequest {
   /** Proposal identifier */
-  proposal_id: string;
-  
+  proposal_id: string
+
   /** Tenant namespace */
-  group_id: GroupId;
-  
+  group_id: GroupId
+
   /** Decision */
-  decision: 'approve' | 'reject';
-  
+  decision: "approve" | "reject"
+
   /** Curator identifier */
-  curator_id: string;
-  
+  curator_id: string
+
   /** Reasoning */
-  rationale?: string;
+  rationale?: string
 }
 
 export interface CuratorApproveResponse {
   /** Success status */
-  success: boolean;
-  
+  success: boolean
+
   /** Memory ID (if approved) */
-  memory_id?: MemoryId;
-  
+  memory_id?: MemoryId
+
   /** Timestamp */
-  decided_at: string;
+  decided_at: string
 }
 
 // ── Configuration ─────────────────────────────────────────────────────────
@@ -516,16 +522,16 @@ export interface CuratorApproveResponse {
  */
 export interface MemoryConfig {
   /** Promotion mode */
-  promotion_mode: PromotionMode;
-  
+  promotion_mode: PromotionMode
+
   /** Auto-approval threshold (default: 0.85) */
-  auto_approval_threshold: number;
-  
+  auto_approval_threshold: number
+
   /** Duplicate detection threshold (default: 0.95) */
-  duplicate_threshold: number;
-  
+  duplicate_threshold: number
+
   /** Soft-delete recovery window (days, default: 30) */
-  recovery_window_days: number;
+  recovery_window_days: number
 }
 
 // ── Error Types ────────────────────────────────────────────────────────────
@@ -535,13 +541,13 @@ export interface MemoryConfig {
  */
 export interface MemoryError {
   /** Error code */
-  code: 'INVALID_GROUP_ID' | 'MEMORY_NOT_FOUND' | 'UNAUTHORIZED' | 'VALIDATION_ERROR' | 'INTERNAL_ERROR';
-  
+  code: "INVALID_GROUP_ID" | "MEMORY_NOT_FOUND" | "UNAUTHORIZED" | "VALIDATION_ERROR" | "INTERNAL_ERROR"
+
   /** Error message */
-  message: string;
-  
+  message: string
+
   /** Additional details */
-  details?: Record<string, unknown>;
+  details?: Record<string, unknown>
 }
 
 /**
@@ -549,8 +555,8 @@ export interface MemoryError {
  */
 export class GroupIdValidationError extends Error {
   constructor(message: string) {
-    super(message);
-    this.name = 'GroupIdValidationError';
+    super(message)
+    this.name = "GroupIdValidationError"
   }
 }
 
@@ -559,8 +565,8 @@ export class GroupIdValidationError extends Error {
  */
 export class MemoryNotFoundError extends Error {
   constructor(id: string) {
-    super(`Memory not found: ${id}`);
-    this.name = 'MemoryNotFoundError';
+    super(`Memory not found: ${id}`)
+    this.name = "MemoryNotFoundError"
   }
 }
 
@@ -569,8 +575,8 @@ export class MemoryNotFoundError extends Error {
  */
 export class UnauthorizedError extends Error {
   constructor(message: string) {
-    super(message);
-    this.name = 'UnauthorizedError';
+    super(message)
+    this.name = "UnauthorizedError"
   }
 }
 
@@ -579,7 +585,7 @@ export class UnauthorizedError extends Error {
  */
 export class MemoryAlreadyCanonicalError extends Error {
   constructor(id: string) {
-    super(`Memory is already canonical: ${id}`);
-    this.name = 'MemoryAlreadyCanonicalError';
+    super(`Memory is already canonical: ${id}`)
+    this.name = "MemoryAlreadyCanonicalError"
   }
 }
