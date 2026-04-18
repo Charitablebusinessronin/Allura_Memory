@@ -4,13 +4,13 @@ Execute a skill by routing it to a specialist agent executor.
 
 ## Usage
 
-```
+```bash
 /skill-load <skill-name> [--executor <executor-name>]
 ```
 
 ## Examples
 
-```
+```bash
 /skill-load code-review                       # Use default executor (@Pike)
 /skill-load code-review --executor pike-interface-review     # Explicit routing
 /skill-load postgres-optimization --executor woz-builder
@@ -27,7 +27,7 @@ Execute a skill by routing it to a specialist agent executor.
 ## Surgical Team Executors
 
 | Executor | Specialty | Permissions |
-|----------|-----------|-------------|
+| -------- | --------- | ----------- |
 | `pike-interface-review` | Architecture review | Read-only (no writes) |
 | `woz-builder` | Deep implementation | Full read/write |
 | `fowler-refactor-gate` | Strategic planning | Read + planning tools |
@@ -55,7 +55,7 @@ Execute a skill by routing it to a specialist agent executor.
 
 When loading `skill-creator`, Brooks orchestrates the full workflow:
 
-```
+```bash
 /skill-load skill-creator              # Full: draft → test → review → improve → optimize
 /skill-load skill-creator --improve     # Improve existing skill
 /skill-load skill-creator --eval        # Run evals + benchmark

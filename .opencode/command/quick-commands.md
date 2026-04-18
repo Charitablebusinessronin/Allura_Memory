@@ -59,7 +59,7 @@ Type these directly in your IDE for fast access to Allura Memory workflows.
 
 ### Start a Session
 
-```
+```bash
 /start
 ```
 
@@ -67,7 +67,7 @@ Loads memory, verifies infrastructure, prepares tools.
 
 ### Create a Task
 
-```
+```bash
 /task Add OAuth2 authentication with Google provider
 ```
 
@@ -75,7 +75,7 @@ Generates structured task file with memory links.
 
 ### Launch Party Mode
 
-```
+```bash
 /party Implement user dashboard with charts
 ```
 
@@ -83,7 +83,7 @@ Spawns all agents in parallel for maximum throughput.
 
 ### Quick Update
 
-```
+```bash
 /update progress Added OAuth2 authentication
 ```
 
@@ -91,7 +91,7 @@ Updates Allura Brain and logs to events.
 
 ### Query Memory
 
-```
+```bash
 /query authentication patterns
 ```
 
@@ -99,7 +99,7 @@ Searches Allura Brain for relevant insights.
 
 ### Code Review
 
-```
+```bash
 /review
 ```
 

@@ -4,15 +4,13 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)](tsconfig.json)
 [![Self-Hosted](https://img.shields.io/badge/deployment-self--hosted-1C232B)](#deployment-options)
 
-**Memory That Shows Its Work**
+## Memory That Shows Its Work
 
 Allura Memory is a self-hosted AI memory system for teams that want memory they can inspect, review, and manage.
 
 It is built around a simple promise: memory should be **traceable**, **structured**, and **governed** — and the experience of using it should feel considered rather than opaque.
 
-<p align="center">
-  <img src="./public/readme/readme-hero.png" alt="Allura Memory hero" width="100%" />
-</p>
+![Allura Memory hero](./public/readme/readme-hero.png)
 
 > Allura is designed for teams that care about visibility, control, and auditability today — and for organizations that may aspire to stricter regulatory or enterprise standards in the future. It does **not** claim current SOC 2 certification, banking approval, or any unverified compliance status.
 
@@ -33,15 +31,11 @@ For AI builders and technical teams who want memory they can inspect and manage,
 
 Allura’s v2 direction is warmer, softer, and more magnetic than a typical infrastructure product while still grounded in clarity and control.
 
-<p align="center">
-  <img src="./public/readme/readme-homepage-options.png" alt="Allura homepage direction options" width="100%" />
-</p>
+![Allura homepage direction options](./public/readme/readme-homepage-options.png)
 
 This is not “magic AI.” It is a more legible memory system with a more considered interface.
 
-<p align="center">
-  <img src="./public/readme/readme-brand-system.png" alt="Allura brand system direction" width="100%" />
-</p>
+![Allura brand system direction](./public/readme/readme-brand-system.png)
 
 ---
 
@@ -50,18 +44,21 @@ This is not “magic AI.” It is a more legible memory system with a more consi
 Inside the project, “**Allura Brain**” refers to the memory architecture itself:
 
 ### Episodic Layer — PostgreSQL
+
 - append-only event history
 - high-volume trace capture
 - audit trail by design
 - raw activity stays reconstructable
 
 ### Semantic Layer — Neo4j
+
 - curated knowledge
 - version history via `SUPERSEDES`
 - promotion gate before durable knowledge writes
 - lower-volume, higher-confidence memory
 
 ### Core Principle
+
 Every memory starts in the episodic layer. Promoted knowledge moves into the semantic layer **after review**, not before.
 
 This keeps Allura grounded in inspectability rather than black-box automation.
@@ -85,6 +82,7 @@ This keeps Allura grounded in inspectability rather than black-box automation.
 ## What We Claim — And What We Don’t
 
 ### We do claim
+
 - Allura is designed around inspectability, structure, and governance
 - It uses a dual-layer memory model
 - It supports append-only event logging
@@ -92,6 +90,7 @@ This keeps Allura grounded in inspectability rather than black-box automation.
 - It uses a curator / approval pattern for promoted knowledge flows
 
 ### We do **not** claim
+
 - current SOC 2 certification
 - banking-grade approval
 - zero hallucinations
@@ -100,6 +99,7 @@ This keeps Allura grounded in inspectability rather than black-box automation.
 - benchmark superiority unless specifically verified
 
 Where the product is directional or still evolving, the project should be described as:
+
 - **designed to**
 - **built to support**
 - **positioned to help**
@@ -114,7 +114,7 @@ Allura is being developed as a more governed, more inspectable alternative in th
 Directional differentiation today:
 
 | Dimension | Allura Direction | mem0 Reference Frame |
-|-----------|------------------|----------------------|
+| --------- | ---------------- | -------------------- |
 | Memory posture | inspectable + governed | autonomous memory emphasis |
 | Review model | approval-friendly | more automation-oriented |
 | Auditability | append-only system trail | less central to positioning |
@@ -127,6 +127,7 @@ This is **positioning**, not an absolute superiority claim.
 ## Quick Start
 
 ### Prerequisites
+
 - Docker + Docker Compose
 - Bun 1.0+
 
@@ -201,6 +202,7 @@ ENCRYPTION_KEY=$(openssl rand -hex 32)
 In this codebase, `soc2` is an **internal workflow label** for a stricter review path.
 
 It means:
+
 - higher-confidence items are queued for review
 - promotion is gated more conservatively
 - the flow is aimed at audit-conscious environments
@@ -210,7 +212,7 @@ It does **not** mean the project is currently SOC 2 certified.
 ### Promotion Modes
 
 | Mode | Behavior | Typical Use |
-|------|----------|-------------|
+| ---- | -------- | ----------- |
 | `soc2` | score ≥ threshold queues for curator review | stricter review workflow |
 | `auto` | score ≥ threshold promotes automatically | lower-risk or experimental environments |
 
@@ -249,6 +251,7 @@ This keeps the system explainable. The goal is not to hide memory work — it is
 The Plugin Harness orchestrates MCP servers and skill delegation with **explicit approval**.
 
 ### Principles
+
 - no auto-loading
 - no silent discovery
 - explicit approval before activation
@@ -266,6 +269,7 @@ The Plugin Harness orchestrates MCP servers and skill delegation with **explicit
 ```
 
 See:
+
 - `.opencode/PLUGIN-ARCHITECTURE.md`
 - `.opencode/HARNESS-TO-CLAUDE-CODE.md`
 - `.opencode/HARNESS-QUICKSTART.md`
@@ -275,13 +279,16 @@ See:
 ## Use Cases
 
 ### 1. Developer Session Memory
+
 When sessions end, useful working context often disappears. Allura helps preserve structured memory that can be reviewed and reused later.
 
 ### 2. Internal Team Knowledge Flows
+
 Teams running agents across projects need clearer boundaries, provenance, and continuity across sessions and operators.
 
 ### 3. Audit-Conscious Workflows
-Organizations that care about traceability today — and may aspire to stricter enterprise or regulated operating standards in the future — can use Allura’s review-oriented model as a more conservative memory workflow.
+
+Organizations that care about traceability today — and may aspire to stricter enterprise or regulated operating standards in the future — can use Allura's review-oriented model as a more conservative memory workflow.
 
 ---
 
@@ -295,9 +302,11 @@ curl http://localhost:3000/api/health
 ```
 
 ### Docker Compose
+
 Suitable for individuals and small teams running self-hosted infrastructure.
 
 ### Kubernetes
+
 Available for teams that want to operationalize the stack in a more managed environment.
 
 See: `.github/DEPLOYMENT.md`
@@ -307,9 +316,11 @@ See: `.github/DEPLOYMENT.md`
 ## Architecture
 
 ### PostgreSQL (Episodic)
+
 Raw execution logs and append-only events.
 
 ### Neo4j (Semantic)
+
 Curated knowledge with version history via `SUPERSEDES`.
 
 ### Key Rule
@@ -337,6 +348,7 @@ bun run lint
 ```
 
 Harness-specific references:
+
 - `.opencode/HARNESS-TEST-COMMAND.txt`
 - `.opencode/harness/test-e2e.ts`
 
@@ -352,6 +364,7 @@ bun run format
 ```
 
 Contributions welcome:
+
 - bug fixes
 - feature work
 - docs improvements
@@ -364,6 +377,7 @@ See `CLAUDE.md` for conventions.
 ## Learn More
 
 ### Core Docs
+
 - `.github/ARCHITECTURE.md`
 - `.github/API-REFERENCE.md`
 - `.github/DEPLOYMENT.md`
@@ -371,12 +385,14 @@ See `CLAUDE.md` for conventions.
 - `docs/allura/WIREFRAMES.md`
 
 ### Harness Docs
+
 - `.opencode/PLUGIN-ARCHITECTURE.md`
 - `.opencode/HARNESS-LOGGING-INTEGRATION.md`
 - `.opencode/HARNESS-TO-CLAUDE-CODE.md`
 - `.opencode/HARNESS-QUICKSTART.md`
 
 ### Internal Memory System Context
+
 - `.claude/README.md`
 
 ---

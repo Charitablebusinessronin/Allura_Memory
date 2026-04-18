@@ -1,106 +1,145 @@
 ---
 name: party-mode
-description: "Launch multiple agents in parallel for maximum throughput. The surgical team works together."
-allowed-tools: ["Agent", "Read", "Grep", "Bash", "mcp__MCP_DOCKER__*"]
+description: "Launch multiple Team RAM specialists in parallel. Brooks orchestrates; the team executes."
+allowed-tools: ["Task", "Read", "Grep", "Bash", "mcp__MCP_DOCKER__*"]
 ---
 
-# Party Mode — Parallel Agent Orchestration
+# Party Mode — Team RAM Parallel Dispatch
 
-Launch multiple specialists simultaneously. The surgical team works together.
+Launch multiple specialists simultaneously. Brooks orchestrates; Team RAM executes.
+
+## Usage
+
+```text
+/party <task description>
+```
 
 ## When to Use
 
 - Complex tasks requiring multiple perspectives
-- Time-sensitive work needing parallel execution
-- Research + implementation + review in parallel
-- Multi-file changes across domains
+- Time-sensitive work where some subtasks are independent
+- Research + implementation + validation work that can be split cleanly
+- Multi-file or multi-domain changes where separate specialists add value
 
-## The Surgical Team Party
+## When Not to Use
 
-When you invoke `party-mode`, you get:
+- Small one-file changes
+- Tight sequential work where one step depends on the last
+- Trivial fixes where coordination overhead would cost more than it saves
+- Tasks without at least two meaningful specialist slices
 
-> **Source of truth:** `.opencode/agent/*.md` — 10 canonical agents. Personas derived from agent definitions.
+## Team RAM Roster
 
-| Agent | Persona | Role | Parallel Task |
-|-------|---------|------|---------------|
-| **Brooks** | Frederick Brooks | Orchestrator | Coordinates the party |
-| **Woz** | Steve Wozniak | Primary Builder | Implementation |
-| **Pike** | Rob Pike | Simplicity Gate | Architecture review (read-only) |
-| **Scout** | (none) | Fast Discovery | External research + codebase search |
-| **Bellard** | Fabrice Bellard | Diagnostics + Perf | Performance measurement |
-| **Fowler** | Martin Fowler | Maintainability Gate | Refactoring review |
+| Agent | Subagent Type | Role | Writes Code? |
+|-------|--------------|------|-------------|
+| **Woz** | `WOZ_BUILDER` | Primary builder — implements, tests, and prepares diffs | ✅ Yes |
+| **Scout** | `SCOUT_RECON` | Recon — file discovery, pattern grep, risk scan | ❌ Read-only |
+| **Knuth** | `KNUTH_DATA_ARCHITECT` | Data — schema, queries, migrations | ⚠️ Ask first |
+| **Bellard** | `BELLARD_DIAGNOSTICS_PERF` | Diagnostics — perf measurement, profiling | ❌ Read-only |
+| **Carmack** | `CARMACK_PERFORMANCE` | Perf — latency reduction, hot path optimization | ❌ Read-only |
+| **Fowler** | `FOWLER_REFACTOR_GATE` | Refactor gate — maintainability, lint, typecheck | ✅ Yes, limited |
+| **Pike** | `PIKE_INTERFACE_REVIEW` | Interface gate — API ergonomics, surface area | ❌ Read-only |
+| **Hightower** | `HIGHTOWER_DEVOPS` | DevOps — Docker, CI/CD, infrastructure | ⚠️ Ask first |
 
-## Party Protocol
+## Protocol
 
-### Phase 1: Spawn All Agents
+### Phase 1: Decompose (Brooks)
 
-Launch ALL agents in a single turn. Every agent uses `run_in_background=true`. No sequential launches.
+Brooks reads the task and breaks it into **independent subtasks**.
+Each subtask maps to one Team RAM specialist.
+
+```text
+Subtasks with NO dependencies → run in PARALLEL (same turn)
+Subtasks that depend on others → run AFTER dependency completes
+```
+
+Brooks should keep the decomposition simple and explicit.
+
+### Phase 2: Dispatch (Parallel Launch)
+
+Launch all independent specialists in a **single message** using the Task tool.
 
 ```javascript
-// Spawn all agents simultaneously
-Agent({ subagent_type: "WOZ_BUILDER", prompt: "...", run_in_background: true })
-Agent({ subagent_type: "PIKE_INTERFACE_REVIEW", prompt: "...", run_in_background: true })
-Agent({ subagent_type: "SCOUT_RECON", prompt: "...", run_in_background: true })
-Agent({ subagent_type: "SCOUT_RECON", prompt: "...", run_in_background: true })
-Agent({ subagent_type: "ux", prompt: "...", run_in_background: true })
+// Example: "Add user authentication with OAuth2"
+
+Task(subagent_type: "SCOUT_RECON", prompt: "Find all existing auth patterns, middleware, and session handling in src/. Check .env for auth-related vars. Report file paths and current state.")
+Task(subagent_type: "WOZ_BUILDER", prompt: "Implement OAuth2 flow per specs. Follow existing auth patterns. Write tests alongside implementation.")
+Task(subagent_type: "KNUTH_DATA_ARCHITECT", prompt: "Review schema for user tables and session storage. Check migrations and propose any schema changes needed for OAuth2.")
+Task(subagent_type: "HIGHTOWER_DEVOPS", prompt: "Check Docker and CI config for auth-related env vars and secrets. Ensure .env.example is updated. Verify environment and callback assumptions.")
 ```
 
-### Phase 2: Collect Results
+### Phase 3: Collect and Validate
 
-Use `background_output` to collect results:
+After all parallel agents complete:
 
-```javascript
-// Check each agent's output
-background_output({ task_id: "woz-builder-task-id" })
-background_output({ task_id: "pike-interface-review-task-id" })
-background_output({ task_id: "scout-recon-task-id" })
-background_output({ task_id: "scout-recon-task-id" })
-background_output({ task_id: "ux-task-id" })
+1. **Fowler gate** — run `bun run typecheck && bun run lint`
+2. **Pike gate** — review any new API or interface surface
+3. **Bellard gate** — measure if a performance-sensitive path changed
+
+### Phase 4: Synthesize and Commit
+
+Brooks synthesizes all results, resolves conflicts, and approves the final path.
+
+Woz is the **default writer** for implementation changes.
+Other specialists write only when explicitly authorized by the task and their role.
+
+If a commit is requested, Woz should normally prepare or perform the implementation commit after the gates pass.
+
+## Task Decomposition Examples
+
+### "Run k6 load test and optimize if needed"
+
+```text
+PARALLEL:
+  - Bellard: Run k6 at VU=100, capture p95 metrics
+  - Scout: Find hot paths in src/mcp/ and src/lib/memory/
+
+AFTER Bellard reports:
+  - Carmack: Optimize if p95 > 200ms
 ```
 
-### Phase 3: Synthesize
+### "Process backlogged proposals through Notion sync"
 
-Brooks synthesizes all results and presents unified output.
+```text
+PARALLEL:
+  - Knuth: Query pending proposals and check dedup state
+  - Scout: Find Notion sync config and env vars
 
-## Party Rules
-
-1. **No sequential launches** — All agents spawn simultaneously
-2. **No blocking** — Use `run_in_background=true` always
-3. **No dependencies** — Each agent works independently
-4. **Synthesis at the end** — Brooks combines results
-
-## Example: Full Feature Party
-
-```
-User: "Add user authentication with OAuth2"
-
-Brooks spawns:
-- Woz: Implement OAuth2 flow
-- Pike: Review security architecture
-- Scout: Research OAuth2 best practices
-- Scout: Find existing auth patterns in codebase
-- UX: Review login flow accessibility
-
-All run in parallel. Brooks synthesizes.
+AFTER both report:
+  - Woz: Implement batch processing script using query results
 ```
 
-## Example: Code Review Party
+### "Debug failing test suite"
 
+```text
+PARALLEL:
+  - Scout: Find all failing tests and categorize by error type
+  - Bellard: Check for perf regressions or timing-related failures
+
+AFTER both report:
+  - Woz: Fix failures categorized by Scout
+  - Fowler: Validate fixes do not add debt
 ```
-User: "Review PR #123"
 
-Brooks spawns:
-- Pike: Architecture review
-- Scout: Find related patterns
-- UX: Accessibility review
+## Rules
 
-All run in parallel. Brooks synthesizes.
-```
+1. **At least 2 agents per party** — no solo work in party mode
+2. **Woz is the default writer** — other specialists write only when explicitly authorized
+3. **Fowler gates every commit path** — no commit flow without typecheck and lint passing
+4. **Brooks never implements** — Brooks orchestrates, synthesizes, and approves direction
+5. **group_id on every DB operation** — required in this repo
+6. **Append-only on events table** — INSERT only in this repo
 
-## Communication Overhead
+## Why This Works
 
-With 5 agents running in parallel, we reduce $\frac{5 \times 4}{2} = 10$ communication paths to **zero** during execution. Brooks handles all synthesis.
+Party mode is useful when the work can be split into real specialist slices.
+
+It fails when used on tasks that are too small, too coupled, or too vague.
+
+Brooks keeps conceptual integrity.
+The specialists reduce delay.
+The gates keep the work honest.
 
 ---
 
-**Invoke with:** `party-mode <task description>`
+**Invoke with:** `/party <task description>`

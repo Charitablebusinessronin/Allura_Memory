@@ -4,7 +4,7 @@ Create, improve, or evaluate an OpenCode skill using the iterative skill-creator
 
 ## Usage
 
-```
+```bash
 /skill-create <skill-name>              # Create a new skill from scratch
 /skill-create <skill-name> --improve    # Improve an existing skill
 /skill-create <skill-name> --eval      # Run evals on an existing skill
@@ -13,7 +13,7 @@ Create, improve, or evaluate an OpenCode skill using the iterative skill-creator
 
 ## Examples
 
-```
+```bash
 /skill-create pdf-extractor              # New skill: extract data from PDFs
 /skill-create code-review --improve     # Improve the existing code-review skill
 /skill-create mcp-builder --eval        # Run evals on mcp-builder skill
