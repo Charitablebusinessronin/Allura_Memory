@@ -2,7 +2,7 @@
 
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -16,19 +16,8 @@ import { SettingsSheet } from "@/components/memory/settings-sheet"
 import { DURHAM_GRADIENTS } from "@/lib/brand/durham"
 import { DEFAULT_GROUP_ID, DEFAULT_USER_ID } from "@/lib/defaults/scope"
 import { useMemoryList } from "@/hooks/use-memory-list"
+import { buildScopeLabel } from "@/lib/scope/display-names"
 import type { Memory } from "@/hooks/use-memory-list"
-
-function buildScopeLabel(groupId: string, userId: string, allUsers: boolean): string {
-  if (allUsers) {
-    return `Showing memories from everyone in ${groupId}`
-  }
-
-  if (userId) {
-    return `Showing memories for ${userId}`
-  }
-
-  return `Showing memories in ${groupId}`
-}
 
 export default function MemoryViewerPage() {
   const {
@@ -67,6 +56,16 @@ export default function MemoryViewerPage() {
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [restoringId, setRestoringId] = useState<string | null>(null)
+  const [scopeLabel, setScopeLabel] = useState<string>('Loading...')
+
+  // Resolve human-readable scope label
+  useEffect(() => {
+    let mounted = true
+    buildScopeLabel(groupId, userId, allUsers).then((label) => {
+      if (mounted) setScopeLabel(label)
+    })
+    return () => { mounted = false }
+  }, [groupId, userId, allUsers])
 
   const handleAddSubmit = async () => {
     if (!addContent.trim()) return
@@ -92,8 +91,6 @@ export default function MemoryViewerPage() {
 
     return `${memories.length} memor${memories.length === 1 ? "y" : "ies"} ready to review`
   }, [memories.length, deletedMemories.length, searchQuery, viewStatus])
-
-  const scopeLabel = useMemo(() => buildScopeLabel(groupId, userId, allUsers), [groupId, userId, allUsers])
 
   return (
     <div className="min-h-screen bg-[--durham-page-bg]" style={{ backgroundImage: DURHAM_GRADIENTS.page }}>
