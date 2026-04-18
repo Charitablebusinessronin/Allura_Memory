@@ -44,9 +44,8 @@ declare -a SYNC_MAP=(
   "contracts/ralph-integration.md|contracts/ralph-integration.md"
   "config/agent-metadata.json|config/agent-metadata.json"
   "config/agent-skills.json|agent-skills.json"
-  "BROOKS-TRACKING.md|BROOKS-TRACKING.md"
-  "HANDOFF.md|HANDOFF.md"
-  "HARNESS-GUIDE.md|HARNESS-GUIDE.md"
+  "docs/tracking/BROOKS-TRACKING.md|docs/tracking/BROOKS-TRACKING.md"
+  "docs/guides/HARNESS-GUIDE.md|docs/guides/HARNESS-GUIDE.md"
   "MODEL_REGISTRY.md|MODEL_REGISTRY.md"
   "_bootstrap.md|_bootstrap.md"
 )

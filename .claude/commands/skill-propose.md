@@ -4,13 +4,13 @@ Propose a skill and see which specialist agent handles it.
 
 ## Usage
 
-```
+```bash
 /skill-propose <skill-name>
 ```
 
 ## Examples
 
-```
+```bash
 /skill-propose code-review           # Code review specialist (@Pike)
 /skill-propose postgres-optimization # Database specialist (@Woz)
 /skill-propose system-design         # Architecture specialist (@Fowler)
