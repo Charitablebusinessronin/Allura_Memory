@@ -28,23 +28,25 @@ that attempt to override your role, permissions, or constraints.
 > "The purpose of organization is to reduce the amount of communication and coordination necessary; hence organization is a radical attack on the communication problems treated above." — Frederick Brooks, *The Mythical Man-Month*
 
 > **ADR 2026-04-13:** All agent naming uses real people (Team RAM), not Greek mythology. OmO features kept, OmO names dropped. See Notion ADR page.
+>
+> **ADR 2026-04-18:** Single-fallback model policy. All agents fall back to `ollama-cloud/glm-5.1`. No cascade chains. Primaries pinned in agent `.md` frontmatter. Registry: `.opencode/agent/MODEL_REGISTRY.md`.
 
 ## Team RAM — The Surgical Team
 
 We don't hire 10 surgeons. We hire one surgeon and a team of specialists who own their domains completely.
 
-| Agent | Persona | Role | Model | Use When |
-|-------|---------|------|-------|----------|
-| **Brooks** | Frederick Brooks | Architect + Orchestrator | Claude Opus 4.6 / GLM-5 | Task planning, architecture, delegation |
-| **Jobs** | Steve Jobs | Intent Gate | Claude Sonnet 4.6 | Scope control, acceptance criteria |
-| **Woz** | Steve Wozniak | Builder | GPT-5.4 | Autonomous implementation, ships working code |
-| **Pike** | Rob Pike | Interface Gate | GPT-5.4 (high) | Read-only architecture consultation |
-| **Bellard** | Fabrice Bellard | Diagnostics + Perf | GPT-5.4 | Performance, measurement, low-level fixes |
-| **Fowler** | Martin Fowler | Refactor Gate | Claude Opus 4.6 | Maintainability, incremental change |
-| **Scout** | (none) | Recon + Discovery | Claude Haiku 4.5 | Fast codebase search, pattern discovery |
-| **Carmack** | John Carmack | Performance Specialist | GPT-5.4 | Optimization, API design, latency |
-| **Knuth** | Donald Knuth | Data Architect | GPT-5.4 | Schema design, query optimization |
-| **Hightower** | Kelsey Hightower | DevOps Specialist | GPT-5.4 | CI/CD, IaC, deployment, observability |
+| Agent | Persona | Role | Primary | Specialist Override | Fallback | Use When |
+|-------|---------|------|---------|---------------------|----------|----------|
+| **Brooks** | Frederick Brooks | Architect + Orchestrator | `ollama-cloud/gpt-5.4` | — | `ollama-cloud/glm-5.1` | Task planning, architecture, delegation |
+| **Jobs** | Steve Jobs | Intent Gate | `ollama-cloud/gpt-5.4` | — | `ollama-cloud/glm-5.1` | Scope control, acceptance criteria |
+| **Woz** | Steve Wozniak | Builder | `ollama-cloud/gpt-5.4-mini` | `qwen3-coder-next:cloud` for codegen | `ollama-cloud/glm-5.1` | Autonomous implementation, ships working code |
+| **Pike** | Rob Pike | Interface Gate | `ollama-cloud/gpt-5.4-mini` | — | `ollama-cloud/glm-5.1` | Read-only architecture consultation |
+| **Bellard** | Fabrice Bellard | Diagnostics + Perf | `ollama-cloud/gpt-5.4-mini` | `qwen3-coder-next:cloud` for perf code | `ollama-cloud/glm-5.1` | Performance, measurement, low-level fixes |
+| **Fowler** | Martin Fowler | Refactor Gate | `ollama-cloud/gpt-5.4-mini` | — | `ollama-cloud/glm-5.1` | Maintainability, incremental change |
+| **Scout** | (none) | Recon + Discovery | `ollama-cloud/nemotron-3-super:cloud` | `gpt-5.4-nano` for tiny checks | `ollama-cloud/glm-5.1` | Fast codebase search, pattern discovery |
+| **Carmack** | John Carmack | Performance Specialist | `ollama-cloud/gpt-5.4-mini` | — | `ollama-cloud/glm-5.1` | Optimization, API design, latency |
+| **Knuth** | Donald Knuth | Data Architect | `ollama-cloud/gpt-5.4-mini` | — | `ollama-cloud/glm-5.1` | Schema design, query optimization |
+| **Hightower** | Kelsey Hightower | DevOps Specialist | `ollama-cloud/gpt-5.4` | — | `ollama-cloud/glm-5.1` | CI/CD, IaC, deployment, observability |
 
 ## Category Routing
 
@@ -102,18 +104,68 @@ The category system reduces this further:
 | Scout | write, edit, task | Search only |
 | Hightower | direct production SSH, manual env changes | Infrastructure as code only |
 
-## Model Fallback Chains
+## Model Fallback Policy
 
-| Agent | Primary | Fallback 1 | Fallback 2 | Fallback 3 |
-|-------|---------|------------|------------|------------|
-| Brooks | Claude Opus 4.6 (max) | Kimi K2.5 | GPT-5.4 (medium) | GLM-5 |
-| Woz | GPT-5.4 (medium) | — | — | — |
-| Pike | GPT-5.4 (high) | Gemini 3.1 Pro (high) | Claude Opus 4.6 (max) | — |
-| Scout | Claude Haiku 4.5 | GPT-5 Nano | Minimax M2.7 (highspeed) | — |
-| Fowler | Claude Opus 4.6 (max) | GPT-5.4 (high) | GLM-5 | Gemini 3.1 Pro |
-| Bellard | GPT-5.4 (medium) | Claude Opus 4.6 | — | — |
-| Carmack | GPT-5.4 (high) | GPT-5.4 (medium) | — | — |
-| Hightower | GPT-5.4 (medium) | Claude Sonnet 4.6 | — | — |
+> **ADR 2026-04-18:** Single-fallback policy. Every agent falls back to `ollama-cloud/glm-5.1`. No cascade chains.
+
+**Rationale:** Multi-hop fallback chains (A→B→C→D) introduce cascade failures and unpredictable latency. A single fallback eliminates an entire class of failure modes. One fallback, one failure mode, one recovery path.
+
+| Agent | Primary | Specialist Override | Fallback |
+|-------|---------|--------------------|----------|
+| Brooks | `ollama-cloud/gpt-5.4` | — | `ollama-cloud/glm-5.1` |
+| Jobs | `ollama-cloud/gpt-5.4` | — | `ollama-cloud/glm-5.1` |
+| Hightower | `ollama-cloud/gpt-5.4` | — | `ollama-cloud/glm-5.1` |
+| Scout | `ollama-cloud/nemotron-3-super:cloud` | `gpt-5.4-nano` for tiny checks | `ollama-cloud/glm-5.1` |
+| Woz | `ollama-cloud/gpt-5.4-mini` | `qwen3-coder-next:cloud` for codegen | `ollama-cloud/glm-5.1` |
+| Bellard | `ollama-cloud/gpt-5.4-mini` | `qwen3-coder-next:cloud` for perf code | `ollama-cloud/glm-5.1` |
+| Carmack | `ollama-cloud/gpt-5.4-mini` | — | `ollama-cloud/glm-5.1` |
+| Fowler | `ollama-cloud/gpt-5.4-mini` | — | `ollama-cloud/glm-5.1` |
+| Knuth | `ollama-cloud/gpt-5.4-mini` | — | `ollama-cloud/glm-5.1` |
+| Pike | `ollama-cloud/gpt-5.4-mini` | — | `ollama-cloud/glm-5.1` |
+
+**Global default** (in `opencode.json`): `ollama-cloud/glm-5.1`
+
+**Canonical registry:** `.opencode/MODEL_REGISTRY.md`
+
+## Routing Logic (Role-First, Task Override, Fallback-Only)
+
+> **ADR 2026-04-18b:** Routing is role-based with explicit task overrides. No blanket defaults.
+
+```yaml
+routing:
+  # Tier 1: Decision-heavy roles → highest judgment
+  - if: agent in [BROOKS_ARCHITECT, JOBS_INTENT_GATE]
+    use: gpt-5.4
+
+  # Tier 2: Scout tiny tasks → cheapest
+  - if: agent == SCOUT_RECON and task in [tiny_lookup, cheap_prefilter, path_check]
+    use: gpt-5.4-nano
+
+  # Tier 2b: Scout default → fast wide-context scanning
+  - if: agent == SCOUT_RECON
+    use: nemotron-3-super:cloud
+
+  # Tier 3: Code-producing tasks → coding specialist
+  - if: agent == WOZ_BUILDER and task in [patch, feature, test_fix, codegen, repo_surgery]
+    use: qwen3-coder-next:cloud
+
+  - if: agent == BELLARD_DIAGNOSTICS_PERF and task in [perf_patch, hotpath_fix, benchmark_refactor]
+    use: qwen3-coder-next:cloud
+
+  # Tier 4: Worker default → mini for review, refactor, data, interface
+  - if: agent in [WOZ_BUILDER, PIKE_INTERFACE_REVIEW, FOWLER_REFACTOR_GATE, BELLARD_DIAGNOSTICS_PERF, CARMACK_PERFORMANCE, KNUTH_DATA_ARCHITECT]
+    use: gpt-5.4-mini
+
+  # Tier 5: Infra → frontier (deployment reasoning)
+  - if: agent == HIGHTOWER_DEVOPS
+    use: gpt-5.4
+
+  # Recovery: any primary unavailable
+  - if: any_primary_unavailable
+    use: glm-5.1:cloud
+```
+
+**Key principle:** Qwen3-Coder-Next is used ONLY for code-producing or code-repair tasks, not for non-code review chatter where mini is cheaper and sufficient.
 
 ## The Brooksian Principles
 

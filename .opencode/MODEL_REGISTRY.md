@@ -3,21 +3,80 @@
 # Update this file whenever a model is changed in either runtime.
 # This is the authoritative contract between OpenCode and Claude Code agent equivalents.
 
-version: "1.0.0"
-last_updated: "2026-04-06"
+version: "3.0.0"
+last_updated: "2026-04-18"
 
-## Mapping
+## Primary Assignments
 
-| Agent Role         | OpenCode Agent       | OpenCode Model  | Claude Code Agent          | Claude Model        | Behavioral Notes                                              |
-|--------------------|----------------------|-----------------|----------------------------|---------------------|---------------------------------------------------------------|
-| Orchestrator       | MemoryOrchestrator   | glm-5-cloud     | memory-orchestrator        | claude-opus-4-6     | Brooks persona in Claude Code; loop enforcement in prompt     |
-| Architect          | MemoryArchitect      | (runtime default)| brooks-architect           | claude-opus-4-6     | CA/VA commands; ADR discipline identical                      |
-| Builder            | MemoryBuilder        | (runtime default)| memory-builder             | claude-sonnet-4-6   | Write templates identical; Postgres append-only enforced      |
-| Guardian           | MemoryGuardian       | (runtime default)| memory-guardian            | claude-sonnet-4-6   | HITL gating identical; invariant checklist identical          |
-| Scout              | MemoryScout          | (runtime default)| memory-scout               | claude-sonnet-4-6   | Memory-first search pattern identical; tools differ (see note)|
-| Analyst            | MemoryAnalyst        | (runtime default)| memory-analyst             | claude-sonnet-4-6   | SQL/Cypher queries identical; report formats identical        |
-| Chronicler         | MemoryChronicler     | (runtime default)| memory-chronicler          | claude-sonnet-4-6   | ADR format identical; Notion sync uses Smithery MCP           |
-| Gap Auditor        | (no equivalent)      | —               | architecture-gap-auditor   | claude-sonnet-4-6   | Claude Code only — no OpenCode counterpart                    |
+| Agent        | Role           | Primary Model                      | Specialist Override                    | Fallback Model          |
+|--------------|----------------|------------------------------------|---------------------------------------|-------------------------|
+| brooks       | Orchestrator   | ollama-cloud/gpt-5.4              | —                                     | ollama-cloud/glm-5.1    |
+| hightower    | Infra          | ollama-cloud/gpt-5.4              | —                                     | ollama-cloud/glm-5.1    |
+| jobs         | Strategy       | ollama-cloud/gpt-5.4              | —                                     | ollama-cloud/glm-5.1    |
+| scout        | Search/Triage  | ollama-cloud/nemotron-3-super:cloud | ollama-cloud/gpt-5.4-nano (tiny)    | ollama-cloud/glm-5.1    |
+| woz          | Code           | ollama-cloud/gpt-5.4-mini         | ollama-cloud/qwen3-coder-next:cloud  | ollama-cloud/glm-5.1    |
+| bellard      | Code/Diag      | ollama-cloud/gpt-5.4-mini         | ollama-cloud/qwen3-coder-next:cloud  | ollama-cloud/glm-5.1    |
+| carmack      | Code/Perf      | ollama-cloud/gpt-5.4-mini         | —                                     | ollama-cloud/glm-5.1    |
+| knuth        | Code/Data      | ollama-cloud/gpt-5.4-mini         | —                                     | ollama-cloud/glm-5.1    |
+| fowler       | Code/Refactor  | ollama-cloud/gpt-5.4-mini         | —                                     | ollama-cloud/glm-5.1    |
+| pike         | Code/Interface | ollama-cloud/gpt-5.4-mini         | —                                     | ollama-cloud/glm-5.1    |
+
+## Specialist Override Tasks
+
+Specialist overrides activate when the task type matches. The agent stays on its primary model for all other work.
+
+| Agent    | Specialist Model                    | Override Tasks                                        |
+|----------|-------------------------------------|-------------------------------------------------------|
+| scout    | ollama-cloud/gpt-5.4-nano           | tiny_lookup, cheap_prefilter, path_check             |
+| woz      | ollama-cloud/qwen3-coder-next:cloud | patch, feature, test_fix, codegen, repo_surgery      |
+| bellard  | ollama-cloud/qwen3-coder-next:cloud | perf_patch, hotpath_fix, benchmark_refactor           |
+
+## Global Default (opencode.json)
+
+```json
+{
+  "model": "ollama-cloud/glm-5.1"
+}
+```
+
+> All agents without an explicit `model:` field inherit this. Fallback activates on credit exhaustion or API error.
+
+## Agent Frontmatter (per .md file)
+
+```yaml
+# brooks.md / hightower.md / jobs.md
+model: ollama-cloud/gpt-5.4
+
+# scout.md
+model: ollama-cloud/nemotron-3-super:cloud
+model_tiny: ollama-cloud/gpt-5.4-nano
+
+# woz.md
+model: ollama-cloud/gpt-5.4-mini
+specialist_override: ollama-cloud/qwen3-coder-next:cloud
+specialist_tasks: [patch, feature, test_fix, codegen, repo_surgery]
+
+# bellard.md
+model: ollama-cloud/gpt-5.4-mini
+specialist_override: ollama-cloud/qwen3-coder-next:cloud
+specialist_tasks: [perf_patch, hotpath_fix, benchmark_refactor]
+
+# carmack.md / knuth.md / fowler.md / pike.md
+model: ollama-cloud/gpt-5.4-mini
+```
+
+## Cross-Runtime Mapping
+
+| Agent Role         | OpenCode Agent       | OpenCode Model              | Claude Code Agent          | Claude Model        | Behavioral Notes                                              |
+|--------------------|----------------------|-----------------------------|----------------------------|---------------------|---------------------------------------------------------------|
+| Orchestrator       | MemoryOrchestrator   | ollama-cloud/glm-5.1        | memory-orchestrator        | claude-opus-4-6     | Brooks persona in Claude Code; loop enforcement in prompt     |
+| Architect          | MemoryArchitect      | ollama-cloud/gpt-5.4        | brooks-architect           | claude-opus-4-6     | CA/VA commands; ADR discipline identical                      |
+| Builder            | MemoryBuilder        | ollama-cloud/gpt-5.4-mini   | memory-builder             | claude-sonnet-4-6   | Write templates identical; Postgres append-only enforced      |
+| Guardian           | MemoryGuardian       | ollama-cloud/glm-5.1        | memory-guardian            | claude-sonnet-4-6   | HITL gating identical; invariant checklist identical          |
+| Scout              | MemoryScout          | ollama-cloud/gpt-5.4-nano   | memory-scout               | claude-sonnet-4-6   | Memory-first search pattern identical; tools differ (see note)|
+| Analyst            | MemoryAnalyst        | ollama-cloud/gpt-5.4-mini   | memory-analyst             | claude-sonnet-4-6   | SQL/Cypher queries identical; report formats identical        |
+| Chronicler         | MemoryChronicler     | ollama-cloud/gpt-5.4-mini   | memory-chronicler          | claude-sonnet-4-6   | ADR format identical; Notion sync uses Smithery MCP           |
+| Gap Auditor        | (no equivalent)      | —                           | architecture-gap-auditor   | claude-sonnet-4-6   | Claude Code only — no OpenCode counterpart                    |
 
 ## Tool Differences (Claude Code vs OpenCode)
 
@@ -42,10 +101,33 @@ The following behaviors MUST be identical across both runtimes:
 - HITL gate: no Postgres → Neo4j promotion without human approval
 - Append-only: no UPDATE/DELETE on Postgres event rows
 
+## Model Rationale
+
+| Model                              | Why                                                                        |
+|------------------------------------|----------------------------------------------------------------------------|
+| ollama-cloud/gpt-5.4               | Best intelligence for orchestration, strategy, and infra reasoning         |
+| ollama-cloud/gpt-5.4-mini          | Strongest mini model for coding subagents (review, refactor, data)        |
+| ollama-cloud/nemotron-3-super:cloud | Fast wide-context scanning for recon; internal benchmark: 1.63s avg latency |
+| ollama-cloud/qwen3-coder-next:cloud | Coding specialist — 262K context, optimized for codegen and repo surgery  |
+| ollama-cloud/gpt-5.4-nano          | Cheapest for tiny lookups, path checks, and prefiltering                   |
+| ollama-cloud/kimi-k2.5             | (Retired from primary — Jobs now uses gpt-5.4 for precision over speed)  |
+| ollama-cloud/glm-5.1               | Universal fallback — instruction-following, always-on                      |
+
+> **Note:** The 1.63s latency claim for Nemotron is internal benchmark data, not a generally established property. Validate with per-agent harness evals before locking.
+
 ## Known Divergences
 
 1. **Loop enforcement location:** OpenCode enforces max_steps at runtime (menu.yaml). Claude Code enforces via prompt instructions. Prompt enforcement is advisory; runtime enforcement is hard. This is an accepted gap — the `memory() wrapper` implementation (Story 1.2) will close it.
 
-2. **glm-5-cloud vs claude-opus-4-6:** The Orchestrator models differ. GLM-5 is a Chinese LLM optimized for instruction-following; Claude Opus 4.6 is larger and more reasoning-capable. The Brooks persona behavior in the Claude Code Orchestrator compensates with explicit loop discipline in the prompt.
+2. **ollama-cloud/glm-5.1 vs claude-opus-4-6:** The Orchestrator models differ. GLM-5.1 is a Chinese LLM optimized for instruction-following; Claude Opus 4.6 is larger and more reasoning-capable. The Brooks persona behavior in the Claude Code Orchestrator compensates with explicit loop discipline in the prompt.
 
 3. **Context7 / YouTube Transcript:** Not available in Claude Code session. MemoryScout uses Tavily and Exa instead.
+
+## Excluded Models
+
+| Model                      | Reason                                                     |
+|----------------------------|------------------------------------------------------------|
+| qwen3-coder-next           | Removed per owner decision                                 |
+| gpt-oss:120b-cloud         | Removed per owner decision                                 |
+| gemma3:27b-cloud           | Removed per owner decision                                 |
+| deepseek-v3.1:671b-cloud   | Removed per owner decision                                 |
