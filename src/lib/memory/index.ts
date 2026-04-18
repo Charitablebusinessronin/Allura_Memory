@@ -12,7 +12,6 @@ export * from "./types";
 
 // Operations
 export { searchMemories, getMemoriesByType, searchAgents } from "./search";
-export { storeMemory, promoteMemory, deprecateMemory, archiveMemory } from "./store";
 export { getMemory, getCurrentMemory, getMemoryHistory, memoryExists } from "./get";
 
 // Knowledge Promotion (HITL governance)

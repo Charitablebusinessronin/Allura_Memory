@@ -41,6 +41,49 @@ FOR (a:Agent)
 ON (a.platform, a.status);
 
 // ============================================
+// InsightHead Indexes
+// ============================================
+
+// Composite index on InsightHead for (insight_id, group_id)
+// Every insight operation starts with InsightHead lookup by these two properties:
+//   insert-insight.ts:229   — existence check before create
+//   insert-insight.ts:331   — version creation head lookup
+//   insert-insight.ts:412   — deprecation head lookup
+//   insert-insight.ts:487   — revert head lookup
+//   get-insight.ts:204      — getCurrentInsight
+//   get-insight.ts:280      — getInsightHistory
+//   get-insight.ts:363-385  — listInsights count + data queries
+//   get-dual-context.ts:196  — dual-context per-group queries
+//   group-governance.ts:159  — governance stats
+// Without this index, all InsightHead traversals fall back to AllNodesScan.
+CREATE INDEX insight_head_insight_id_group_id_idx IF NOT EXISTS
+FOR (h:InsightHead)
+ON (h.insight_id, h.group_id);
+
+// Index on InsightHead.id for direct-ID lookups
+// Used in insert-insight.ts:261 (MERGE on InsightHead with group_id)
+// and get-insight.ts:206 (MATCH Insight by h.current_id)
+// Redundant with composite above for (insight_id, group_id) queries,
+// but provides a dedicated index for the planner when queries filter
+// only on h.id (rare but possible in admin/debug paths).
+CREATE INDEX insight_head_id_idx IF NOT EXISTS
+FOR (h:InsightHead)
+ON (h.id);
+
+// ============================================
+// AgentGroup Indexes
+// ============================================
+
+// Index on AgentGroup.group_id for tenant-isolated lookups
+// Used in agent-nodes.ts:554 — existence check before create
+// Used in agent-nodes.ts:607 — linkAgentToGroup resolution
+// Low cardinality (one node per tenant) but prevents AllNodesScan
+// on the existence check which runs before every agent group creation.
+CREATE INDEX agent_group_group_id_idx IF NOT EXISTS
+FOR (g:AgentGroup)
+ON (g.group_id);
+
+// ============================================
 // Create Full-Text Search Index
 // ============================================
 
