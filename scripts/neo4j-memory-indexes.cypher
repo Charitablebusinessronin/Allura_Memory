@@ -49,10 +49,8 @@ FOR (m:Memory) ON EACH [m.content, m.summary, m.title];
 // SUPERSEDES RELATIONSHIP INDEXES
 // ============================================================================
 
-// Index for finding deprecated memories
-CREATE INDEX memory_superseded_idx IF NOT EXISTS
-FOR (m:Memory)
-ON (m.deprecated);
+// NOTE: memory_deprecated_idx (above) already indexes :Memory.deprecated.
+// A separate memory_superseded_idx would be a duplicate — removed 2026-04-18.
 
 // Index for SUPERSEDES relationships
 CREATE INDEX relationship_supersedes_idx IF NOT EXISTS
@@ -103,7 +101,6 @@ ON (m.version);
 //   'memory_deprecated_idx',
 //   'memory_group_user_idx',
 //   'memory_search_index',
-//   'memory_superseded_idx',
 //   'relationship_supersedes_idx',
 //   'memory_usage_count_idx',
 //   'memory_version_idx'
