@@ -8,6 +8,7 @@ config();
 export default defineConfig({
   test: {
     environment: "node",
+    pool: "forks",
     include: [
       "src/**/*.{test,spec}.{ts,tsx}",
       "tests/**/*.test.ts",
