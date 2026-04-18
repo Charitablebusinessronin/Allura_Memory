@@ -24,6 +24,36 @@
  * - Fail-open: If budget/circuit breaker can't initialize, requests pass through.
  */
 
+// ── Sub-module imports ────────────────────────────────────────────────────
+import { getConnections, resetConnections } from "./canonical-tools/connection"
+import {
+  neo4jDateToISO,
+  EpisodicMemoryRow,
+  toMemoryId,
+  toProvenance,
+  parseEpisodicTags,
+  getRecentUsageCount,
+  baseMeta,
+  degradedMeta,
+  getPromotionMode,
+  getAutoApprovalThreshold,
+  DUPLICATE_THRESHOLD,
+  RECOVERY_WINDOW_DAYS,
+  validateGroupId,
+  generateMemoryId,
+  sortDedupedMemories,
+} from "./canonical-tools/validation-utils"
+import {
+  getBudgetEnforcer,
+  getBreakerManager,
+  ensureSession,
+  checkBudget,
+  recordToolCall,
+  withCircuitBreaker,
+} from "./canonical-tools/budget-circuit"
+import { checkDuplicate } from "./canonical-tools/duplicate-check"
+
+// ── External imports ──────────────────────────────────────────────────────
 import type {
   MemoryAddRequest,
   MemoryAddResponse,
@@ -60,417 +90,12 @@ import {
   RecoveryWindowExpiredError,
 } from "@/lib/memory/canonical-contracts"
 
-import { Pool } from "pg"
-import neo4j, { Driver } from "neo4j-driver"
+import neo4j from "neo4j-driver"
 import { randomUUID } from "crypto"
-import { config } from "dotenv"
 import { DatabaseUnavailableError, DatabaseQueryError, classifyPostgresError } from "@/lib/errors/database-errors"
 import { curatorScore } from "@/lib/curator/score"
-import { validateGroupId as canonicalValidateGroupId } from "@/lib/validation/group-id"
 import { createProposalDedupChecker, getDedupThreshold, type ProposalCandidate } from "@/lib/dedup/proposal-dedup"
-import { BudgetEnforcer } from "@/lib/budget/enforcer"
-import { type SessionId, DEFAULT_BUDGET_CONFIG } from "@/lib/budget/types"
-import { checkBudgetBeforeCall, updateBudgetAfterCall, createSessionId } from "@/lib/budget/middleware-integration"
-import { BreakerManager } from "@/lib/circuit-breaker/manager"
 import { shouldUseRuVector, searchWithFeedback } from "@/lib/ruvector/retrieval-adapter"
-
-config()
-
-// ── Neo4j DateTime → ISO string ──────────────────────────────────────────
-// Neo4j driver returns temporal types as neo4j.DateTime objects, not ISO strings.
-// Convert them so the API always returns plain strings.
-function neo4jDateToISO(value: unknown): string {
-  if (typeof value === "string") return value
-  if (value && typeof value === "object" && "year" in value) {
-    // neo4j.DateTime — use the driver's toString() which produces ISO format
-    if (typeof (value as { toString?: () => string }).toString === "function") {
-      const str = (value as { toString: () => string }).toString()
-      const parsed = new Date(str)
-      if (!isNaN(parsed.getTime())) return parsed.toISOString()
-    }
-    // Fallback: manually construct from neo4j integer fields
-    const d = value as Record<string, { low: number; high?: number }>
-    const get = (field: string): number => d[field]?.low ?? 0
-    return new Date(
-      Date.UTC(
-        get("year"),
-        get("month") - 1,
-        get("day"),
-        get("hour"),
-        get("minute"),
-        get("second"),
-        Math.floor(get("nanosecond") / 1_000_000)
-      )
-    ).toISOString()
-  }
-  // Last resort
-  return new Date(value as string | number).toISOString()
-}
-
-// ── Budget Enforcer & Circuit Breaker Setup ────────────────────────────────
-//
-// Fail-open design: if budget enforcer or circuit breaker can't initialize,
-// requests pass through. Budget is only enforced on write operations.
-// Circuit breakers wrap database calls, not tool handlers.
-
-const BUDGET_ENABLED = process.env.BUDGET_ENABLED !== "false"
-const BUDGET_MAX_RPM = parseInt(process.env.BUDGET_MAX_RPM || "60", 10)
-const BUDGET_MAX_TOKENS_PER_HOUR = parseInt(process.env.BUDGET_MAX_TOKENS_PER_HOUR || "100000", 10)
-const CIRCUIT_BREAKER_FAILURE_THRESHOLD = parseInt(process.env.CIRCUIT_BREAKER_FAILURE_THRESHOLD || "5", 10)
-const CIRCUIT_BREAKER_RESET_TIMEOUT = parseInt(process.env.CIRCUIT_BREAKER_RESET_TIMEOUT || "30000", 10)
-
-let budgetEnforcer: BudgetEnforcer | null = null
-let breakerManager: BreakerManager | null = null
-
-function getBudgetEnforcer(): BudgetEnforcer | null {
-  if (!BUDGET_ENABLED) return null
-  try {
-    if (!budgetEnforcer) {
-      budgetEnforcer = new BudgetEnforcer({
-        budgetConfig: {
-          ...DEFAULT_BUDGET_CONFIG,
-          defaults: {
-            ...DEFAULT_BUDGET_CONFIG.defaults,
-            maxTokens: BUDGET_MAX_TOKENS_PER_HOUR,
-            maxToolCalls: BUDGET_MAX_RPM,
-          },
-        },
-        enabled: true,
-      })
-    }
-    return budgetEnforcer
-  } catch (error) {
-    console.error("[budget] Failed to initialize budget enforcer, failing open:", error)
-    return null
-  }
-}
-
-function getBreakerManager(): BreakerManager | null {
-  try {
-    if (!breakerManager) {
-      breakerManager = new BreakerManager({
-        defaultConfig: {
-          errorThreshold: CIRCUIT_BREAKER_FAILURE_THRESHOLD,
-          openTimeoutMs: CIRCUIT_BREAKER_RESET_TIMEOUT,
-        },
-        enableAutoRecovery: true,
-        healthCheckIntervalMs: 30000,
-        maxBreakersPerScope: 100,
-      })
-    }
-    return breakerManager
-  } catch (error) {
-    console.error("[circuit-breaker] Failed to initialize breaker manager, failing open:", error)
-    return null
-  }
-}
-
-const activeSessions = new Map<string, SessionId>()
-
-function ensureSession(groupId: string, agentId: string): SessionId | null {
-  const enforcer = getBudgetEnforcer()
-  if (!enforcer) return null
-
-  const sessionKey = `${groupId}:${agentId}`
-  const existing = activeSessions.get(sessionKey)
-  if (existing) {
-    if (enforcer.getSessionState(existing)) {
-      return existing
-    }
-    activeSessions.delete(sessionKey)
-  }
-
-  try {
-    const sessionId = createSessionId(groupId, agentId, `mcp-${Date.now()}`)
-    enforcer.startSession(sessionId)
-    activeSessions.set(sessionKey, sessionId)
-    return sessionId
-  } catch (error) {
-    console.warn("[budget] Failed to start session, failing open:", error)
-    return null
-  }
-}
-
-async function checkBudget(
-  groupId: string,
-  agentId: string,
-  toolName: string
-): Promise<{ allowed: boolean; reason?: string; retryAfter?: number }> {
-  const enforcer = getBudgetEnforcer()
-  const sessionId = ensureSession(groupId, agentId)
-
-  if (!enforcer || !sessionId) {
-    return { allowed: true }
-  }
-
-  try {
-    const budgetCheck = checkBudgetBeforeCall(enforcer, sessionId)
-    if (!budgetCheck.allowed) {
-      const halt = budgetCheck.haltReason
-      const retryAfter = halt?.type === "time_limit" ? Math.ceil((halt.limitMs - halt.elapsedMs) / 1000) : undefined
-      console.warn(`[budget] Budget exceeded for ${groupId}/${agentId} on ${toolName}: ${budgetCheck.reason}`)
-      return { allowed: false, reason: budgetCheck.reason, retryAfter }
-    }
-    return { allowed: true }
-  } catch (error) {
-    console.error("[budget] Budget check failed, failing open:", error)
-    return { allowed: true }
-  }
-}
-
-function recordToolCall(
-  groupId: string,
-  agentId: string,
-  toolName: string,
-  durationMs: number,
-  success: boolean
-): void {
-  const enforcer = getBudgetEnforcer()
-  const sessionId = ensureSession(groupId, agentId)
-  if (!enforcer || !sessionId) return
-
-  try {
-    updateBudgetAfterCall(enforcer, sessionId, { toolName, durationMs, success })
-  } catch (error) {
-    console.warn("[budget] Failed to record tool call:", error)
-  }
-}
-
-async function withCircuitBreaker<T>(
-  breakerName: string,
-  groupId: string,
-  operation: string,
-  fn: () => Promise<T>
-): Promise<T> {
-  const manager = getBreakerManager()
-  if (!manager) {
-    return fn()
-  }
-
-  try {
-    const { result, breakerResult } = await manager.executeThrough(breakerName, groupId, operation, fn)
-
-    if (!breakerResult.allowed) {
-      throw new Error(`Circuit breaker open for ${breakerName}: ${breakerResult.rejectionReason}`)
-    }
-
-    if (!breakerResult.success && breakerResult.error) {
-      throw breakerResult.error
-    }
-
-    return result as T
-  } catch (error) {
-    if (error instanceof Error && error.message.startsWith("Circuit breaker open")) {
-      console.warn(`[circuit-breaker] ${error.message}`)
-    }
-    throw error
-  }
-}
-
-// ── Connection Management ─────────────────────────────────────────────────
-
-let pgPool: Pool | null = null
-let neo4jDriver: Driver | null = null
-
-async function getConnections(): Promise<{ pg: Pool; neo4j: Driver }> {
-  if (!pgPool) {
-    pgPool = new Pool({
-      host: process.env.POSTGRES_HOST || "localhost",
-      port: parseInt(process.env.POSTGRES_PORT || "5432"),
-      database: process.env.POSTGRES_DB || "memory",
-      user: process.env.POSTGRES_USER || "ronin4life",
-      password: process.env.POSTGRES_PASSWORD,
-      connectionTimeoutMillis: 10000,
-      max: 10,
-    })
-  }
-
-  if (!neo4jDriver) {
-    neo4jDriver = neo4j.driver(
-      process.env.NEO4J_URI || "bolt://localhost:7687",
-      neo4j.auth.basic(process.env.NEO4J_USER || "neo4j", process.env.NEO4J_PASSWORD || "password"),
-      { maxConnectionPoolSize: 50 }
-    )
-  }
-
-  return { pg: pgPool, neo4j: neo4jDriver }
-}
-
-/**
- * Reset cached connections. Used in tests to force reconnection
- * after changing environment variables.
- */
-export function resetConnections(): void {
-  if (pgPool) {
-    pgPool.end().catch(() => {})
-    pgPool = null
-  }
-  if (neo4jDriver) {
-    neo4jDriver.close().catch(() => {})
-    neo4jDriver = null
-  }
-  budgetEnforcer = null
-  breakerManager = null
-  activeSessions.clear()
-}
-
-interface EpisodicMemoryRow {
-  id: string
-  content: string
-  provenance: string | null
-  user_id: string | null
-  created_at: string
-  tags?: string | null
-}
-
-function toMemoryId(value: string): MemoryId {
-  return value as MemoryId
-}
-
-function toProvenance(value: string | null | undefined): MemoryProvenance {
-  return value === "manual" ? "manual" : "conversation"
-}
-
-/**
- * Parse tags from a PG metadata text column.
- * Tags are stored as comma-separated strings in metadata->>'tags'.
- * Returns empty array if null/undefined.
- */
-function parseEpisodicTags(tags: string | null | undefined): string[] {
-  if (!tags) return []
-  if (typeof tags === "string")
-    return tags
-      .split(",")
-      .map((t: string) => t.trim())
-      .filter(Boolean)
-  if (Array.isArray(tags)) return tags as string[]
-  return []
-}
-
-/**
- * Count how many times a memory was retrieved or searched in the last 30 days.
- *
- * Queries the append-only events table for event_type matching 'retrieve' or 'search'
- * patterns that reference the given memory_id in their metadata.
- *
- * Uses the expression index on metadata->>'memory_id' (migration 18).
- *
- * Returns:
- * - A positive integer if retrieval events exist
- * - null if no tracking data is available (episodic-only, no retrieval events)
- *
- * This function NEVER returns 0 — if there are zero retrieval events the caller
- * can distinguish "we track but nobody looked" (0 is valid) from "we don't track
- * this memory's retrievals at all" (null).  In practice, when the query succeeds
- * we return the actual count (which can be 0), but wrap it: null means the query
- * failed or the memory is episodic-only with no retrieval trace.
- */
-async function getRecentUsageCount(pg: Pool, groupId: string, memoryId: string): Promise<number | null> {
-  const THIRTY_DAYS_AGO = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-
-  try {
-    const result = await pg.query<{ count: string }>(
-      `SELECT COUNT(*) AS count
-       FROM events
-       WHERE group_id = $1
-         AND metadata->>'memory_id' = $2
-         AND event_type IN ('memory_search', 'memory_retrieve', 'memory_get')
-         AND created_at >= $3`,
-      [groupId, memoryId, THIRTY_DAYS_AGO]
-    )
-
-    const count = parseInt(result.rows[0]?.count ?? "0", 10)
-    return count
-  } catch (error) {
-    console.warn("[usage] Failed to query recent usage count, returning null:", error)
-    return null
-  }
-}
-
-function baseMeta(storesUsed: Array<"postgres" | "neo4j">, degraded: boolean = false): MemoryResponseMeta {
-  return {
-    contract_version: "v1",
-    degraded,
-    stores_used: storesUsed,
-    stores_attempted: ["postgres", "neo4j"],
-    warnings: degraded ? ["semantic layer unavailable; returned episodic results only"] : [],
-  }
-}
-
-function degradedMeta(storesUsed: Array<"postgres" | "neo4j">): MemoryResponseMeta {
-  return {
-    ...baseMeta(storesUsed, true),
-    degraded_reason: "neo4j_unavailable",
-  }
-}
-
-// ── Configuration ─────────────────────────────────────────────────────────
-
-function getPromotionMode(): "auto" | "soc2" {
-  return (process.env.PROMOTION_MODE || "soc2") as "auto" | "soc2"
-}
-
-function getAutoApprovalThreshold(): number {
-  return parseFloat(process.env.AUTO_APPROVAL_THRESHOLD || "0.85")
-}
-
-const DUPLICATE_THRESHOLD = parseFloat(process.env.DUPLICATE_THRESHOLD || "0.95")
-const RECOVERY_WINDOW_DAYS = parseInt(process.env.RECOVERY_WINDOW_DAYS || "30")
-
-// ── Validation ─────────────────────────────────────────────────────────────
-
-/**
- * ARCH-001: Validate group_id using canonical module.
- * All entry points must enforce ^allura-[a-z0-9-]+$ pattern.
- */
-function validateGroupId(groupId: string): GroupId {
-  return canonicalValidateGroupId(groupId) as GroupId
-}
-
-function generateMemoryId(): MemoryId {
-  return randomUUID() as MemoryId
-}
-
-// ── Deduplication ─────────────────────────────────────────────────────────
-
-/**
- * Check for duplicate memories in Neo4j.
- * Returns existing memory ID if duplicate found, null otherwise.
- */
-async function checkDuplicate(
-  neo4j: Driver,
-  groupId: GroupId,
-  userId: string | null | undefined,
-  content: string
-): Promise<MemoryId | null> {
-  const session = neo4j.session()
-
-  try {
-    // Exact match check
-    const result = await session.run(
-      `
-      MATCH (m:Memory)
-      WHERE m.group_id = $groupId
-        AND ($userId IS NULL OR m.user_id = $userId)
-        AND m.content = $content
-        AND NOT (m)<-[:SUPERSEDES]-()
-      RETURN m.id AS id
-      LIMIT 1
-      `,
-      { groupId, userId: userId ?? null, content }
-    )
-
-    if (result.records.length > 0) {
-      return result.records[0].get("id") as MemoryId
-    }
-
-    // TODO: Semantic similarity check (requires embeddings)
-
-    return null
-  } finally {
-    await session.close()
-  }
-}
 
 // ── Canonical Operations ───────────────────────────────────────────────────
 
@@ -1239,26 +864,6 @@ export async function memory_list(request: MemoryListRequest): Promise<MemoryLis
     }
     console.error("memory_list error:", error)
     throw error
-  }
-}
-
-/**
- * Sort deduplicated memories according to the requested sort order.
- */
-function sortDedupedMemories(
-  memories: MemoryGetResponse[],
-  sort: "created_at_desc" | "created_at_asc" | "score_desc" | "score_asc"
-): MemoryGetResponse[] {
-  switch (sort) {
-    case "created_at_asc":
-      return [...memories].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-    case "score_desc":
-      return [...memories].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-    case "score_asc":
-      return [...memories].sort((a, b) => (a.score ?? 0) - (b.score ?? 0))
-    case "created_at_desc":
-    default:
-      return [...memories].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   }
 }
 
@@ -2145,3 +1750,5 @@ export const canonicalMemoryTools = {
 }
 
 export { getBudgetEnforcer, getBreakerManager, ensureSession, checkBudget, recordToolCall, withCircuitBreaker }
+
+export { resetConnections }
