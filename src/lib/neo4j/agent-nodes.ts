@@ -33,7 +33,7 @@ export interface AgentNode {
   name: string;
   /** Agent role description */
   role: string;
-  /** Model identifier (e.g., 'glm-5-cloud') */
+  /** Model identifier (e.g., 'ollama-cloud/glm-5.1') */
   model: string;
   /** Tenant isolation identifier (e.g., 'allura-default') */
   group_id: string;
@@ -630,49 +630,49 @@ export async function initializeDefaultAgents(
       agent_id: "memory-orchestrator",
       name: "MemoryOrchestrator",
       role: "BMad workflow coordination",
-      model: "glm-5-cloud",
+      model: "ollama-cloud/glm-5.1",
       group_id,
     },
     {
       agent_id: "memory-architect",
       name: "MemoryArchitect",
       role: "System design lead",
-      model: "glm-5-cloud",
+      model: "ollama-cloud/glm-5.1",
       group_id,
     },
     {
       agent_id: "memory-builder",
       name: "MemoryBuilder",
       role: "Infrastructure implementation",
-      model: "kimi-k2.5:cloud",
+      model: "ollama-cloud/gpt-5.4-mini",
       group_id,
     },
     {
       agent_id: "memory-guardian",
       name: "MemoryGuardian",
       role: "Quality gates and validation",
-      model: "glm-5-cloud",
+      model: "ollama-cloud/glm-5.1",
       group_id,
     },
     {
       agent_id: "memory-scout",
       name: "MemoryScout",
       role: "Context discovery",
-      model: "ministral-3:8b-cloud",
+      model: "ollama-cloud/nemotron-3-super:cloud",
       group_id,
     },
     {
       agent_id: "memory-analyst",
       name: "MemoryAnalyst",
       role: "Memory system metrics",
-      model: "glm-5-cloud",
+      model: "ollama-cloud/glm-5.1",
       group_id,
     },
     {
       agent_id: "memory-chronicler",
       name: "MemoryChronicler",
       role: "Documentation/specs",
-      model: "glm-5-cloud",
+      model: "ollama-cloud/glm-5.1",
       group_id,
     },
   ];

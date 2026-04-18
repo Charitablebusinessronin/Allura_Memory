@@ -409,7 +409,7 @@ describe.skipIf(!shouldRunE2E)("Initialize Default Agents", () => {
       agent_id: "memory-orchestrator",
       name: "MemoryOrchestrator",
       role: "BMad workflow coordination",
-      model: "glm-5-cloud",
+      model: "ollama-cloud/glm-5.1",
       group_id: groupId,
     });
 
