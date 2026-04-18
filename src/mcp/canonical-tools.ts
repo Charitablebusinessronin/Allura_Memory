@@ -503,19 +503,9 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
   // Budget pre-check: memory_add is write-intensive, enforce budget before proceeding
   const budgetResult = await checkBudget(groupId, agentId, "memory_add")
   if (!budgetResult.allowed) {
-    return {
-      id: memoryId,
-      stored: "episodic",
-      score: 0,
-      created_at: createdAt,
-      meta: {
-        contract_version: "v1",
-        degraded: true,
-        stores_used: [],
-        stores_attempted: [],
-        warnings: [budgetResult.reason ?? "Budget exceeded"],
-      },
-    } satisfies MemoryAddResponse
+    throw new Error(
+      `Budget exceeded for ${agentId} in ${groupId}: ${budgetResult.reason ?? "rate limit reached"}. Memory was NOT stored.`
+    )
   }
 
   try {
@@ -1176,6 +1166,7 @@ export async function memory_list(request: MemoryListRequest): Promise<MemoryLis
             created_at: neo4jDateToISO(record.get("created_at")),
             version: record.get("version")?.toNumber?.() || 1,
             usage_count: 0,
+            recent_usage_count: null as number | null,
             tags: record.get("tags") || [],
           }))
 
@@ -1200,6 +1191,7 @@ export async function memory_list(request: MemoryListRequest): Promise<MemoryLis
       user_id: row.user_id || "unknown",
       created_at: row.created_at,
       usage_count: 0,
+      recent_usage_count: null as number | null,
       tags: parseEpisodicTags(row.tags),
     }))
 
@@ -1722,6 +1714,7 @@ export async function memory_export(request: MemoryExportRequest): Promise<Memor
       created_at: neo4jDateToISO(record.get("created_at")),
       version: record.get("version")?.toNumber?.() ?? 1,
       usage_count: 0,
+      recent_usage_count: null as number | null,
       tags: record.get("tags") || [],
       meta: baseMeta(["neo4j"]),
     }))
@@ -1779,6 +1772,7 @@ export async function memory_export(request: MemoryExportRequest): Promise<Memor
       created_at: row.created_at,
       version: 1,
       usage_count: 0,
+      recent_usage_count: null as number | null,
       tags: parseEpisodicTags(row.tags),
     }))
 
@@ -1873,8 +1867,8 @@ export async function memory_restore(request: MemoryRestoreRequest): Promise<Mem
              REMOVE m.deprecated
              REMOVE m:deprecated
              WITH m
-             OPTIONAL MATCH (newer)-[:SUPERSEDES]->(m)
-             DELETE newer-[:SUPERSEDES]->m
+             OPTIONAL MATCH (newer)-[r:SUPERSEDES]->(m)
+             DELETE r
              SET m.restored_at = datetime($restoredAt)
              RETURN m.id AS id`,
             { id: request.id, groupId, restoredAt }

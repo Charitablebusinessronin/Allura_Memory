@@ -2,7 +2,7 @@
 /**
  * Allura Memory MCP Server - Canonical Interface
  *
- * Exposes the 8 canonical memory operations via MCP:
+ * Exposes the 10 canonical memory operations via MCP:
  * 1. memory_add - Add a memory (episodic → score → promote/queue)
  * 2. memory_search - Search memories (federated: Postgres + Neo4j)
  * 3. memory_get - Get a single memory by ID
@@ -11,6 +11,8 @@
  * 6. memory_update - Append-only versioned update
  * 7. memory_promote - Request curator promotion
  * 8. memory_export - Export memories
+ * 9. memory_restore - Restore a soft-deleted memory within recovery window
+ * 10. memory_list_deleted - List soft-deleted memories within recovery window
  *
  * Reference: docs/allura/BLUEPRINT.md
  *
@@ -30,6 +32,8 @@ import {
   memory_update,
   memory_promote,
   memory_export,
+  memory_restore,
+  memory_list_deleted,
 } from "./canonical-tools.js"
 
 // Server setup
@@ -307,6 +311,56 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["group_id"],
         },
       },
+      {
+        name: "memory_restore",
+        description:
+          "Restore a soft-deleted memory within the 30-day recovery window. Removes deprecated flag in Neo4j and cleans up SUPERSEDES relationships. Appends restore event to PostgreSQL (append-only).",
+        inputSchema: {
+          type: "object",
+          properties: {
+            id: {
+              type: "string",
+              description: "Required: Memory identifier to restore",
+            },
+            group_id: {
+              type: "string",
+              description: "Required: Tenant namespace (format: allura-*)",
+            },
+            user_id: {
+              type: "string",
+              description: "Required: User identifier (for audit trail)",
+            },
+          },
+          required: ["id", "group_id", "user_id"],
+        },
+      },
+      {
+        name: "memory_list_deleted",
+        description:
+          "List soft-deleted memories within the 30-day recovery window. Returns deleted memories with their pre-deletion content and recovery_days_remaining.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            group_id: {
+              type: "string",
+              description: "Required: Tenant namespace (format: allura-*)",
+            },
+            user_id: {
+              type: "string",
+              description: "Optional: User identifier (scope to user)",
+            },
+            limit: {
+              type: "number",
+              description: "Optional: Maximum results (default: 50)",
+            },
+            offset: {
+              type: "number",
+              description: "Optional: Pagination offset",
+            },
+          },
+          required: ["group_id"],
+        },
+      },
     ],
   }
 })
@@ -403,6 +457,30 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case "memory_export": {
         const result = await memory_export(args as any)
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        }
+      }
+
+      case "memory_restore": {
+        const result = await memory_restore(args as any)
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        }
+      }
+
+      case "memory_list_deleted": {
+        const result = await memory_list_deleted(args as any)
         return {
           content: [
             {
