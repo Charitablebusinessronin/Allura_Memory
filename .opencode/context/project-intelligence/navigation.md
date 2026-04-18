@@ -1,14 +1,18 @@
-<!-- Context: project-intelligence/nav | Priority: critical | Version: 1.1 | Updated: 2026-04-11 -->
+<!-- Context: project-intelligence/nav | Priority: critical | Version: 1.2 | Updated: 2026-04-17 -->
 
 # Project Intelligence — Allura Memory
 
 > Memory layer for Allura Agent-OS with provable governance, tenant isolation, and auditable promotion.
+
+> **Reading order:** `system-authority.md` first (it overrides all defaults), then `informant.md` for field manual.
 
 ## Quick Routes
 
 | What You Need       | File                      | Key Content                  |
 | ------------------- | ------------------------- | ---------------------------- |
 | **Start here**      | `navigation.md`           | This file - quick overview   |
+| **System authority**| `system-authority.md`     | SYSTEM — overrides all agent defaults |
+| **v1 blockers**     | `v1-blockers.md`           | Active — must resolve before v1 GO |
 | **How to build**    | `technical-domain.md`     | Stack, patterns, conventions |
 | **Why this exists** | `business-domain.md`      | Positioning vs mem0          |
 | **Architecture**    | `business-tech-bridge.md` | Business → tech mapping      |
@@ -35,9 +39,9 @@ OpenCode 1.4.3 (agent runtime) + MCP (tool protocol)
 
 ```bash
 bun install              # Install dependencies
-npm run dev              # Start dev server
-npm test                 # Run tests (85% passing)
-npm run typecheck        # TypeScript check
+bun run dev              # Start dev server
+bun test                 # Run tests
+bun run typecheck        # TypeScript check
 docker compose up -d     # Start infrastructure
 ```
 

@@ -72,7 +72,6 @@ This category covers:
 ## Related Categories
 
 - `development/` - General development patterns (backend, APIs, clean code)
-- `product/` - Product design and UX strategy
 - `content/` - Content design and copywriting
 
 ---

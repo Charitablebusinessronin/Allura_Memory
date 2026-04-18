@@ -102,7 +102,6 @@ Managing design assets in web applications - split into focused guides.
 
 - `ui/terminal/` - Terminal UI patterns
 - `development/` - General development patterns
-- `product/` - Product design and UX strategy
 
 ---
 

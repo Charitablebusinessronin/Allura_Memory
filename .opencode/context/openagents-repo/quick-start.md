@@ -49,14 +49,14 @@ Before working on this repo, understand these 4 systems:
 
 | Task | Load These Files |
 |------|------------------|
-| Add a new agent | `core-concepts/agents.md` + `guides/adding-agent.md` |
+| Add a new agent | `core-concepts/agents.md` + `guides/adding-agent-basics.md` |
 | Test an agent | `core-concepts/evals.md` + `guides/testing-agent.md` |
 | Fix registry | `core-concepts/registry.md` + `guides/updating-registry.md` |
 | Debug issue | `guides/debugging.md` |
 | Find files | `lookup/file-locations.md` |
 | Create release | `guides/creating-release.md` |
-| Write content or copy | `core-concepts/categories.md` + `../content-creation/principles/navigation.md` |
-| Use Claude Code helpers | `core-concepts/agents.md` + `guides/adding-agent.md` + `../to-be-consumed/claude-code-docs/create-subagents.md` |
+| Write content or copy | `core-concepts/categories.md` |
+| Use Claude Code helpers | `core-concepts/agents.md` + `guides/adding-agent-basics.md` + `../to-be-consumed/claude-code-docs/create-subagents.md` |
 
 ---
 
@@ -161,7 +161,7 @@ opencode-agents/
 ## Next Steps
 
 1. **First time?** → Read `core-concepts/agents.md`, `evals.md`, `registry.md`
-2. **Adding agent?** → Load `guides/adding-agent.md`
+2. **Adding agent?** → Load `guides/adding-agent-basics.md`
 3. **Testing?** → Load `guides/testing-agent.md`
 4. **Need details?** → Load specific files from `core-concepts/` or `guides/`
 
