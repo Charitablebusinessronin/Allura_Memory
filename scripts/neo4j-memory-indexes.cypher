@@ -69,6 +69,25 @@ FOR (m:Memory)
 ON (m.usage_count);
 
 // ============================================================================
+// PROPERTY INDEXES FOR MEMORY FILTER/SORT PATHS
+// ============================================================================
+
+// Index for version-filtered queries
+// Query: memory_get with version parameter — get.ts:26 "AND m.version = $version"
+// Also benefits ORDER BY m.version DESC in history queries (get.ts:112,203)
+// Note: version filter is optional (rare), but the index is low-cost since
+// version cardinality equals memory count per topic_key (typically 1-5).
+CREATE INDEX memory_version_idx IF NOT EXISTS
+FOR (m:Memory)
+ON (m.version);
+
+// NOTE: m.tags does NOT get an index. Analysis shows tags appears only in
+// RETURN clauses (canonical-tools.ts:618,779,1300,1653; search.ts:81,172,227;
+// get.ts:49,111,202) — never in a WHERE filter. A property index accelerates
+// predicates, not projections. Adding an index on tags would consume write
+// overhead on every INSERT/UPDATE with zero read-path benefit.
+
+// ============================================================================
 // VERIFICATION QUERIES
 // ============================================================================
 
@@ -86,7 +105,8 @@ ON (m.usage_count);
 //   'memory_search_index',
 //   'memory_superseded_idx',
 //   'relationship_supersedes_idx',
-//   'memory_usage_count_idx'
+//   'memory_usage_count_idx',
+//   'memory_version_idx'
 // ];
 
 // ============================================================================
