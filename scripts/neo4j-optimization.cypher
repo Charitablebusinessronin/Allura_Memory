@@ -1,19 +1,10 @@
-// Neo4j Optimization for Allura Brain
-// Fixes data quality issues and adds performance indexes
+// Neo4j Optimization for Allura Brain — DDL ONLY
+// Idempotent index and constraint creation for production init
+// Data mutation queries moved to scripts/neo4j-data-fixes.cypher
 
-// ============================================
-// Fix NULL agent_id values
-// ============================================
-
-// Update agents with NULL agent_id using name
-MATCH (a:Agent)
-WHERE a.agent_id IS NULL AND a.name IS NOT NULL
-SET a.agent_id = toLower(replace(a.name, " ", "-"))
-RETURN count(a) as fixed_count;
-
-// ============================================
-// Create Constraints and Indexes
-// ============================================
+// ============================================================================
+// Agent Constraints and Indexes
+// ============================================================================
 
 // Unique constraint on agent_id
 CREATE CONSTRAINT agent_id_unique IF NOT EXISTS
@@ -40,9 +31,9 @@ CREATE INDEX agent_platform_status_idx IF NOT EXISTS
 FOR (a:Agent)
 ON (a.platform, a.status);
 
-// ============================================
+// ============================================================================
 // InsightHead Indexes
-// ============================================
+// ============================================================================
 
 // Composite index on InsightHead for (insight_id, group_id)
 // Every insight operation starts with InsightHead lookup by these two properties:
@@ -70,9 +61,9 @@ CREATE INDEX insight_head_id_idx IF NOT EXISTS
 FOR (h:InsightHead)
 ON (h.id);
 
-// ============================================
+// ============================================================================
 // AgentGroup Indexes
-// ============================================
+// ============================================================================
 
 // Index on AgentGroup.group_id for tenant-isolated lookups
 // Used in agent-nodes.ts:554 — existence check before create
@@ -83,41 +74,25 @@ CREATE INDEX agent_group_group_id_idx IF NOT EXISTS
 FOR (g:AgentGroup)
 ON (g.group_id);
 
-// ============================================
-// Create Full-Text Search Index
-// ============================================
+// ============================================================================
+// Full-Text Search Index
+// ============================================================================
 
 CREATE FULLTEXT INDEX agentSearch IF NOT EXISTS
 FOR (a:Agent) ON EACH [a.name, a.description];
 
-// ============================================
-// Optimized Query Examples
-// ============================================
-
-// Fast agent lookup by ID
-// MATCH (a:Agent {agent_id: 'memory-orchestrator'}) RETURN a;
-
-// Fast agent search by name
-// MATCH (a:Agent) WHERE a.name CONTAINS 'Memory' RETURN a;
-
-// Full-text search
-// CALL db.index.fulltext.queryNodes('agentSearch', 'orchestrator') YIELD node RETURN node;
-
-// Get agent with relationships
-// MATCH (a:Agent {agent_id: 'memory-orchestrator'})-[r]-(related)
-// RETURN a, r, related;
-
-// ============================================
-// Data Quality Check
-// ============================================
-
-// Count agents with missing fields
-MATCH (a:Agent)
-WHERE a.agent_id IS NULL OR a.name IS NULL
-RETURN count(a) as incomplete_agents;
-
-// List all agents with complete data
-MATCH (a:Agent)
-WHERE a.agent_id IS NOT NULL AND a.name IS NOT NULL
-RETURN a.agent_id, a.name, a.platform, a.status
-ORDER BY a.name;
+// ============================================================================
+// Verification Query (run manually after init):
+//
+// SHOW INDEXES
+// WHERE name IN [
+//   'agent_id_unique',
+//   'agent_name_idx',
+//   'agent_platform_idx',
+//   'agent_status_idx',
+//   'agent_platform_status_idx',
+//   'insight_head_insight_id_group_id_idx',
+//   'insight_head_id_idx',
+//   'agent_group_group_id_idx',
+//   'agentSearch'
+// ];
