@@ -31,154 +31,164 @@
 --     (b) Changing store.ts to use the main PG pool for fallback writes.
 -- ============================================================================
 
--- ============================================================================
--- 1. Create the memories table
--- ============================================================================
--- Columns:
---   id              - Surrogate key (BIGSERIAL for large-scale append)
---   session_id      - Session correlation (maps to agent session)
---   user_id         - User who triggered this memory
---   content         - Raw text content (indexed for BM25 via GIN)
---   memory_type     - Semantic taxonomy: episodic | semantic | procedural
---   embedding       - nomic-embed-text vector, 768 dims, NULL until populated
---   metadata        - Flexible JSONB for extensible attributes
---   trajectory_id   - SONA feedback correlation key
---   created_at      - Immutable insertion timestamp
---   relevance       - SONA-adjusted relevance score (0.0 = no feedback)
---   group_id        - Tenant isolation, enforced to ^allura- pattern
---   deleted_at      - Soft-delete support (NULL = active)
--- ============================================================================
+-- Guard: only create allura_memories on instances that have the ruvector extension
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ruvector') THEN
 
-CREATE TABLE IF NOT EXISTS allura_memories (
-    id              BIGSERIAL PRIMARY KEY,
-    session_id      TEXT        NOT NULL,
-    user_id         TEXT        NOT NULL,
-    content         TEXT        NOT NULL,
-    memory_type     TEXT        NOT NULL DEFAULT 'episodic'
-        CHECK (memory_type IN ('episodic', 'semantic', 'procedural')),
-    embedding       ruvector(768),  -- nomic-embed-text; NULL until embedding service populates
-    metadata        JSONB       NOT NULL DEFAULT '{}'::jsonb,
-    trajectory_id   TEXT,       -- for SONA feedback correlation
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    relevance       REAL        NOT NULL DEFAULT 0.0,
+    -- ============================================================================
+    -- 1. Create the memories table
+    -- ============================================================================
+    -- Columns:
+    --   id              - Surrogate key (BIGSERIAL for large-scale append)
+    --   session_id      - Session correlation (maps to agent session)
+    --   user_id         - User who triggered this memory
+    --   content         - Raw text content (indexed for BM25 via GIN)
+    --   memory_type     - Semantic taxonomy: episodic | semantic | procedural
+    --   embedding       - nomic-embed-text vector, 768 dims, NULL until populated
+    --   metadata        - Flexible JSONB for extensible attributes
+    --   trajectory_id   - SONA feedback correlation key
+    --   created_at      - Immutable insertion timestamp
+    --   relevance       - SONA-adjusted relevance score (0.0 = no feedback)
+    --   group_id        - Tenant isolation, enforced to ^allura- pattern
+    --   deleted_at      - Soft-delete support (NULL = active)
+    -- ============================================================================
 
-    -- Tenant isolation: group_id must match Allura convention
-    group_id        TEXT        NOT NULL CHECK (group_id ~ '^allura-[a-z0-9-]+$'),
+    CREATE TABLE IF NOT EXISTS allura_memories (
+        id              BIGSERIAL PRIMARY KEY,
+        session_id      TEXT        NOT NULL,
+        user_id         TEXT        NOT NULL,
+        content         TEXT        NOT NULL,
+        memory_type     TEXT        NOT NULL DEFAULT 'episodic'
+            CHECK (memory_type IN ('episodic', 'semantic', 'procedural')),
+        embedding       ruvector(768),  -- nomic-embed-text; NULL until embedding service populates
+        metadata        JSONB       NOT NULL DEFAULT '{}'::jsonb,
+        trajectory_id   TEXT,       -- for SONA feedback correlation
+        created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        relevance       REAL        NOT NULL DEFAULT 0.0,
 
-    -- Soft delete support
-    deleted_at      TIMESTAMPTZ,
+        -- Tenant isolation: group_id must match Allura convention
+        group_id        TEXT        NOT NULL CHECK (group_id ~ '^allura-[a-z0-9-]+$'),
 
-    -- Stored generated tsvector column for RuVector hybrid search FTS
-    -- Required by ruvector_register_hybrid() as the fts_column parameter.
-    -- Automatically kept in sync with content column by PostgreSQL.
-    content_tsv    tsvector GENERATED ALWAYS AS (to_tsvector('english', content)) STORED
-);
+        -- Soft delete support
+        deleted_at      TIMESTAMPTZ,
 
--- ============================================================================
--- 2. HNSW index for fast ANN vector search
--- ============================================================================
--- RuVector v0.3.0 provides the `hnsw` access method with `ruvector_cosine_ops`.
--- This is the primary index for approximate nearest-neighbor vector search.
--- For hybrid search, use ruvector_hybrid_search() which combines BM25 + HNSW.
--- ============================================================================
+        -- Stored generated tsvector column for RuVector hybrid search FTS
+        -- Required by ruvector_register_hybrid() as the fts_column parameter.
+        -- Automatically kept in sync with content column by PostgreSQL.
+        content_tsv    tsvector GENERATED ALWAYS AS (to_tsvector('english', content)) STORED
+    );
 
-CREATE INDEX IF NOT EXISTS allura_mem_embedding_hnsw
-    ON allura_memories USING hnsw (embedding ruvector_cosine_ops);
+    -- ============================================================================
+    -- 2. HNSW index for fast ANN vector search
+    -- ============================================================================
+    -- RuVector v0.3.0 provides the `hnsw` access method with `ruvector_cosine_ops`.
+    -- This is the primary index for approximate nearest-neighbor vector search.
+    -- For hybrid search, use ruvector_hybrid_search() which combines BM25 + HNSW.
+    -- ============================================================================
 
--- ============================================================================
--- 3. GIN index for full-text search on stored tsvector
--- ============================================================================
--- The content_tsv column is a stored generated tsvector. This GIN index
--- enables fast BM25-style keyword search for hybrid retrieval.
--- ============================================================================
+    CREATE INDEX IF NOT EXISTS allura_mem_embedding_hnsw
+        ON allura_memories USING hnsw (embedding ruvector_cosine_ops);
 
-CREATE INDEX IF NOT EXISTS allura_mem_content_fts
-    ON allura_memories USING gin(content_tsv);
+    -- ============================================================================
+    -- 3. GIN index for full-text search on stored tsvector
+    -- ============================================================================
+    -- The content_tsv column is a stored generated tsvector. This GIN index
+    -- enables fast BM25-style keyword search for hybrid retrieval.
+    -- ============================================================================
 
--- ============================================================================
--- 4. Composite index for tenant+time queries
--- ============================================================================
--- Primary access pattern: tenant-scoped chronological queries.
--- Most dashboards and list views filter by group_id and ORDER BY created_at DESC.
--- ============================================================================
+    CREATE INDEX IF NOT EXISTS allura_mem_content_fts
+        ON allura_memories USING gin(content_tsv);
 
-CREATE INDEX IF NOT EXISTS allura_mem_group_time
-    ON allura_memories (group_id, created_at DESC);
+    -- ============================================================================
+    -- 4. Composite index for tenant+time queries
+    -- ============================================================================
+    -- Primary access pattern: tenant-scoped chronological queries.
+    -- Most dashboards and list views filter by group_id and ORDER BY created_at DESC.
+    -- ============================================================================
 
--- ============================================================================
--- 5. Index for filtering by memory type within a tenant
--- ============================================================================
--- Supports queries like: WHERE group_id = $1 AND memory_type = $2
--- ============================================================================
+    CREATE INDEX IF NOT EXISTS allura_mem_group_time
+        ON allura_memories (group_id, created_at DESC);
 
-CREATE INDEX IF NOT EXISTS allura_mem_group_type
-    ON allura_memories (group_id, memory_type);
+    -- ============================================================================
+    -- 5. Index for filtering by memory type within a tenant
+    -- ============================================================================
+    -- Supports queries like: WHERE group_id = $1 AND memory_type = $2
+    -- ============================================================================
 
--- ============================================================================
--- 6. Index for feedback correlation (trajectory_id lookups)
--- ============================================================================
--- SONA feedback loop uses trajectory_id to correlate retrieval with feedback.
--- Partial index saves space — only rows with trajectory_id set are indexed.
--- ============================================================================
+    CREATE INDEX IF NOT EXISTS allura_mem_group_type
+        ON allura_memories (group_id, memory_type);
 
-CREATE INDEX IF NOT EXISTS allura_mem_trajectory
-    ON allura_memories (trajectory_id) WHERE trajectory_id IS NOT NULL;
+    -- ============================================================================
+    -- 6. Index for feedback correlation (trajectory_id lookups)
+    -- ============================================================================
+    -- SONA feedback loop uses trajectory_id to correlate retrieval with feedback.
+    -- Partial index saves space — only rows with trajectory_id set are indexed.
+    -- ============================================================================
 
--- ============================================================================
--- 7. Partial index for active (non-deleted) memories
--- ============================================================================
--- Most queries exclude soft-deleted rows. This index covers the common case:
--- WHERE group_id = $1 AND deleted_at IS NULL ORDER BY relevance DESC
--- ============================================================================
+    CREATE INDEX IF NOT EXISTS allura_mem_trajectory
+        ON allura_memories (trajectory_id) WHERE trajectory_id IS NOT NULL;
 
-CREATE INDEX IF NOT EXISTS allura_mem_active
-    ON allura_memories (group_id, relevance DESC)
-    WHERE deleted_at IS NULL;
+    -- ============================================================================
+    -- 7. Partial index for active (non-deleted) memories
+    -- ============================================================================
+    -- Most queries exclude soft-deleted rows. This index covers the common case:
+    -- WHERE group_id = $1 AND deleted_at IS NULL ORDER BY relevance DESC
+    -- ============================================================================
 
--- ============================================================================
--- 8. Session-scoped index for session replay patterns
--- ============================================================================
--- Supports: WHERE session_id = $1 AND deleted_at IS NULL ORDER BY created_at
--- ============================================================================
+    CREATE INDEX IF NOT EXISTS allura_mem_active
+        ON allura_memories (group_id, relevance DESC)
+        WHERE deleted_at IS NULL;
 
-CREATE INDEX IF NOT EXISTS allura_mem_session
-    ON allura_memories (session_id, created_at DESC)
-    WHERE deleted_at IS NULL;
+    -- ============================================================================
+    -- 8. Session-scoped index for session replay patterns
+    -- ============================================================================
+    -- Supports: WHERE session_id = $1 AND deleted_at IS NULL ORDER BY created_at
+    -- ============================================================================
 
--- ============================================================================
--- Comments for documentation
--- ============================================================================
+    CREATE INDEX IF NOT EXISTS allura_mem_session
+        ON allura_memories (session_id, created_at DESC)
+        WHERE deleted_at IS NULL;
 
-COMMENT ON TABLE allura_memories IS
-    'Hybrid vector+BM25 memory store for Allura. '
-    'Embeddings use ruvector(768) (nomic-embed-text, 768 dims). '
-    'HNSW index enables fast ANN search via ruvector_cosine_ops. '
-    'ruvector_hybrid_search() combines BM25 + ANN for fusion retrieval. '
-    'group_id enforced to ^allura- via CHECK. '
-    'SONA feedback loop uses trajectory_id for correlation.';
+    -- ============================================================================
+    -- Comments for documentation
+    -- ============================================================================
 
-COMMENT ON COLUMN allura_memories.embedding IS
-    'Vector embedding as ruvector(768). nomic-embed-text produces 768-dim vectors. '
-    'NULL until embedding service populates it. '
-    'HNSW index uses ruvector_cosine_ops for approximate nearest-neighbor search.';
+    COMMENT ON TABLE allura_memories IS
+        'Hybrid vector+BM25 memory store for Allura. '
+        'Embeddings use ruvector(768) (nomic-embed-text, 768 dims). '
+        'HNSW index enables fast ANN search via ruvector_cosine_ops. '
+        'ruvector_hybrid_search() combines BM25 + ANN for fusion retrieval. '
+        'group_id enforced to ^allura- via CHECK. '
+        'SONA feedback loop uses trajectory_id for correlation.';
 
-COMMENT ON COLUMN allura_memories.trajectory_id IS
-    'Correlation ID for SONA feedback. Set during retrieval, '
-    'used by ruvector_record_feedback() for relevance adjustment.';
+    COMMENT ON COLUMN allura_memories.embedding IS
+        'Vector embedding as ruvector(768). nomic-embed-text produces 768-dim vectors. '
+        'NULL until embedding service populates it. '
+        'HNSW index uses ruvector_cosine_ops for approximate nearest-neighbor search.';
 
-COMMENT ON COLUMN allura_memories.relevance IS
-    'Relevance score updated by SONA feedback loop. 0.0 = no feedback yet. '
-    'Use ruvector_sona_learn() for trajectory-based learning adjustments.';
+    COMMENT ON COLUMN allura_memories.trajectory_id IS
+        'Correlation ID for SONA feedback. Set during retrieval, '
+        'used by ruvector_record_feedback() for relevance adjustment.';
 
-COMMENT ON COLUMN allura_memories.deleted_at IS
-    'Soft-delete timestamp. NULL = active memory. '
-    'Set to NOW() on deletion; excluded from queries via partial indexes.';
+    COMMENT ON COLUMN allura_memories.relevance IS
+        'Relevance score updated by SONA feedback loop. 0.0 = no feedback yet. '
+        'Use ruvector_sona_learn() for trajectory-based learning adjustments.';
 
-COMMENT ON COLUMN allura_memories.memory_type IS
-    'Semantic taxonomy of memory. '
-    'episodic: specific event recollection. '
-    'semantic: generalized knowledge. '
-    'procedural: skill/process memory.';
+    COMMENT ON COLUMN allura_memories.deleted_at IS
+        'Soft-delete timestamp. NULL = active memory. '
+        'Set to NOW() on deletion; excluded from queries via partial indexes.';
+
+    COMMENT ON COLUMN allura_memories.memory_type IS
+        'Semantic taxonomy of memory. '
+        'episodic: specific event recollection. '
+        'semantic: generalized knowledge. '
+        'procedural: skill/process memory.';
+
+  ELSE
+    RAISE NOTICE 'Skipping allura_memories — ruvector type not available (standard PG instance)';
+  END IF;
+END $$;
 
 -- ============================================================================
 -- POST-MIGRATION: Hybrid search registration
