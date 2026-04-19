@@ -116,7 +116,7 @@ function validateGroupIdOrEnvelope<T>(
  * Extract store information from the canonical-tools response meta.
  * Falls back to empty array if meta is not present.
  */
-function extractMetaOverrides(response: { meta?: { stores_used?: Array<"postgres" | "neo4j" | "ruvector">; degraded?: boolean; degraded_reason?: string; warnings?: string[] } }): Partial<EnvelopeMeta> {
+function extractMetaOverrides(response: { meta?: { stores_used?: Array<"postgres" | "neo4j" | "ruvector" | "graph">; degraded?: boolean; degraded_reason?: string; warnings?: string[] } }): Partial<EnvelopeMeta> {
   if (!response.meta) return {}
   return {
     stores_used: response.meta.stores_used ?? [],
