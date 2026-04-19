@@ -63,6 +63,8 @@ This keeps Allura grounded in inspectability rather than black-box automation.
 
 ### Architecture Overview
 
+![Allura Brain Architecture v2.0](./alllura%20logo%20final/allura_architecture_v2.png)
+
 **Episodic Layer (PostgreSQL)** → Append-only event history, high-volume traces, audit trail by design  
 **Semantic Layer (Neo4j)** → Curated knowledge, versioned via SUPERSEDES, promotion-gated writes  
 **Vector Layer (RuVector)** → 768d embeddings for semantic search, hybrid ANN + BM25 ranking
