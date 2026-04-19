@@ -110,7 +110,7 @@ interface ContractCheck {
 
 const ROOT_DIR = process.cwd();
 const GROUP_ID = "allura-memory";
-const AGENT_ID = "dijkstra";
+const AGENT_ID = "carmack";
 
 const SUBCOMMANDS = ["review", "check", "surface", "contracts"] as const;
 type SubCommand = (typeof SUBCOMMANDS)[number];
@@ -592,7 +592,7 @@ function getPrDiff(prRef: string): DiffFileChange[] {
         { encoding: "utf-8", cwd: ROOT_DIR, maxBuffer: 50 * 1024 * 1024 },
       );
     } catch {
-      console.error(`[dijkstra] Cannot get diff for PR ref ${prRef}`);
+      console.error(`[carmack] Cannot get diff for PR ref ${prRef}`);
       process.exit(1);
     }
   }
@@ -842,12 +842,12 @@ function cmdCheck(targetPath: string): {
   const absPath = join(ROOT_DIR, targetPath);
 
   if (!existsSync(absPath)) {
-    console.error(`[dijkstra] Path not found: ${targetPath}`);
+    console.error(`[carmack] Path not found: ${targetPath}`);
     process.exit(1);
   }
 
   if (statSync(absPath).isDirectory()) {
-    console.error(`[dijkstra] check requires a file path, not directory. Use 'surface' for directories.`);
+    console.error(`[carmack] check requires a file path, not directory. Use 'surface' for directories.`);
     process.exit(1);
   }
 
@@ -971,12 +971,12 @@ function cmdSurface(dirPath: string): {
   const absPath = join(ROOT_DIR, dirPath);
 
   if (!existsSync(absPath)) {
-    console.error(`[dijkstra] Directory not found: ${dirPath}`);
+    console.error(`[carmack] Directory not found: ${dirPath}`);
     process.exit(1);
   }
 
   if (!statSync(absPath).isDirectory()) {
-    console.error(`[dijkstra] surface requires a directory path. Use 'check' for files.`);
+    console.error(`[carmack] surface requires a directory path. Use 'check' for files.`);
     process.exit(1);
   }
 
@@ -1272,9 +1272,9 @@ function extractInterfaceBlock(lines: string[], interfaceName: string): string |
 
 function formatReview(result: ReviewResult): string {
   const lines: string[] = [];
-  lines.push("[dijkstra] ═══════════════════════════════════════════════════");
-  lines.push("[dijkstra]       CODE REVIEW REPORT");
-  lines.push("[dijkstra] ═══════════════════════════════════════════════════");
+  lines.push("[carmack] ═══════════════════════════════════════════════════");
+  lines.push("[carmack]       CODE REVIEW REPORT");
+  lines.push("[carmack] ═══════════════════════════════════════════════════");
   lines.push("");
   lines.push(`Files changed: ${result.diffStats.filesChanged}`);
   lines.push(`  +${result.diffStats.additions} / -${result.diffStats.deletions}`);
@@ -1350,7 +1350,7 @@ function formatCheck(
   result: { fileReview: FileReview; functionScores: FunctionScore[] },
 ): string {
   const lines: string[] = [];
-  lines.push("[dijkstra] ══ FILE REVIEW ════════════════════════════════");
+  lines.push("[carmack] ══ FILE REVIEW ════════════════════════════════");
   lines.push("");
   lines.push(`File: ${result.fileReview.path}`);
   lines.push(`Total lines: ${result.fileReview.totalLines}`);
@@ -1402,7 +1402,7 @@ function formatSurface(result: {
   };
 }): string {
   const lines: string[] = [];
-  lines.push("[dijkstra] ══ API SURFACE ANALYSIS ═══════════════════════");
+  lines.push("[carmack] ══ API SURFACE ANALYSIS ═══════════════════════");
   lines.push("");
   lines.push(`Modules analyzed: ${result.summary.totalModules}`);
   lines.push(`Total exports: ${result.summary.totalExports}`);
@@ -1453,7 +1453,7 @@ function formatContracts(result: {
   verdict: Severity;
 }): string {
   const lines: string[] = [];
-  lines.push("[dijkstra] ══ CANONICAL CONTRACTS CHECK ═════════════════");
+  lines.push("[carmack] ══ CANONICAL CONTRACTS CHECK ═════════════════");
   lines.push("");
   lines.push("Canonical Memory Operations:");
   lines.push("──────────────────────────────────────────────────────");
@@ -1583,21 +1583,21 @@ async function main(): Promise<void> {
 
   // No args at all → print usage
   if (!subCommand && args.length === 0) {
-    console.log("[dijkstra] Dijkstra — Code Review Agent");
+    console.log("[carmack] Carmack — Performance Review Agent");
     console.log("");
     console.log("Usage:");
-    console.log("  bun scripts/agents/dijkstra-review.ts review <pr>   Code review of a PR (git diff)");
-    console.log("  bun scripts/agents/dijkstra-review.ts check <path>  Standalone file review");
-    console.log("  bun scripts/agents/dijkstra-review.ts surface <dir> API surface analysis");
-    console.log("  bun scripts/agents/dijkstra-review.ts contracts    Check canonical contracts");
-    console.log("  bun scripts/agents/dijkstra-review.ts <pr>         Default: review (backward compat)");
+    console.log("  bun scripts/agents/carmack-review.ts review <pr>   Code review of a PR (git diff)");
+    console.log("  bun scripts/agents/carmack-review.ts check <path>  Standalone file review");
+    console.log("  bun scripts/agents/carmack-review.ts surface <dir> API surface analysis");
+    console.log("  bun scripts/agents/carmack-review.ts contracts    Check canonical contracts");
+    console.log("  bun scripts/agents/carmack-review.ts <pr>         Default: review (backward compat)");
     process.exit(0);
   }
 
-  console.log("[dijkstra] Starting code review...");
-  console.log(`[dijkstra] Command: ${subCommand || "review"}`);
+  console.log("[carmack] Starting code review...");
+  console.log(`[carmack] Command: ${subCommand || "review"}`);
   if (args.length > 0) {
-    console.log(`[dijkstra] Args: ${args.join(" ")}`);
+    console.log(`[carmack] Args: ${args.join(" ")}`);
   }
   console.log("");
 
@@ -1608,7 +1608,7 @@ async function main(): Promise<void> {
 
   if (subCommand === "review") {
     if (args.length === 0) {
-      console.error("[dijkstra] review requires a PR number or ref");
+      console.error("[carmack] review requires a PR number or ref");
       process.exit(1);
     }
     const result = cmdReview(args[0]);
@@ -1625,7 +1625,7 @@ async function main(): Promise<void> {
     exitCode = result.verdict === "fail" ? 1 : 0;
   } else if (subCommand === "check") {
     if (args.length === 0) {
-      console.error("[dijkstra] check requires a file path");
+      console.error("[carmack] check requires a file path");
       process.exit(1);
     }
     const result = cmdCheck(args[0]);
@@ -1641,7 +1641,7 @@ async function main(): Promise<void> {
     exitCode = hasFail || failFunctions > 0 ? 1 : 0;
   } else if (subCommand === "surface") {
     if (args.length === 0) {
-      console.error("[dijkstra] surface requires a directory path");
+      console.error("[carmack] surface requires a directory path");
       process.exit(1);
     }
     const result = cmdSurface(args[0]);
@@ -1691,9 +1691,9 @@ async function main(): Promise<void> {
   const db = await getDbConnections();
 
   if (!db) {
-    console.log("\n[dijkstra] ⚠️  Database connections not configured");
-    console.log("[dijkstra] Review complete — results shown above (no DB logging)");
-    console.log("[dijkstra] Set POSTGRES_URL and NEO4J_URI to log findings");
+    console.log("\n[carmack] ⚠️  Database connections not configured");
+    console.log("[carmack] Review complete — results shown above (no DB logging)");
+    console.log("[carmack] Set POSTGRES_URL and NEO4J_URI to log findings");
     process.exit(exitCode);
   }
 
@@ -1716,9 +1716,9 @@ async function main(): Promise<void> {
       confidence,
     });
 
-    console.log("\n[dijkstra] ✅ Review logged to PostgreSQL and Neo4j");
+    console.log("\n[carmack] ✅ Review logged to PostgreSQL and Neo4j");
   } catch (error) {
-    console.error("\n[dijkstra] DB logging failed:", error);
+    console.error("\n[carmack] DB logging failed:", error);
     // Don't change exit code — the review output is still valid
   } finally {
     await db.neo4jSession.close();

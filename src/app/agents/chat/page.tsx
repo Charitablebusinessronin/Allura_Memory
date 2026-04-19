@@ -25,16 +25,16 @@ interface Message {
 }
 
 const AGENTS: Agent[] = [
-  { agent_id: "brooks", name: "Frederick Brooks", role: "Orchestrator", model: "GLM-5" },
-  { agent_id: "knuth", name: "Donald Knuth", role: "Deep Worker", model: "GPT-5.4-mini" },
-  { agent_id: "turing", name: "Alan Turing", role: "Architecture", model: "GPT-5.4-mini" },
-  { agent_id: "berners-lee", name: "Tim Berners-Lee", role: "Curator", model: "Kimi 2.5" },
-  { agent_id: "hopper", name: "Grace Hopper", role: "Explorer", model: "Gemma 4" },
-  { agent_id: "cerf", name: "Vint Cerf", role: "Context Manager", model: "GLM-5" },
-  { agent_id: "torvalds", name: "Linus Torvalds", role: "Code Generator", model: "GPT-5.4-mini" },
-  { agent_id: "liskov", name: "Barbara Liskov", role: "Analyst", model: "Kimi 2.5" },
-  { agent_id: "dijkstra", name: "Edsger Dijkstra", role: "Reviewer", model: "GLM-5" },
-  { agent_id: "hinton", name: "Geoffrey Hinton", role: "Vision", model: "Kimi 2.5" },
+  { agent_id: "brooks", name: "Frederick Brooks", role: "Orchestrator", model: "GPT-5.4" },
+  { agent_id: "jobs", name: "Steve Jobs", role: "Intent Gate", model: "Kimi 2.5" },
+  { agent_id: "woz", name: "Steve Wozniak", role: "Builder", model: "Qwen3-Coder-Next" },
+  { agent_id: "pike", name: "Rob Pike", role: "Interface Gate", model: "GPT-5.4-mini" },
+  { agent_id: "bellard", name: "Fabrice Bellard", role: "Diagnostics", model: "GLM-5.1" },
+  { agent_id: "fowler", name: "Martin Fowler", role: "Refactor Gate", model: "GLM-5.1" },
+  { agent_id: "scout", name: "Scout", role: "Recon", model: "Nemotron-3-Super" },
+  { agent_id: "carmack", name: "John Carmack", role: "Performance", model: "Qwen3-Coder-Next" },
+  { agent_id: "knuth", name: "Donald Knuth", role: "Data Architect", model: "GLM-5.1" },
+  { agent_id: "hightower", name: "Kelsey Hightower", role: "DevOps", model: "GPT-5.4" },
 ];
 
 export default function AgentChat() {
