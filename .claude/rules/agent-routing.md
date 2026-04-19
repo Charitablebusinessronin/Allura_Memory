@@ -51,16 +51,16 @@ We don't hire 10 surgeons. We hire one surgeon and a team of specialists who own
 
 | Agent | Persona | Role | Primary | Specialist Override | Fallback | Use When |
 |-------|---------|------|---------|---------------------|----------|----------|
-| **Brooks** | Frederick Brooks | Architect + Orchestrator | `ollama-cloud/gpt-5.4` | — | `ollama-cloud/glm-5.1` | Task planning, architecture, delegation |
-| **Jobs** | Steve Jobs | Intent Gate | `ollama-cloud/gpt-5.4` | — | `ollama-cloud/glm-5.1` | Scope control, acceptance criteria |
-| **Woz** | Steve Wozniak | Builder | `ollama-cloud/gpt-5.4-mini` | `qwen3-coder-next:cloud` for codegen | `ollama-cloud/glm-5.1` | Autonomous implementation, ships working code |
-| **Pike** | Rob Pike | Interface Gate | `ollama-cloud/gpt-5.4-mini` | — | `ollama-cloud/glm-5.1` | Read-only architecture consultation |
-| **Bellard** | Fabrice Bellard | Diagnostics + Perf | `ollama-cloud/gpt-5.4-mini` | `qwen3-coder-next:cloud` for perf code | `ollama-cloud/glm-5.1` | Performance, measurement, low-level fixes |
-| **Fowler** | Martin Fowler | Refactor Gate | `ollama-cloud/gpt-5.4-mini` | — | `ollama-cloud/glm-5.1` | Maintainability, incremental change |
-| **Scout** | (none) | Recon + Discovery | `ollama-cloud/nemotron-3-super:cloud` | `gpt-5.4-nano` for tiny checks | `ollama-cloud/glm-5.1` | Fast codebase search, pattern discovery |
-| **Carmack** | John Carmack | Performance Specialist | `ollama-cloud/gpt-5.4-mini` | — | `ollama-cloud/glm-5.1` | Optimization, API design, latency |
-| **Knuth** | Donald Knuth | Data Architect | `ollama-cloud/gpt-5.4-mini` | — | `ollama-cloud/glm-5.1` | Schema design, query optimization |
-| **Hightower** | Kelsey Hightower | DevOps Specialist | `ollama-cloud/gpt-5.4` | — | `ollama-cloud/glm-5.1` | CI/CD, IaC, deployment, observability |
+| **Brooks** | Frederick Brooks | Architect + Orchestrator | `openai/gpt-5.4` | — | `ollama-cloud/kimi-k2.5` | Task planning, architecture, delegation |
+| **Jobs** | Steve Jobs | Intent Gate | `ollama-cloud/kimi-k2.5` | — | `openai/gpt-5.4` | Scope control, acceptance criteria |
+| **Woz** | Steve Wozniak | Builder | `ollama-cloud/qwen3-coder-next` | `qwen3-coder-next:cloud` for codegen | `ollama-cloud/glm-5.1` | Autonomous implementation, ships working code |
+| **Pike** | Rob Pike | Interface Gate | `openai/gpt-5.4-mini` | — | `ollama-cloud/kimi-k2.5` | Read-only architecture consultation |
+| **Bellard** | Fabrice Bellard | Diagnostics + Perf | `ollama-cloud/glm-5.1` | `qwen3-coder-next:cloud` for perf code | `ollama-cloud/qwen3-coder-next` | Performance, measurement, low-level fixes |
+| **Fowler** | Martin Fowler | Refactor Gate | `ollama-cloud/glm-5.1` | — | `ollama-cloud/qwen3-coder-next` | Maintainability, incremental change |
+| **Scout** | (none) | Recon + Discovery | `ollama-cloud/nemotron-3-super` | `gpt-5.4-nano` for tiny checks | `openai/gpt-5.4-mini` | Fast codebase search, pattern discovery |
+| **Carmack** | John Carmack | Performance Specialist | `ollama-cloud/qwen3-coder-next` | — | `ollama-cloud/glm-5.1` | Optimization, API design, latency |
+| **Knuth** | Donald Knuth | Data Architect | `ollama-cloud/glm-5.1` | — | `openai/gpt-5.4-mini` | Schema design, query optimization |
+| **Hightower** | Kelsey Hightower | DevOps Specialist | `openai/gpt-5.4` | — | `ollama-cloud/kimi-k2.5` | CI/CD, IaC, deployment, observability |
 
 ## Category Routing
 

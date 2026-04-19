@@ -3,16 +3,10 @@
  * Sync Agent Skills to Notion database
  */
 
-// MCP Notion integration available via mcp__MCP_DOCKER__ tools
-// import { mcp__claude_ai_Notion__notion_update_database } from "@mcp_docker";
+// Notion access is via mcp__claude_ai_Notion__* MCP tools — no API key required.
+// Use: mcp__claude_ai_Notion__notion-create-pages / notion-update-page etc.
 
-const NOTION_TOKEN = process.env.NOTION_TOKEN;
 const PARENT_PAGE_ID = "33b1d9be65b381d4905af618f6dcfe0e";
-
-if (!NOTION_TOKEN) {
-  console.log("❌ NOTION_TOKEN not set");
-  process.exit(1);
-}
 
 const SKILLS = {
   tier1: [

@@ -17,6 +17,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3100
 
+# Install wget for the health check probe (not present in slim image)
+RUN apt-get update -qq && apt-get install -y --no-install-recommends wget && rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json

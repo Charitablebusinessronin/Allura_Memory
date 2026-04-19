@@ -116,19 +116,11 @@ interface NotionDatabaseResponse {
   url?: string;
 }
 
-function getNotionApiKey(): string {
-  const apiKey = process.env.NOTION_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('NOTION_API_KEY is required for hydration');
-  }
-
-  return apiKey;
-}
+// Notion access is via mcp__claude_ai_Notion__* MCP tools — no API key needed.
+// Direct REST calls below use NOTION_MCP_URL as the gateway base URL.
 
 function getNotionHeaders(): Record<string, string> {
   return {
-    'Authorization': `Bearer ${getNotionApiKey()}`,
     'Notion-Version': NOTION_API_VERSION,
     'Content-Type': 'application/json',
   };
