@@ -8,7 +8,7 @@
  *
  * Operations:
  * 1. memory_add    - Add a memory (episodic → score → promote/queue)
- * 2. memory_search  - Search memories (federated: Postgres + Neo4j)
+ * 2. memory_search  - Search memories (RuVector primary → Neo4j fallback → PG traces)
  * 3. memory_get     - Get a single memory by ID
  * 4. memory_list    - List all memories for a user
  * 5. memory_delete  - Soft-delete a memory
@@ -16,10 +16,15 @@
  * 7. memory_promote - Request curator promotion
  * 8. memory_export  - Export memories
  *
+ * Architecture (Slice B - RuVector Primary):
+ * - RuVector: Primary backend for episodic retrieval (hybrid vector + BM25)
+ * - Neo4j: Fallback for semantic insights until Slice D
+ * - PostgreSQL: Audit trails and fallback for unembedded events
+ *
  * Budget & Circuit Breaker Integration:
  * - memory_add: Budget-enforced (pre-check, post-update). Write-intensive, needs rate limiting.
  * - memory_update, memory_delete, memory_promote: Budget-tracked (record usage after call).
- * - All write ops: Wrapped in circuit breakers for DB calls (separate breakers for PG & Neo4j).
+ * - All write ops: Wrapped in circuit breakers for DB calls.
  * - Read ops: Circuit breakers on DB calls, no budget check (reads are cheap).
  * - Fail-open: If budget/circuit breaker can't initialize, requests pass through.
  */
@@ -394,69 +399,95 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
 /**
  * 2. memory_search
  *
- * Search memories across both stores.
- * Federated search: PostgreSQL (episodic) + Neo4j (semantic).
- * Results merged by relevance score.
+ * Search memories with RuVector as primary backend.
+ * Priority: RuVector (episodic hybrid: vector + BM25) → Neo4j (semantic) → PostgreSQL (traces).
+ * Results merged by relevance score with source attribution.
  */
 export async function memory_search(request: MemorySearchRequest): Promise<MemorySearchResponse> {
   // Validate
   const groupId = validateGroupId(request.group_id)
   const limit = Math.floor(request.limit || 10)
+  const startTime = Date.now()
+
+  const storesUsed: Array<"postgres" | "neo4j" | "ruvector"> = []
+  const warnings: string[] = []
+  let searchMeta = baseMeta([])
+
+  // ── STEP 1: Primary search — RuVector (episodic hybrid: vector + BM25) ─────────
+  let ruvectorResults: Array<{
+    id: MemoryId
+    content: MemoryContent
+    score: ConfidenceScore
+    provenance: MemoryProvenance
+    created_at: string
+    usage_count: number
+    tags: string[]
+  }> = []
+  let ruvectorTrajectoryId: string | undefined
 
   try {
-    const { pg, neo4j: neo4jDriver } = await getConnections()
-    const startTime = Date.now()
+    const ruvectorResult = await searchWithFeedback(groupId, request.query, {
+      limit: request.limit ?? 10,
+      threshold: 0.3, // Lower threshold for recall
+    })
 
-    // Parallel search both stores
-    const episodicResults = await pg.query<EpisodicMemoryRow>(
-      `SELECT metadata->>'memory_id' AS id, metadata->>'content' AS content, 
-            metadata->>'source' AS provenance,
-            metadata->>'tags' AS tags,
-            created_at
-      FROM events
-     WHERE group_id = $1
-       AND event_type = 'memory_add'
-       AND ($2::text IS NULL OR metadata->>'user_id' = $2)
-       AND metadata->>'content' ILIKE '%' || $3 || '%'
-     ORDER BY created_at DESC
-     LIMIT $4`,
-      [groupId, request.user_id || null, request.query, limit]
-    )
+    ruvectorTrajectoryId = ruvectorResult.trajectoryId
+    ruvectorResults = ruvectorResult.memories.map((m) => ({
+      id: m.id as MemoryId,
+      content: m.content as MemoryContent,
+      score: m.score as ConfidenceScore,
+      provenance: "conversation" as MemoryProvenance, // RuVector stores episodic
+      created_at: new Date().toISOString(), // Bridge doesn't return created_at
+      usage_count: 0,
+      tags: [],
+    }))
 
-    let semanticResults: Array<{
-      id: MemoryId
-      content: string
-      score: number
-      provenance: MemoryProvenance
-      created_at: string
-      usage_count: number
-      relevance: number
-      tags: string[]
-    }> = []
-    let searchMeta = baseMeta(["postgres", "neo4j"])
+    if (ruvectorResults.length > 0) {
+      storesUsed.push("ruvector")
+    }
+  } catch (ruvectorErr) {
+    // RuVector failure — log warning and continue to fallback
+    const msg = ruvectorErr instanceof Error ? ruvectorErr.message : String(ruvectorErr)
+    console.warn("[memory_search] RuVector primary search failed:", msg)
+    warnings.push(`ruvector_unavailable: ${msg}`)
+  }
 
+  // ── STEP 2: Fallback 1 — Neo4j (semantic full-text) ───────────────────────────
+  let semanticResults: Array<{
+    id: MemoryId
+    content: string
+    score: number
+    provenance: MemoryProvenance
+    created_at: string
+    usage_count: number
+    relevance: number
+    tags: string[]
+  }> = []
+
+  if (ruvectorResults.length < limit) {
     try {
+      const { neo4j: neo4jDriver } = await getConnections()
       const session = neo4jDriver.session()
       try {
         const result = await session.run(
           `CALL db.index.fulltext.queryNodes('memory_search_index', $query)
-         YIELD node AS m, score
-         WHERE m.group_id = $groupId
-           AND NOT (m)<-[:SUPERSEDES]-()
-         RETURN m.id AS id,
-                m.content AS content,
-                m.score AS score,
-                m.provenance AS provenance,
-                m.created_at AS created_at,
-                m.usage_count AS usage_count,
-                m.tags AS tags,
-                score AS relevance
-         ORDER BY relevance DESC, m.score DESC
-         LIMIT $limit`,
+           YIELD node AS m, score
+           WHERE m.group_id = $groupId
+             AND NOT (m)<-[:SUPERSEDES]-()
+           RETURN m.id AS id,
+                  m.content AS content,
+                  m.score AS score,
+                  m.provenance AS provenance,
+                  m.created_at AS created_at,
+                  m.usage_count AS usage_count,
+                  m.tags AS tags,
+                  score AS relevance
+           ORDER BY relevance DESC, m.score DESC
+           LIMIT $limit`,
           {
             query: request.query,
             groupId,
-            limit: neo4j.int(limit),
+            limit: neo4j.int(limit - ruvectorResults.length),
           }
         )
 
@@ -470,119 +501,118 @@ export async function memory_search(request: MemorySearchRequest): Promise<Memor
           tags: record.get("tags") || [],
           relevance: record.get("relevance"),
         }))
+
+        if (semanticResults.length > 0) {
+          storesUsed.push("neo4j")
+        }
       } finally {
         await session.close()
       }
     } catch (error) {
-      console.warn("[degraded] Neo4j unavailable in memory_search:", error)
-      searchMeta = degradedMeta(["postgres"])
+      console.warn("[degraded] Neo4j fallback unavailable in memory_search:", error)
+      warnings.push("neo4j_unavailable")
     }
+  }
 
-    // --- RuVector conditional enrichment ---
-    // Feature-flagged: only activates when RUVECTOR_ENABLED=true AND health check passes.
-    // Fail-closed: if RuVector is unavailable, search continues with PG+Neo4j results only.
-    let ruvectorResults: Array<{ id: string; content: string; score: number; source: string }> = []
-    let ruvectorTrajectoryId: string | undefined
+  // ── STEP 3: Fallback 2 — PostgreSQL (episodic traces without embeddings) ──────
+  let episodicResults: Array<{
+    id: MemoryId
+    content: MemoryContent
+    score: ConfidenceScore
+    provenance: MemoryProvenance
+    created_at: string
+    usage_count: number
+    tags: string[]
+  }> = []
 
+  const totalSoFar = ruvectorResults.length + semanticResults.length
+  if (totalSoFar < limit) {
     try {
-      if (await shouldUseRuVector()) {
-        const ruvectorResult = await searchWithFeedback(groupId, request.query, {
-          limit: request.limit ?? 10,
-          threshold: 0.3, // Lower threshold for recall; canonical layer filters further
-        })
-
-        ruvectorTrajectoryId = ruvectorResult.trajectoryId
-        ruvectorResults = ruvectorResult.memories.map((m) => ({
-          id: m.id,
-          content: m.content,
-          score: m.score,
-          source: "ruvector",
-        }))
-      }
-    } catch (ruvectorErr) {
-      // RuVector failure is non-fatal — log and continue with PG+Neo4j results only
-      console.warn(
-        "[memory_search] RuVector enrichment failed, continuing with PG+Neo4j:",
-        ruvectorErr instanceof Error ? ruvectorErr.message : String(ruvectorErr)
+      const { pg } = await getConnections()
+      const result = await pg.query<EpisodicMemoryRow>(
+        `SELECT metadata->>'memory_id' AS id, metadata->>'content' AS content, 
+              metadata->>'source' AS provenance,
+              metadata->>'tags' AS tags,
+              created_at
+       FROM events
+      WHERE group_id = $1
+        AND event_type = 'memory_add'
+        AND ($2::text IS NULL OR metadata->>'user_id' = $2)
+        AND metadata->>'content' ILIKE '%' || $3 || '%'
+      ORDER BY created_at DESC
+      LIMIT $4`,
+        [groupId, request.user_id || null, request.query, limit - totalSoFar]
       )
-    }
 
-    // Merge results
-    const episodic = episodicResults.rows.map((row) => ({
-      id: toMemoryId(row.id),
-      content: row.content,
-      score: 0.5, // Episodic memories don't have scores
-      source: "episodic" as const,
-      provenance: toProvenance(row.provenance),
-      created_at: row.created_at,
-      usage_count: 0,
-      tags: parseEpisodicTags(row.tags),
-    }))
+      episodicResults = result.rows.map((row) => ({
+        id: toMemoryId(row.id),
+        content: row.content,
+        score: 0.5, // Episodic without embedding scores lower
+        provenance: toProvenance(row.provenance),
+        created_at: row.created_at,
+        usage_count: 0,
+        tags: parseEpisodicTags(row.tags),
+      }))
 
-    const semantic = semanticResults.map((item) => ({
-      id: item.id,
-      content: item.content,
-      score: item.score,
-      source: "semantic" as const,
-      provenance: item.provenance,
-      created_at: item.created_at,
-      usage_count: item.usage_count,
-      tags: item.tags,
-    }))
+      if (episodicResults.length > 0) {
+        storesUsed.push("postgres")
+      }
+    } catch (error) {
+      console.warn("[degraded] PostgreSQL fallback unavailable in memory_search:", error)
+      warnings.push("postgres_unavailable")
+    }
+  }
 
-    // Map RuVector results into canonical shape
-    const ruvector = ruvectorResults.map((r) => ({
-      id: r.id as MemoryId,
-      content: r.content as MemoryContent,
-      score: r.score as ConfidenceScore,
-      source: "episodic" as StorageLocation, // RuVector is episodic storage
-      provenance: "conversation" as MemoryProvenance,
-      created_at: new Date().toISOString(), // RuVector doesn't return created_at in retrieveMemories
-      usage_count: 0,
-      tags: [] as string[],
-    }))
+  // ── STEP 4: Merge results ────────────────────────────────────────────────────
+  const semantic = semanticResults.map((item) => ({
+    id: item.id,
+    content: item.content,
+    score: item.score,
+    source: "semantic" as const,
+    provenance: item.provenance,
+    created_at: item.created_at,
+    usage_count: item.usage_count,
+    tags: item.tags,
+  }))
 
-    // Combine and sort by score
-    const results = [...semantic, ...episodic, ...ruvector].sort((a, b) => b.score - a.score).slice(0, limit)
+  const episodic = episodicResults.map((item) => ({
+    ...item,
+    source: "episodic" as const,
+  }))
 
-    const latency = Date.now() - startTime
+  const ruvector = ruvectorResults.map((item) => ({
+    ...item,
+    source: "episodic" as const, // RuVector stores episodic memories
+  }))
 
-    // Build stores_used array based on what actually returned results
-    const storesUsed: Array<"postgres" | "neo4j" | "ruvector"> = []
-    if (episodic.length > 0 || searchMeta.stores_used.includes("postgres")) {
-      storesUsed.push("postgres")
-    }
-    if (semanticResults.length > 0 || searchMeta.stores_used.includes("neo4j")) {
-      storesUsed.push("neo4j")
-    }
-    if (ruvectorResults.length > 0) {
-      storesUsed.push("ruvector")
-    }
-    // Fallback: ensure at least the stores attempted are listed
-    if (storesUsed.length === 0) {
-      storesUsed.push(...searchMeta.stores_used)
-    }
+  // Combine, dedupe by ID, sort by score
+  const seen = new Set<string>()
+  const combined = [...ruvector, ...semantic, ...episodic]
+    .filter((item) => {
+      if (seen.has(item.id)) return false
+      seen.add(item.id)
+      return true
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
 
-    return {
-      results,
-      count: results.length,
-      latency_ms: latency,
-      meta: {
-        ...searchMeta,
-        stores_used: storesUsed,
-        ...(ruvectorTrajectoryId !== undefined
-          ? { ruvector_trajectory_id: ruvectorTrajectoryId, ruvector_count: ruvectorResults.length }
-          : {}),
-      },
-    }
-  } catch (error) {
-    if (error instanceof DatabaseUnavailableError || error instanceof DatabaseQueryError) {
-      throw error
-    }
-    if (error instanceof Error && (error as Error & { code?: string }).code) {
-      throw classifyPostgresError(error, "memory_search", "SELECT events ILIKE")
-    }
-    throw error
+  const latency = Date.now() - startTime
+
+  // Build final metadata
+  searchMeta = {
+    ...searchMeta,
+    stores_used: storesUsed.length > 0 ? storesUsed : ["none"],
+    ...(warnings.length > 0 ? { warnings } : {}),
+    ...(ruvectorTrajectoryId !== undefined
+      ? { ruvector_trajectory_id: ruvectorTrajectoryId, ruvector_count: ruvectorResults.length }
+      : {}),
+  }
+
+  return {
+    results: combined,
+    count: combined.length,
+    latency_ms: latency,
+    meta: searchMeta,
   }
 }
 
