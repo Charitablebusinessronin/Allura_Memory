@@ -1,15 +1,15 @@
 ---
-description: "Memory query — search Allura Brain for insights"
+description: "Memory query — search memory for insights"
 allowed-tools: ["mcp__MCP_DOCKER__*"]
 ---
 
 # Memory Query
 
-Search Allura Brain for relevant insights.
+Search memory for relevant insights. When Allura Brain is available, uses MCP_DOCKER tools.
 
 ## Usage
 
-```
+```bash
 /query <search term>
 ```
 
@@ -17,35 +17,33 @@ Search Allura Brain for relevant insights.
 
 ### Phase 1: Search Memory
 
-```javascript
-// Search Allura Brain
-mcp__MCP_DOCKER__search_memories({ 
-  query: "<search term>",
-  limit: 10,
-  min_confidence: 0.7
-})
-```
+Search your configured memory backend for relevant insights:
+
+- Query by search term
+
+- Limit results to most relevant matches
+
+- Filter by confidence if supported
 
 ### Phase 2: Find Related Entities
 
-```javascript
-// Find related entities
-mcp__MCP_DOCKER__find_memories_by_name({ 
-  names: ["<entity names from search>"]
-})
-```
+Look for related entities, decisions, or events connected to the search results.
 
 ### Phase 3: Present Results
 
 Present:
+
 - Top insights with confidence scores
+
 - Related entities
+
 - Links to source events
+
 - Recommendations for next steps
 
 ## Example
 
-```
+```markdown
 User: /query authentication patterns
 
 Results:

@@ -416,9 +416,11 @@ evals/agents/core/
 
 ## Related Files
 
-- **Adding agents**: `guides/adding-agent-basics.md`
+- **Adding agents**: `guides/adding-agent.md`
+- **Adding categories**: `guides/add-category.md`
 - **Agent concepts**: `core-concepts/agents.md`
 - **File locations**: `lookup/file-locations.md`
+- **Content creation principles**: `../content-creation/principles/navigation.md`
 
 ---
 

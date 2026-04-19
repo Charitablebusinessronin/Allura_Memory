@@ -1,24 +1,24 @@
 ---
 name: allura-menu
-description: "Interactive menu for Allura Memory surgical team. Quick prompts for common workflows."
+description: "Allura-specific skill. Interactive menu for Allura Brain surgical team. Quick prompts for common Allura workflows. Not part of the generic default surface — requires Allura Brain infrastructure."
 allowed-tools: ["Read", "Grep", "Bash", "mcp__MCP_DOCKER__*"]
 ---
 
 # Allura Menu — Quick Prompts
 
-Interactive menu for common Allura Memory workflows.
+> **This skill is Allura-specific.** It provides quick prompts for Allura Brain workflows and requires MCP_DOCKER tools and Allura Brain infrastructure. It is not part of the generic harness default surface.
 
 ## Menu Structure
 
 ```
 ╔═══════════════════════════════════════════════════════════════╗
-║                    ALLURA MEMORY MENU                        ║
+║                    ALLURA BRAIN MENU                          ║
 ╠═══════════════════════════════════════════════════════════════╣
 ║  [1] 🚀 Start Session      — Load memory, verify infra       ║
 ║  [2] 📋 Create Task        — Generate structured task         ║
 ║  [3] 🎉 Party Mode         — Launch parallel agents           ║
 ║  [4] 📝 Quick Update        — Sync docs with memory            ║
-║  [5] 🔍 Code Review        — Surgical team review             ║
+║  [5] 🔍 Code Review        — Team RAM review                  ║
 ║  [6] 📊 Dashboard           — View system status               ║
 ║  [7] 🧠 Memory Query       — Search Allura Brain              ║
 ║  [8] 📤 Promote            — HITL promotion workflow           ║
@@ -34,10 +34,9 @@ Interactive menu for common Allura Memory workflows.
 **Trigger:** `start-session`
 
 **What it does:**
-
 - Verifies Neo4j and PostgreSQL connectivity
-- Hydrates context from Allura Brain via Scout
-- Searches recent events and insights for blockers and decisions
+- Hydrates context from Allura Brain
+- Reads memory-bank files in order
 - Logs session start
 
 **Equivalent command:** `/start-session`
@@ -49,7 +48,6 @@ Interactive menu for common Allura Memory workflows.
 **Trigger:** `task-creator`
 
 **What it does:**
-
 - Gathers context from Allura Brain
 - Generates structured task file
 - Links to memory insights
@@ -64,7 +62,6 @@ Interactive menu for common Allura Memory workflows.
 **Trigger:** `party-mode`
 
 **What it does:**
-
 - Launches all agents in parallel
 - Each agent works independently
 - Brooks synthesizes results
@@ -79,10 +76,9 @@ Interactive menu for common Allura Memory workflows.
 **Trigger:** `quick-update`
 
 **What it does:**
-
-- Stores updates to Allura Brain via MCP tools
-- Syncs with canonical docs in docs/allura/
-- Logs changes to events
+- Updates memory-bank files
+- Syncs with Allura Brain
+- Logs changes
 - Maintains consistency
 
 **Equivalent skill:** `quick-update <target> <changes>`
@@ -94,10 +90,9 @@ Interactive menu for common Allura Memory workflows.
 **Trigger:** `code-review`
 
 **What it does:**
-
-- Pike reviews architecture
+- Pike reviews architecture and interface surface
 - Scout finds patterns
-- UX reviews accessibility
+- Fowler checks refactor and maintainability risks
 - Brooks synthesizes
 
 **Equivalent skill:** `code-review`
@@ -109,7 +104,6 @@ Interactive menu for common Allura Memory workflows.
 **Trigger:** `dashboard`
 
 **What it does:**
-
 - Shows system status
 - Displays active tasks
 - Lists recent insights
@@ -124,7 +118,6 @@ Interactive menu for common Allura Memory workflows.
 **Trigger:** `memory-query`
 
 **What it does:**
-
 - Searches Allura Brain
 - Returns relevant insights
 - Links to related entities
@@ -139,7 +132,6 @@ Interactive menu for common Allura Memory workflows.
 **Trigger:** `curator-team-promote`
 
 **What it does:**
-
 - Proposes promotion from PostgreSQL to Neo4j
 - Runs curator team workflow
 - Requires HITL approval
@@ -156,7 +148,6 @@ Interactive menu for common Allura Memory workflows.
 **Trigger:** `end-session`
 
 **What it does:**
-
 - Persists session reflection to Neo4j
 - Logs completion to PostgreSQL
 - Archives temporary files
@@ -171,7 +162,6 @@ Interactive menu for common Allura Memory workflows.
 **Trigger:** `help`
 
 **What it does:**
-
 - Shows this menu
 - Lists available skills
 - Shows current context
@@ -183,37 +173,32 @@ Interactive menu for common Allura Memory workflows.
 
 Type these directly in your IDE:
 
-| Prompt            | Action            |
-| ----------------- | ----------------- |
-| `start`           | Start session     |
-| `task <desc>`     | Create task       |
-| `party <task>`    | Launch party mode |
-| `update <target>` | Quick update      |
-| `review`          | Code review       |
-| `dash`            | Dashboard         |
-| `query <term>`    | Memory query      |
-| `promote`         | HITL promotion    |
-| `end <summary>`   | End session       |
+| Prompt | Action |
+|--------|--------|
+| `start` | Start session |
+| `task <desc>` | Create task |
+| `party <task>` | Launch party mode |
+| `update <target>` | Quick update |
+| `review` | Code review |
+| `dash` | Dashboard |
+| `query <term>` | Memory query |
+| `promote` | HITL promotion |
+| `end <summary>` | End session |
 
 ---
 
 ## Agent Shortcuts
 
-> **Source of truth:** `.opencode/agent/*.md` — 10 canonical agents. This table is derived, not defining.
-
-| Agent      | Shortcut                 | Persona           | Role                        |
-| ---------- | ------------------------ | ----------------- | --------------------------- |
-| Brooks     | `@brooks`      | Frederick Brooks  | Architect + Orchestrator    |
-| Jobs       | `@jobs`     | Steve Jobs        | Intent Gate + Scope Owner   |
-| Woz        | `@woz`          | Steve Wozniak     | Primary Builder             |
-| Pike       | `@pike` | Rob Pike          | Simplicity Gate (read-only) |
-| Scout      | `@scout`          | (none)            | Fast Discovery (read-only)  |
-| Bellard    | `@bellard`  | Fabrice Bellard   | Diagnostics + Perf         |
-| Carmack    | `@carmack-perf`         | John Carmack      | Performance Specialist      |
-| Fowler     | `@fowler` | Martin Fowler     | Maintainability Gate        |
-| Knuth      | `@knuth-data`           | Donald Knuth      | Data Architect              |
-| Hightower  | `@hightower`     | Kelsey Hightower  | DevOps + Infrastructure     |
-
----
-
+| Agent | Shortcut | Persona |
+|-------|----------|---------|
+| Brooks | `@brooks` | Frederick P. Brooks Jr. |
+| Jobs | `@jobs` | Steve Jobs |
+| Woz | `@woz` | Steve Wozniak |
+| Pike | `@pike` | Rob Pike |
+| Scout | `@scout` | Utility role |
+| Fowler | `@fowler` | Martin Fowler |
+| Bellard | `@bellard` | Fabrice Bellard |
+| Carmack | `@carmack` | John Carmack |
+| Knuth | `@knuth` | Donald Knuth |
+| Hightower | `@hightower` | Kelsey Hightower |
 **Invoke with:** `allura-menu` or type any quick prompt directly.

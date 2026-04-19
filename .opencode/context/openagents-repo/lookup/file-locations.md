@@ -27,7 +27,10 @@ opencode-agents/
 │   ├── context/                     # Shared knowledge
 │   │   ├── core/                    # Core standards & workflows
 │   │   ├── development/             # Dev context
-│   │   ├── project-intelligence/   # System authority + repo truth + current state
+│   │   ├── content-creation/        # Content creation context
+│   │   ├── data/                    # Data context
+│   │   ├── product/                 # Product context
+│   │   ├── learning/                # Learning context
 │   │   └── openagents-repo/         # Repo-specific context
 │   ├── prompts/                     # Model-specific variants
 │   ├── tool/                        # Custom tools
@@ -206,7 +209,7 @@ evals/framework/src/types/            # TypeScript types
 **Examples**:
 - `.opencode/context/core/standards/code-quality.md`
 - `.opencode/context/ui/web/react-patterns.md`
-- `.opencode/context/content-creation/principles/copywriting-frameworks.md` *(not available)*
+- `.opencode/context/content-creation/principles/copywriting-frameworks.md`
 
 ### Tests
 

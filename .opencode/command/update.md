@@ -1,73 +1,51 @@
 ---
-description: "Quick update — sync documentation with Allura Brain"
+description: "Quick update — sync documentation with memory"
 allowed-tools: ["Write", "Read", "Grep", "mcp__MCP_DOCKER__*"]
 ---
 
 # Quick Update Command
 
-Quickly update Allura Brain and canonical docs with insights from the current session.
+Quickly update documentation with insights from memory. When Allura Brain is available, uses MCP_DOCKER tools.
 
 ## Usage
 
-```
+```bash
 /update <target> <change description>
 ```
 
 ## Targets
 
-| Target          | Destination                                    | Purpose               |
-| --------------- | ---------------------------------------------- | --------------------- |
-| `decision`      | Allura Brain (memory_add)                      | Architecture decision |
-| `blocker`       | Allura Brain (memory_add)                      | Critical blocker      |
-| `insight`       | Allura Brain (memory_add)                      | General insight       |
-| `blueprint`     | `docs/allura/BLUEPRINT.md` + Brain             | System blueprint      |
-| `solution-arch` | `docs/allura/SOLUTION-ARCHITECTURE.md` + Brain | Architecture          |
-| `design`        | `docs/allura/DESIGN-ALLURA.md` + Brain         | Design contracts      |
-| `requirements`  | `docs/allura/REQUIREMENTS-MATRIX.md` + Brain   | Requirements          |
-| `risks`         | `docs/allura/RISKS-AND-DECISIONS.md` + Brain   | ADRs and risks        |
-| `data-dict`     | `docs/allura/DATA-DICTIONARY.md` + Brain       | Schema reference      |
+| Target | File | Purpose |
+| ------ | ---- | ------- |
+| `activeContext` | `memory-bank/activeContext.md` | Current focus and blockers |
+| `progress` | `memory-bank/progress.md` | What has been done |
+| `systemPatterns` | `memory-bank/systemPatterns.md` | Architecture decisions |
+| `techContext` | `memory-bank/techContext.md` | Tech stack details |
 
 ## Protocol
 
-### Phase 1: Write to Brain
+### Phase 1: Gather Context
 
-```javascript
-// Store to Allura Brain (source of truth)
-mcp__MCP_DOCKER__memory_add({
-  group_id: "allura-roninmemory",
-  user_id: agent_id,
-  content: "<change description>",
-  metadata: { source: "manual", update_target: target },
-})
-```
+- Search memory for relevant insights on the topic
+- Read the current document
 
-### Phase 2: Sync Canonical Doc (if applicable)
+### Phase 2: Update Document
 
-```javascript
-// Only for docs/allura/ targets
-Read({ path: `docs/allura/${targetFile}.md` })
-Write({ path: `docs/allura/${targetFile}.md`, content: updatedContent })
-```
+- Write updated content to the target file
 
-### Phase 3: Log Event
+### Phase 3: Log to Memory
 
-```javascript
-mcp__MCP_DOCKER__execute_sql({
-  sql_query: `INSERT INTO events (event_type, agent_id, group_id, status, metadata, created_at)
-    VALUES ('DOC_UPDATE', 'brooks', 'allura-roninmemory', 'completed', $1, NOW())`,
-  params: [{ target, changeSummary }],
-})
-```
+- Log the update event to your configured memory backend (when available)
 
 ## Example
 
-```
-User: /update decision Decided to use RRF fusion for hybrid search
+```markdown
+User: /update progress Added OAuth2 authentication
 
 Updates:
-- memory_add → Brain stores the decision
-- RISKS-AND-DECISIONS.md gets ADR entry (if target='risks')
-- Events logged for audit
+- memory-bank/progress.md
+- Logs to memory (when available)
+- Updates activeContext if needed
 ```
 
 ---

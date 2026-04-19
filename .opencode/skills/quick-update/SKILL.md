@@ -1,117 +1,117 @@
 ---
 name: quick-update
-description: "Quick updates using Allura Brain via MCP tools. Writes insights to Brain, syncs canonical docs."
+description: "Quick documentation updates using memory. Updates docs with memory insights and current context. Allura Brain is used when available."
 allowed-tools: ["Write", "Read", "Grep", "mcp__MCP_DOCKER__*"]
 ---
 
-# Quick Update — Brain-First Sync
+# Quick Update — Documentation Sync
 
-Quickly update Allura Brain and canonical docs with insights from the current session.
+Quickly update documentation with insights from memory. When Allura Brain is available, uses MCP_DOCKER tools for search and logging.
 
 ## When to Use
 
-- Logging a session decision or architecture insight
-- Updating canonical docs after code changes
-- Recording a blocker or status change
-- Refreshing architecture docs with new decisions
+- Updating docs after code changes
+- Syncing memory-bank files
+- Updating PROJECT.md with new decisions
+- Refreshing architecture docs
 
 ## Update Protocol
 
 ### Phase 1: Identify Target
 
-```javascript
-// What needs updating?
-const target = args[0] // e.g., "decision", "blocker", "insight", "blueprint", "design"
-```
+What needs updating? Common targets: `activeContext`, `progress`, `systemPatterns`, `techContext`, `projectbrief`, `productContext`.
 
-### Phase 2: Write to Brain
+### Phase 2: Gather Context
 
-```javascript
-// Store the update as a memory in the Brain
-mcp__MCP_DOCKER__memory_add({
-  group_id: "allura-roninmemory",
-  user_id: agent_id,
-  content: "<the update content>",
-  metadata: {
-    source: "manual",
-    agent_id: "brooks",
-    update_type: target,
-  },
-})
-```
+- Search memory for relevant insights (when available)
+- Read the current document
 
-### Phase 3: Sync Canonical Docs (if applicable)
+### Phase 3: Update Document
 
-For canonical doc targets, also update the file:
+- Write updated content to the target file
 
-| Target          | File                                   | Purpose          |
-| --------------- | -------------------------------------- | ---------------- |
-| `blueprint`     | `docs/allura/BLUEPRINT.md`             | System blueprint |
-| `solution-arch` | `docs/allura/SOLUTION-ARCHITECTURE.md` | Architecture     |
-| `design`        | `docs/allura/DESIGN-ALLURA.md`         | Design contracts |
-| `requirements`  | `docs/allura/REQUIREMENTS-MATRIX.md`   | Requirements     |
-| `risks`         | `docs/allura/RISKS-AND-DECISIONS.md`   | ADRs and risks   |
-| `data-dict`     | `docs/allura/DATA-DICTIONARY.md`       | Schema reference |
+### Phase 4: Log to Memory
 
-```javascript
-// Read current doc
-Read({ path: `docs/allura/${target}.md` })
-// Write updated content
-Write({ path: `docs/allura/${target}.md`, content: updatedContent })
-```
+- Log the update event to your configured memory backend (when available)
 
-### Phase 4: Log to Events
+## Update Targets
 
-```javascript
-// Log the update event
-mcp__MCP_DOCKER__execute_sql({
-  sql_query: `INSERT INTO events (event_type, agent_id, group_id, status, metadata, created_at)
-    VALUES ('DOC_UPDATE', 'brooks', 'allura-roninmemory', 'completed', $1, NOW())`,
-  params: [{ target, changeSummary }],
-})
-```
+| Target | File | Purpose |
+|--------|------|---------|
+| `activeContext` | `memory-bank/activeContext.md` | Current focus and blockers |
+| `progress` | `memory-bank/progress.md` | What has been done |
+| `systemPatterns` | `memory-bank/systemPatterns.md` | Architecture decisions |
+| `techContext` | `memory-bank/techContext.md` | Tech stack details |
+| `projectbrief` | `memory-bank/projectbrief.md` | Project overview |
+| `productContext` | `memory-bank/productContext.md` | Product context |
 
 ## Quick Update Patterns
 
-### Pattern 1: After Architecture Decision
+### Pattern 1: After Code Change
 
 ```
-User: "quick-update decision Decided to use RRF fusion for hybrid search"
+User: "quick-update progress Added OAuth2 authentication"
 
 Updates:
-- memory_add → Brain stores the decision
-- RISKS-AND-DECISIONS.md gets the ADR entry
-- Events logged for audit trail
+- memory-bank/progress.md with new completion
+- Logs to memory (when available)
+- Updates activeContext if needed
 ```
 
-### Pattern 2: After Blocker
+### Pattern 2: After Architecture Decision
 
 ```
-User: "quick-update blocker Neo4j driver timeout on large queries"
+User: "quick-update systemPatterns Decided to use JWT for auth"
 
 Updates:
-- memory_add → Brain stores the blocker
-- Events logged with BLOCKER type
+- memory-bank/systemPatterns.md with new pattern
+- Creates ADR if applicable
+- Logs to memory (when available)
 ```
 
-### Pattern 3: After Code Change
+### Pattern 3: After Blocker
 
 ```
-User: "quick-update insight Fixed Neo4j DateTime serialization"
+User: "quick-update activeContext Blocked on API key from vendor"
 
 Updates:
-- memory_add → Brain stores the insight
-- Events logged for audit
+- memory-bank/activeContext.md with blocker
+- Logs to memory (when available)
+- Notifies if critical
+```
+
+## Memory Integration
+
+When Allura Brain is available:
+
+1. **Searches** Allura Brain for related insights
+2. **Updates** the target document
+3. **Logs** the change to memory
+4. **Links** to relevant entities
+
+When memory is not available, the update still proceeds — it just writes to the target file without logging.
+
+---
+
+**Invoke with:** `quick-update <target> <change description>`
+
+```
+User: "quick-update activeContext Blocked on API key from vendor"
+
+Updates:
+- memory-bank/activeContext.md with blocker
+- Logs to Allura Brain
+- Notifies if critical
 ```
 
 ## Memory Integration
 
 Every quick-update:
 
-1. **Writes** to Allura Brain via memory_add (Brain is source of truth)
-2. **Syncs** canonical docs if target is a docs/allura/ file
-3. **Logs** the change to PostgreSQL events
-4. **Never** writes to memory-bank/ (deleted — Brain is the source)
+1. **Searches** Allura Brain for related insights
+2. **Updates** the target document
+3. **Logs** the change to memory
+4. **Links** to relevant entities
 
 ---
 

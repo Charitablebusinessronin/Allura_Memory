@@ -124,7 +124,7 @@ task-creator creates:
 - TASK-042: Add OAuth2 authentication
 - Links to memory insights about auth patterns
 - Sets priority based on epic priority
-- Assigns to Hephaestus (implementation)
+- Assigns to Woz (implementation)
 ```
 
 ---

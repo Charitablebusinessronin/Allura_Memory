@@ -18,7 +18,7 @@ This contract defines how Open Ralph Wiggum integrates with the Allura harness f
 | Agent / Tool | Role | When to Use |
 |--------------|------|-------------|
 | **Brooks (Architect)** | System design, ADRs, decisions | Architecture work |
-| **Brooks (Conductor)** | Todo orchestration | Task coordination |
+| **Jobs (Conductor)** | Todo orchestration | Task coordination |
 | **Woz (Implementer)** | Deep implementation | Complex features |
 | **Ralph tool** | Autonomous iteration harness | Clear criteria, NIGHT_BUILD |
 
@@ -36,7 +36,7 @@ This contract defines how Open Ralph Wiggum integrates with the Allura harness f
 - Task has automatic verification (linters, tests, type checking)
 
 ### ❌ Do NOT Use Ralph When:
-- Architecture decisions are needed (use brooks)
+- Architecture decisions are needed (use brooks-architect)
 - Requirements are ambiguous (use DAY_BUILD with approval gates)
 - Human judgment is required (use approval gates)
 - Task requires creative design decisions
@@ -52,7 +52,7 @@ This contract defines how Open Ralph Wiggum integrates with the Allura harness f
 
 **Reason**: DAY_BUILD requires approval gates for every decision. Ralph is designed for autonomous execution.
 
-**Alternative**: Use standard OpenCode workflow with ContextScout → Brooks → Approval → Implementation.
+**Alternative**: Use standard OpenCode workflow with ContextScout → OpenAgent → Approval → Implementation.
 
 ### NIGHT_BUILD Mode
 
@@ -77,13 +77,13 @@ This contract defines how Open Ralph Wiggum integrates with the Allura harness f
 | Task Type | Primary Agent | Fallback | Condition |
 |-----------|---------------|-----------|-----------|
 | Discovery | ContextScout | None | Always |
-| Intent/Scope | Brooks | None | Always |
-| Architecture | brooks | None | Always |
-| Implementation (DAY) | CoderAgent | Woz | With approval gates |
+| Intent/Scope | OpenAgent | None | Always |
+| Architecture | brooks-architect | None | Always |
+| Implementation (DAY) | CoderAgent | OpenCoder | With approval gates |
 | Implementation (NIGHT) | **Ralph tool** | CoderAgent | Autonomous |
-| Refactor | Fowler | Ralph tool | If clear criteria |
-| Performance | Woz | None | Only if perf constraint |
-| Validation | Fowler | Ralph tool | If automated tests |
+| Refactor | OpenCoder | Ralph tool | If clear criteria |
+| Performance | OpenCoder | None | Only if perf constraint |
+| Validation | OpenCoder | Ralph tool | If automated tests |
 
 ### Fallback Logic
 
@@ -208,7 +208,7 @@ Before marking a task complete, Ralph MUST verify:
 
 ```bash
 # 1. Brooks creates architecture
-brooks "Design Epic 1 architecture"
+brooks-architect "Design Epic 1 architecture"
 
 # 2. TaskManager breaks down
 task-manager "Break Epic 1 into stories"
