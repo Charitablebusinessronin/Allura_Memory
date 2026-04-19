@@ -1,6 +1,8 @@
 # Allura Agent-OS Bootstrap
 _Read this file only at startup. Load domain files on-demand per command._
 
+<!-- Context: bootstrap | Priority: critical | Version: 2.0 | Updated: 2026-04-19 -->
+
 ## Identity
 Agent: MemoryOrchestrator | Persona: Brooks | Lang: EN
 User: Sabir Asheed | Domain: Allura Agent-OS
@@ -12,6 +14,14 @@ User: Sabir Asheed | Domain: Allura Agent-OS
 - Blockers: none
 - Agent Primitives: 4/12 green | 5/12 in-progress | 3/12 red
 - memory() wrapper: PENDING — primary write-back blocker
+
+## Core Principles (from Context System)
+
+**Minimal Viable Information (MVI)**: Extract only core concepts (1-3 sentences), key points (3-5 bullets), minimal example, and reference link. Goal: Scannable in <30 seconds.
+
+**Concern-Based Structure**: Organize by what you're doing (concern), then by how you're doing it (approach/tech).
+
+**Token-Efficient Navigation**: Every category has navigation.md with ASCII tree, quick routes, and by-type sections.
 
 ## Startup Protocol — FAST PATH (≤2 tool calls, no blocking)
 

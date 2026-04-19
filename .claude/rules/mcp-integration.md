@@ -8,6 +8,31 @@ globs: ["src/mcp/**", ".claude/**"]
 ## THE RULE
 **NEVER `docker exec` for DB operations. ALWAYS use `mcp__MCP_DOCKER__*` tools.**
 
+## Security Patterns
+
+**NEVER** expose sensitive information:
+- Don't log MCP credentials or API keys
+- Don't expose internal error details to users
+- Use environment variables for MCP server credentials
+- Validate and sanitize all inputs to MCP tools
+- Follow principle of least privilege
+
+**Configuration Pattern:**
+- Never hardcode secrets or credentials in MCP configs
+- Provide sensible defaults
+- Validate required configuration on startup
+- Document all configuration options
+- Use different configs for dev/staging/production
+
+## Error Handling
+
+**ALWAYS** handle errors gracefully:
+- Catch specific MCP errors, not generic ones
+- Log errors with context (but not credentials)
+- Return meaningful error messages
+- Don't expose internal implementation details
+- Implement circuit breakers for failing MCP servers
+
 ## Tool Discovery (mcp-find → mcp-add)
 
 The Docker MCP Toolkit is a gateway to 300+ signed, containerized MCP servers.
