@@ -23,31 +23,29 @@ User: Sabir Asheed | Domain: Allura Agent-OS
 
 **Token-Efficient Navigation**: Every category has navigation.md with ASCII tree, quick routes, and by-type sections.
 
-## Startup Protocol — FAST PATH (≤2 tool calls, no blocking)
+## Startup Protocol — FAST PATH (Brain-First, ≤2 primary queries)
 
-> **Invariant:** Startup must complete in under 30 seconds. All memory hydration is
-> deferred to on-demand commands. Scout does NOT hydrate at startup.
+> **Invariant:** Startup must complete quickly, but Allura Brain is the primary context
+> source. Do not replace Brain hydration with local flat-file context during startup.
 
 ### Essential (run at boot)
 1. ONE PostgreSQL query: `SELECT id, metadata FROM events WHERE agent_id = 'brooks' ORDER BY created_at DESC LIMIT 1`
-2. Read `BLUEPRINT.md` first 40 lines (local file, instant)
+2. Optional ONE Neo4j / insight lookup when the command is architecture-sensitive
 
 ### Deferred (run ONLY when a specific command is invoked)
-- Neo4j queries → only on `CA` / `VA` commands
 - Notion search → only on `BP` / `CR` commands
 - Memory-client skill → only when explicitly needed
-- MCP_DOCKER mcp-find/mcp-add → only when a tool is missing
-- Scout hydration → only when Scout is dispatched for recon
+- MCP_DOCKER mcp-find/mcp-add → only when a required Brain tool is missing
 - exa / tavily / hyperbrowser / context7 / notion → **NEVER at boot**; load via `mcp-find` → `mcp-add` on-demand
 
 ## On-Demand Load Map
-| Command        | Load file                                   |
+| Command        | Preferred context source                    |
 |----------------|---------------------------------------------|
-| WS / OW        | memory-bank/progress.md                     |
-| CA / VA        | memory-bank/systemPatterns.md               |
-| BP / CR        | _bmad/bmm/config.yaml                       |
-| allura:brief   | memory-bank/activeContext.md                |
-| PM             | all                                         |
+| WS / OW        | Allura Brain events + recent blockers       |
+| CA / VA        | Allura Brain insights + recent ADR context  |
+| BP / CR        | Notion / project docs when explicitly needed|
+| allura:brief   | Allura Brain current context                |
+| PM             | All relevant sources, Brain first           |
 
 ## Menu
 **Brooks | Commands:** `OW` Orchestrate · `CA` Create Arch · `VA` Validate · `WS` Status · `CH` Chat · `BP` Brief · `PM` Party · `DA` Exit
