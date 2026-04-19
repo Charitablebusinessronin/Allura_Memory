@@ -199,16 +199,32 @@ Do not create net-new files in `docs/allura/` beyond the canonical six. Keep req
 
 ## 13) Agent Directory
 
-Canonical source: `.opencode/agent/` (flat, 10 files). `.claude/agents/` is a symlink to it — edit only in `.opencode/agent/`.
+Canonical source: `.opencode/agent/` (nested by role). `.claude/agents/` is a symlink to it — edit only in `.opencode/agent/`.
 
 ```
-brooks.md    jobs.md     fowler.md   pike.md     scout.md
-bellard.md   carmack.md  knuth.md    hightower.md woz.md
+.opencode/agent/
+├── core/
+│   ├── brooks.md    (primary, orchestrator)
+│   └── jobs.md      (primary, intent gate)
+└── subagents/
+    ├── bellard.md   (diagnostics + perf)
+    ├── carmack.md   (performance + optimization)
+    ├── fowler.md    (refactor gate)
+    ├── hightower.md (DevOps + deployment)
+    ├── knuth.md     (data architect + schema)
+    ├── pike.md      (interface review)
+    ├── scout.md     (recon + discovery, read-only)
+    └── woz.md       (primary builder)
 ```
 
-### Legacy Layout (removed)
+### Agent Directory Rules
 
-The old subdirectory structure (`core/`, `subagents/code/`, `subagents/development/`) was removed. All agents now live flat in `.opencode/agent/`.
+1. Edit agent definitions only in `.opencode/agent/`.
+2. Do not recreate `.opencode/agents/` as a second live source.
+3. Ralph is a tool integration, not an agent file.
+4. All agents use real-person names (Team RAM), not Greek mythology or generic names.
+5. Every agent MUST have an INSTRUCTION BOUNDARY block after frontmatter.
+6. Agent `name` field in frontmatter MUST match the filename (lowercase, no SCREAMING_SNAKE).
 
 ## Team RAM (Real Actual Masters)
 
@@ -225,7 +241,7 @@ The old subdirectory structure (`core/`, `subagents/code/`, `subagents/developme
 | Data | Knuth | Data Architect + Schema Specialist |
 | DevOps | Hightower | Infrastructure + Deployment |
 
-Filename = agent name. YAML frontmatter must include `description` (required) and `mode` (`primary` or `subagent`).
+Filename = agent name. Directory = role (`core/` for primary, `subagents/` for specialist). YAML frontmatter must include `description` (required) and `mode` (`primary` or `subagent`).
 
 ### Agent Directory Rules
 

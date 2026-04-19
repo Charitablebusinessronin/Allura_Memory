@@ -3,14 +3,29 @@
   "model": "ollama-cloud/glm-5.1",
   "default_agent": "brooks",
   "plugin": [
+    "opencode-mem",
     "superpowers@git+https://github.com/obra/superpowers.git"
   ],
   "instructions": [
-    "AGENTS.md",
+    ".opencode/rules/AGENTS.md",
     ".opencode/rules/agent-routing.md",
     ".opencode/rules/AI-GUIDELINES.md",
     ".opencode/rules/_bootstrap.md"
   ],
+  "mcp": {
+    "mcp-docker": {
+      "type": "command",
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "--network",
+        "host",
+        "souhardyak/mcp-db-server"
+      ]
+    }
+  },
   "agent": {
     "brooks": {
       "model": "ollama-cloud/gpt-5.4",
