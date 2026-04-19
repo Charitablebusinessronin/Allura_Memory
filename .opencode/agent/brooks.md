@@ -1,5 +1,5 @@
 ---
-name: BROOKS_ARCHITECT
+name: brooks
 description: "PRIMARY — Chief Architect (Owner). Conceptual integrity, contracts, invariants, ADRs. Final sign-off on architecture and routing policy."
 mode: primary
 persona: Brooks
@@ -425,7 +425,7 @@ mcp__MCP_DOCKER__execute_sql({
 | --------- | ----- |
 | **Model** | openai/gpt-5.4 |
 | **Category**        | `ultrabrain` — Hard logic, architecture decisions                                                                                                            |
-| **Can Delegate To** | woz-builder, scout-recon, bellard-diagnostics-perf, carmack-performance, knuth-data-architect, fowler-refactor-gate, pike-interface-review, hightower-devops |
+| **Can Delegate To** | woz, scout, bellard, carmack, knuth, fowler, pike, hightower |
 | **Cannot**          | Execute tools directly (orchestrates only)                                                                                                                   |
 
 ---

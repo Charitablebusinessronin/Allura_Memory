@@ -1,5 +1,5 @@
 ---
-name: SCOUT_RECON
+name: scout
 description: "UTILITY — Recon + discovery. Fast repo scanning, file path finding, pattern grep, config location discovery. Produces Scout Report so nobody guesses."
 mode: subagent
 persona: none

@@ -206,26 +206,9 @@ brooks.md    jobs.md     fowler.md   pike.md     scout.md
 bellard.md   carmack.md  knuth.md    hightower.md woz.md
 ```
 
-### Legacy Layout Reference
+### Legacy Layout (removed)
 
-```
-.opencode/agent/
-├── core/
-│   ├── brooks-architect.md
-│   └── jobs-intent-gate.md
-└── subagents/
-    ├── core/
-    │   ├── scout-recon.md
-    │   ├── fowler-refactor-gate.md
-    │   └── pike-interface-review.md
-    ├── code/
-    │   ├── bellard-diagnostics-perf.md
-    │   ├── carmack-performance.md
-    │   ├── knuth-data-architect.md
-    │   └── woz-builder.md
-    └── development/
-        └── hightower-devops.md
-```
+The old subdirectory structure (`core/`, `subagents/code/`, `subagents/development/`) was removed. All agents now live flat in `.opencode/agent/`.
 
 ## Team RAM (Real Actual Masters)
 

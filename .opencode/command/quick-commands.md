@@ -46,13 +46,13 @@ Type these directly in your IDE for fast access to Allura Memory workflows.
 
 | Shortcut                 | Agent  | Persona         |
 | ------------------------ | ------ | --------------- |
-| `@brooks-architect`      | Brooks | Rich Hickey     |
-| `@brooks-architect`      | Brooks | Gergely Orosz   |
-| `@woz-builder`           | Woz    | Fabrice Bellard |
-| `@pike-interface-review` | Pike   | Rob Pike        |
-| `@scout-recon`           | Scout  | Julia Evans     |
-| `@scout-recon`           | Scout  | Peter Bourgon   |
-| `@fowler-refactor-gate`  | Fowler | Martin Fowler   |
+| `@brooks`      | Brooks | Rich Hickey     |
+| `@brooks`      | Brooks | Gergely Orosz   |
+| `@woz`           | Woz    | Fabrice Bellard |
+| `@pike` | Pike   | Rob Pike        |
+| `@scout`           | Scout  | Julia Evans     |
+| `@scout`           | Scout  | Peter Bourgon   |
+| `@fowler`  | Fowler | Martin Fowler   |
 | `@ux`                    | UX     | Sara Soueidan   |
 
 ## Usage Examples

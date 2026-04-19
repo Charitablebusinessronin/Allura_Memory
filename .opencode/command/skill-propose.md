@@ -55,7 +55,7 @@ Propose a skill and see which specialist agent handles it.
 {
   "event": "SKILL_PROPOSED",
   "skill_name": "code-review",
-  "executor": "pike-interface-review",
+  "executor": "pike",
   "description": "Read-only code review and architecture feedback",
   "requirements": ["Can read source files", "Cannot write code"]
 }

@@ -12,8 +12,8 @@ Execute a skill by routing it to a specialist agent executor.
 
 ```bash
 /skill-load code-review                       # Use default executor (@Pike)
-/skill-load code-review --executor pike-interface-review     # Explicit routing
-/skill-load postgres-optimization --executor woz-builder
+/skill-load code-review --executor pike     # Explicit routing
+/skill-load postgres-optimization --executor woz
 ```
 
 ## How It Works
@@ -28,16 +28,16 @@ Execute a skill by routing it to a specialist agent executor.
 
 | Executor | Specialty | Permissions |
 | -------- | --------- | ----------- |
-| `pike-interface-review` | Architecture review | Read-only (no writes) |
-| `woz-builder` | Deep implementation | Full read/write |
-| `fowler-refactor-gate` | Strategic planning | Read + planning tools |
+| `pike` | Architecture review | Read-only (no writes) |
+| `woz` | Deep implementation | Full read/write |
+| `fowler` | Strategic planning | Read + planning tools |
 | `ux` | Design + accessibility | Design tools only |
-| `scout-recon` | Documentation search | Search tools only |
-| `scout-recon` | Codebase patterns | Read + grep tools |
-| `brooks-architect` | Todo coordination | Task + memory tools |
-| `brooks-architect` | Orchestration | All tools (planning only) |
-| `brooks-architect` | Skill creation & eval | All tools + subagents |
-| `woz-builder` | Skill implementation | Full read/write + scripts |
+| `scout` | Documentation search | Search tools only |
+| `scout` | Codebase patterns | Read + grep tools |
+| `brooks` | Todo coordination | Task + memory tools |
+| `brooks` | Orchestration | All tools (planning only) |
+| `brooks` | Skill creation & eval | All tools + subagents |
+| `woz` | Skill implementation | Full read/write + scripts |
 
 ## Result
 
@@ -45,7 +45,7 @@ Execute a skill by routing it to a specialist agent executor.
 {
   "event": "SKILL_LOADED",
   "skill_name": "code-review",
-  "executor": "pike-interface-review",
+  "executor": "pike",
   "context": "project root directory",
   "permissions": ["read", "grep", "lsp"]
 }
