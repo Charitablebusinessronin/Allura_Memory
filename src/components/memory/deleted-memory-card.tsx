@@ -72,7 +72,7 @@ export function DeletedMemoryCard({ memory, onRestore, isRestoring, formatRelati
             {isRestoring ? "Restoring…" : "Restore"}
           </Button>
           <Button asChild variant="ghost" size="sm" className="text-[--durham-muted-text]">
-            <Link href={`/memory/${memory.id}?group_id=allura-memory`}>View</Link>
+            <Link href={`/memory/${memory.id}?group_id=allura-roninmemory`}>View</Link>
           </Button>
         </div>
       </CardContent>

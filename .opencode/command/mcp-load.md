@@ -11,9 +11,9 @@ Load an approved MCP server and activate its tools.
 ## Examples
 
 ```
-/mcp-load allura-memory         # Load local Allura memory engine
-/mcp-load tavily                # Load Tavily web search + crawl
-/mcp-load postgresql            # Load PostgreSQL client (if approved)
+ /mcp-load neo4j-memory          # Load default safe Neo4j memory surface
+ /mcp-load tavily                # Load Tavily web search + crawl
+ /mcp-load neo4j-cypher          # Load restricted raw Cypher surface (if approved)
 ```
 
 ## How It Works

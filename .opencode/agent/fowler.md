@@ -13,14 +13,26 @@ permission:
   edit: ask
   bash:
     "*": ask
+    "git diff*": allow
+    "git log*": allow
+    "git status*": allow
+    "git show*": allow
+    "git branch*": allow
+    "git add*": allow
+    "git commit*": allow
     "bun vitest*": allow
     "bun run typecheck*": allow
     "bun run lint*": allow
   webfetch: deny
   skill:
     "*": allow
-  MCP_DOCKER_search_nodes: allow
-  MCP_DOCKER_query_database: allow
+  # neo4j-cypher (read-only)
+  read_neo4j_cypher: allow
+  get_neo4j_schema: allow
+  # neo4j-memory (read-only)
+  search_memories: allow
+  read_graph: allow
+  MCP_DOCKER_find_memories_by_name: allow
   MCP_DOCKER_mcp-find: allow
   MCP_DOCKER_mcp-add: allow
 ---

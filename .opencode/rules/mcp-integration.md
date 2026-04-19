@@ -61,11 +61,10 @@ mcp__MCP_DOCKER__mcp-add("server-name")
 | `mcp__MCP_DOCKER__read_neo4j_cypher` | Neo4j reads |
 | `mcp__MCP_DOCKER__write_neo4j_cypher` | Neo4j writes (SUPERSEDES) |
 
-## Allura Memory MCP Server (src/mcp/memory-server.ts)
-- Transport: stdio
-- `group_id` auto-loaded from session context
-- Rate limits: 100 queries/min, 50 writes/min
-- Tools: `memory_retrieve`, `memory_write`, `memory_propose_insight`
+## Server Policy
+- `neo4j-memory` is the default safe graph server for most agents.
+- `neo4j-cypher` is restricted and should only be loaded for governed graph maintenance.
+- Do not configure or load a local `allura-memory` MCP server.
 
 ## Settings
-`.claude/settings.json` — allura-memory runs as local bun process; exa/tavily/hyperbrowser/context7 run via MCP Docker Toolkit (preferred over separate Docker containers).
+Use approved Docker-backed MCP servers only; prefer on-demand activation through MCP Docker Toolkit.

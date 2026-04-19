@@ -71,7 +71,7 @@ interface GrepResult {
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const ROOT_DIR = process.cwd();
-const GROUP_ID = "allura-memory";
+const GROUP_ID = "allura-roninmemory";
 const AGENT_ID = "scout";
 
 const SUBCOMMANDS = ["scan", "grep", "paths", "risks", "report"] as const;

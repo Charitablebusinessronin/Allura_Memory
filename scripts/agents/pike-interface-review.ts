@@ -84,7 +84,7 @@ interface CanonicalCheck {
 // ── Constants ───────────────────────────────────────────────────────────────
 
 const ROOT_DIR = process.cwd();
-const GROUP_ID = "allura-memory";
+const GROUP_ID = "allura-roninmemory";
 const AGENT_ID = "pike";
 
 const SUBCOMMANDS = ["review", "check", "breaking", "surface", "canonical"] as const;

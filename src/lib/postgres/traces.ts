@@ -10,7 +10,7 @@ import { getPool } from './connection';
 export interface Trace {
   id: string;
   group_id: string;
-  type: 'memory' | 'decision' | 'action' | 'prompt' | 'insight';
+  type: string;
   content: string;
   agent: string;
   timestamp: Date;
@@ -21,13 +21,17 @@ export interface TraceQuery {
   group_id: string;
   limit?: number;
   offset?: number;
-  type?: 'memory' | 'decision' | 'action' | 'prompt' | 'insight';
+  type?: string;
   startTime?: Date;
   endTime?: Date;
 }
 
 /**
  * Query raw traces from PostgreSQL
+ *
+ * Queries the `events` table (the canonical append-only trace store).
+ * Maps event_type → type, agent_id → agent, created_at → timestamp,
+ * and serializes metadata as content for trace retrieval.
  */
 export async function queryTraces(query: TraceQuery): Promise<Trace[]> {
   const { group_id, limit = 50, offset = 0, type, startTime, endTime } = query;
@@ -38,19 +42,19 @@ export async function queryTraces(query: TraceQuery): Promise<Trace[]> {
   let paramIndex = 2;
 
   if (type) {
-    conditions.push(`type = $${paramIndex}`);
+    conditions.push(`event_type = $${paramIndex}`);
     values.push(type);
     paramIndex++;
   }
 
   if (startTime) {
-    conditions.push(`timestamp >= $${paramIndex}`);
+    conditions.push(`created_at >= $${paramIndex}`);
     values.push(startTime);
     paramIndex++;
   }
 
   if (endTime) {
-    conditions.push(`timestamp <= $${paramIndex}`);
+    conditions.push(`created_at <= $${paramIndex}`);
     values.push(endTime);
     paramIndex++;
   }
@@ -58,26 +62,33 @@ export async function queryTraces(query: TraceQuery): Promise<Trace[]> {
   values.push(limit);
   values.push(offset);
 
-  const result = await pool.query<Trace>(
+  const result = await pool.query(
     `
     SELECT 
       id::text,
       group_id,
-      type,
-      content,
-      agent,
-      timestamp,
+      event_type,
+      agent_id,
+      created_at,
       metadata
-    FROM agent_traces
+    FROM events
     WHERE ${conditions.join(' AND ')}
-    ORDER BY timestamp DESC
+    ORDER BY created_at DESC
     LIMIT $${paramIndex}
     OFFSET $${paramIndex + 1}
     `,
     values
   );
 
-  return result.rows;
+  return result.rows.map((row: Record<string, unknown>) => ({
+    id: row.id as string,
+    group_id: row.group_id as string,
+    type: row.event_type as string,
+    content: JSON.stringify(row.metadata),
+    agent: row.agent_id as string,
+    timestamp: row.created_at as Date,
+    metadata: (row.metadata as Record<string, unknown>) || {},
+  }));
 }
 
 /**

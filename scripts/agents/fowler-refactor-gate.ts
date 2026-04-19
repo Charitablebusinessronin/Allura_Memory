@@ -96,7 +96,7 @@ interface CheckResult {
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const ROOT_DIR = process.cwd();
-const GROUP_ID = "allura-memory";
+const GROUP_ID = "allura-roninmemory";
 const AGENT_ID = "fowler";
 
 const SUBCOMMANDS = ["check", "diff", "debt", "gate"] as const;

@@ -110,4 +110,4 @@ jobs:
         run: bun run build
 
       - name: Check MCP server builds
-        run: bun build src/mcp/memory-server-canonical.ts --outdir dist/mcp --target node
+        run: bun build src/mcp/legacy/ --outdir dist/mcp --target node

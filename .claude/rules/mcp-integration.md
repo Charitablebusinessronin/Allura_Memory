@@ -86,22 +86,15 @@ mcp__MCP_DOCKER__mcp-add("server-name")
 | `mcp__MCP_DOCKER__read_neo4j_cypher` | Neo4j reads |
 | `mcp__MCP_DOCKER__write_neo4j_cypher` | Neo4j writes (SUPERSEDES) |
 
-## Allura Memory MCP Server (src/mcp/memory-server.ts)
-- Transport: stdio
-- `group_id` auto-loaded from session context
-- Rate limits: 100 queries/min, 50 writes/min
-- Tools: `memory_retrieve`, `memory_write`, `memory_propose_insight`
+## Boot Policy — Docker Toolkit On-Demand
 
-## Boot Policy — Memory-Only, Everything Else On-Demand
+> **ADR 2026-04-19b:** Local allura-memory MCP usage is retired. Agents use MCP_DOCKER discovery and approved Docker-backed servers only.
 
-> **ADR 2026-04-19:** Only `allura-memory` starts at boot. All other MCP servers
-> (exa, tavily, hyperbrowser, context7, notion) are loaded on-demand via `mcp-find` → `mcp-add`.
-> This reduces boot time from ~4 minutes (5 Docker containers cold-starting) to <10 seconds.
-
-### What starts at boot
+### Default graph surface
 | Server | Why |
 |--------|-----|
-| `allura-memory` | Core memory tools — store, retrieve, propose insight. Always needed. |
+| `neo4j-memory` | Default safe graph search/CRUD surface for most agents. |
+| `neo4j-cypher` | Restricted raw Cypher access for privileged maintenance workflows only. |
 
 ### What loads on-demand (via mcp-find → mcp-add)
 | Server | Trigger |
@@ -125,4 +118,4 @@ mcp__MCP_DOCKER__tavily_search("query")
 ```
 
 ## Settings
-`.claude/settings.json` — only `allura-memory` at boot. All others via MCP Docker Toolkit on-demand.
+`.claude/settings.json` should only define approved Docker-backed MCP servers. No local allura-memory MCP server should be configured.

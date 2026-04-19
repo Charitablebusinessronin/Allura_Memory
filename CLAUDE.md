@@ -33,9 +33,9 @@ bun vitest run src/lib/postgres/connection.test.ts
 bun vitest run -t "should build connection config"
 
 # MCP server
-bun run mcp               # canonical stdio server (src/mcp/memory-server-canonical.ts)
-bun run mcp:dev           # watch mode
-bun run mcp:http          # HTTP gateway (port $ALLURA_MCP_HTTP_PORT, default 3201)
+bun run mcp               # MCP server (legacy only)
+bun run mcp:dev           # watch mode (legacy only)
+bun run mcp:http          # HTTP gateway (legacy only)
 
 # Curator pipeline (HITL promotion)
 bun run curator:run       # score and queue proposals
@@ -68,7 +68,7 @@ At the start of each session, dispatch Scout to hydrate from Allura Brain:
 3. **Insight Search** — Query Neo4j for recent insights matching 'allura-roninmemory.\*'
 4. **Synthesize** — Scout returns: what's active, what's blocking, what was decided last session
 
-Invoke skill `memory-client` at session start for Brain connectivity. Invoke `memory-client` skill at session end to write reflection to Neo4j knowledge graph.
+Use MCP_DOCKER tools for Brain connectivity and governed writes. Do not rely on a local allura-memory MCP server.
 
 ## Architecture
 
@@ -84,7 +84,6 @@ Allura is a **dual-database AI memory engine** exposed via MCP — a self-hosted
 
 ### Key Subsystems
 
-- **MCP Server** (`src/mcp/memory-server-canonical.ts`): exposes memory tools via Model Context Protocol. Legacy server at `src/mcp/legacy/`.
 - **Curator** (`src/curator/`): HITL promotion pipeline — scores traces, queues proposals, requires human approval before Neo4j writes.
 - **Embedding Backfill** (`src/curator/embedding-backfill-worker.ts`): standalone worker that populates NULL embeddings via Ollama in batches of 10.
 - **Kernel** (`src/kernel/`): RuVix proof-gated mutation layer.
@@ -94,7 +93,7 @@ Allura is a **dual-database AI memory engine** exposed via MCP — a self-hosted
 
 ### MCP Tools (canonical)
 
-`memory_store`, `memory_retrieve`, `memory_delete`, `memory_list`, `memory_propose_insight` — all require `group_id`.
+Use `MCP_DOCKER` tools as the canonical MCP surface for database and graph operations.
 
 ### Hybrid Search (RuVector)
 
@@ -173,13 +172,5 @@ Do not create net-new files in `docs/allura/` beyond the canonical six. Route re
 Full routing rules: `.claude/rules/agent-routing.md`
 
 ## MCP Integration
-
-```json
-{
-  "mcpServers": {
-    "memory": { "command": "bun", "args": ["run", "src/mcp/memory-server-canonical.ts"] }
-  }
-}
-```
 
 **DB operations via MCP_DOCKER tools only** — never `docker exec`. See `.claude/rules/mcp-integration.md`.

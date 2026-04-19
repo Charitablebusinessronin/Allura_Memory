@@ -1,16 +1,45 @@
 {
   "schema_version": "1.0.0",
   "approved_by": "brooks-architect",
-  "last_updated": "2026-04-11T00:00:00Z",
+  "last_updated": "2026-04-19T00:00:00Z",
   "servers": {
-    "allura-memory": {
+    "allura-brain": {
       "status": "approved",
-      "approved_at": "2026-04-11T00:00:00Z",
+      "approved_at": "2026-04-19T00:00:00Z",
       "approved_by": "brooks-architect",
-      "tools": ["memory_add", "memory_search", "memory_get", "memory_list", "memory_delete"],
+      "tools": [
+        "memory_add",
+        "memory_search",
+        "memory_get",
+        "memory_list",
+        "memory_delete",
+        "memory_update",
+        "memory_promote",
+        "memory_export",
+        "memory_restore",
+        "memory_list_deleted"
+      ],
       "category": "database",
       "essential": true,
-      "rationale": "Core memory system for episodic and semantic storage. Required for all harness operations: event logging, session tracking, ADR storage, performance history, and memory promotion (SOC2 mode)."
+      "rationale": "Primary Allura Brain MCP server — canonical memory interface for all agents. Provides query_traces (via memory_search on events), query_insights (via memory_search on Neo4j graph), and full CRUD for episodic + semantic memory. Brain = Postgres events + Neo4j graphs + pgvector embeddings."
+    },
+    "neo4j-cypher": {
+      "status": "approved",
+      "approved_at": "2026-04-19T00:00:00Z",
+      "approved_by": "brooks-architect",
+      "tools": ["read_neo4j_cypher", "write_neo4j_cypher", "get_neo4j_schema"],
+      "category": "database",
+      "essential": false,
+      "rationale": "Restricted raw Cypher access to Neo4j knowledge graph — use only for privileged graph maintenance, schema inspection, and governed writes."
+    },
+    "neo4j-memory": {
+      "status": "approved",
+      "approved_at": "2026-04-19T00:00:00Z",
+      "approved_by": "brooks-architect",
+      "tools": ["search_memories", "read_graph", "find_memories_by_name", "create_entities", "create_relations", "add_observations", "delete_entities", "delete_relations", "delete_observations"],
+      "category": "database",
+      "essential": true,
+      "rationale": "Default safe Neo4j graph surface — use for standard search and CRUD without exposing raw Cypher to every agent."
     }
   },
   "pending": {},
