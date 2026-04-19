@@ -8,8 +8,9 @@ type: utility
 scope: harness
 platform: Both
 status: active
-model: ollama-cloud/nemotron-3-super:cloud
-model_tiny: ollama-cloud/gpt-5.4-nano
+model: nemotron-3-super:cloud
+fallback_model: glm-5.1:cloud
+model_tiny: gpt-5.4-nano
 permission:
   edit: deny
   bash:

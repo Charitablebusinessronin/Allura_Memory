@@ -8,7 +8,8 @@ type: primary
 scope: harness
 platform: Both
 status: active
-model: ollama-cloud/gpt-5.4
+model: gpt-5.4
+fallback_model: glm-5.1:cloud
 permission:
   skill:
     "*": allow

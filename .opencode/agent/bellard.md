@@ -8,8 +8,9 @@ type: specialist
 scope: harness
 platform: Both
 status: active
-model: ollama-cloud/gpt-5.4-mini
-specialist_override: ollama-cloud/qwen3-coder-next:cloud
+model: gpt-5.4-mini
+fallback_model: glm-5.1:cloud
+specialist_override: qwen3-coder-next:cloud
 specialist_tasks: [perf_patch, hotpath_fix, benchmark_refactor]
 permission:
   edit: deny
