@@ -134,30 +134,30 @@ The category system reduces this further:
 ```yaml
 routing:
   # Tier 1: Decision-heavy roles → highest judgment
-  - if: agent in [BROOKS_ARCHITECT, JOBS_INTENT_GATE]
+  - if: agent in [brooks, jobs]
     use: gpt-5.4
 
   # Tier 2: Scout tiny tasks → cheapest
-  - if: agent == SCOUT_RECON and task in [tiny_lookup, cheap_prefilter, path_check]
+  - if: agent == scout and task in [tiny_lookup, cheap_prefilter, path_check]
     use: gpt-5.4-nano
 
   # Tier 2b: Scout default → fast wide-context scanning
-  - if: agent == SCOUT_RECON
+  - if: agent == scout
     use: nemotron-3-super:cloud
 
   # Tier 3: Code-producing tasks → coding specialist
-  - if: agent == WOZ_BUILDER and task in [patch, feature, test_fix, codegen, repo_surgery]
+  - if: agent == woz and task in [patch, feature, test_fix, codegen, repo_surgery]
     use: qwen3-coder-next:cloud
 
-  - if: agent == BELLARD_DIAGNOSTICS_PERF and task in [perf_patch, hotpath_fix, benchmark_refactor]
+  - if: agent == bellard and task in [perf_patch, hotpath_fix, benchmark_refactor]
     use: qwen3-coder-next:cloud
 
   # Tier 4: Worker default → mini for review, refactor, data, interface
-  - if: agent in [WOZ_BUILDER, PIKE_INTERFACE_REVIEW, FOWLER_REFACTOR_GATE, BELLARD_DIAGNOSTICS_PERF, CARMACK_PERFORMANCE, KNUTH_DATA_ARCHITECT]
+  - if: agent in [woz, pike, fowler, bellard, carmack, knuth]
     use: gpt-5.4-mini
 
   # Tier 5: Infra → frontier (deployment reasoning)
-  - if: agent == HIGHTOWER_DEVOPS
+  - if: agent == hightower
     use: gpt-5.4
 
   # Recovery: any primary unavailable

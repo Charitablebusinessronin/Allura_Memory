@@ -17,7 +17,7 @@ Spawn a scout to load context:
 
 ```
 Agent(
-  subagent_type="SCOUT_RECON",
+  subagent_type="scout",
   description="Scout context for task",
   prompt="Search Allura Brain for context relevant to: $ARGUMENTS.
   Query PostgreSQL events for recent activity and blockers.

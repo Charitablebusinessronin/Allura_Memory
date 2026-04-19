@@ -70,7 +70,7 @@ model: ollama-cloud/gpt-5.4-mini
 | Agent Role         | OpenCode Agent       | OpenCode Model              | Claude Code Agent          | Claude Model        | Behavioral Notes                                              |
 |--------------------|----------------------|-----------------------------|----------------------------|---------------------|---------------------------------------------------------------|
 | Orchestrator       | MemoryOrchestrator   | ollama-cloud/glm-5.1        | memory-orchestrator        | claude-opus-4-6     | Brooks persona in Claude Code; loop enforcement in prompt     |
-| Architect          | MemoryArchitect      | ollama-cloud/gpt-5.4        | brooks-architect           | claude-opus-4-6     | CA/VA commands; ADR discipline identical                      |
+| Architect          | MemoryArchitect      | ollama-cloud/gpt-5.4        | brooks           | claude-opus-4-6     | CA/VA commands; ADR discipline identical                      |
 | Builder            | MemoryBuilder        | ollama-cloud/gpt-5.4-mini   | memory-builder             | claude-sonnet-4-6   | Write templates identical; Postgres append-only enforced      |
 | Guardian           | MemoryGuardian       | ollama-cloud/glm-5.1        | memory-guardian            | claude-sonnet-4-6   | HITL gating identical; invariant checklist identical          |
 | Scout              | MemoryScout          | ollama-cloud/gpt-5.4-nano   | memory-scout               | claude-sonnet-4-6   | Memory-first search pattern identical; tools differ (see note)|

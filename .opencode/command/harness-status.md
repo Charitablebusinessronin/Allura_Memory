@@ -28,8 +28,8 @@ Show the harness health, loaded servers, and available skills.
   "loaded_servers": ["allura-memory", "tavily", "context7"],
   "approved_pending": ["postgresql", "neo4j"],
   "available_skills": [
-    {"name": "code-review", "executor": "pike-interface-review"},
-    {"name": "postgres-optimization", "executor": "woz-builder"}
+    {"name": "code-review", "executor": "pike"},
+    {"name": "postgres-optimization", "executor": "woz"}
   ],
   "recent_events": 12
 }

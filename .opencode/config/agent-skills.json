@@ -1,54 +1,54 @@
 {
   "tier": 1,
   "skills": {
-    "brooks-architect": [
+    "brooks": [
       "mcp-docker",
       "memory-client",
       "skill-creator",
       "code-review",
       "context7"
     ],
-    "knuth-data-architect": [
+    "knuth": [
       "mcp-docker",
       "memory-client",
       "postgres-best-practices",
       "next-best-practices"
     ],
-    "woz-builder": [
+    "woz": [
       "mcp-docker",
       "memory-client",
       "code-review"
     ],
-    "jobs-intent-gate": [
+    "jobs": [
       "mcp-docker",
       "memory-client",
       "postgres-best-practices"
     ],
-    "hightower-devops": [
+    "hightower": [
       "mcp-docker",
       "memory-client",
       "next-best-practices"
     ],
-    "carmack-performance": [
+    "carmack": [
       "mcp-docker",
       "memory-client"
     ],
-    "bellard-diagnostics-perf": [
+    "bellard": [
       "mcp-docker",
       "memory-client",
       "next-best-practices"
     ],
-    "fowler-refactor-gate": [
+    "fowler": [
       "mcp-docker",
       "memory-client",
       "code-review"
     ],
-    "pike-interface-review": [
+    "pike": [
       "mcp-docker",
       "memory-client",
       "code-review"
     ],
-    "scout-recon": [
+    "scout": [
       "mcp-docker",
       "memory-client",
       "context7",

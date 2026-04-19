@@ -69,7 +69,7 @@ Create, improve, or evaluate an OpenCode skill using the iterative skill-creator
 {
   "event": "SKILL_CREATED",
   "skill_name": "pdf-extractor",
-  "executor": "brooks-architect",
+  "executor": "brooks",
   "path": ".opencode/skills/pdf-extractor/SKILL.md",
   "phases_completed": ["draft", "test", "review", "improve", "optimize"],
   "benchmark": {

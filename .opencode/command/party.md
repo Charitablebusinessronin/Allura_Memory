@@ -31,14 +31,14 @@ Launch multiple specialists simultaneously. Brooks orchestrates; Team RAM execut
 
 | Agent | Subagent Type | Role | Writes Code? |
 |-------|--------------|------|-------------|
-| **Woz** | `WOZ_BUILDER` | Primary builder — implements, tests, and prepares diffs | ✅ Yes |
-| **Scout** | `SCOUT_RECON` | Recon — file discovery, pattern grep, risk scan | ❌ Read-only |
-| **Knuth** | `KNUTH_DATA_ARCHITECT` | Data — schema, queries, migrations | ⚠️ Ask first |
-| **Bellard** | `BELLARD_DIAGNOSTICS_PERF` | Diagnostics — perf measurement, profiling | ❌ Read-only |
-| **Carmack** | `CARMACK_PERFORMANCE` | Perf — latency reduction, hot path optimization | ❌ Read-only |
-| **Fowler** | `FOWLER_REFACTOR_GATE` | Refactor gate — maintainability, lint, typecheck | ✅ Yes, limited |
-| **Pike** | `PIKE_INTERFACE_REVIEW` | Interface gate — API ergonomics, surface area | ❌ Read-only |
-| **Hightower** | `HIGHTOWER_DEVOPS` | DevOps — Docker, CI/CD, infrastructure | ⚠️ Ask first |
+| **Woz** | `woz` | Primary builder — implements, tests, and prepares diffs | ✅ Yes |
+| **Scout** | `scout` | Recon — file discovery, pattern grep, risk scan | ❌ Read-only |
+| **Knuth** | `knuth` | Data — schema, queries, migrations | ⚠️ Ask first |
+| **Bellard** | `bellard` | Diagnostics — perf measurement, profiling | ❌ Read-only |
+| **Carmack** | `carmack` | Perf — latency reduction, hot path optimization | ❌ Read-only |
+| **Fowler** | `fowler` | Refactor gate — maintainability, lint, typecheck | ✅ Yes, limited |
+| **Pike** | `pike` | Interface gate — API ergonomics, surface area | ❌ Read-only |
+| **Hightower** | `hightower` | DevOps — Docker, CI/CD, infrastructure | ⚠️ Ask first |
 
 ## Protocol
 
@@ -61,10 +61,10 @@ Launch all independent specialists in a **single message** using the Task tool.
 ```javascript
 // Example: "Add user authentication with OAuth2"
 
-Task(subagent_type: "SCOUT_RECON", prompt: "Find all existing auth patterns, middleware, and session handling in src/. Check .env for auth-related vars. Report file paths and current state.")
-Task(subagent_type: "WOZ_BUILDER", prompt: "Implement OAuth2 flow per specs. Follow existing auth patterns. Write tests alongside implementation.")
-Task(subagent_type: "KNUTH_DATA_ARCHITECT", prompt: "Review schema for user tables and session storage. Check migrations and propose any schema changes needed for OAuth2.")
-Task(subagent_type: "HIGHTOWER_DEVOPS", prompt: "Check Docker and CI config for auth-related env vars and secrets. Ensure .env.example is updated. Verify environment and callback assumptions.")
+Task(subagent_type: "scout", prompt: "Find all existing auth patterns, middleware, and session handling in src/. Check .env for auth-related vars. Report file paths and current state.")
+Task(subagent_type: "woz", prompt: "Implement OAuth2 flow per specs. Follow existing auth patterns. Write tests alongside implementation.")
+Task(subagent_type: "knuth", prompt: "Review schema for user tables and session storage. Check migrations and propose any schema changes needed for OAuth2.")
+Task(subagent_type: "hightower", prompt: "Check Docker and CI config for auth-related env vars and secrets. Ensure .env.example is updated. Verify environment and callback assumptions.")
 ```
 
 ### Phase 3: Collect and Validate

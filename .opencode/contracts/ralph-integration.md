@@ -36,7 +36,7 @@ This contract defines how Open Ralph Wiggum integrates with the Allura harness f
 - Task has automatic verification (linters, tests, type checking)
 
 ### ❌ Do NOT Use Ralph When:
-- Architecture decisions are needed (use brooks-architect)
+- Architecture decisions are needed (use brooks)
 - Requirements are ambiguous (use DAY_BUILD with approval gates)
 - Human judgment is required (use approval gates)
 - Task requires creative design decisions
@@ -78,7 +78,7 @@ This contract defines how Open Ralph Wiggum integrates with the Allura harness f
 |-----------|---------------|-----------|-----------|
 | Discovery | ContextScout | None | Always |
 | Intent/Scope | Brooks | None | Always |
-| Architecture | brooks-architect | None | Always |
+| Architecture | brooks | None | Always |
 | Implementation (DAY) | CoderAgent | Woz | With approval gates |
 | Implementation (NIGHT) | **Ralph tool** | CoderAgent | Autonomous |
 | Refactor | Fowler | Ralph tool | If clear criteria |
@@ -208,7 +208,7 @@ Before marking a task complete, Ralph MUST verify:
 
 ```bash
 # 1. Brooks creates architecture
-brooks-architect "Design Epic 1 architecture"
+brooks "Design Epic 1 architecture"
 
 # 2. TaskManager breaks down
 task-manager "Break Epic 1 into stories"

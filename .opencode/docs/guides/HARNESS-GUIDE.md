@@ -205,8 +205,8 @@ Harness:
 
 ```
 /skill-load code-review                       # Use default (@Pike)
-/skill-load code-review --executor pike-interface-review     # Explicit routing
-/skill-load postgres-optimization --executor woz-builder
+/skill-load code-review --executor pike     # Explicit routing
+/skill-load postgres-optimization --executor woz
 ```
 
 **Prerequisites:** Skill must exist and be available

@@ -203,16 +203,16 @@ Type these directly in your IDE:
 
 | Agent      | Shortcut                 | Persona           | Role                        |
 | ---------- | ------------------------ | ----------------- | --------------------------- |
-| Brooks     | `@brooks-architect`      | Frederick Brooks  | Architect + Orchestrator    |
-| Jobs       | `@jobs-intent-gate`     | Steve Jobs        | Intent Gate + Scope Owner   |
-| Woz        | `@woz-builder`          | Steve Wozniak     | Primary Builder             |
-| Pike       | `@pike-interface-review` | Rob Pike          | Simplicity Gate (read-only) |
-| Scout      | `@scout-recon`          | (none)            | Fast Discovery (read-only)  |
-| Bellard    | `@bellard-diagnostics`  | Fabrice Bellard   | Diagnostics + Perf         |
+| Brooks     | `@brooks`      | Frederick Brooks  | Architect + Orchestrator    |
+| Jobs       | `@jobs`     | Steve Jobs        | Intent Gate + Scope Owner   |
+| Woz        | `@woz`          | Steve Wozniak     | Primary Builder             |
+| Pike       | `@pike` | Rob Pike          | Simplicity Gate (read-only) |
+| Scout      | `@scout`          | (none)            | Fast Discovery (read-only)  |
+| Bellard    | `@bellard`  | Fabrice Bellard   | Diagnostics + Perf         |
 | Carmack    | `@carmack-perf`         | John Carmack      | Performance Specialist      |
-| Fowler     | `@fowler-refactor-gate` | Martin Fowler     | Maintainability Gate        |
+| Fowler     | `@fowler` | Martin Fowler     | Maintainability Gate        |
 | Knuth      | `@knuth-data`           | Donald Knuth      | Data Architect              |
-| Hightower  | `@hightower-devops`     | Kelsey Hightower  | DevOps + Infrastructure     |
+| Hightower  | `@hightower`     | Kelsey Hightower  | DevOps + Infrastructure     |
 
 ---
 
