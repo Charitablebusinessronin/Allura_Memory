@@ -16,7 +16,8 @@
  *
  * Reference: docs/allura/BLUEPRINT.md
  *
- * Usage: bun run src/mcp/memory-server-canonical.ts
+ * Usage: bun src/mcp/memory-server-canonical.ts
+ *    or: bun run mcp
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js"
