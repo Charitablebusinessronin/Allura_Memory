@@ -17,30 +17,14 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { Pool } from "pg"
 import { randomUUID } from "crypto"
 import { createHash } from "crypto"
+import { getPool } from "@/lib/postgres/connection"
 import { Neo4jConnectionError, Neo4jPromotionError } from "@/lib/errors/neo4j-errors"
 import { createInsight, InsightConflictError } from "@/lib/neo4j/queries/insert-insight"
 import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id"
 import { requireRole, forbiddenResponse, unauthorizedResponse } from "@/lib/auth/api-auth"
 import { captureException } from "@/lib/observability/sentry"
-
-let pgPool: Pool | null = null
-
-async function getConnections(): Promise<{ pg: Pool }> {
-  if (!pgPool) {
-    pgPool = new Pool({
-      host: process.env.POSTGRES_HOST || "localhost",
-      port: parseInt(process.env.POSTGRES_PORT || "5432"),
-      database: process.env.POSTGRES_DB || "memory",
-      user: process.env.POSTGRES_USER || "ronin4life",
-      password: process.env.POSTGRES_PASSWORD,
-    })
-  }
-
-  return { pg: pgPool }
-}
 
 /**
  * POST /api/curator/approve
@@ -94,7 +78,7 @@ export async function POST(request: NextRequest) {
       throw error
     }
 
-    const { pg } = await getConnections()
+    const pg = getPool()
 
     // Fetch proposal
     const proposalResult = await pg.query(

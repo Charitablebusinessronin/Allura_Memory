@@ -28,7 +28,7 @@ Build Model Context Protocol (MCP) servers for Allura agents.
 \`\`\`typescript
 // Create MCP server
 const server = new MCPServer({
-  name: "allura-memory",
+  name: "neo4j-memory",
   version: "1.0.0"
 });
 

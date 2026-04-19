@@ -109,7 +109,7 @@ interface ContractCheck {
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const ROOT_DIR = process.cwd();
-const GROUP_ID = "allura-memory";
+const GROUP_ID = "allura-roninmemory";
 const AGENT_ID = "carmack";
 
 const SUBCOMMANDS = ["review", "check", "surface", "contracts"] as const;

@@ -7,25 +7,10 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { Pool } from "pg";
+import { getPool } from "@/lib/postgres/connection";
 import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
 import { requireRole, forbiddenResponse, unauthorizedResponse } from "@/lib/auth/api-auth";
 import { captureException } from "@/lib/observability/sentry";
-
-let pgPool: Pool | null = null;
-
-async function getPool(): Promise<Pool> {
-  if (!pgPool) {
-    pgPool = new Pool({
-      host: process.env.POSTGRES_HOST || "localhost",
-      port: parseInt(process.env.POSTGRES_PORT || "5432"),
-      database: process.env.POSTGRES_DB || "memory",
-      user: process.env.POSTGRES_USER || "ronin4life",
-      password: process.env.POSTGRES_PASSWORD,
-    });
-  }
-  return pgPool;
-}
 
 /**
  * GET /api/curator/proposals
@@ -72,7 +57,7 @@ export async function GET(request: NextRequest) {
       throw error;
     }
 
-    const pool = await getPool();
+    const pool = getPool();
 
     // Build query based on status
     let query: string;

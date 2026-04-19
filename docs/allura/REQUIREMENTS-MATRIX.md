@@ -189,4 +189,87 @@ Curator approves → Neo4j write
 
 ---
 
-*This document was compiled from COMPETITIVE-ANALYSIS.md (archived 2026-04-08).*
+## Governed Memory Pipeline — Business → Functional Traceability
+
+This section traces the governed memory pipeline requirements from business goals through functional behaviors to concrete satisfaction evidence. See [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md) for the full implementation design and [VALIDATION-GATE.md](../archive/allura/VALIDATION-GATE.md) for the acceptance checklist.
+
+### Section 1: Business Requirements → Functional Requirements
+
+| ID | Business Requirement | Functional Requirements | Use Cases |
+|----|----------------------|------------------------|-----------|
+| B1 | Agents must persist all task activity as append-only raw traces so execution history is auditable and recoverable. | [F1](#f1), [F2](#f2), [F3](#f3) | MEM-UC1, MEM-UC2 |
+| B2 | A curator process must turn raw traces into proposed insights with explicit evidence and confidence, without promoting them directly to active knowledge. | [F4](#f4), [F5](#f5) | MEM-UC3 |
+| B3 | No insight may become active knowledge until it is approved by a human or policy-controlled approval flow, and that approval must be auditable. | [F6](#f6), [F7](#f7) | MEM-UC4 |
+| B4 | Approved insights must be stored in Neo4j as immutable, versioned knowledge records with relationships such as `SUPERSEDES`, `DEPRECATED`, and `REVERTED`. | [F8](#f8), [F9](#f9) | MEM-UC5 |
+| B5 | Agents must retrieve approved knowledge through a controlled retrieval layer that supports semantic and structured queries with project and global scope. | [F10](#f10), [F11](#f11) | MEM-UC6 |
+| B6 | All reads and writes must pass through controlled APIs that enforce project-level access, agent permissions, and audit logging. | [F12](#f12), [F13](#f13) | MEM-UC7 |
+| B7 | The full loop from agent execution to later knowledge reuse must be demonstrably end-to-end and reversible. | [F14](#f14), [F15](#f15) | MEM-UC8 |
+
+### Section 2: Functional Requirements Detail
+
+#### Trace Ingestion (F1–F3)
+
+| ID | Requirement | Satisfied by |
+|----|-------------|--------------|
+| <a name="f1"></a>F1 | The system must persist agent task lifecycle events, tool calls, outputs, retries, and terminal status into a raw trace store. | `insertEvent()` · `src/lib/postgres/queries/insert-trace.ts` · [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md#trace-ingestion) |
+| <a name="f2"></a>F2 | Raw trace storage must be append-only and must not overwrite prior events in place. | Append-only write policy · `events` table schema · `00-traces.sql` · [RISKS-AND-DECISIONS.md](./RISKS-AND-DECISIONS.md) |
+| <a name="f3"></a>F3 | Raw traces must preserve provenance sufficient to link downstream insights back to source evidence. | `trace_ref` field on proposals · `evidence_refs` in promotion metadata · [DATA-DICTIONARY.md](./DATA-DICTIONARY.md) |
+
+#### Curator Pipeline (F4–F5)
+
+| ID | Requirement | Satisfied by |
+|----|-------------|--------------|
+| <a name="f4"></a>F4 | A curator service must read raw traces and generate proposed insights rather than active insights. | `src/curator/index.ts` · `curatorScore()` · `canonical_proposals` table · [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md#insight-curation-and-approval) |
+| <a name="f5"></a>F5 | Each proposed insight must include summary, evidence links, confidence score, timestamp, and status. | Proposal schema · `score`, `reasoning`, `tier`, `trace_ref` fields · [DATA-DICTIONARY.md](./DATA-DICTIONARY.md) |
+
+#### Approval and Governance (F6–F7)
+
+| ID | Requirement | Satisfied by |
+|----|-------------|--------------|
+| <a name="f6"></a>F6 | Proposed insights must enter an approval flow before they can become active. | `POST /api/curator/approve` · `status: pending` gate · [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md#insight-curation-and-approval) |
+| <a name="f7"></a>F7 | Every approval, rejection, or policy-based decision must be recorded as an audit event. | `proposal_approved` / `proposal_rejected` event types · witness hash · [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md#insight-curation-and-approval) |
+
+#### Knowledge Graph Versioning (F8–F9)
+
+| ID | Requirement | Satisfied by |
+|----|-------------|--------------|
+| <a name="f8"></a>F8 | Approved insights must be written to Neo4j as immutable nodes and must never be updated in place. | `createInsight()` · `src/lib/neo4j/queries/insert-insight.ts` · [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md#knowledge-graph-versioning) |
+| <a name="f9"></a>F9 | When an insight changes, the system must create a new insight node linked with `SUPERSEDES`, `DEPRECATED`, or `REVERTED`. | `createInsightVersion()` · `deprecateInsight()` · `revertInsightVersion()` · [RISKS-AND-DECISIONS.md](./RISKS-AND-DECISIONS.md) |
+
+#### Retrieval Layer (F10–F11)
+
+| ID | Requirement | Satisfied by |
+|----|-------------|--------------|
+| <a name="f10"></a>F10 | Agents must retrieve knowledge through a retrieval service rather than by directly querying PostgreSQL or Neo4j. | `POST /api/memory/retrieval` · `src/lib/memory/retrieval-layer.ts` · [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md#retrieval-layer) |
+| <a name="f11"></a>F11 | The retrieval service must support semantic and structured queries and return scoped context from approved insights, with optional raw-trace access. | `searchInsights()` · `getDualContextSemanticMemory()` · `queryTraces()` · [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md#retrieval-layer) |
+
+#### Policy and Access Control (F12–F13)
+
+| ID | Requirement | Satisfied by |
+|----|-------------|--------------|
+| <a name="f12"></a>F12 | All knowledge-system reads and writes must pass through controlled endpoints that enforce project-level access. | `requireRole()` · `validateGroupId()` · RBAC middleware · [SOLUTION-ARCHITECTURE.md](./SOLUTION-ARCHITECTURE.md) |
+| <a name="f13"></a>F13 | The system must enforce agent permissions and audit all access to trace and knowledge resources. | Auth middleware · audit event logging · [BLUEPRINT.md](./BLUEPRINT.md#9-logging--audit) |
+
+#### End-to-End Validation (F14–F15)
+
+| ID | Requirement | Satisfied by |
+|----|-------------|--------------|
+| <a name="f14"></a>F14 | A second agent must be able to retrieve approved knowledge as context and use it in a later task correctly. | Retrieval endpoint · validation gate scenario MEM-UC8 · [VALIDATION-GATE.md](../archive/allura/VALIDATION-GATE.md) |
+| <a name="f15"></a>F15 | The full lifecycle from trace capture to knowledge reuse must be traceable, auditable, and reversible. | Evidence chain: trace → proposal → approval → Neo4j → retrieval · [VALIDATION-GATE.md](../archive/allura/VALIDATION-GATE.md) · [RISKS-AND-DECISIONS.md](./RISKS-AND-DECISIONS.md) |
+
+### Section 3: Use Case Index
+
+| Use Case | Domain Area | Requirements |
+|----------|-------------|-------------|
+| MEM-UC1 | Trace Ingestion | Record agent execution trace | F1, F2, F3 |
+| MEM-UC2 | Trace Ingestion | Reject non-append trace write | F2 |
+| MEM-UC3 | Curation | Curate a proposed insight from traces | F4, F5 |
+| MEM-UC4 | Approval | Approve a proposed insight | F6, F7 |
+| MEM-UC5 | Knowledge Graph | Promote an approved insight to Neo4j | F8, F9 |
+| MEM-UC6 | Retrieval | Retrieve approved knowledge for an agent | F10, F11 |
+| MEM-UC7 | Access Control | Enforce access and audit on all reads/writes | F12, F13 |
+| MEM-UC8 | E2E Validation | Reuse approved knowledge in a later agent run | F14, F15 |
+
+---
+
+*This document was compiled from COMPETITIVE-ANALYSIS.md (archived 2026-04-08). Governed pipeline traceability added 2026-04-19.*

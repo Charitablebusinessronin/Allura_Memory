@@ -23,7 +23,7 @@ async function runCurator() {
     // Step 1: Query PostgreSQL for unpromoted events
     console.log("[Curator] Querying PostgreSQL for candidate events...");
     const pgResult = await pgPool.query(`
-      SELECT id, event_type, agent_id, metadata, created_at
+      SELECT id, event_type, agent_id, metadata, created_at, group_id
       FROM events
       WHERE status != 'promoted'
         AND created_at > NOW() - INTERVAL '7 days'
@@ -65,13 +65,15 @@ async function runCurator() {
     console.log(`\n[Curator] ${highConfidence.length} events qualify for promotion\n`);
     
     // Step 4: Create promotion proposals in PostgreSQL canonical_proposals
+    // and mark source events as promoted to prevent re-scoring (AD-20)
     for (const event of highConfidence) {
+      const eventGroupId = event.group_id || 'allura-roninmemory';
       await pgPool.query(
         `INSERT INTO canonical_proposals (id, group_id, content, score, reasoning, tier, status, trace_ref, created_at)
          VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 'pending', $6, NOW())
          ON CONFLICT DO NOTHING`,
         [
-          'allura-roninmemory',
+          eventGroupId,
           JSON.stringify({ event_type: event.event_type, agent_id: event.agent_id, ...event.metadata }),
           event.score.confidence,
           event.score.reasoning,
@@ -80,6 +82,13 @@ async function runCurator() {
         ]
       );
       console.log(`[Curator] Queued proposal for event ${event.id} in canonical_proposals`);
+
+      // Mark the source event as promoted so it won't be re-scored
+      await pgPool.query(
+        `UPDATE events SET status = 'promoted' WHERE id = $1`,
+        [event.id]
+      );
+      console.log(`[Curator] Marked event ${event.id} as promoted`);
     }
     
     console.log("\n[Curator] Workflow complete!");

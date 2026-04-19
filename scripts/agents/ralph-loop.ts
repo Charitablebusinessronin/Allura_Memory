@@ -209,7 +209,7 @@ async function ralphLoop() {
         INSERT INTO events (group_id, event_type, agent_id, metadata, status)
         VALUES ($1, $2, $3, $4, $5)
       `, [
-        "allura-memory",
+        "allura-roninmemory",
         "ralph_loop_start",
         "ralph",
         JSON.stringify({
@@ -257,7 +257,7 @@ async function ralphLoop() {
         INSERT INTO events (group_id, event_type, agent_id, metadata, status)
         VALUES ($1, $2, $3, $4, $5)
       `, [
-        "allura-memory",
+        "allura-roninmemory",
         "ralph_loop_end",
         "ralph",
         JSON.stringify({
@@ -282,7 +282,7 @@ async function ralphLoop() {
           summary: $summary,
           confidence: $confidence,
           status: 'active',
-          group_id: 'allura-memory',
+          group_id: 'allura-roninmemory',
           created_at: datetime(),
           source_type: 'agent_loop'
         })

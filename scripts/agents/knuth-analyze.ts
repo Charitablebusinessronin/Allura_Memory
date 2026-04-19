@@ -91,7 +91,7 @@ interface LayerMap {
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const ROOT_DIR = process.cwd();
-const GROUP_ID = "allura-memory";
+const GROUP_ID = "allura-roninmemory";
 const AGENT_ID = "knuth";
 
 const SUBCOMMANDS = ["analyze", "complexity", "layers"] as const;

@@ -389,9 +389,9 @@ The following items must be added to the GOAL DONE PROMPT checklist as new hard 
 ❌ 1.14  RETURNING id is used to capture BIGINT trace_ref after events insert
 
 [LAYER 2 — MCP API ADDITIONS]
-❌ 2.11  Default bun run mcp starts canonical server, not legacy server
-❌ 2.12  .claude/settings.json allura-memory command points to memory-server-canonical.ts
-❌ 2.13  .opencode/config.json allura-memory command points to memory-server-canonical.ts
+❌ 2.11  Default bun run mcp starts legacy server
+❌ 2.12  .claude/settings.json allura-memory command points to legacy server
+❌ 2.13  .opencode/config.json allura-memory command points to legacy server
 ❌ 2.14  Legacy tools.ts is marked and isolated — not exposed to agents
 
 [LAYER 9 — RUNTIME ADDITIONS]

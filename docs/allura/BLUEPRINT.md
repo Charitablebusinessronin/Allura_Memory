@@ -108,6 +108,13 @@ The hard isolation boundary. Every read and write MUST include a valid `group_id
 | B20 | Dashboard deployable on Vercel with backend engine in user's VPC/cloud                       |
 | B21 | Curator authentication via Clerk (SSO, RBAC)                                                 |
 | B22 | Error tracking via Sentry; curator alerted on engine failures                                |
+| B23 | Agents must persist all task activity as append-only raw traces for auditability             |
+| B24 | A curator process must turn raw traces into proposed insights without promoting them directly |
+| B25 | No insight may become active knowledge until approved by a human or policy-controlled flow    |
+| B26 | Approved insights must be stored in Neo4j as immutable, versioned knowledge records          |
+| B27 | Agents must retrieve approved knowledge through a controlled retrieval layer                 |
+| B28 | All reads/writes must pass through controlled APIs with project-level access and audit        |
+| B29 | The full loop from agent execution to knowledge reuse must be demonstrably end-to-end        |
 
 ---
 
@@ -157,6 +164,26 @@ The hard isolation boundary. Every read and write MUST include a valid `group_id
 | F23 | Curator dashboard deployed on Vercel; calls backend engine via `CURATOR_ENGINE_URL` env var |
 | F24 | Vercel Functions (`/api/curator/*`) call Docker engine in VPC/cloud via HTTPS               |
 | F25 | Error tracking: unhandled exceptions sent to Sentry; curator notified via email/Slack       |
+
+#### Governed Memory Pipeline
+
+| #   | Requirement                                                                                                          |
+| --- | ------------------------------------------------------------------------------------------------------------------- |
+| F26 | Agent task lifecycle events, tool calls, outputs, retries, and terminal status are persisted as append-only traces    |
+| F27 | Raw trace storage is append-only; no UPDATE or DELETE on the `events` table                                        |
+| F28 | Raw traces preserve provenance linking downstream insights back to source evidence                                   |
+| F29 | Curator reads raw traces and generates proposed insights (not active insights)                                     |
+| F30 | Each proposed insight includes summary, evidence links, confidence score, timestamp, and status                    |
+| F31 | Proposed insights enter an approval flow before becoming active knowledge                                           |
+| F32 | Every approval, rejection, or policy decision is recorded as an audit event with actor and timestamp                |
+| F33 | Approved insights are written to Neo4j as immutable nodes; no in-place updates                                     |
+| F34 | Changed insights create new nodes linked with `SUPERSEDES`, `DEPRECATED`, or `REVERTED` relationships             |
+| F35 | Agents retrieve knowledge through a controlled retrieval service, not by querying databases directly                 |
+| F36 | Retrieval supports semantic and structured queries with project and global scope                                    |
+| F37 | All knowledge-system reads/writes pass through controlled endpoints enforcing project-level access                  |
+| F38 | Agent permissions enforced and all access to trace/knowledge resources is audited                                  |
+| F39 | A second agent can retrieve approved knowledge and use it correctly in a later task                                |
+| F40 | The full lifecycle from trace capture to knowledge reuse is traceable, auditable, and reversible                   |
 
 ---
 
@@ -438,7 +465,9 @@ Before any Neo4j write, search for an existing node with matching `content` + `g
 - [DATA-DICTIONARY.md](./DATA-DICTIONARY.md)
 - [RISKS-AND-DECISIONS.md](./RISKS-AND-DECISIONS.md)
 - [DESIGN-ALLURA.md](./DESIGN-ALLURA.md) — UI/UX wireframes and design rules
+- [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md) — Governed memory pipeline design
 - [REQUIREMENTS-MATRIX.md](./REQUIREMENTS-MATRIX.md) — Competitive analysis and use case fit
+- [VALIDATION-GATE.md](../archive/allura/VALIDATION-GATE.md) — Acceptance checklist and benchmark matrix
 - `src/mcp/memory-server.ts` — MCP tool implementations
 - `src/lib/memory/` — memory engine
 - `postgres-init/` — PostgreSQL schema SQL

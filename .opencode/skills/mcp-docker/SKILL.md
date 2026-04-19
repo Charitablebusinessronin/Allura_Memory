@@ -127,17 +127,17 @@ MCP_DOCKER_mcp-exec --name filesystem --tool read_file --arguments '{
 }'
 ```
 
-### Example 4: Custom MCP Server (Allura's Memory)
+### Example 4: Custom MCP Server
 
 ```
 # Build your custom MCP server image
-docker build -f Dockerfile.mcp -t allura-memory-mcp:latest .
+docker build -f Dockerfile.mcp -t project-neo4j-memory-mcp:latest .
 
 # Add to MCP_DOCKER
-MCP_DOCKER_mcp-add --name allura-memory-mcp --activate
+MCP_DOCKER_mcp-add --name project-neo4j-memory-mcp --activate
 
 # Execute tools
-MCP_DOCKER_mcp-exec --name allura-memory-mcp --tool search_memories --arguments '{
+MCP_DOCKER_mcp-exec --name project-neo4j-memory-mcp --tool search_memories --arguments '{
   "query": "authentication patterns",
   "group_id": "myproject"
 }'
