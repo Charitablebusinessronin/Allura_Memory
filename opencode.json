@@ -1,6 +1,8 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "model": "openai/gpt-5.4",
+  "experimentalAgentTeams": true,
+  "terminals": "tmux",
   "mcpServers": {
     "allura-brain": {
       "command": "bun",
@@ -86,6 +88,7 @@
       "mcp-docker": "allow",
       "mcp-docker-memory-system": "allow",
       "memory-client": "allow",
+      "context7": "allow",
       "multi-search": "allow",
       "next-best-practices": "allow",
       "party-mode": "allow",
@@ -102,10 +105,10 @@
   },
   "instructions": [
     ".opencode/AGENTS.md",
-    ".claude/rules/_bootstrap.md",
-    ".claude/rules/agent-routing.md",
-    ".claude/rules/mcp-integration.md",
-    ".claude/rules/AI-GUIDELINES.md"
+    ".opencode/rules/_bootstrap.md",
+    ".opencode/rules/agent-routing.md",
+    ".opencode/rules/mcp-integration.md",
+    ".opencode/rules/AI-GUIDELINES.md"
   ],
   "compaction": {
     "auto": true,
