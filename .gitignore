@@ -39,9 +39,9 @@ tsconfig.tsbuildinfo
 *.key
 
 # OpenCode config with potential secrets
-opencode.json
-opencode.json.*
-.opencode/opencode.json*
+# opencode.json
+# opencode.json.*
+# .opencode/opencode.json*
 
 # Legacy / retired artifacts (never re-add)
 _bmad-output/
