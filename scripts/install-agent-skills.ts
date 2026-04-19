@@ -49,7 +49,7 @@ server.registerTool("memory_retrieve", async (args) => {
     id: "postgres-best-practices",
     name: "PostgreSQL Best Practices",
     description: "Database consistency and query optimization",
-    agents: ["knuth", "berners-lee"],
+    agents: ["knuth", "fowler"],
     platforms: ["claude"],
     content: `# PostgreSQL Best Practices
 
@@ -80,7 +80,7 @@ SELECT * FROM events WHERE agent_id = 'brooks';
     id: "next-best-practices",
     name: "Next.js Best Practices",
     description: "Framework standards for Next.js 16",
-    agents: ["knuth", "hopper", "torvalds"],
+    agents: ["knuth", "woz", "hightower"],
     platforms: ["claude", "opencode"],
     content: `# Next.js Best Practices
 
@@ -140,7 +140,7 @@ gh pr merge --squash
     id: "code-review",
     name: "Code Review",
     description: "Structured code review process",
-    agents: ["dijkstra"],
+    agents: ["carmack"],
     platforms: ["github", "claude"],
     content: `# Code Review Skill
 
@@ -200,15 +200,15 @@ skill-name/
 ];
 
 const TIER_2_SKILLS = [
-  { id: "security-best-practices", name: "Security Best Practices", agents: ["dijkstra"] },
-  { id: "react-best-practices", name: "React Best Practices", agents: ["hopper", "torvalds", "hinton"] },
-  { id: "create-pr", name: "Create PR", agents: ["knuth", "torvalds"] },
-  { id: "commit", name: "Commit", agents: ["torvalds", "knuth"] },
-  { id: "figma-implement-design", name: "Figma Implement Design", agents: ["hinton"] },
-  { id: "firecrawl-agent", name: "Firecrawl Agent", agents: ["hopper"] },
-  { id: "notion-knowledge-capture", name: "Notion Knowledge Capture", agents: ["cerf"] },
+  { id: "security-best-practices", name: "Security Best Practices", agents: ["carmack"] },
+  { id: "react-best-practices", name: "React Best Practices", agents: ["woz", "hightower", "bellard"] },
+  { id: "create-pr", name: "Create PR", agents: ["knuth", "hightower"] },
+  { id: "commit", name: "Commit", agents: ["hightower", "knuth"] },
+  { id: "figma-implement-design", name: "Figma Implement Design", agents: ["woz"] },
+  { id: "firecrawl-agent", name: "Firecrawl Agent", agents: ["scout"] },
+  { id: "notion-knowledge-capture", name: "Notion Knowledge Capture", agents: ["scout"] },
   { id: "claude-settings-audit", name: "Claude Settings Audit", agents: ["brooks"] },
-  { id: "semgrep-rule-creator", name: "Semgrep Rule Creator", agents: ["liskov"] },
+  { id: "semgrep-rule-creator", name: "Semgrep Rule Creator", agents: ["pike"] },
 ];
 
 async function installSkills(tier: number) {
@@ -274,15 +274,15 @@ async function installSkills(tier: number) {
 async function updateAgentSkills(skills: any[], tier: number) {
   const agentSkills: Record<string, string[]> = {
     'brooks': [],
+    'jobs': [],
+    'pike': [],
+    'fowler': [],
+    'scout': [],
+    'woz': [],
+    'bellard': [],
+    'carmack': [],
     'knuth': [],
-    'turing': [],
-    'berners-lee': [],
-    'hopper': [],
-    'cerf': [],
-    'torvalds': [],
-    'liskov': [],
-    'dijkstra': [],
-    'hinton': []
+    'hightower': []
   };
 
   // Map skills to agents

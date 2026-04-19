@@ -4,7 +4,7 @@
   "description": "Database consistency and query optimization",
   "agents": [
     "knuth",
-    "berners-lee"
+    "fowler"
   ],
   "platforms": [
     "claude"

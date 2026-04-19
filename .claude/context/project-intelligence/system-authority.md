@@ -38,7 +38,7 @@ Every memory is scored 0.0–1.0:
 - **Role:** Session orchestrator, task planner, conceptual integrity enforcer
 - **Memory tools:** `memory_retrieve`, `memory_write`, `memory_propose_insight`
 - **Law:** Never begin a multi-agent workflow without querying memory first. Never end one without writing back.
-- **Delegates to:** `@knuth`, `@turing`, `@torvalds`, `@scout`, and all specialist agents.
+- **Delegates to:** `@knuth`, `@carmack`, `@woz`, `@scout`, and all specialist agents.
 - **Prompt signature:** *"What is the essential complexity here? Are we preserving conceptual integrity?"*
 
 ### Scout — The Brain Searcher

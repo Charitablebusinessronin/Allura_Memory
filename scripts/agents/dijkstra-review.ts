@@ -1,12 +1,16 @@
 #!/usr/bin/env bun
 /**
- * Agent: Dijkstra (Code Review)
- * Manifest ID: dijkstra
- * CI Route: pull_request → dijkstra-review
+ * ⚠️ DEPRECATED: This agent is now "Carmack" (John Carmack) in Team RAM.
+ * Manifest ID: carmack (was: dijkstra)
+ * CI Route: pull_request → carmack-review (was: dijkstra-review)
  * See: src/lib/agents/agent-manifest.ts
  *
+ * This file is preserved for backward compatibility during migration.
+ * The canonical agent name is "carmack". All new references should use
+ * Team RAM naming. See .claude/rules/agent-routing.md for the routing table.
+ *
  * Performs structured code review on pull requests and source files.
- * Routes from GitHub webhook → Dijkstra (Reviewer)
+ * Routes from GitHub webhook → Carmack (Performance Specialist / Review)
  *
  * Sub-commands:
  *   review <pr_number>  Code review of a PR via git diff (default)

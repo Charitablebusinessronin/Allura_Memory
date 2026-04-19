@@ -3,7 +3,7 @@
   "name": "Code Review",
   "description": "Structured code review process",
   "agents": [
-    "dijkstra"
+    "carmack"
   ],
   "platforms": [
     "github",
