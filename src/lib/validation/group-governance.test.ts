@@ -181,6 +181,7 @@ describe("group-governance", () => {
         group_id: testProject1,
         content: "Test insight for governance",
         confidence: 0.9,
+        topic_key: "test.insight",
       });
 
       await createInsight({
@@ -188,6 +189,7 @@ describe("group-governance", () => {
         group_id: testProject2,
         content: "Another test insight",
         confidence: 0.8,
+        topic_key: "test.insight",
       });
 
       const report = await getNeo4jGroupIdStats();
@@ -306,6 +308,7 @@ describe("group-governance", () => {
         group_id: testProject1,
         content: "Test insight",
         confidence: 0.9,
+        topic_key: "test.insight",
       });
     });
 
@@ -380,6 +383,7 @@ describe("group-governance", () => {
         group_id: "allura-governance-similar-2",
         content: "Test",
         confidence: 0.9,
+        topic_key: "test.insight",
       });
 
       const report = await generateGroupIdGovernanceReport();

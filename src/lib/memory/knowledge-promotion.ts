@@ -731,6 +731,7 @@ export async function promoteToNeo4j(insight: KnowledgeInsight): Promise<string>
     group_id: insight.group_id,
     content: insight.content,
     confidence: insight.confidence,
+    topic_key: insight.topic,
     source_type: 'promotion' as const,
     source_ref: insight.postgres_trace_id,
     created_by: insight.source,

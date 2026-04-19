@@ -37,7 +37,7 @@ async function collectSnapshot(groupId: string): Promise<SnapshotPayload> {
       // Total memories via direct pool query
       getPool()
         .query<{ count: string }>(
-          "SELECT COUNT(*) AS count FROM memories WHERE group_id = $1",
+          "SELECT COUNT(*) AS count FROM events WHERE group_id = $1",
           [groupId],
         )
         .then((r) => parseInt(r.rows[0]?.count ?? "0", 10))

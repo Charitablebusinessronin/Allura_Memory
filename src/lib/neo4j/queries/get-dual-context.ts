@@ -140,6 +140,7 @@ function neo4jToScopedInsight(
     version: convertValue(props.version) as number,
     content: props.content as string,
     confidence: convertValue(props.confidence) as number,
+    topic_key: (props.topic_key as string) || "uncategorized",
     group_id: props.group_id as string,
     source_type: props.source_type as InsightRecord["source_type"],
     source_ref: props.source_ref as string | null,

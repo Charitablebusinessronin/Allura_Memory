@@ -129,6 +129,7 @@ export async function POST(request: NextRequest) {
           group_id: validatedGroupId,
           content: proposal.content,
           confidence: parseFloat(proposal.score),
+          topic_key: `curator.${proposal.tier}`,
           source_type: "promotion",
           created_by: curator_id,
           metadata: {

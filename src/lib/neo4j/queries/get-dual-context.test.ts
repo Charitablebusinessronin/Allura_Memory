@@ -149,6 +149,7 @@ describe("get-dual-context (Neo4j)", () => {
           group_id: testProjectGroup,
           content: `Project insight number ${i}`,
           confidence: 0.8 + i * 0.05,
+          topic_key: "test.insight",
         });
       }
 
@@ -159,6 +160,7 @@ describe("get-dual-context (Neo4j)", () => {
           group_id: globalGroupId,
           content: `Global insight number ${i}`,
           confidence: 0.9,
+          topic_key: "test.insight",
         });
       }
 
@@ -168,6 +170,7 @@ describe("get-dual-context (Neo4j)", () => {
         group_id: testOtherProject,
         content: "Other project insight",
         confidence: 0.7,
+        topic_key: "test.insight",
       });
     });
 
@@ -239,6 +242,7 @@ describe("get-dual-context (Neo4j)", () => {
         group_id: testProjectGroup,
         content: "Deprecated insight",
         confidence: 0.5,
+        topic_key: "test.insight",
       });
 
       // Note: We'd need to deprecate it, but for now test the active filter
@@ -286,6 +290,7 @@ describe("get-dual-context (Neo4j)", () => {
         group_id: testProjectGroup,
         content: "Low confidence project",
         confidence: 0.7,
+        topic_key: "test.insight",
       });
 
       await createInsight({
@@ -293,6 +298,7 @@ describe("get-dual-context (Neo4j)", () => {
         group_id: testProjectGroup,
         content: "High confidence project",
         confidence: 0.95,
+        topic_key: "test.insight",
       });
 
       // Create global insight
@@ -301,6 +307,7 @@ describe("get-dual-context (Neo4j)", () => {
         group_id: globalGroupId,
         content: "Medium confidence global",
         confidence: 0.85,
+        topic_key: "test.insight",
       });
     });
 
@@ -342,6 +349,7 @@ describe("get-dual-context (Neo4j)", () => {
           group_id: testProjectGroup,
           content: `Working memory project ${i}`,
           confidence: 0.8,
+          topic_key: "test.insight",
         });
       }
 
@@ -351,6 +359,7 @@ describe("get-dual-context (Neo4j)", () => {
           group_id: globalGroupId,
           content: `Working memory global ${i}`,
           confidence: 0.9,
+          topic_key: "test.insight",
         });
       }
     });
@@ -392,6 +401,7 @@ describe("get-dual-context (Neo4j)", () => {
         group_id: testProjectGroup,
         content: "The quick brown fox",
         confidence: 0.9,
+        topic_key: "test.insight",
       });
 
       await createInsight({
@@ -399,6 +409,7 @@ describe("get-dual-context (Neo4j)", () => {
         group_id: testProjectGroup,
         content: "The lazy dog",
         confidence: 0.8,
+        topic_key: "test.insight",
       });
 
       await createInsight({
@@ -406,6 +417,7 @@ describe("get-dual-context (Neo4j)", () => {
         group_id: globalGroupId,
         content: "Quick thinking required",
         confidence: 0.85,
+        topic_key: "test.insight",
       });
     });
 
@@ -494,6 +506,7 @@ describe("get-dual-context (Neo4j)", () => {
         group_id: testProjectGroup,
         content: "Only project insight",
         confidence: 0.9,
+        topic_key: "test.insight",
       });
 
       const result = await getDualContextSemanticMemory({
