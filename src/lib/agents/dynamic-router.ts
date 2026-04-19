@@ -8,7 +8,7 @@
  * Usage:
  *   // In CI or programmatic context
  *   const agents = await routeEvent("pull_request", { action: "opened", number: 42 });
- *   // → [{ agentId: "dijkstra", scriptPath: "scripts/agents/dijkstra-review.ts" }]
+ *   // → [{ agentId: "pike", scriptPath: "scripts/agents/pike-interface-review.ts" }]
  *
  * @module dynamic-router
  */
@@ -23,7 +23,7 @@ import {
 
 /** A resolved routing target: which agent to invoke and how. */
 export interface RouteTarget {
-  /** The agent's manifest ID (e.g. "dijkstra", "brooks"). */
+  /** The agent's manifest ID (e.g. "carmack", "brooks"). */
   agentId: string;
   /** Path to the agent's executable script, relative to project root. */
   scriptPath: string;

@@ -1759,7 +1759,7 @@ function formatCanonical(result: {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// DB Logging (same pattern as dijkstra/fowler/knuth)
+// DB Logging (same pattern as carmack/fowler/knuth)
 // ════════════════════════════════════════════════════════════════════════════
 
 interface DbConnections {
