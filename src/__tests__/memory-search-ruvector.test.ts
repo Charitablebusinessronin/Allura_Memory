@@ -1,29 +1,27 @@
 /**
- * RuVector Bridge Integration Tests for memory_search
+ * RuVector Primary Backend Tests for memory_search (Slice B)
  *
- * Tests that the canonical memory_search function correctly integrates
- * RuVector as a conditional third search source:
- * - Feature-flagged: only active when RUVECTOR_ENABLED=true AND health check passes
- * - Fail-closed: if RuVector fails, search falls back to PG+Neo4j only
- * - Evidence-gated feedback: trajectoryId is surfaced in metadata for caller use
- * - Score normalization: RuVector scores are used as-is (already 0-1 compatible)
- * - Group_id enforcement: all paths validate group_id via validateGroupId()
- * - stores_used includes "ruvector" when RuVector results are present
+ * Tests that memory_search uses RuVector as the PRIMARY backend:
+ * - Priority: RuVector → Neo4j fallback → PostgreSQL traces
+ * - RuVector is always called first (no feature flag check)
+ * - Fail-closed: if RuVector fails, falls back to Neo4j, then PG
+ * - Evidence-gated feedback: trajectoryId surfaced in metadata
+ * - Stores are attempted in priority order, only successful ones in stores_used
  *
- * These tests mock the RuVector adapter and database connections to avoid
- * requiring live services.
+ * Architecture change (Slice B): RuVector moved from "conditional enrichment"
+ * to "primary backend" for episodic retrieval.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
-// Mock the RuVector retrieval adapter
-const mockShouldUseRuVector = vi.fn();
+// Mock the RuVector retrieval adapter (now primary, not conditional)
 const mockSearchWithFeedback = vi.fn();
 
 vi.mock("@/lib/ruvector/retrieval-adapter", () => ({
-  shouldUseRuVector: (...args: unknown[]) => mockShouldUseRuVector(...args),
+  // Slice B: RuVector is primary — always call searchWithFeedback
+  shouldUseRuVector: vi.fn().mockResolvedValue(true),
   searchWithFeedback: (...args: unknown[]) => mockSearchWithFeedback(...args),
 }));
 
@@ -129,23 +127,34 @@ function makeSearchRequest(overrides?: Partial<MemorySearchRequest>): MemorySear
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe("memory_search RuVector integration", () => {
+describe("memory_search RuVector PRIMARY backend (Slice B)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Default: PG returns some results
-    mockPgQuery.mockResolvedValue({
-      rows: [
+    // Default: RuVector returns results (primary backend)
+    mockSearchWithFeedback.mockResolvedValue({
+      memories: [
         {
-          id: "pg-mem-1",
-          content: "User prefers dark mode",
-          provenance: "conversation",
-          created_at: new Date().toISOString(),
+          id: "rv-mem-1",
+          content: "RuVector semantic memory about TypeScript",
+          memoryType: "episodic",
+          score: 0.85,
+        },
+        {
+          id: "rv-mem-2",
+          content: "RuVector memory about dark mode preference",
+          memoryType: "episodic",
+          score: 0.72,
         },
       ],
+      total: 2,
+      latencyMs: 15,
+      trajectoryId: "traj-abc-123",
+      bridgeSource: "ruvector",
+      shouldLogFeedback: true,
     });
 
-    // Default: Neo4j returns some results
+    // Default: Neo4j fallback returns results
     mockNeo4jSession.run.mockResolvedValue({
       records: [
         {
@@ -165,59 +174,29 @@ describe("memory_search RuVector integration", () => {
       ],
     });
 
-    // Default: RuVector is NOT enabled
-    mockShouldUseRuVector.mockResolvedValue(false);
+    // Default: PG fallback returns results
+    mockPgQuery.mockResolvedValue({
+      rows: [
+        {
+          id: "pg-mem-1",
+          content: "User prefers dark mode",
+          provenance: "conversation",
+          created_at: new Date().toISOString(),
+        },
+      ],
+    });
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  describe("when RuVector is disabled (default)", () => {
-    it("should not call shouldUseRuVector when searching", async () => {
+  describe("RuVector as PRIMARY (default)", () => {
+    it("should ALWAYS call searchWithFeedback (no feature flag check)", async () => {
       await memory_search(makeSearchRequest());
 
-      expect(mockShouldUseRuVector).toHaveBeenCalled();
-      expect(mockSearchWithFeedback).not.toHaveBeenCalled();
-    });
-
-    it("should return results without RuVector and without ruvector metadata", async () => {
-      const response = await memory_search(makeSearchRequest());
-
-      // Should have results from PG+Neo4j only
-      expect(response.results.length).toBeGreaterThan(0);
-      // Should NOT have RuVector metadata
-      expect(response.meta?.ruvector_trajectory_id).toBeUndefined();
-      expect(response.meta?.ruvector_count).toBeUndefined();
-      // stores_used should NOT include "ruvector"
-      expect(response.meta?.stores_used).not.toContain("ruvector");
-    });
-  });
-
-  describe("when RuVector is enabled and healthy", () => {
-    beforeEach(() => {
-      mockShouldUseRuVector.mockResolvedValue(true);
-      mockSearchWithFeedback.mockResolvedValue({
-        memories: [
-          {
-            id: "rv-mem-1",
-            content: "RuVector semantic memory about TypeScript",
-            memoryType: "episodic",
-            score: 0.85,
-          },
-          {
-            id: "rv-mem-2",
-            content: "RuVector memory about dark mode preference",
-            memoryType: "episodic",
-            score: 0.72,
-          },
-        ],
-        total: 2,
-        latencyMs: 15,
-        trajectoryId: "traj-abc-123",
-        bridgeSource: "ruvector",
-        shouldLogFeedback: true,
-      });
+      // Slice B: RuVector is primary — always called
+      expect(mockSearchWithFeedback).toHaveBeenCalled();
     });
 
     it("should call searchWithFeedback with validated group_id and query", async () => {
@@ -234,28 +213,17 @@ describe("memory_search RuVector integration", () => {
       );
     });
 
-    it("should merge RuVector results with PG+Neo4j results", async () => {
+    it("should return RuVector results first in priority", async () => {
       const response = await memory_search(makeSearchRequest());
 
-      // Results should include both PG/Neo4j and RuVector results
+      // RuVector results should be present
       const ruvectorContents = response.results
         .filter((r) => r.content.includes("RuVector"))
         .map((r) => r.content);
       expect(ruvectorContents.length).toBe(2);
 
-      // Total count should reflect all sources
-      expect(response.results.length).toBeGreaterThanOrEqual(3); // 1 PG + 1 Neo4j + 2 RV
-    });
-
-    it("should sort all results by score descending", async () => {
-      const response = await memory_search(makeSearchRequest());
-
-      // Verify scores are in descending order
-      for (let i = 1; i < response.results.length; i++) {
-        expect(response.results[i - 1].score).toBeGreaterThanOrEqual(
-          response.results[i].score,
-        );
-      }
+      // stores_used should include ruvector first (attempted order)
+      expect(response.meta?.stores_used).toContain("ruvector");
     });
 
     it("should include ruvector_trajectory_id and ruvector_count in metadata", async () => {
@@ -263,15 +231,6 @@ describe("memory_search RuVector integration", () => {
 
       expect(response.meta?.ruvector_trajectory_id).toBe("traj-abc-123");
       expect(response.meta?.ruvector_count).toBe(2);
-    });
-
-    it("should include 'ruvector' in stores_used when RuVector returns results", async () => {
-      const response = await memory_search(makeSearchRequest());
-
-      expect(response.meta?.stores_used).toContain("ruvector");
-      // Should also still include postgres and neo4j
-      expect(response.meta?.stores_used).toContain("postgres");
-      expect(response.meta?.stores_used).toContain("neo4j");
     });
 
     it("should map RuVector results as episodic source with conversation provenance", async () => {
@@ -282,7 +241,7 @@ describe("memory_search RuVector integration", () => {
       );
 
       for (const result of ruvectorResults) {
-        expect(result.source).toBe("episodic"); // RuVector is episodic storage
+        expect(result.source).toBe("episodic");
         expect(result.provenance).toBe("conversation");
         expect(result.created_at).toBeDefined();
         expect(result.usage_count).toBe(0);
@@ -308,11 +267,202 @@ describe("memory_search RuVector integration", () => {
         }),
       );
     });
+
+    it("should NOT query Neo4j if RuVector returns sufficient results", async () => {
+      // RuVector returns 2 results, limit is 2
+      const request = makeSearchRequest({ limit: 2 });
+      await memory_search(request);
+
+      // Neo4j should not be queried when RuVector satisfies the limit
+      expect(mockNeo4jSession.run).not.toHaveBeenCalled();
+    });
+
+    it("should NOT query PostgreSQL if RuVector returns sufficient results", async () => {
+      // RuVector returns 2 results, limit is 2
+      const request = makeSearchRequest({ limit: 2 });
+      await memory_search(request);
+
+      // PG should not be queried when RuVector satisfies the limit
+      expect(mockPgQuery).not.toHaveBeenCalled();
+    });
   });
 
-  describe("when RuVector is enabled but returns no results", () => {
+  describe("Neo4j fallback when RuVector returns insufficient results", () => {
     beforeEach(() => {
-      mockShouldUseRuVector.mockResolvedValue(true);
+      // RuVector returns only 1 result
+      mockSearchWithFeedback.mockResolvedValue({
+        memories: [
+          {
+            id: "rv-mem-1",
+            content: "RuVector memory about TypeScript",
+            memoryType: "episodic",
+            score: 0.85,
+          },
+        ],
+        total: 1,
+        latencyMs: 10,
+        trajectoryId: "traj-abc-456",
+        bridgeSource: "ruvector",
+        shouldLogFeedback: true,
+      });
+    });
+
+    it("should query Neo4j when RuVector results < limit", async () => {
+      const request = makeSearchRequest({ limit: 3 });
+      await memory_search(request);
+
+      expect(mockNeo4jSession.run).toHaveBeenCalled();
+    });
+
+    it("should include both ruvector and graph in stores_used", async () => {
+      const response = await memory_search(makeSearchRequest({ limit: 3 }));
+
+      expect(response.meta?.stores_used).toContain("ruvector");
+      expect(response.meta?.stores_used).toContain("graph");
+    });
+
+    it("should combine results from RuVector and Neo4j", async () => {
+      const response = await memory_search(makeSearchRequest({ limit: 3 }));
+
+      // Should have both RuVector and Neo4j results
+      const contents = response.results.map((r) => r.content);
+      expect(contents).toContain("RuVector memory about TypeScript");
+      expect(contents).toContain("Semantic knowledge about dark mode");
+    });
+
+    it("should NOT query PostgreSQL if RuVector + Neo4j satisfy limit", async () => {
+      const request = makeSearchRequest({ limit: 2 }); // 1 RV + 1 Neo4j = 2
+      await memory_search(request);
+
+      expect(mockPgQuery).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("PostgreSQL fallback when RuVector + Neo4j insufficient", () => {
+    beforeEach(() => {
+      // RuVector returns empty
+      mockSearchWithFeedback.mockResolvedValue({
+        memories: [],
+        total: 0,
+        latencyMs: 5,
+        trajectoryId: "traj-empty-789",
+        bridgeSource: "ruvector",
+        shouldLogFeedback: false,
+      });
+
+      // Neo4j returns empty
+      mockNeo4jSession.run.mockResolvedValue({
+        records: [],
+      });
+    });
+
+    it("should query PostgreSQL when RuVector and Neo4j return no results", async () => {
+      await memory_search(makeSearchRequest());
+
+      expect(mockPgQuery).toHaveBeenCalled();
+    });
+
+    it("should include postgres in stores_used (only store with results)", async () => {
+      const response = await memory_search(makeSearchRequest());
+
+      // Only postgres returned results (RuVector and Neo4j returned empty)
+      expect(response.meta?.stores_used).not.toContain("ruvector");
+      expect(response.meta?.stores_used).not.toContain("neo4j");
+      expect(response.meta?.stores_used).toContain("postgres");
+    });
+
+    it("should still return PG results when RuVector and Neo4j are empty", async () => {
+      const response = await memory_search(makeSearchRequest());
+
+      expect(response.results.length).toBeGreaterThan(0);
+      const contents = response.results.map((r) => r.content);
+      expect(contents).toContain("User prefers dark mode");
+    });
+  });
+
+  describe("RuVector failure (fail-closed to Neo4j)", () => {
+    beforeEach(() => {
+      mockSearchWithFeedback.mockRejectedValue(
+        new Error("RuVector connection refused"),
+      );
+    });
+
+    it("should NOT fail the entire search", async () => {
+      const response = await memory_search(makeSearchRequest());
+
+      expect(response.results.length).toBeGreaterThan(0);
+      expect(response.count).toBeGreaterThan(0);
+    });
+
+    it("should fallback to Neo4j when RuVector fails", async () => {
+      await memory_search(makeSearchRequest());
+
+      expect(mockNeo4jSession.run).toHaveBeenCalled();
+    });
+
+    it("should include warning about RuVector failure in metadata", async () => {
+      const response = await memory_search(makeSearchRequest());
+
+      expect(response.meta?.warnings).toBeDefined();
+      expect(response.meta?.warnings?.some((w: string) =>
+        w.includes("ruvector_unavailable")
+      )).toBe(true);
+    });
+
+    it("should NOT include RuVector metadata when it fails", async () => {
+      const response = await memory_search(makeSearchRequest());
+
+      expect(response.meta?.ruvector_trajectory_id).toBeUndefined();
+      expect(response.meta?.ruvector_count).toBeUndefined();
+    });
+
+    it("should NOT include 'ruvector' in stores_used when it fails", async () => {
+      const response = await memory_search(makeSearchRequest());
+
+      expect(response.meta?.stores_used).not.toContain("ruvector");
+    });
+  });
+
+  describe("Neo4j failure (fail-closed to PostgreSQL)", () => {
+    beforeEach(() => {
+      // RuVector succeeds but returns insufficient results
+      mockSearchWithFeedback.mockResolvedValue({
+        memories: [{ id: "rv-1", content: "test", memoryType: "episodic", score: 0.5 }],
+        total: 1,
+        latencyMs: 10,
+        trajectoryId: "traj-123",
+        bridgeSource: "ruvector",
+        shouldLogFeedback: true,
+      });
+
+      // Neo4j fails
+      mockNeo4jSession.run.mockRejectedValue(
+        new Error("Neo4j connection refused"),
+      );
+    });
+
+    it("should NOT fail when Neo4j fails", async () => {
+      const response = await memory_search(makeSearchRequest({ limit: 3 }));
+
+      expect(response.results.length).toBeGreaterThan(0);
+    });
+
+    it("should fallback to PostgreSQL when Neo4j fails", async () => {
+      await memory_search(makeSearchRequest({ limit: 3 }));
+
+      expect(mockPgQuery).toHaveBeenCalled();
+    });
+
+    it("should include ruvector in stores_used but not neo4j when Neo4j fails", async () => {
+      const response = await memory_search(makeSearchRequest({ limit: 3 }));
+
+      expect(response.meta?.stores_used).toContain("ruvector");
+      expect(response.meta?.stores_used).not.toContain("neo4j");
+    });
+  });
+
+  describe("when RuVector returns empty", () => {
+    beforeEach(() => {
       mockSearchWithFeedback.mockResolvedValue({
         memories: [],
         total: 0,
@@ -336,87 +486,100 @@ describe("memory_search RuVector integration", () => {
       expect(response.meta?.stores_used).not.toContain("ruvector");
     });
 
-    it("should still return PG+Neo4j results", async () => {
-      const response = await memory_search(makeSearchRequest());
-
-      expect(response.results.length).toBeGreaterThan(0);
-    });
-  });
-
-  describe("when RuVector throws an error (fail-closed)", () => {
-    beforeEach(() => {
-      mockShouldUseRuVector.mockResolvedValue(true);
-      mockSearchWithFeedback.mockRejectedValue(
-        new Error("RuVector connection refused"),
-      );
-    });
-
-    it("should NOT fail the entire search", async () => {
-      const response = await memory_search(makeSearchRequest());
-
-      // Search should succeed with PG+Neo4j results only
-      expect(response.results.length).toBeGreaterThan(0);
-      expect(response.count).toBeGreaterThan(0);
-    });
-
-    it("should NOT include RuVector metadata", async () => {
-      const response = await memory_search(makeSearchRequest());
-
-      expect(response.meta?.ruvector_trajectory_id).toBeUndefined();
-      expect(response.meta?.ruvector_count).toBeUndefined();
-    });
-
-    it("should NOT include 'ruvector' in stores_used", async () => {
-      const response = await memory_search(makeSearchRequest());
-
-      expect(response.meta?.stores_used).not.toContain("ruvector");
-    });
-  });
-
-  describe("when shouldUseRuVector returns false", () => {
-    beforeEach(() => {
-      mockShouldUseRuVector.mockResolvedValue(false);
-    });
-
-    it("should not call searchWithFeedback", async () => {
+    it("should fallback to Neo4j when RuVector returns empty", async () => {
       await memory_search(makeSearchRequest());
 
-      expect(mockSearchWithFeedback).not.toHaveBeenCalled();
-    });
-
-    it("should not include RuVector metadata", async () => {
-      const response = await memory_search(makeSearchRequest());
-
-      expect(response.meta?.ruvector_trajectory_id).toBeUndefined();
-      expect(response.meta?.ruvector_count).toBeUndefined();
-      expect(response.meta?.stores_used).not.toContain("ruvector");
-    });
-  });
-
-  describe("when shouldUseRuVector throws", () => {
-    beforeEach(() => {
-      mockShouldUseRuVector.mockRejectedValue(
-        new Error("Health check timeout"),
-      );
-    });
-
-    it("should fail-closed and continue with PG+Neo4j only", async () => {
-      const response = await memory_search(makeSearchRequest());
-
-      expect(response.results.length).toBeGreaterThan(0);
-      expect(response.meta?.stores_used).not.toContain("ruvector");
+      expect(mockNeo4jSession.run).toHaveBeenCalled();
     });
   });
 
   describe("group_id validation", () => {
-    it("should reject invalid group_id before reaching RuVector", async () => {
+    it("should reject invalid group_id before reaching any store", async () => {
       const request = makeSearchRequest({
         group_id: "invalid-group" as any,
       });
 
       await expect(memory_search(request)).rejects.toThrow("Invalid group_id");
-      // searchWithFeedback should not be called since validation fails first
+      // No stores should be called since validation fails first
       expect(mockSearchWithFeedback).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("result ordering and deduplication", () => {
+    beforeEach(() => {
+      // RuVector returns result with same ID as Neo4j (duplication test)
+      mockSearchWithFeedback.mockResolvedValue({
+        memories: [
+          { id: "dup-mem-1", content: "RuVector version", memoryType: "episodic", score: 0.9 },
+          { id: "rv-unique", content: "RuVector unique", memoryType: "episodic", score: 0.8 },
+        ],
+        total: 2,
+        latencyMs: 10,
+        trajectoryId: "traj-dup",
+        bridgeSource: "ruvector",
+        shouldLogFeedback: true,
+      });
+
+      // Neo4j has duplicate ID
+      mockNeo4jSession.run.mockResolvedValue({
+        records: [
+          {
+            get: (key: string) => {
+              const map: Record<string, unknown> = {
+                id: "dup-mem-1", // Same ID as RuVector
+                content: "Neo4j version (should be deduped)",
+                score: 0.85,
+                provenance: "conversation",
+                created_at: new Date().toISOString(),
+                usage_count: 0,
+                relevance: 0.85,
+              };
+              return map[key];
+            },
+          },
+          {
+            get: (key: string) => {
+              const map: Record<string, unknown> = {
+                id: "neo4j-unique",
+                content: "Neo4j unique",
+                score: 0.7,
+                provenance: "conversation",
+                created_at: new Date().toISOString(),
+                usage_count: 0,
+                relevance: 0.7,
+              };
+              return map[key];
+            },
+          },
+        ],
+      });
+
+      // PG returns empty for this test (we're testing RuVector+Neo4j dedup)
+      mockPgQuery.mockResolvedValue({
+        rows: [],
+      });
+    });
+
+    it("should deduplicate results by ID (keep first occurrence)", async () => {
+      const response = await memory_search(makeSearchRequest({ limit: 5 }));
+
+      // Count occurrences of "dup-mem-1"
+      const dupCount = response.results.filter((r) => r.id === "dup-mem-1").length;
+      expect(dupCount).toBe(1);
+
+      // Should have 3 unique results: dup-mem-1, rv-unique, neo4j-unique (PG is empty)
+      expect(response.results.length).toBe(3);
+    });
+
+    it("should sort results by score descending", async () => {
+      const response = await memory_search(makeSearchRequest({ limit: 5 }));
+
+      // Verify scores are in descending order
+      for (let i = 1; i < response.results.length; i++) {
+        expect(response.results[i - 1].score).toBeGreaterThanOrEqual(
+          response.results[i].score,
+        );
+      }
     });
   });
 });

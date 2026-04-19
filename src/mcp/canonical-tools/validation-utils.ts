@@ -119,20 +119,20 @@ export async function getRecentUsageCount(pg: Pool, groupId: string, memoryId: s
   }
 }
 
-export function baseMeta(storesUsed: Array<"postgres" | "neo4j">, degraded: boolean = false): MemoryResponseMeta {
+export function baseMeta(storesUsed: Array<"postgres" | "neo4j" | "graph">, degraded: boolean = false): MemoryResponseMeta {
   return {
     contract_version: "v1",
     degraded,
     stores_used: storesUsed,
-    stores_attempted: ["postgres", "neo4j"],
+    stores_attempted: ["postgres", "graph"],
     warnings: degraded ? ["semantic layer unavailable; returned episodic results only"] : [],
   }
 }
 
-export function degradedMeta(storesUsed: Array<"postgres" | "neo4j">): MemoryResponseMeta {
+export function degradedMeta(storesUsed: Array<"postgres" | "neo4j" | "graph">): MemoryResponseMeta {
   return {
     ...baseMeta(storesUsed, true),
-    degraded_reason: "neo4j_unavailable",
+    degraded_reason: "graph_unavailable",
   }
 }
 

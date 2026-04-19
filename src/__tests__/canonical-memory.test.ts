@@ -673,7 +673,7 @@ describe("Canonical Memory Operations", () => {
     });
 
     describe("memory_search error propagation", () => {
-      it("should throw DatabaseUnavailableError when PostgreSQL is unreachable", async () => {
+      it("should succeed when PostgreSQL is unreachable (RuVector primary, Neo4j fallback)", async () => {
         const originalHost = process.env.POSTGRES_HOST;
         const originalPort = process.env.POSTGRES_PORT;
         process.env.POSTGRES_HOST = "127.0.0.1";
@@ -686,12 +686,14 @@ describe("Canonical Memory Operations", () => {
             group_id: `allura-test-${RUN_ID}` as any,
           };
 
-          await expect(memory_search(request)).rejects.toThrow();
-          try {
-            await memory_search(request);
-          } catch (error) {
-            expect(error).toBeInstanceOf(DatabaseUnavailableError);
-          }
+          // With Slice B architecture: RuVector is primary, Neo4j is fallback.
+          // Search should succeed even when PostgreSQL is unreachable.
+          const response = await memory_search(request);
+          
+          expect(response.results).toBeDefined();
+          expect(response.count).toBeGreaterThanOrEqual(0);
+          // PG should NOT be in stores_used since it's unreachable
+          expect(response.meta?.stores_used).not.toContain("postgres");
         } finally {
           process.env.POSTGRES_HOST = originalHost;
           process.env.POSTGRES_PORT = originalPort;

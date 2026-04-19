@@ -85,6 +85,7 @@ services:
       RUVECTOR_USER: ${POSTGRES_USER}
       RUVECTOR_PASSWORD: ${POSTGRES_PASSWORD}
       RUVECTOR_DB: ${POSTGRES_DB}
+      GRAPH_BACKEND: ${GRAPH_BACKEND:-neo4j}
       RUVIX_KERNEL_SECRET: ${RUVIX_KERNEL_SECRET}
       DEFAULT_GROUP_ID: ${DEFAULT_GROUP_ID:-allura-default}
       ALLURA_DEV_AUTH_ENABLED: ${ALLURA_DEV_AUTH_ENABLED:-true}
@@ -131,6 +132,7 @@ services:
       NEO4J_PASSWORD: ${NEO4J_PASSWORD}
       OLLAMA_API_KEY: ${OLLAMA_API_KEY}
       OLLAMA_CLOUD_URL: ${OLLAMA_CLOUD_URL:-https://ollama.com}
+      GRAPH_BACKEND: ${GRAPH_BACKEND:-neo4j}
     healthcheck:
       test: ["CMD-SHELL", "exit 0"]
       interval: 30s
@@ -164,6 +166,7 @@ services:
       NEO4J_PASSWORD: ${NEO4J_PASSWORD}
       ALLURA_MCP_HTTP_PORT: "3201"
       ALLURA_MCP_HTTP_ENABLED: "true"
+      GRAPH_BACKEND: ${GRAPH_BACKEND:-neo4j}
     command: ["bun", "run", "src/mcp/canonical-http-gateway.ts"]
     healthcheck:
       test: ["CMD-SHELL", "wget", "-qO-", "http://localhost:3201/health", "||", "exit", "1"]

@@ -16,9 +16,11 @@
  * 7. memory_promote - Request curator promotion
  * 8. memory_export  - Export memories
  *
- * Architecture (Slice B - RuVector Primary):
+ * Architecture (Slice C - Graph Adapter):
  * - RuVector: Primary backend for episodic retrieval (hybrid vector + BM25)
- * - Neo4j: Fallback for semantic insights until Slice D
+ * - Graph Adapter: Abstraction layer for semantic operations (Neo4j or PG tables)
+ *   - GRAPH_BACKEND=neo4j: Neo4jGraphAdapter (legacy, default)
+ *   - GRAPH_BACKEND=ruvector: RuVectorGraphAdapter (new, target for Slice D+)
  * - PostgreSQL: Audit trails and fallback for unembedded events
  *
  * Budget & Circuit Breaker Integration:
@@ -95,12 +97,12 @@ import {
   RecoveryWindowExpiredError,
 } from "@/lib/memory/canonical-contracts"
 
-import neo4j from "neo4j-driver"
 import { randomUUID } from "crypto"
 import { DatabaseUnavailableError, DatabaseQueryError, classifyPostgresError } from "@/lib/errors/database-errors"
+import { createGraphAdapter } from "@/lib/graph-adapter"
 import { curatorScore } from "@/lib/curator/score"
 import { createProposalDedupChecker, getDedupThreshold, type ProposalCandidate } from "@/lib/dedup/proposal-dedup"
-import { shouldUseRuVector, searchWithFeedback } from "@/lib/ruvector/retrieval-adapter"
+import { searchWithFeedback } from "@/lib/ruvector/retrieval-adapter"
 
 // ── Canonical Operations ───────────────────────────────────────────────────
 
@@ -139,7 +141,8 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
   }
 
   try {
-    const { pg, neo4j } = await getConnections()
+    const { pg, neo4j: neo4jDriver } = await getConnections()
+    const graphAdapter = createGraphAdapter({ pg, neo4j: neo4jDriver })
 
     // Write to PostgreSQL (episodic) — wrapped in circuit breaker
     const eventResult = await withCircuitBreaker("postgres", groupId, "memory_add:insert_event", async () =>
@@ -196,17 +199,18 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
     if (PROMOTION_MODE === "auto") {
       // Auto mode: Promote immediately
 
-      // Check for duplicates (only in auto mode) — circuit-breaker wrapped
+      // Check for duplicates (only in auto mode) — via graph adapter
       let duplicateId: MemoryId | null = null
       try {
-        duplicateId = await withCircuitBreaker("neo4j", groupId, "memory_add:duplicate_check", async () =>
-          checkDuplicate(neo4j, groupId, request.user_id, request.content)
+        const dupResult = await withCircuitBreaker("graph", groupId, "memory_add:duplicate_check", async () =>
+          graphAdapter.checkDuplicate({ group_id: groupId, user_id: request.user_id, content: request.content })
         )
+        duplicateId = dupResult.existingId
       } catch (error) {
         if (error instanceof Error && error.message.startsWith("Circuit breaker open")) {
           throw error
         }
-        console.warn("[degraded] Neo4j duplicate check unavailable in memory_add:", error)
+        console.warn("[degraded] Graph adapter duplicate check unavailable in memory_add:", error)
         return {
           id: memoryId,
           stored: "episodic",
@@ -223,33 +227,22 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
           stored: "semantic",
           score,
           created_at: createdAt,
-          meta: baseMeta(["neo4j"]),
+          meta: baseMeta(["graph"]),
         }
       }
 
-      // Promote to Neo4j
-      const session = neo4j.session()
+      // Promote to graph layer
       try {
-        await session.run(
-          `CREATE (m:Memory {
-          id: $id,
-          group_id: $groupId,
-          user_id: $userId,
-          content: $content,
-          score: $score,
-          provenance: $provenance,
-          created_at: datetime($createdAt),
-          deprecated: false
-        })`,
-          {
+        await withCircuitBreaker("graph", groupId, "memory_add:create_memory", async () =>
+          graphAdapter.createMemory({
             id: memoryId,
-            groupId,
-            userId: request.user_id,
+            group_id: groupId,
+            user_id: request.user_id,
             content: request.content,
             score,
             provenance: request.metadata?.source || "conversation",
-            createdAt,
-          }
+            created_at: createdAt,
+          })
         )
 
         // Log promotion event — circuit-breaker wrapped
@@ -282,7 +275,7 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
           created_at: createdAt,
         }
       } catch (error) {
-        console.warn("[degraded] Neo4j promotion unavailable in memory_add:", error)
+        console.warn("[degraded] Graph adapter promotion unavailable in memory_add:", error)
         return {
           id: memoryId,
           stored: "episodic",
@@ -290,8 +283,6 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
           created_at: createdAt,
           meta: degradedMeta(["postgres"]),
         }
-      } finally {
-        await session.close()
       }
     } else {
       // SOC2 mode: Queue for human approval with dedup check
@@ -409,7 +400,7 @@ export async function memory_search(request: MemorySearchRequest): Promise<Memor
   const limit = Math.floor(request.limit || 10)
   const startTime = Date.now()
 
-  const storesUsed: Array<"postgres" | "neo4j" | "ruvector"> = []
+  const storesUsed: Array<"postgres" | "neo4j" | "ruvector" | "graph"> = []
   const warnings: string[] = []
   let searchMeta = baseMeta([])
 
@@ -466,51 +457,31 @@ export async function memory_search(request: MemorySearchRequest): Promise<Memor
 
   if (ruvectorResults.length < limit) {
     try {
-      const { neo4j: neo4jDriver } = await getConnections()
-      const session = neo4jDriver.session()
-      try {
-        const result = await session.run(
-          `CALL db.index.fulltext.queryNodes('memory_search_index', $query)
-           YIELD node AS m, score
-           WHERE m.group_id = $groupId
-             AND NOT (m)<-[:SUPERSEDES]-()
-           RETURN m.id AS id,
-                  m.content AS content,
-                  m.score AS score,
-                  m.provenance AS provenance,
-                  m.created_at AS created_at,
-                  m.usage_count AS usage_count,
-                  m.tags AS tags,
-                  score AS relevance
-           ORDER BY relevance DESC, m.score DESC
-           LIMIT $limit`,
-          {
-            query: request.query,
-            groupId,
-            limit: neo4j.int(limit - ruvectorResults.length),
-          }
-        )
+      const { pg, neo4j: neo4jDriver } = await getConnections()
+      const graphAdapter = createGraphAdapter({ pg, neo4j: neo4jDriver })
+      const graphResults = await graphAdapter.searchMemories({
+        query: request.query,
+        group_id: groupId,
+        limit: limit - ruvectorResults.length,
+      })
 
-        semanticResults = result.records.map((record) => ({
-          id: record.get("id") as MemoryId,
-          content: record.get("content"),
-          score: record.get("score"),
-          provenance: toProvenance(record.get("provenance")),
-          created_at: neo4jDateToISO(record.get("created_at")),
-          usage_count: record.get("usage_count")?.toNumber?.() || 0,
-          tags: record.get("tags") || [],
-          relevance: record.get("relevance"),
-        }))
+      semanticResults = graphResults.map((item) => ({
+        id: item.id,
+        content: item.content,
+        score: item.score,
+        provenance: item.provenance,
+        created_at: item.created_at,
+        usage_count: item.usage_count,
+        tags: item.tags,
+        relevance: item.relevance,
+      }))
 
-        if (semanticResults.length > 0) {
-          storesUsed.push("neo4j")
-        }
-      } finally {
-        await session.close()
+      if (semanticResults.length > 0) {
+        storesUsed.push("graph")
       }
     } catch (error) {
-      console.warn("[degraded] Neo4j fallback unavailable in memory_search:", error)
-      warnings.push("neo4j_unavailable")
+      console.warn("[degraded] Graph adapter fallback unavailable in memory_search:", error)
+      warnings.push("graph_unavailable")
     }
   }
 
@@ -601,7 +572,7 @@ export async function memory_search(request: MemorySearchRequest): Promise<Memor
   // Build final metadata
   searchMeta = {
     ...searchMeta,
-    stores_used: storesUsed.length > 0 ? storesUsed : ["none"],
+    stores_used: storesUsed.length > 0 ? storesUsed : ([] as Array<"postgres" | "neo4j" | "ruvector">),
     ...(warnings.length > 0 ? { warnings } : {}),
     ...(ruvectorTrajectoryId !== undefined
       ? { ruvector_trajectory_id: ruvectorTrajectoryId, ruvector_count: ruvectorResults.length }
@@ -627,55 +598,38 @@ export async function memory_get(request: MemoryGetRequest): Promise<MemoryGetRe
   const groupId = validateGroupId(request.group_id)
 
   try {
-    const { pg, neo4j } = await getConnections()
+    const { pg, neo4j: neo4jDriver } = await getConnections()
+    const graphAdapter = createGraphAdapter({ pg, neo4j: neo4jDriver })
 
-    // Try Neo4j first (semantic) - secondary store, degradation acceptable
-    let getMeta = baseMeta(["postgres", "neo4j"])
-    const session = neo4j.session()
+    // Try graph adapter first (semantic) - secondary store, degradation acceptable
+    let getMeta = baseMeta(["postgres", "graph"])
     try {
-      const result = await session.run(
-        `MATCH (m:Memory)
-       WHERE m.id = $id
-         AND m.group_id = $groupId
-         AND NOT (m)<-[:SUPERSEDES]-()
-       RETURN m.id AS id,
-              m.content AS content,
-              m.score AS score,
-              m.provenance AS provenance,
-              m.user_id AS user_id,
-              m.created_at AS created_at,
-              m.version AS version,
-              m.tags AS tags,
-              m.deprecated AS deprecated`,
-        { id: request.id, groupId }
-      )
+      const graphResult = await graphAdapter.getMemory({ id: request.id, group_id: groupId })
 
-      if (result.records.length > 0) {
-        const record = result.records[0]
+      if (graphResult.node) {
+        const node = graphResult.node
 
         // Query recent usage from PG events table (uses migration-18 index)
         const recentUsage = await getRecentUsageCount(pg, groupId, request.id)
 
         return {
-          id: record.get("id") as MemoryId,
-          content: record.get("content"),
-          score: record.get("score"),
+          id: node.id,
+          content: node.content,
+          score: node.score,
           source: "semantic",
-          provenance: toProvenance(record.get("provenance")),
-          user_id: record.get("user_id"),
-          created_at: neo4jDateToISO(record.get("created_at")),
-          version: record.get("version")?.toNumber?.() || 1,
+          provenance: node.provenance,
+          user_id: node.user_id ?? "",
+          created_at: node.created_at,
+          version: node.version,
           usage_count: recentUsage ?? 0,
           recent_usage_count: recentUsage,
-          tags: record.get("tags") || [],
+          tags: node.tags,
           meta: getMeta,
         }
       }
     } catch (error) {
-      console.warn("[degraded] Neo4j unavailable in memory_get:", error)
+      console.warn("[degraded] Graph adapter unavailable in memory_get:", error)
       getMeta = degradedMeta(["postgres"])
-    } finally {
-      await session.close()
     }
 
     // Fall back to PostgreSQL (episodic)
@@ -747,9 +701,10 @@ export async function memory_list(request: MemoryListRequest): Promise<MemoryLis
 
   try {
     const { pg, neo4j: neo4jDriver } = await getConnections()
+    const graphAdapter = createGraphAdapter({ pg, neo4j: neo4jDriver })
 
     // Parallel query both stores — no LIMIT/OFFSET; we paginate in application code
-    let listMeta = baseMeta(["postgres", "neo4j"])
+    let listMeta = baseMeta(["postgres", "graph"])
 
     // PG: fetch count + data (no LIMIT/OFFSET on data)
     const [pgCountResult, episodicResults, semanticResults] = await Promise.all([
@@ -778,60 +733,33 @@ export async function memory_list(request: MemoryListRequest): Promise<MemoryLis
         [groupId, request.user_id ?? null]
       ),
 
-      // Neo4j — fetch all + count in one pass
+      // Graph adapter — fetch all + count in one pass
       (async () => {
-        const session = neo4jDriver.session()
         try {
-          // Get total count from Neo4j
-          const countResult = await session.run(
-            `MATCH (m:Memory)
-             WHERE m.group_id = $groupId
-               AND ($userId IS NULL OR m.user_id = $userId)
-               AND NOT (m)<-[:SUPERSEDES]-()
-             RETURN count(m) AS total`,
-            { groupId, userId: request.user_id ?? null }
-          )
-          const neo4jTotal = countResult.records[0]?.get("total")?.toNumber?.() ?? 0
+          const graphResult = await graphAdapter.listMemories({
+            group_id: groupId,
+            user_id: request.user_id ?? null,
+          })
 
-          // Get all data (no SKIP/LIMIT — paginate in application code)
-          const result = await session.run(
-            `MATCH (m:Memory)
-                 WHERE m.group_id = $groupId
-                   AND ($userId IS NULL OR m.user_id = $userId)
-                   AND NOT (m)<-[:SUPERSEDES]-()
-                 RETURN m.id AS id,
-                        m.content AS content,
-                        m.score AS score,
-                        m.provenance AS provenance,
-                        m.user_id AS user_id,
-                        m.created_at AS created_at,
-                        m.version AS version,
-                        m.tags AS tags
-                 ORDER BY m.created_at DESC`,
-            { groupId, userId: request.user_id ?? null }
-          )
-
-          const memories = result.records.map((record) => ({
-            id: record.get("id") as MemoryId,
-            content: record.get("content"),
-            score: record.get("score"),
+          const memories = graphResult.memories.map((node) => ({
+            id: node.id,
+            content: node.content,
+            score: node.score,
             source: "semantic" as const,
-            provenance: toProvenance(record.get("provenance")),
-            user_id: record.get("user_id"),
-            created_at: neo4jDateToISO(record.get("created_at")),
-            version: record.get("version")?.toNumber?.() || 1,
+            provenance: node.provenance,
+            user_id: node.user_id ?? "",
+            created_at: node.created_at,
+            version: node.version,
             usage_count: 0,
             recent_usage_count: null as number | null,
-            tags: record.get("tags") || [],
+            tags: node.tags,
           }))
 
-          return { memories, total: neo4jTotal }
+          return { memories, total: graphResult.total }
         } catch (err) {
-          console.warn("[degraded] Neo4j query error in memory_list:", err)
+          console.warn("[degraded] Graph adapter query error in memory_list:", err)
           listMeta = degradedMeta(["postgres"])
           return { memories: [], total: 0 }
-        } finally {
-          await session.close()
         }
       })(),
     ])
@@ -912,7 +840,7 @@ export async function memory_delete(request: MemoryDeleteRequest): Promise<Memor
   const startTime = Date.now()
 
   try {
-    const { pg, neo4j } = await getConnections()
+    const { pg, neo4j: neo4jDriver } = await getConnections()
 
     // 1. Append deletion event to PostgreSQL — circuit-breaker wrapped
     await withCircuitBreaker("postgres", groupId, "memory_delete:insert_event", async () =>
@@ -934,30 +862,18 @@ export async function memory_delete(request: MemoryDeleteRequest): Promise<Memor
       )
     )
 
-    // 2. Mark Neo4j node as deprecated (if exists) — secondary store, degradation acceptable
-    let deleteMeta = baseMeta(["postgres", "neo4j"])
+    // 2. Mark graph node as deprecated (if exists) — secondary store, degradation acceptable
+    let deleteMeta = baseMeta(["postgres", "graph"])
     try {
-      await withCircuitBreaker("neo4j", groupId, "memory_delete:mark_deprecated", async () => {
-        const session = neo4j.session()
-        try {
-          await session.run(
-            `MATCH (m:Memory)
-           WHERE m.id = $id
-             AND m.group_id = $groupId
-           SET m.deprecated = true,
-               m.deleted_at = datetime($deletedAt)
-           RETURN m.id AS id`,
-            { id: request.id, groupId, deletedAt }
-          )
-        } finally {
-          await session.close()
-        }
-      })
+      const graphAdapter = createGraphAdapter({ pg, neo4j: neo4jDriver })
+      await withCircuitBreaker("graph", groupId, "memory_delete:mark_deprecated", async () =>
+        graphAdapter.softDeleteMemory({ id: request.id, group_id: groupId, deleted_at: deletedAt })
+      )
     } catch (error) {
       if (error instanceof Error && error.message.startsWith("Circuit breaker open")) {
         throw error
       }
-      console.warn("[degraded] Neo4j unavailable in memory_delete:", error)
+      console.warn("[degraded] Graph adapter unavailable in memory_delete:", error)
       deleteMeta = degradedMeta(["postgres"])
     }
 
@@ -1023,78 +939,51 @@ export async function memory_update(request: MemoryUpdateRequest): Promise<Memor
       )
     )
 
-    // 2. Attempt Neo4j SUPERSEDES versioning — circuit-breaker wrapped
+    // 2. Attempt graph adapter SUPERSEDES versioning — circuit-breaker wrapped
     try {
-      return await withCircuitBreaker("neo4j", groupId, "memory_update:supersedes", async () => {
-        const session = neo4jDriver.session()
-        try {
-          const existing = await session.run(
-            `MATCH (v1:Memory)
-             WHERE v1.id = $prevId
-               AND v1.group_id = $groupId
-               AND NOT (v1)<-[:SUPERSEDES]-()
-             RETURN v1.version AS version`,
-            { prevId: request.id, groupId }
-          )
+      return await withCircuitBreaker("graph", groupId, "memory_update:supersedes", async () => {
+        const graphAdapter = createGraphAdapter({ pg, neo4j: neo4jDriver })
 
-          if (existing.records.length === 0) {
-            return {
-              id: newId,
-              previous_id: request.id as MemoryId,
-              stored: "episodic" as const,
-              version: 1,
-              updated_at: updatedAt,
-              meta: baseMeta(["postgres"]),
-            }
-          }
+        const versionResult = await graphAdapter.getVersion({ id: request.id as MemoryId, group_id: groupId })
 
-          const prevVersion: number = existing.records[0].get("version")?.toNumber?.() ?? 1
-          const newVersion = prevVersion + 1
-
-          await session.run(
-            `MATCH (v1:Memory { id: $prevId, group_id: $groupId })
-             CREATE (v2:Memory {
-               id: $newId,
-               group_id: $groupId,
-               user_id: $userId,
-               content: $content,
-               score: v1.score,
-               provenance: v1.provenance,
-               version: $version,
-               created_at: datetime($updatedAt),
-               deprecated: false
-             })
-             CREATE (v2)-[:SUPERSEDES]->(v1)
-             SET v1.deprecated = true
-             SET v1:deprecated`,
-            {
-              prevId: request.id,
-              newId,
-              groupId,
-              userId: request.user_id,
-              content: request.content,
-              version: neo4j.int(newVersion),
-              updatedAt,
-            }
-          )
-
+        if (!versionResult.exists) {
           return {
             id: newId,
             previous_id: request.id as MemoryId,
-            stored: "semantic" as const,
-            version: newVersion,
+            stored: "episodic" as const,
+            version: 1,
             updated_at: updatedAt,
-            meta: baseMeta(["postgres", "neo4j"]),
+            meta: baseMeta(["postgres"]),
           }
-        } finally {
-          await session.close()
+        }
+
+        const prevVersion = versionResult.version ?? 1
+        const newVersion = prevVersion + 1
+
+        await graphAdapter.supersedesMemory({
+          prev_id: request.id as MemoryId,
+          new_id: newId,
+          group_id: groupId,
+          user_id: request.user_id,
+          content: request.content,
+          version: newVersion,
+          created_at: updatedAt,
+        })
+
+        return {
+          id: newId,
+          previous_id: request.id as MemoryId,
+          stored: "semantic" as const,
+          version: newVersion,
+          updated_at: updatedAt,
+          meta: baseMeta(["postgres", "graph"]),
         }
       })
     } catch (error) {
       if (error instanceof Error && error.message.startsWith("Circuit breaker open")) {
         throw error
       }
-      console.warn("[degraded] Neo4j unavailable in memory_update:", error)
+      console.warn("[degraded] Graph adapter unavailable in memory_update:", error)
       recordToolCall(groupId, agentId, "memory_update", Date.now() - startTime, true)
       return {
         id: newId,
@@ -1131,30 +1020,18 @@ export async function memory_promote(request: MemoryPromoteRequest): Promise<Mem
   const queuedAt = new Date().toISOString()
 
   const { pg, neo4j: neo4jDriver } = await getConnections()
+  const graphAdapter = createGraphAdapter({ pg, neo4j: neo4jDriver })
 
-  // 1. Check if already canonical in Neo4j — fails loudly (no silent fallback)
-  const neo4jSession = neo4jDriver.session()
-  try {
-    const canonicalCheck = await neo4jSession.run(
-      `MATCH (m:Memory)
-       WHERE m.id = $id
-         AND m.group_id = $groupId
-         AND NOT (m)<-[:SUPERSEDES]-()
-         AND m.deprecated = false
-       RETURN m.id AS id LIMIT 1`,
-      { id: request.id, groupId }
-    )
-    if (canonicalCheck.records.length > 0) {
-      return {
-        id: request.id,
-        proposal_id: "",
-        status: "already_canonical",
-        queued_at: queuedAt,
-        meta: baseMeta(["neo4j"]),
-      }
+  // 1. Check if already canonical in graph layer — fails loudly (no silent fallback)
+  const canonicalResult = await graphAdapter.checkCanonical({ id: request.id, group_id: groupId })
+  if (canonicalResult.isCanonical) {
+    return {
+      id: request.id,
+      proposal_id: "",
+      status: "already_canonical",
+      queued_at: queuedAt,
+      meta: baseMeta(["graph"]),
     }
-  } finally {
-    await neo4jSession.close()
   }
 
   // 2. Check for existing pending proposal (idempotency)
@@ -1307,61 +1184,41 @@ export async function memory_export(request: MemoryExportRequest): Promise<Memor
   const exportedAt = new Date().toISOString()
 
   const { pg, neo4j: neo4jDriver } = await getConnections()
+  const graphAdapter = createGraphAdapter({ pg, neo4j: neo4jDriver })
 
-  // Canonical memories from Neo4j
+  // Canonical memories from graph layer
   let canonicalMemories: MemoryGetResponse[] = []
-  let neo4jFailed = false
+  let graphFailed = false
 
-  const neo4jSession = neo4jDriver.session()
   try {
-    const result = await neo4jSession.run(
-      `MATCH (m:Memory)
-       WHERE m.group_id = $groupId
-         AND NOT (m)<-[:SUPERSEDES]-()
-         AND m.deprecated = false
-         AND ($userId IS NULL OR m.user_id = $userId)
-       RETURN m.id AS id,
-              m.content AS content,
-              m.score AS score,
-              m.provenance AS provenance,
-              m.user_id AS user_id,
-              m.created_at AS created_at,
-              m.version AS version,
-              m.tags AS tags
-       ORDER BY m.created_at DESC
-       SKIP $offset
-       LIMIT $limit`,
-      {
-        groupId,
-        userId: request.user_id ?? null,
-        offset: neo4j.int(offset),
-        limit: neo4j.int(limit),
-      }
-    )
+    const graphResult = await graphAdapter.exportMemories({
+      group_id: groupId,
+      user_id: request.user_id ?? null,
+      offset,
+      limit,
+    })
 
-    canonicalMemories = result.records.map((record) => ({
-      id: record.get("id") as MemoryId,
-      content: record.get("content"),
-      score: record.get("score"),
+    canonicalMemories = graphResult.memories.map((node) => ({
+      id: node.id,
+      content: node.content,
+      score: node.score,
       source: "semantic" as const,
-      provenance: toProvenance(record.get("provenance")),
-      user_id: record.get("user_id"),
-      created_at: neo4jDateToISO(record.get("created_at")),
-      version: record.get("version")?.toNumber?.() ?? 1,
+      provenance: node.provenance,
+      user_id: node.user_id ?? "",
+      created_at: node.created_at,
+      version: node.version,
       usage_count: 0,
       recent_usage_count: null as number | null,
-      tags: record.get("tags") || [],
-      meta: baseMeta(["neo4j"]),
+      tags: node.tags,
+      meta: baseMeta(["graph"]),
     }))
   } catch (error) {
     if (request.canonical_only) {
       // canonical_only=true: no fallback — fail loudly
-      throw new DatabaseUnavailableError("memory_export:neo4j", error instanceof Error ? error : undefined)
+      throw new DatabaseUnavailableError("memory_export:graph", error instanceof Error ? error : undefined)
     }
-    console.warn("[degraded] Neo4j unavailable in memory_export:", error)
-    neo4jFailed = true
-  } finally {
-    await neo4jSession.close()
+    console.warn("[degraded] Graph adapter unavailable in memory_export:", error)
+    graphFailed = true
   }
 
   if (request.canonical_only) {
@@ -1371,7 +1228,7 @@ export async function memory_export(request: MemoryExportRequest): Promise<Memor
       exported_at: exportedAt,
       canonical_count: canonicalMemories.length,
       episodic_count: 0,
-      meta: baseMeta(["neo4j"]),
+      meta: baseMeta(["graph"]),
     }
   }
 
@@ -1412,7 +1269,7 @@ export async function memory_export(request: MemoryExportRequest): Promise<Memor
     }))
 
   const allMemories = [...canonicalMemories, ...episodicMemories]
-  const exportMeta = neo4jFailed ? degradedMeta(["postgres"]) : baseMeta(["postgres", "neo4j"])
+  const exportMeta = graphFailed ? degradedMeta(["postgres"]) : baseMeta(["postgres", "graph"])
 
   return {
     memories: allMemories,
@@ -1438,7 +1295,7 @@ export async function memory_export(request: MemoryExportRequest): Promise<Memor
  * Constraints:
  * - No UPDATE on PostgreSQL events table (append-only)
  * - RESTORE appends event_type='memory_restore' row
- * - Neo4j: REMOVE m.deprecated, REMOVE m:deprecated label
+ * - Graph adapter: remove deprecated flag, remove SUPERSEDES relationships
  * - group_id scoped on every query
  */
 export async function memory_restore(request: MemoryRestoreRequest): Promise<MemoryRestoreResponse> {
@@ -1447,7 +1304,7 @@ export async function memory_restore(request: MemoryRestoreRequest): Promise<Mem
   const startTime = Date.now()
 
   try {
-    const { pg, neo4j } = await getConnections()
+    const { pg, neo4j: neo4jDriver } = await getConnections()
 
     // 1. Verify memory was deleted within the recovery window
     const deleteEventResult = await withCircuitBreaker(
@@ -1487,36 +1344,18 @@ export async function memory_restore(request: MemoryRestoreRequest): Promise<Mem
       throw new RecoveryWindowExpiredError(request.id)
     }
 
-    // 2. Restore in Neo4j — remove deprecated flag and label
-    let restoreMeta = baseMeta(["postgres", "neo4j"])
+    // 2. Restore in graph layer — remove deprecated flag and SUPERSEDES relationships
+    let restoreMeta = baseMeta(["postgres", "graph"])
     try {
-      await withCircuitBreaker("neo4j", groupId, "memory_restore:restore_node", async () => {
-        const session = neo4j.session()
-        try {
-          // Remove SUPERSEDES relationship pointing TO this memory (if any)
-          // and remove deprecated flag and label
-          await session.run(
-            `MATCH (m:Memory)
-             WHERE m.id = $id
-               AND m.group_id = $groupId
-             REMOVE m.deprecated
-             REMOVE m:deprecated
-             WITH m
-             OPTIONAL MATCH (newer)-[r:SUPERSEDES]->(m)
-             DELETE r
-             SET m.restored_at = datetime($restoredAt)
-             RETURN m.id AS id`,
-            { id: request.id, groupId, restoredAt }
-          )
-        } finally {
-          await session.close()
-        }
-      })
+      const graphAdapter = createGraphAdapter({ pg, neo4j: neo4jDriver })
+      await withCircuitBreaker("graph", groupId, "memory_restore:restore_node", async () =>
+        graphAdapter.restoreMemory({ id: request.id, group_id: groupId, restored_at: restoredAt })
+      )
     } catch (error) {
       if (error instanceof Error && error.message.startsWith("Circuit breaker open")) {
         throw error
       }
-      console.warn("[degraded] Neo4j unavailable in memory_restore:", error)
+      console.warn("[degraded] Graph adapter unavailable in memory_restore:", error)
       restoreMeta = degradedMeta(["postgres"])
     }
 
@@ -1585,8 +1424,9 @@ export async function memory_list_deleted(request: MemoryListDeletedRequest): Pr
 
   try {
     const { pg, neo4j: neo4jDriver } = await getConnections()
+    const graphAdapter = createGraphAdapter({ pg, neo4j: neo4jDriver })
 
-    let listMeta = baseMeta(["postgres", "neo4j"])
+    let listMeta = baseMeta(["postgres", "graph"])
 
     // 1. Find memory_delete events within the recovery window, grouped by memory_id
     const deleteEventsResult = await withCircuitBreaker(
@@ -1652,8 +1492,8 @@ export async function memory_list_deleted(request: MemoryListDeletedRequest): Pr
 
     const addByMemoryId = new Map(addEventsResult.rows.map((r) => [r.memory_id, r]))
 
-    // 3. Cross-reference Neo4j for deprecated memories
-    let neo4jMemories: Map<
+    // 3. Cross-reference graph adapter for deprecated memories
+    let graphMemories: Map<
       string,
       {
         content: string
@@ -1666,61 +1506,44 @@ export async function memory_list_deleted(request: MemoryListDeletedRequest): Pr
       }
     > = new Map()
     try {
-      const session = neo4jDriver.session()
-      try {
-        const neo4jResult = await session.run(
-          `MATCH (m:Memory)
-           WHERE m.group_id = $groupId
-             AND m.id IN $ids
-             AND m.deprecated = true
-           RETURN m.id AS id,
-                  m.content AS content,
-                  m.score AS score,
-                  m.provenance AS provenance,
-                  m.user_id AS user_id,
-                  m.created_at AS created_at,
-                  m.version AS version,
-                  m.tags AS tags`,
-          { groupId, ids: deletedMemoryIds }
-        )
-
-        neo4jMemories = new Map(
-          neo4jResult.records.map((record) => [
-            record.get("id") as string,
-            {
-              content: record.get("content"),
-              score: record.get("score")?.toNumber?.() ?? 0.5,
-              provenance: record.get("provenance"),
-              user_id: record.get("user_id"),
-              created_at: neo4jDateToISO(record.get("created_at")),
-              version: record.get("version")?.toNumber?.() ?? 1,
-              tags: record.get("tags") || [],
-            },
-          ])
-        )
-      } finally {
-        await session.close()
-      }
+      const deprecatedNodes = await graphAdapter.getDeprecatedMemories({
+        ids: deletedMemoryIds,
+        group_id: groupId,
+      })
+      graphMemories = new Map(
+        [...deprecatedNodes.entries()].map(([id, node]) => [
+          id,
+          {
+            content: node.content,
+            score: node.score,
+            provenance: node.provenance,
+            user_id: node.user_id ?? "unknown",
+            created_at: node.created_at,
+            version: node.version,
+            tags: node.tags,
+          },
+        ])
+      )
     } catch (error) {
-      console.warn("[degraded] Neo4j unavailable in memory_list_deleted:", error)
+      console.warn("[degraded] Graph adapter unavailable in memory_list_deleted:", error)
       listMeta = degradedMeta(["postgres"])
     }
 
-    // 4. Merge PG and Neo4j results — prefer Neo4j when available
+    // 4. Merge PG and graph results — prefer graph when available
     const now = Date.now()
     const memories = deleteEventsResult.rows
       .map((delRow) => {
         const addRow = addByMemoryId.get(delRow.memory_id)
-        const neo4jData = neo4jMemories.get(delRow.memory_id)
+        const graphData = graphMemories.get(delRow.memory_id)
 
-        const content = neo4jData?.content ?? addRow?.content ?? "(content unavailable)"
-        const provenance = toProvenance(neo4jData?.provenance ?? addRow?.provenance)
-        const userId = neo4jData?.user_id ?? addRow?.user_id ?? delRow.user_id ?? "unknown"
-        const createdAt = neo4jData?.created_at ?? addRow?.created_at ?? delRow.deleted_at
-        const score = (neo4jData?.score ?? parseFloat(addRow?.score ?? "0.5")) || 0.5
-        const version = neo4jData?.version ?? 1
-        const tags = neo4jData?.tags ?? parseEpisodicTags(addRow?.tags ?? null)
-        const source: StorageLocation = neo4jData ? "semantic" : "episodic"
+        const content = graphData?.content ?? addRow?.content ?? "(content unavailable)"
+        const provenance = toProvenance(graphData?.provenance ?? addRow?.provenance)
+        const userId = graphData?.user_id ?? addRow?.user_id ?? delRow.user_id ?? "unknown"
+        const createdAt = graphData?.created_at ?? addRow?.created_at ?? delRow.deleted_at
+        const score = (graphData?.score ?? parseFloat(addRow?.score ?? "0.5")) || 0.5
+        const version = graphData?.version ?? 1
+        const tags = graphData?.tags ?? parseEpisodicTags(addRow?.tags ?? null)
+        const source: StorageLocation = graphData ? "semantic" : "episodic"
 
         const deletedAtDate = new Date(delRow.deleted_at)
         const recoveryDeadline = new Date(deletedAtDate.getTime() + RECOVERY_WINDOW_DAYS * 24 * 60 * 60 * 1000)
@@ -1740,7 +1563,7 @@ export async function memory_list_deleted(request: MemoryListDeletedRequest): Pr
           version,
         }
       })
-      .filter((m) => m.content !== "(content unavailable)" || neo4jMemories.has(m.id as string))
+      .filter((m) => m.content !== "(content unavailable)" || graphMemories.has(m.id as string))
       .sort((a, b) => new Date(b.deleted_at).getTime() - new Date(a.deleted_at).getTime())
 
     const total = memories.length
