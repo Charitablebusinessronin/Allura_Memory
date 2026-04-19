@@ -1,3 +1,5 @@
+![Allura Memory Logo](./alllura%20logo%20final/allura_logo_final.png)
+
 # Allura Memory
 
 ## Memory That Shows Its Work
