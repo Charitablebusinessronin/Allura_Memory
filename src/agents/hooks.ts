@@ -37,7 +37,7 @@ export class HookValidationError extends Error {
 // ── Shared Base Schema ────────────────────────────────────────────────────────
 
 const BaseHookSchema = z.object({
-  agent_id: z.enum(["brooks-triage", "pike", "dijkstra", "fowler"]),
+  agent_id: z.enum(["brooks-triage", "pike", "carmack", "fowler"]),
   event_type: z.string().min(1),
   group_id: z.string().min(1),
   session_id: z.string().min(1),
@@ -62,7 +62,7 @@ export const PikeMetadataSchema = z.object({
   severity: z.enum(["low", "medium", "high"]).optional(),
 });
 
-export const DijkstraMetadataSchema = z.object({
+export const CarmackMetadataSchema = z.object({
   decision: z.enum(["approve", "reject", "comment"]),
   pr_ref: z.string().optional(),
   finding: z.string().optional(),
@@ -100,8 +100,8 @@ export const PikePayloadSchema = BaseHookSchema.extend({
   metadata: z.record(z.string(), z.unknown()),
 });
 
-export const DijkstraPayloadSchema = BaseHookSchema.extend({
-  agent_id: z.literal("dijkstra"),
+export const CarmackPayloadSchema = BaseHookSchema.extend({
+  agent_id: z.literal("carmack"),
   event_type: z.enum([
     "pr_review_started",
     "pr_review_complete",
@@ -129,7 +129,7 @@ export { BaseHookSchema };
 // ── Inferred Types ────────────────────────────────────────────────────────────
 
 export type AgentHookPayload = z.infer<typeof BaseHookSchema> & {
-  agent_id: "brooks-triage" | "pike" | "dijkstra" | "fowler";
+  agent_id: "brooks-triage" | "pike" | "carmack" | "fowler";
 };
 
 // Convenience param types for per-agent helpers (omit agent_id — injected automatically)
@@ -141,8 +141,8 @@ export type PikeHookParams = Omit<z.infer<typeof PikePayloadSchema>, "agent_id">
   metadata: z.infer<typeof PikeMetadataSchema> & Record<string, unknown>;
 };
 
-export type DijkstraHookParams = Omit<z.infer<typeof DijkstraPayloadSchema>, "agent_id"> & {
-  metadata: z.infer<typeof DijkstraMetadataSchema> & Record<string, unknown>;
+export type CarmackHookParams = Omit<z.infer<typeof CarmackPayloadSchema>, "agent_id"> & {
+  metadata: z.infer<typeof CarmackMetadataSchema> & Record<string, unknown>;
 };
 
 export type FowlerHookParams = Omit<z.infer<typeof FowlerPayloadSchema>, "agent_id"> & {
@@ -185,9 +185,9 @@ function validatePayload(payload: AgentHookPayload): void {
       if (!metaResult.success) allIssues.push(...metaResult.error.issues);
       break;
     }
-    case "dijkstra": {
-      const outerResult = DijkstraPayloadSchema.safeParse(payload);
-      const metaResult = DijkstraMetadataSchema.safeParse(payload.metadata);
+    case "carmack": {
+      const outerResult = CarmackPayloadSchema.safeParse(payload);
+      const metaResult = CarmackMetadataSchema.safeParse(payload.metadata);
       if (!outerResult.success) allIssues.push(...outerResult.error.issues);
       if (!metaResult.success) allIssues.push(...metaResult.error.issues);
       break;
@@ -280,13 +280,13 @@ export async function pikeHook(params: PikeHookParams): Promise<void> {
 }
 
 /**
- * dijkstra hook.
+ * carmack hook.
  * Handles: pr_review_started | pr_review_complete | structural_issue_found | pr_approved | pr_rejected
  */
-export async function dijkstraHook(params: DijkstraHookParams): Promise<void> {
+export async function carmackHook(params: CarmackHookParams): Promise<void> {
   return writeAgentHook({
     ...params,
-    agent_id: "dijkstra",
+    agent_id: "carmack",
   });
 }
 

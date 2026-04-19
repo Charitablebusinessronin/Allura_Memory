@@ -1,12 +1,20 @@
 // scripts/hydration/notion-client.ts
 // MCP_DOCKER Notion API wrapper with Zod validation
 //
-// ⚠️ DEPRECATION NOTICE: Direct Notion REST API calls are deprecated.
-// All Notion access should go through MCP tools (mcp__MCP_DOCKER__* or
-// mcp__claude_ai_Notion__*). This file is preserved for backward
-// compatibility during migration. See AD-CURATOR-NOTION in RISKS-AND-DECISIONS.md.
+// ⛔ DEPRECATED — DO NOT USE IN NEW CODE
+//
+// Direct Notion REST API calls (api.notion.com) are deprecated.
+// All Notion access MUST go through MCP tools:
+//   - Production: mcp__claude_ai_Notion__notion-create-pages (via curator pipeline)
+//   - Hydration: mcp__MCP_DOCKER__notion-create-pages (via MCP Docker toolkit)
+//
+// This file exists ONLY for backward compatibility with legacy hydration scripts.
+// New code MUST NOT import from this module. See AD-CURATOR-NOTION in
+// RISKS-AND-DECISIONS.md for the architectural decision.
 //
 // No NOTION_API_KEY is required — auth is handled by the remote MCP service.
+// The REST calls below will be removed once all hydration scripts are
+// migrated to MCP-only paths.
 
 import { z } from 'zod';
 
@@ -164,6 +172,7 @@ function extractDatabaseIdFromViewUrl(viewUrl: string): string {
 }
 
 /**
+ * @deprecated Use mcp__claude_ai_Notion__notion-create-pages or mcp__MCP_DOCKER__notion-create-pages instead.
  * Create a Notion page in a database using MCP_DOCKER_notion-create-pages
  */
 export async function createNotionPage(
@@ -188,6 +197,7 @@ export async function createNotionPage(
 }
 
 /**
+ * @deprecated Use mcp__claude_ai_Notion__notion-query-database or mcp__MCP_DOCKER__notion-query-database instead.
  * Query a Notion database using MCP_DOCKER_notion-query-database-view
  */
 export async function queryNotionDatabase(
@@ -204,6 +214,7 @@ export async function queryNotionDatabase(
 }
 
 /**
+ * @deprecated Use mcp__claude_ai_Notion__notion-fetch-database or mcp__MCP_DOCKER__notion-fetch-database instead.
  * Fetch a Notion database schema using MCP_DOCKER_notion-fetch
  */
 export async function fetchNotionDatabase(
