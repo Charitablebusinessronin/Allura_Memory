@@ -110,7 +110,7 @@ services:
     container_name: allura-memory-mcp
     restart: unless-stopped
     ports:
-      - "3201:3201"
+      - "5888:3201"
     depends_on:
       postgres:
         condition: service_healthy
@@ -134,6 +134,40 @@ services:
       timeout: 10s
       start_period: 10s
       retries: 3
+
+  # HTTP Gateway for MCP - provides HTTP access to memory tools
+  http-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp
+    container_name: allura-http-gateway
+    restart: unless-stopped
+    ports:
+      - "5888:3201"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: ${NEO4J_USER}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
+      ALLURA_MCP_HTTP_PORT: "3201"
+      ALLURA_MCP_HTTP_ENABLED: "true"
+    command: ["bun", "run", "src/mcp/canonical-http-gateway.ts"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget", "-qO-", "http://localhost:3201/health", "||", "exit", "1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   # RuVector - High Performance Vector DB with GNN
   # https://github.com/Charitablebusinessronin/RuVector

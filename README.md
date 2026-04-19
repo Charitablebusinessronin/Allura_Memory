@@ -1,16 +1,10 @@
-# Allura Memory
-
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)](tsconfig.json)
-[![Self-Hosted](https://img.shields.io/badge/deployment-self--hosted-1C232B)](#deployment-options)
+![Allura Memory Logo](./public/readme/logo-v2.png)
 
 ## Memory That Shows Its Work
 
 Allura Memory is a self-hosted AI memory system for teams that want memory they can inspect, review, and manage.
 
 It is built around a simple promise: memory should be **traceable**, **structured**, and **governed** — and the experience of using it should feel considered rather than opaque.
-
-![Allura Memory hero](./public/readme/readme-hero.png)
 
 > Allura is designed for teams that care about visibility, control, and auditability today — and for organizations that may aspire to stricter regulatory or enterprise standards in the future. It does **not** claim current SOC 2 certification, banking approval, or any unverified compliance status.
 
@@ -62,6 +56,10 @@ Inside the project, “**Allura Brain**” refers to the memory architecture its
 Every memory starts in the episodic layer. Promoted knowledge moves into the semantic layer **after review**, not before.
 
 This keeps Allura grounded in inspectability rather than black-box automation.
+
+### Architecture Overview
+
+![Allura Memory Architecture](./public/readme/architecture-diagram.png)
 
 ---
 
@@ -220,6 +218,8 @@ It does **not** mean the project is currently SOC 2 certified.
 
 ## How It Works
 
+![Allura Memory Infographic](./public/readme/infographic.png)
+
 ### Memory Flow
 
 1. An agent writes a memory event
@@ -328,6 +328,76 @@ Curated knowledge with version history via `SUPERSEDES`.
 > Every memory starts in PostgreSQL. Higher-confidence facts may move to Neo4j after review. History is preserved.
 
 See: `.github/ARCHITECTURE.md`
+
+---
+
+## Dependencies
+
+### Runtime
+
+| Package | Purpose |
+|---------|---------|
+| `@modelcontextprotocol/sdk` | MCP protocol implementation |
+| `@clerk/nextjs` | Authentication |
+| `neo4j-driver` | Neo4j graph database client |
+| `pg` | PostgreSQL client |
+| `next` | React framework |
+| `react` / `react-dom` | UI library |
+| `zod` | Schema validation |
+| `zustand` | State management |
+| `tailwindcss` | Styling |
+| `lucide-react` | Icons |
+| `recharts` | Data visualization |
+| `dockerode` | Docker integration |
+| `@openai/agents` | OpenAI agents SDK |
+
+### Dev
+
+| Package | Purpose |
+|---------|---------|
+| `typescript` | Type checking |
+| `vitest` | Testing |
+| `eslint` / `prettier` | Linting and formatting |
+| `@types/*` | Type definitions |
+| `cross-env` | Environment variables |
+| `dotenv` | Environment config |
+
+### Infrastructure
+
+- Docker + Docker Compose
+- PostgreSQL 16
+- Neo4j 5.26
+
+---
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `bun run dev` | Start Next.js dev server with Turbo |
+| `bun run build` | Build for production |
+| `bun run start` | Start production server |
+| `bun run typecheck` | Run TypeScript type check |
+| `bun run lint` | Run linting (alias for typecheck) |
+| `bun run format` | Format code with Prettier |
+| `bun test` | Run unit tests |
+| `bun run test:watch` | Run tests in watch mode |
+| `bun run test:e2e` | Run E2E integration tests |
+| `bun run test:all` | Run typecheck + lint + unit + e2e + MCP browser tests |
+| `bun run mcp` | Start canonical MCP server (stdio) |
+| `bun run mcp:dev` | Start MCP server in watch mode |
+| `bun run mcp:http` | Start MCP HTTP gateway |
+| `bun run curator:run` | Run curator scoring and queue |
+| `bun run curator:approve` | Approve pending proposals |
+| `bun run curator:reject` | Reject pending proposals |
+| `bun run curator:watchdog` | Start curator watchdog |
+| `bun run session:start` | Start a Brooks session |
+| `bun run session:bootstrap` | Full session hydrate cycle |
+| `bun run brooks:start` | Start Brooks CLI session |
+| `bun run brooks:status` | Check Brooks session status |
+| `bun run brooks:end` | End Brooks session |
+| `bun run backfill:embeddings` | One-shot embedding backfill |
+| `bun run benchmark` | Run performance benchmark |
 
 ---
 
