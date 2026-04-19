@@ -60,14 +60,14 @@ const opencodeFiles = [
   '.opencode/agent/core/AGENT-REGISTRY.md',
   '.opencode/agent/core/brooks.md',
   '.opencode/agent/core/knuth.md',
-  '.opencode/agent/core/turing.md',
-  '.opencode/agent/core/berners-lee.md',
-  '.opencode/agent/subagents/hopper.md',
-  '.opencode/agent/subagents/cerf.md',
-  '.opencode/agent/subagents/torvalds.md',
-  '.opencode/agent/subagents/liskov.md',
-  '.opencode/agent/subagents/dijkstra.md',
-  '.opencode/agent/subagents/hinton.md',
+  '.opencode/agent/core/jobs.md',
+  '.opencode/agent/core/pike.md',
+  '.opencode/agent/subagents/fowler.md',
+  '.opencode/agent/subagents/scout.md',
+  '.opencode/agent/subagents/woz.md',
+  '.opencode/agent/subagents/bellard.md',
+  '.opencode/agent/subagents/carmack.md',
+  '.opencode/agent/subagents/hightower.md',
   '.opencode/plugin/allura-memory.md'
 ];
 

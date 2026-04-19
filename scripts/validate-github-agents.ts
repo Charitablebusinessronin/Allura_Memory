@@ -8,7 +8,7 @@
 import { getPool, closePool } from "../src/lib/postgres/connection";
 
 const AGENTS = [
-  { name: 'dijkstra', script: 'dijkstra-review.ts', testArg: '123' },
+  { name: 'carmack', script: 'carmack-review.ts', testArg: '123' },
   { name: 'knuth', script: 'knuth-analyze.ts', testArg: 'abc123def' },
   { name: 'brooks', script: 'brooks-triage.ts', testArg: '456' },
 ];

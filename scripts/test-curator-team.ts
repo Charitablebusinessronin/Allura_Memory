@@ -68,7 +68,7 @@ async function testCuratorTeam() {
     });
 
     const curatorContract = {
-      agent: "berners-lee (Curator)",
+      agent: "fowler (Curator)",
       task: "Score trace and publish promotability contract",
       output: {
         trace_id: TRACE_ID,
@@ -110,7 +110,7 @@ async function testCuratorTeam() {
         const relatedCount = result.records[0]?.get('related_count') || 0;
 
         return {
-          agent: "liskov (Analyst)",
+          agent: "pike (Analyst)",
           task: "Find related insights",
           output: {
             related_insights_found: relatedCount,
@@ -148,7 +148,7 @@ async function testCuratorTeam() {
         const totalInsights = chainResult.records[0]?.get('total_insights');
 
         return {
-          agent: "turing (Validator)",
+          agent: "brooks (Validator)",
           task: "Check Neo4j constraints",
           output: {
             already_promoted: exists,

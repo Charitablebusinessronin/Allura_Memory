@@ -10,15 +10,15 @@ import { getDriver, closeDriver } from "../src/lib/neo4j/connection";
 
 const AGENTS = [
   { id: 'brooks', name: 'Frederick Brooks', role: 'Orchestrator', platform: 'Claude Code + OpenCode + GitHub', status: 'active' },
-  { id: 'knuth', name: 'Donald Knuth', role: 'Deep Worker', platform: 'Claude Code + OpenCode + GitHub', status: 'active' },
-  { id: 'turing', name: 'Alan Turing', role: 'Architecture Reviewer', platform: 'Claude Code + OpenCode', status: 'active' },
-  { id: 'berners-lee', name: 'Tim Berners-Lee', role: 'Knowledge Curator', platform: 'Claude Code + OpenCode', status: 'active' },
-  { id: 'hopper', name: 'Grace Hopper', role: 'Explorer', platform: 'Claude Code + OpenCode', status: 'active' },
-  { id: 'cerf', name: 'Vint Cerf', role: 'Context Manager', platform: 'Claude Code + OpenCode', status: 'active' },
-  { id: 'torvalds', name: 'Linus Torvalds', role: 'Code Generator', platform: 'Claude Code + OpenCode + GitHub', status: 'active' },
-  { id: 'liskov', name: 'Barbara Liskov', role: 'Analyst', platform: 'Claude Code + OpenCode', status: 'active' },
-  { id: 'dijkstra', name: 'Edsger Dijkstra', role: 'Reviewer', platform: 'Claude Code + OpenCode + GitHub', status: 'active' },
-  { id: 'hinton', name: 'Geoffrey Hinton', role: 'Vision Specialist', platform: 'Claude Code + OpenCode', status: 'active' },
+  { id: 'jobs', name: 'Steve Jobs', role: 'Intent Gate', platform: 'Claude Code + OpenCode', status: 'active' },
+  { id: 'pike', name: 'Rob Pike', role: 'Interface Review', platform: 'Claude Code + OpenCode + GitHub', status: 'active' },
+  { id: 'fowler', name: 'Martin Fowler', role: 'Refactor Gate', platform: 'Claude Code + OpenCode + GitHub', status: 'active' },
+  { id: 'scout', name: 'Scout', role: 'Recon', platform: 'Claude Code + OpenCode', status: 'active' },
+  { id: 'woz', name: 'Steve Wozniak', role: 'Builder', platform: 'Claude Code + OpenCode', status: 'active' },
+  { id: 'bellard', name: 'Fabrice Bellard', role: 'Perf Diagnostics', platform: 'Claude Code + OpenCode', status: 'active' },
+  { id: 'carmack', name: 'John Carmack', role: 'Performance Specialist', platform: 'Claude Code + OpenCode + GitHub', status: 'active' },
+  { id: 'knuth', name: 'Donald Knuth', role: 'Deep Analysis', platform: 'Claude Code + OpenCode + GitHub', status: 'active' },
+  { id: 'hightower', name: 'Kelsey Hightower', role: 'DevOps Specialist', platform: 'Claude Code + OpenCode + GitHub', status: 'active' },
 ];
 
 async function syncNotionAgents() {

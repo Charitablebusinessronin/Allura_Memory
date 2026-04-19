@@ -1,5 +1,12 @@
 // scripts/hydration/notion-client.ts
 // MCP_DOCKER Notion API wrapper with Zod validation
+//
+// ⚠️ DEPRECATION NOTICE: Direct Notion REST API calls are deprecated.
+// All Notion access should go through MCP tools (mcp__MCP_DOCKER__* or
+// mcp__claude_ai_Notion__*). This file is preserved for backward
+// compatibility during migration. See AD-CURATOR-NOTION in RISKS-AND-DECISIONS.md.
+//
+// No NOTION_API_KEY is required — auth is handled by the remote MCP service.
 
 import { z } from 'zod';
 

@@ -33,6 +33,7 @@ const ALL_TEST_GROUP_IDS = [
   "allura-default-init-test",
   "allura-existing-agent-test",
   "allura-verify-test",
+  "allura-team-ram-test",
 ];
 
 // E2E guard: requires running Neo4j
@@ -443,5 +444,88 @@ describe.skipIf(!shouldRunE2E)("Verify Agent Nodes", () => {
     await expect(verifyAgentNodes("invalid-group")).rejects.toThrow(
       "must use allura-* format"
     );
+  });
+});
+
+describe.skipIf(!shouldRunE2E)("Team RAM Agent Nodes", () => {
+  const TEAM_RAM_GROUP = "allura-team-ram-test";
+
+  afterAll(async () => {
+    const driver = getDriver();
+    const session = driver.session();
+    try {
+      await session.run(
+        "MATCH (n) WHERE n.group_id = $groupId DETACH DELETE n",
+        { groupId: TEAM_RAM_GROUP }
+      );
+    } finally {
+      await session.close();
+    }
+  });
+
+  it("should create Team RAM agent nodes with fallback_model", async () => {
+    const teamRamAgents: AgentInsert[] = [
+      {
+        agent_id: "brooks",
+        name: "Frederick Brooks",
+        role: "Chief Architect",
+        model: "openai/gpt-5.4",
+        fallback_model: "ollama-cloud/kimi-k2.5",
+        group_id: TEAM_RAM_GROUP,
+      },
+      {
+        agent_id: "carmack",
+        name: "John Carmack",
+        role: "Performance Specialist",
+        model: "ollama-cloud/qwen3-coder-next",
+        fallback_model: "ollama-cloud/glm-5.1",
+        group_id: TEAM_RAM_GROUP,
+      },
+      {
+        agent_id: "hightower",
+        name: "Kelsey Hightower",
+        role: "DevOps Specialist",
+        model: "openai/gpt-5.4",
+        fallback_model: "ollama-cloud/kimi-k2.5",
+        group_id: TEAM_RAM_GROUP,
+      },
+    ];
+
+    for (const agent of teamRamAgents) {
+      const created = await createAgentNode(agent);
+      expect(created.agent_id).toBe(agent.agent_id);
+      expect(created.model).toBe(agent.model);
+      expect(created.fallback_model).toBe(agent.fallback_model);
+      expect(created.group_id).toBe(TEAM_RAM_GROUP);
+    }
+  });
+
+  it("should default fallback_model to glm-5.1 when not provided", async () => {
+    const agent: AgentInsert = {
+      agent_id: "no-fallback-test",
+      name: "NoFallbackAgent",
+      role: "Test",
+      model: "test-model",
+      group_id: TEAM_RAM_GROUP,
+    };
+
+    const created = await createAgentNode(agent);
+    expect(created.fallback_model).toBe("ollama-cloud/glm-5.1");
+  });
+
+  it("should persist and retrieve fallback_model from graph", async () => {
+    const retrieved = await getAgentNode("carmack", TEAM_RAM_GROUP);
+    expect(retrieved).not.toBeNull();
+    expect(retrieved?.fallback_model).toBe("ollama-cloud/glm-5.1");
+    expect(retrieved?.model).toBe("ollama-cloud/qwen3-coder-next");
+  });
+
+  it("should not contain any legacy OmO agent names in Team RAM group", async () => {
+    const legacyNames = ["turing", "berners-lee", "hopper", "cerf", "torvalds", "liskov", "dijkstra", "hinton"];
+    const agents = await listAgentNodes({ group_id: TEAM_RAM_GROUP });
+    const agentIds = agents.map((a) => a.agent_id);
+    for (const legacy of legacyNames) {
+      expect(agentIds).not.toContain(legacy);
+    }
   });
 });

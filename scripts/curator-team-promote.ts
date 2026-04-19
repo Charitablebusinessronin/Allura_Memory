@@ -124,7 +124,7 @@ async function curatorTeamPromote(traceId: string) {
           const total = result.records[0]?.get('total');
           
           return {
-            agent: "liskov (Analyst)",
+            agent: "pike (Analyst)",
             task: "Pattern analysis",
             output: {
               total_insights: total,
@@ -149,7 +149,7 @@ async function curatorTeamPromote(traceId: string) {
           const exists = result.records[0]?.get('exists') > 0;
 
           return {
-            agent: "turing (Validator)",
+            agent: "brooks (Validator)",
             task: "Constraint validation",
             output: {
               already_promoted: exists,
@@ -200,7 +200,7 @@ async function curatorTeamPromote(traceId: string) {
         trace_id: traceId,
         decision,
         confidence: finalConfidence,
-        agents: ['berners-lee', 'liskov', 'turing'],
+        agents: ['fowler', 'pike', 'brooks'],
         parallel_time_ms: parallelTime
       }),
       'completed'
