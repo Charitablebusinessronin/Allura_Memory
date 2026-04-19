@@ -15,14 +15,18 @@ ENV NODE_ENV=production
 # so it's available for HTTP gateway or exec-based tool calls.
 COPY <<'EOF' /app/entrypoint.sh
 #!/bin/sh
-# Start the MCP stdio server in the background
+# Start the MCP HTTP gateway server
+# This provides both stdio (for MCP protocol) and HTTP (for external access)
+export ALLURA_MCP_HTTP_PORT=3201
+export ALLURA_MCP_HTTP_ENABLED=true
 bun src/mcp/memory-server-canonical.ts &
 MCP_PID=$!
 
-# Keep container alive — stdio MCP exits without attached stdin
-# The server is also available via canonical-http-gateway
+# Keep container alive
 exec sleep infinity
 EOF
 RUN chmod +x /app/entrypoint.sh
+
+EXPOSE 3201
 
 CMD ["/app/entrypoint.sh"]
