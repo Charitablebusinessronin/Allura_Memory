@@ -224,7 +224,7 @@ DUPLICATE_THRESHOLD=0.95
 RECOVERY_WINDOW_DAYS=30
 
 # ── External Integrations (optional for v1) ───────
-# NOTION_API_KEY=        # optional — Notion MCP integration
+# NOTION_DATABASE_ID=   # optional — Notion MCP integration (auth via remote MCP, no API key)
 # EXA_API_KEY=           # optional — web search
 # TAVILY_API_TOKEN=      # optional — web search
 ```
@@ -300,9 +300,9 @@ describe('canonical memory round-trip', () => {
 
 ---
 
-### P2-1: Notion Should Be Explicitly Optional
+### P2-1: Notion Is MCP-Only — No API Key Required
 
-Notify, document, or remove any health check or startup check that blocks or warns on a missing `NOTION_API_KEY`. Notion is a dev convenience, not a v1 dependency.
+Notion integration uses remote MCP tools exclusively. No `NOTION_API_KEY` env var exists or is needed. Auth is handled by the remote MCP service. Any health check or startup check that blocks or warns on a missing Notion key should be removed. Notion is a dev convenience, not a v1 dependency.
 
 ### P2-2: Legacy `tools.ts` Should Be Clearly Separated
 

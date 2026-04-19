@@ -10,16 +10,16 @@ last_updated: "2026-04-18"
 
 | Agent        | Role           | Primary Model                      | Specialist Override                    | Fallback Model          |
 |--------------|----------------|------------------------------------|---------------------------------------|-------------------------|
-| brooks       | Orchestrator   | ollama-cloud/gpt-5.4              | —                                     | ollama-cloud/glm-5.1    |
-| hightower    | Infra          | ollama-cloud/gpt-5.4              | —                                     | ollama-cloud/glm-5.1    |
-| jobs         | Strategy       | ollama-cloud/gpt-5.4              | —                                     | ollama-cloud/glm-5.1    |
-| scout        | Search/Triage  | ollama-cloud/nemotron-3-super:cloud | ollama-cloud/gpt-5.4-nano (tiny)    | ollama-cloud/glm-5.1    |
-| woz          | Code           | ollama-cloud/gpt-5.4-mini         | ollama-cloud/qwen3-coder-next:cloud  | ollama-cloud/glm-5.1    |
-| bellard      | Code/Diag      | ollama-cloud/gpt-5.4-mini         | ollama-cloud/qwen3-coder-next:cloud  | ollama-cloud/glm-5.1    |
-| carmack      | Code/Perf      | ollama-cloud/gpt-5.4-mini         | —                                     | ollama-cloud/glm-5.1    |
-| knuth        | Code/Data      | ollama-cloud/gpt-5.4-mini         | —                                     | ollama-cloud/glm-5.1    |
-| fowler       | Code/Refactor  | ollama-cloud/gpt-5.4-mini         | —                                     | ollama-cloud/glm-5.1    |
-| pike         | Code/Interface | ollama-cloud/gpt-5.4-mini         | —                                     | ollama-cloud/glm-5.1    |
+| brooks       | Orchestrator   | openai/gpt-5.4                    | —                                     | ollama-cloud/glm-5.1    |
+| hightower    | Infra          | openai/gpt-5.4                    | —                                     | ollama-cloud/glm-5.1    |
+| jobs         | Strategy       | ollama-cloud/kimi-k2.5            | —                                     | ollama-cloud/glm-5.1    |
+| scout        | Search/Triage  | ollama-cloud/nemotron-3-super      | —                                     | ollama-cloud/glm-5.1    |
+| woz          | Code           | ollama-cloud/qwen3-coder-next     | —                                     | ollama-cloud/glm-5.1    |
+| bellard      | Code/Diag      | ollama-cloud/glm-5.1              | —                                     | ollama-cloud/glm-5.1    |
+| carmack      | Code/Perf      | ollama-cloud/qwen3-coder-next     | —                                     | ollama-cloud/glm-5.1    |
+| knuth        | Code/Data      | ollama-cloud/glm-5.1              | —                                     | ollama-cloud/glm-5.1    |
+| fowler       | Code/Refactor  | ollama-cloud/glm-5.1              | —                                     | ollama-cloud/glm-5.1    |
+| pike         | Code/Interface | openai/gpt-5.4-mini               | —                                     | ollama-cloud/glm-5.1    |
 
 ## Specialist Override Tasks
 
@@ -27,9 +27,7 @@ Specialist overrides activate when the task type matches. The agent stays on its
 
 | Agent    | Specialist Model                    | Override Tasks                                        |
 |----------|-------------------------------------|-------------------------------------------------------|
-| scout    | ollama-cloud/gpt-5.4-nano           | tiny_lookup, cheap_prefilter, path_check             |
-| woz      | ollama-cloud/qwen3-coder-next:cloud | patch, feature, test_fix, codegen, repo_surgery      |
-| bellard  | ollama-cloud/qwen3-coder-next:cloud | perf_patch, hotpath_fix, benchmark_refactor           |
+| (none)   | —                                   | No specialist overrides defined in current frontmatter |
 
 ## Global Default (opencode.json)
 
@@ -44,25 +42,23 @@ Specialist overrides activate when the task type matches. The agent stays on its
 ## Agent Frontmatter (per .md file)
 
 ```yaml
-# brooks.md / hightower.md / jobs.md
-model: ollama-cloud/gpt-5.4
+# brooks.md / hightower.md
+model: openai/gpt-5.4
+
+# jobs.md
+model: ollama-cloud/kimi-k2.5
 
 # scout.md
-model: ollama-cloud/nemotron-3-super:cloud
-model_tiny: ollama-cloud/gpt-5.4-nano
+model: ollama-cloud/nemotron-3-super
 
-# woz.md
-model: ollama-cloud/gpt-5.4-mini
-specialist_override: ollama-cloud/qwen3-coder-next:cloud
-specialist_tasks: [patch, feature, test_fix, codegen, repo_surgery]
+# woz.md / carmack.md
+model: ollama-cloud/qwen3-coder-next
 
-# bellard.md
-model: ollama-cloud/gpt-5.4-mini
-specialist_override: ollama-cloud/qwen3-coder-next:cloud
-specialist_tasks: [perf_patch, hotpath_fix, benchmark_refactor]
+# bellard.md / fowler.md / knuth.md
+model: ollama-cloud/glm-5.1
 
-# carmack.md / knuth.md / fowler.md / pike.md
-model: ollama-cloud/gpt-5.4-mini
+# pike.md
+model: openai/gpt-5.4-mini
 ```
 
 ## Cross-Runtime Mapping
@@ -110,7 +106,7 @@ The following behaviors MUST be identical across both runtimes:
 | ollama-cloud/nemotron-3-super:cloud | Fast wide-context scanning for recon; internal benchmark: 1.63s avg latency |
 | ollama-cloud/qwen3-coder-next:cloud | Coding specialist — 262K context, optimized for codegen and repo surgery  |
 | ollama-cloud/gpt-5.4-nano          | Cheapest for tiny lookups, path checks, and prefiltering                   |
-| ollama-cloud/kimi-k2.5             | (Retired from primary — Jobs now uses gpt-5.4 for precision over speed)  |
+| ollama-cloud/kimi-k2.5             | Jobs primary — fast intent gating and scope control                      |
 | ollama-cloud/glm-5.1               | Universal fallback — instruction-following, always-on                      |
 
 > **Note:** The 1.63s latency claim for Nemotron is internal benchmark data, not a generally established property. Validate with per-agent harness evals before locking.

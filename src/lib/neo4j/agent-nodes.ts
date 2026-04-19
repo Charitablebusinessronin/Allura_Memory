@@ -35,6 +35,8 @@ export interface AgentNode {
   role: string;
   /** Model identifier (e.g., 'ollama-cloud/glm-5.1') */
   model: string;
+  /** Fallback model identifier (e.g., 'ollama-cloud/glm-5.1') */
+  fallback_model: string;
   /** Tenant isolation identifier (e.g., 'allura-default') */
   group_id: string;
   /** Creation timestamp */
@@ -65,6 +67,8 @@ export interface AgentInsert {
   role: string;
   /** Required: Model identifier */
   model: string;
+  /** Optional: Fallback model identifier (defaults to 'ollama-cloud/glm-5.1') */
+  fallback_model?: string;
   /** Required: Tenant isolation identifier */
   group_id: string;
   /** Optional: Initial confidence (defaults to 0.0) */
@@ -253,6 +257,7 @@ function neo4jToAgentNode(record: Record<string, unknown>): AgentNode {
     name: unknown;
     role: unknown;
     model: unknown;
+    fallback_model: unknown;
     group_id: unknown;
     created_at: unknown;
     last_active: unknown;
@@ -269,6 +274,7 @@ function neo4jToAgentNode(record: Record<string, unknown>): AgentNode {
     name: p.name as string,
     role: p.role as string,
     model: p.model as string,
+    fallback_model: (p.fallback_model as string) ?? "ollama-cloud/glm-5.1",
     group_id: p.group_id as string,
     created_at: convertDate(p.created_at) as Date,
     last_active: convertDate(p.last_active) as Date,
@@ -316,6 +322,7 @@ export async function createAgentNode(agent: AgentInsert): Promise<AgentNode> {
         name: $name,
         role: $role,
         model: $model,
+        fallback_model: $fallback_model,
         group_id: $group_id,
         created_at: datetime(),
         last_active: datetime(),
@@ -333,6 +340,7 @@ export async function createAgentNode(agent: AgentInsert): Promise<AgentNode> {
       name: agent.name,
       role: agent.role,
       model: agent.model,
+      fallback_model: agent.fallback_model ?? "ollama-cloud/glm-5.1",
       group_id: agent.group_id,
       confidence: agent.confidence ?? 0.0,
       status: agent.status ?? "active",

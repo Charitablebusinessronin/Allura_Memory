@@ -7,7 +7,7 @@
  *   3. `.claude/rules/agent-routing.md` routing rules (8 different personas)
  *
  * The canonical set uses the persona names from `.opencode/agent/` as the
- * source of truth, supplemented by script-only agents (dijkstra, knuth) that
+ * source of truth, supplemented by script-only agents (carmack, knuth) that
  * already have executable scripts at `scripts/agents/`.
  *
  * CI routing replaces the static bash `case` statement in
@@ -86,6 +86,17 @@ export interface AgentManifestEntry {
    */
   modelBackend?: ModelBackend;
   /**
+   * Primary model identifier (e.g., 'ollama-cloud/qwen3-coder-next').
+   * Used for graph inserts and routing decisions.
+   */
+  primaryModel?: string;
+  /**
+   * Fallback model identifier (e.g., 'ollama-cloud/glm-5.1').
+   * Used when primary model is unavailable. Persisted in graph for
+   * routing resilience.
+   */
+  fallbackModel?: string;
+  /**
    * Authentication method for model backend.
    * "OPENCODE_CONFIG" = OpenCode manages auth internally via opencode.json.
    */
@@ -106,6 +117,8 @@ const manifestEntries: Array<AgentManifestEntry> = [
       { event: "issues", action: "opened" },
       { event: "issues", action: "edited" },
     ],
+    primaryModel: "openai/gpt-5.4",
+    fallbackModel: "ollama-cloud/kimi-k2.5",
     description:
       "Architectural integrity owner. Final sign-off on architecture and routing policy. Routes issue events for triage.",
   },
@@ -115,6 +128,8 @@ const manifestEntries: Array<AgentManifestEntry> = [
     role: "Intent Gate",
     category: "primary",
     ciRoutes: [],
+    primaryModel: "ollama-cloud/kimi-k2.5",
+    fallbackModel: "openai/gpt-5.4",
     description:
       "Converts requests into crisp objectives, constraints, and acceptance criteria. No execution until intent is signed off.",
   },
@@ -131,8 +146,10 @@ const manifestEntries: Array<AgentManifestEntry> = [
       { event: "pull_request", action: "synchronize" },
       { event: "pull_request", action: "reopened" },
     ],
+    primaryModel: "openai/gpt-5.4-mini",
+    fallbackModel: "ollama-cloud/kimi-k2.5",
     description:
-      "Reviews surface area, concurrency hazards, and API ergonomics. Detects breaking changes, naming violations, undocumented params. Routes pull_request events alongside dijkstra.",
+      "Reviews surface area, concurrency hazards, and API ergonomics. Detects breaking changes, naming violations, undocumented params. Routes pull_request events alongside carmack.",
   },
   {
     id: "fowler",
@@ -143,6 +160,8 @@ const manifestEntries: Array<AgentManifestEntry> = [
     ciRoutes: [
       { event: "push", action: "*" },
     ],
+    primaryModel: "ollama-cloud/glm-5.1",
+    fallbackModel: "ollama-cloud/qwen3-coder-next",
     description:
       "Ensures changes are incremental, reversible, and don't add debt. Static analysis: complexity, duplication, debt scan, gate verdict. Routes push events for refactor review.",
   },
@@ -152,6 +171,8 @@ const manifestEntries: Array<AgentManifestEntry> = [
     role: "Recon",
     category: "core",
     ciRoutes: [],
+    primaryModel: "ollama-cloud/nemotron-3-super",
+    fallbackModel: "openai/gpt-5.4-mini",
     description:
       "Fast recon and discovery agent. Scans repos, finds paths, patterns, and configs. Produces Scout Report so nobody guesses.",
   },
@@ -163,6 +184,8 @@ const manifestEntries: Array<AgentManifestEntry> = [
     role: "Builder",
     category: "code",
     ciRoutes: [],
+    primaryModel: "ollama-cloud/qwen3-coder-next",
+    fallbackModel: "ollama-cloud/glm-5.1",
     description:
       "Primary builder. Implements the Brooks plan with minimal ceremony. Ships working code, tests, and clean diffs.",
   },
@@ -172,22 +195,32 @@ const manifestEntries: Array<AgentManifestEntry> = [
     role: "Perf Diagnostics",
     category: "code",
     ciRoutes: [],
+    primaryModel: "ollama-cloud/glm-5.1",
+    fallbackModel: "ollama-cloud/qwen3-coder-next",
     description:
       "Performance + deep diagnostics specialist. Measurement-first approach. Only invoked when speed, correctness under constraints, or low-level weirdness matters.",
   },
   {
-    id: "dijkstra",
-    persona: "Edsger Dijkstra",
-    role: "Code Review",
+    id: "carmack",
+    persona: "John Carmack",
+    role: "Performance Specialist",
     category: "code",
-    scriptPath: "scripts/agents/dijkstra-review.ts",
-    ciRoutes: [
-      { event: "pull_request", action: "opened" },
-      { event: "pull_request", action: "synchronize" },
-      { event: "pull_request", action: "reopened" },
-    ],
+    ciRoutes: [],
+    primaryModel: "ollama-cloud/qwen3-coder-next",
+    fallbackModel: "ollama-cloud/glm-5.1",
     description:
-      "Code review specialist. Structural correctness, simplicity, elegant solutions. Routes pull_request events for review.",
+      "Performance specialist. Optimization, API design, latency. Low-level correctness under constraints.",
+  },
+  {
+    id: "hightower",
+    persona: "Kelsey Hightower",
+    role: "DevOps Specialist",
+    category: "core",
+    ciRoutes: [],
+    primaryModel: "openai/gpt-5.4",
+    fallbackModel: "ollama-cloud/kimi-k2.5",
+    description:
+      "CI/CD, infrastructure, deployment, observability. If it can't be deployed in one command, it's not done.",
   },
   {
     id: "knuth",
@@ -198,6 +231,8 @@ const manifestEntries: Array<AgentManifestEntry> = [
     ciRoutes: [
       { event: "push", action: "*" },
     ],
+    primaryModel: "ollama-cloud/glm-5.1",
+    fallbackModel: "openai/gpt-5.4-mini",
     description:
       "Deep analysis specialist. Literate programming, algorithmic complexity, and complexity analysis. Routes push events for analysis.",
   },

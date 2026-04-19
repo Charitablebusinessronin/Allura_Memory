@@ -211,7 +211,8 @@ Design, validate, and document OpenClaw platform configurations. Reference spec:
     notion: {
       command: "npx",
       args: ["-y", "@modelcontextprotocol/server-notion"],
-      env: { NOTION_API_KEY: "$SECRET_NOTION_KEY" }
+      // Auth handled by remote MCP service — no API key needed locally
+      env: { NOTION_DATABASE_ID: "$NOTION_DATABASE_ID" }
     }
   },
 
