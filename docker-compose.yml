@@ -109,6 +109,8 @@ services:
       dockerfile: Dockerfile.mcp
     container_name: allura-memory-mcp
     restart: unless-stopped
+    ports:
+      - "3201:3201"
     depends_on:
       postgres:
         condition: service_healthy
