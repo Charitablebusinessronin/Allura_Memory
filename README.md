@@ -1,4 +1,4 @@
-![Allura Memory Logo](./public/readme/logo-v2.png)
+# Allura Memory
 
 ## Memory That Shows Its Work
 
@@ -25,11 +25,13 @@ For AI builders and technical teams who want memory they can inspect and manage,
 
 Allura’s v2 direction is warmer, softer, and more magnetic than a typical infrastructure product while still grounded in clarity and control.
 
-![Allura homepage direction options](./public/readme/readme-homepage-options.png)
+**Design Principles:**
+- **Warmth over cold utility** — softer palettes, rounded corners, breathing room
+- **Magnetic clarity** — information hierarchy that draws the eye without shouting
+- **Considered restraint** — every element earns its place; no decorative excess
+- **Grounded sophistication** — professional without being sterile; inviting without being casual
 
-This is not “magic AI.” It is a more legible memory system with a more considered interface.
-
-![Allura brand system direction](./public/readme/readme-brand-system.png)
+This is not "magic AI." It is a more legible memory system with a more considered interface.
 
 ---
 
@@ -59,7 +61,9 @@ This keeps Allura grounded in inspectability rather than black-box automation.
 
 ### Architecture Overview
 
-![Allura Memory Architecture](./public/readme/architecture-diagram.png)
+**Episodic Layer (PostgreSQL)** → Append-only event history, high-volume traces, audit trail by design  
+**Semantic Layer (Neo4j)** → Curated knowledge, versioned via SUPERSEDES, promotion-gated writes  
+**Vector Layer (RuVector)** → 768d embeddings for semantic search, hybrid ANN + BM25 ranking
 
 ---
 
@@ -217,8 +221,6 @@ It does **not** mean the project is currently SOC 2 certified.
 ---
 
 ## How It Works
-
-![Allura Memory Infographic](./public/readme/infographic.png)
 
 ### Memory Flow
 
