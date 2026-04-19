@@ -17,9 +17,11 @@ const agentRegistry: Record<string, { name: string; aliases?: string[] }> = {
   "scout": { name: "Scout", aliases: ["recon", "discovery"] },
   "woz": { name: "Steve Wozniak", aliases: ["builder"] },
   "bellard": { name: "Fabrice Bellard", aliases: ["perf", "diagnostics"] },
-  "dijkstra": { name: "Edsger Dijkstra", aliases: ["reviewer", "correctness"] },
+  "carmack": { name: "John Carmack", aliases: ["reviewer", "correctness", "perf", "optimization"] },
+  "hightower": { name: "Kelsey Hightower", aliases: ["devops", "infrastructure"] },
   "knuth": { name: "Donald Knuth", aliases: ["deep-worker", "algorithm"] },
   // Legacy aliases preserved for backward compatibility with older events
+  "dijkstra": { name: "Edsger Dijkstra", aliases: ["reviewer", "correctness"] },
   "turing": { name: "Alan Turing", aliases: ["architect"] },
    "berners-lee": { name: "Tim Berners-Lee", aliases: [] },
   "hopper": { name: "Grace Hopper", aliases: ["explorer"] },
@@ -48,7 +50,7 @@ const aliasLookup = Object.entries(agentRegistry).reduce<Map<string, CanonicalAg
 /** Canonical agent IDs from the AGENT_MANIFEST — the first 10 are active. */
 const MANIFEST_AGENT_IDS = [
   "brooks", "jobs", "ralph", "pike", "fowler",
-  "scout", "woz", "bellard", "dijkstra", "knuth",
+  "scout", "woz", "bellard", "carmack", "hightower", "knuth",
 ] as const;
 
 /** Legacy agent IDs — still resolvable but not in active manifest. */
