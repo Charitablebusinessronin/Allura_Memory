@@ -11,8 +11,11 @@
 # =============================================================================
 
 services:
+  # RuVector-Postgres — Primary PostgreSQL with vector/GNN/attention extension
+  # https://github.com/Charitablebusinessronin/RuVector
+  # Replaces stock postgres:16 + separate ruvector container (ADR 2026-04-19)
   postgres:
-    image: postgres:16
+    image: ruvnet/ruvector-postgres:latest
     container_name: knowledge-postgres
     restart: unless-stopped
     environment:
