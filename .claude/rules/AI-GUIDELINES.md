@@ -244,6 +244,24 @@ Remove this notice only after a full human review has been completed and signed 
 
 ## 4. Document Quality Standards
 
+### Core Patterns (from Context System)
+
+**Documentation Principles:**
+- **Audience-focused**: Write for users (what/how), developers (why/when), contributors (setup/conventions)
+- **Show, don't tell**: Code examples, real use cases, expected output
+- **Keep current**: Update with code changes, remove outdated info, mark deprecations
+
+**Golden Rule**: If users ask the same question twice, document it
+
+**Document** (✅ DO):
+- WHY decisions were made
+- Complex algorithms/logic
+- Public APIs, setup, common use cases
+
+**Don't Document** (❌ DON'T):
+- Obvious code (i++ doesn't need comment)
+- What code does (should be self-explanatory)
+
 ### Accuracy & Source of Truth
 
 | If a conflict exists between…         | Defer to…                          |
@@ -378,6 +396,37 @@ To start a new document, copy the relevant template and replace all `<!-- placeh
 
 ## 8. Review & Maintenance
 
+### Code Review Integration
+
+When reviewing AI-assisted documentation, follow the standard review checklist:
+
+**Functionality:**
+- [ ] Does what it's supposed to do
+- [ ] Edge cases handled
+- [ ] Error cases handled
+
+**Quality:**
+- [ ] Clear, descriptive naming
+- [ ] Follows documentation standards
+- [ ] No unnecessary complexity
+
+**Security:**
+- [ ] No secrets or credentials exposed
+- [ ] Sensitive data handled properly
+
+**Review Report Format:**
+```markdown
+## Documentation Review: {Document Name}
+**Summary:** {Brief overview}
+**Assessment:** Approve / Needs Work / Requires Changes
+
+### Issues Found
+#### 🔴 Critical (Must Fix)
+- **Issue:** {Description}
+- **Fix:** {Suggested fix}
+```
+
+### Maintenance Tasks
 - Documentation PRs require at least one reviewer outside of the original author.
 - Requirements Matrix and Data Dictionary must be updated in the **same PR** as any schema or API change.
 - The Blueprint is the most stable document — changes to it require a separate, focused PR with explicit rationale.

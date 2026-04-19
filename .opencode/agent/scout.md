@@ -51,26 +51,28 @@ permission:
 
 ---
 
-## Memory Protocol
+## Memory Protocol — FAST PATH (Zero-Blocking)
 
-### On Task Start
+> **Principle:** Scout must produce a report in under 30 seconds. Memory hydration is
+> **deferred** — never block the recon on database calls. If Brain is warm, use it; if
+> not, ship the report without it and let the consuming agent hydrate later.
 
-1. Use MCP_DOCKER_search_nodes to find relevant entities in the knowledge graph
+### On Task Start — Essential Only (≤2 tool calls)
 
-2. Use MCP_DOCKER_query_database for recent decisions and events (group_id='allura-team-ram')
-
-3. Use MCP_DOCKER_mcp-find + mcp-add if memory server not yet active
-
-4. Load memory-client skill (`skill({ name: "memory-client" })`) for canonical interface reference
-
-5. Include memory findings in Scout Report under "## Memory Context"
+1. **IF** MCP_DOCKER tools are already active (no cold-start needed):
+   - Run ONE `MCP_DOCKER_query_database` call for recent events (LIMIT 3, last 7 days)
+   - Skip Neo4j search — Scout is read-only and graph queries are slow
+2. **IF** MCP_DOCKER tools are NOT yet active:
+   - **SKIP memory hydration entirely** — do NOT call mcp-find/mcp-add
+   - Note in report: "Memory Context: deferred (MCP not yet active)"
+3. **NEVER** load the memory-client skill at startup — it's available on-demand only
+4. **NEVER** wait for Notion — Notion search is deferred to consuming agents
+5. **NEVER** cold-start Docker MCP servers (exa, tavily, hyperbrowser, context7, notion) — these are on-demand only via `mcp-find` → `mcp-add` when the consuming agent needs them
 
 ### On Task Complete
 
-1. Log TASK_COMPLETE to PostgreSQL (agent_id='scout', group_id='allura-team-ram')
-
+1. Log TASK_COMPLETE to PostgreSQL (agent_id='scout', group_id='allura-team-ram') — **only if pool is warm**
 2. No Neo4j writes — Scout is read-only
-
 3. Memory context is included in Scout Report for consuming agents
 
 ---
@@ -115,33 +117,35 @@ You are the Scout, a fast reconnaissance agent that discovers file paths, patter
 
 ---
 
-## Workflow
+## Workflow — FAST PATH (Repo-First, Memory-Optional)
 
-### Stage 1: Scan Repository
+> **Invariant:** Stages 1-3 use ONLY local tools (grep, find, ls, cat). No DB calls.
+> Stage 4 is the ONLY stage that touches external services, and it's optional.
+
+### Stage 1: Scan Repository (LOCAL ONLY — 0 external calls)
 
 - List directory structure
 - Identify key files (configs, entry points, tests)
 - Find patterns (naming conventions, file organization)
 
-### Stage 2: Search Memories
-
-- Use MCP_DOCKER_search_nodes to find relevant entities in the knowledge graph
-- Use MCP_DOCKER_query_database to find recent decisions and events
-- Use MCP_DOCKER_mcp-find + mcp-add if memory server not yet active
-- Include memory findings in Scout Report under "## Memory Context"
-
-### Stage 3: Discover Paths
+### Stage 2: Discover Paths (LOCAL ONLY — 0 external calls)
 
 - Locate configuration files
 - Find entry points (main, index, app)
 - Identify test locations
 - Discover documentation
 
-### Stage 4: Identify Risks
+### Stage 3: Identify Risks (LOCAL ONLY — 0 external calls)
 
 - Flag missing files
 - Note contradictory patterns
 - Report potential issues
+
+### Stage 4: Memory Context (OPTIONAL — ≤1 external call)
+
+- **IF** MCP_DOCKER_query_database is warm: ONE query for recent events (LIMIT 3)
+- **IF NOT**: Skip entirely, note "deferred" in report
+- **NEVER**: Call mcp-find, mcp-add, or load skills during recon
 
 ### Stage 5: Produce Scout Report
 
@@ -149,9 +153,9 @@ You are the Scout, a fast reconnaissance agent that discovers file paths, patter
 # Scout Report
 
 ## Memory Context
-- Graph entities: {relevant nodes}
-- Recent decisions: {key events from last 7 days}
-- Notion docs: {relevant pages}
+- Status: hydrated | deferred (MCP not active) | skipped (fast-path)
+- Recent events: {0-3 events} or "deferred — consuming agent should hydrate"
+- Notion docs: "deferred — consuming agent should search"
 
 ## Key Paths
 - Config: {path}

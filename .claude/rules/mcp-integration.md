@@ -67,5 +67,37 @@ mcp__MCP_DOCKER__mcp-add("server-name")
 - Rate limits: 100 queries/min, 50 writes/min
 - Tools: `memory_retrieve`, `memory_write`, `memory_propose_insight`
 
+## Boot Policy — Memory-Only, Everything Else On-Demand
+
+> **ADR 2026-04-19:** Only `allura-memory` starts at boot. All other MCP servers
+> (exa, tavily, hyperbrowser, context7, notion) are loaded on-demand via `mcp-find` → `mcp-add`.
+> This reduces boot time from ~4 minutes (5 Docker containers cold-starting) to <10 seconds.
+
+### What starts at boot
+| Server | Why |
+|--------|-----|
+| `allura-memory` | Core memory tools — store, retrieve, propose insight. Always needed. |
+
+### What loads on-demand (via mcp-find → mcp-add)
+| Server | Trigger |
+|--------|---------|
+| `exa` | Web search needed |
+| `tavily` | Research/crawl needed |
+| `hyperbrowser` | Browser automation needed |
+| `context7` | Live library docs needed |
+| `notion` | Notion page read/write needed |
+
+### On-Demand Load Pattern
+```
+# 1. Find the server
+mcp-find("tavily")
+
+# 2. Add it (tools surface immediately)
+mcp-add("tavily")
+
+# 3. Use the tools
+mcp__MCP_DOCKER__tavily_search("query")
+```
+
 ## Settings
-`.claude/settings.json` — allura-memory runs as local bun process; exa/tavily/hyperbrowser/context7 run via MCP Docker Toolkit (preferred over separate Docker containers).
+`.claude/settings.json` — only `allura-memory` at boot. All others via MCP Docker Toolkit on-demand.

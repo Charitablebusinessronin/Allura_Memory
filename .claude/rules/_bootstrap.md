@@ -13,6 +13,23 @@ User: Sabir Asheed | Domain: Allura Agent-OS
 - Agent Primitives: 4/12 green | 5/12 in-progress | 3/12 red
 - memory() wrapper: PENDING — primary write-back blocker
 
+## Startup Protocol — FAST PATH (≤2 tool calls, no blocking)
+
+> **Invariant:** Startup must complete in under 30 seconds. All memory hydration is
+> deferred to on-demand commands. Scout does NOT hydrate at startup.
+
+### Essential (run at boot)
+1. ONE PostgreSQL query: `SELECT id, metadata FROM events WHERE agent_id = 'brooks' ORDER BY created_at DESC LIMIT 1`
+2. Read `BLUEPRINT.md` first 40 lines (local file, instant)
+
+### Deferred (run ONLY when a specific command is invoked)
+- Neo4j queries → only on `CA` / `VA` commands
+- Notion search → only on `BP` / `CR` commands
+- Memory-client skill → only when explicitly needed
+- MCP_DOCKER mcp-find/mcp-add → only when a tool is missing
+- Scout hydration → only when Scout is dispatched for recon
+- exa / tavily / hyperbrowser / context7 / notion → **NEVER at boot**; load via `mcp-find` → `mcp-add` on-demand
+
 ## On-Demand Load Map
 | Command        | Load file                                   |
 |----------------|---------------------------------------------|

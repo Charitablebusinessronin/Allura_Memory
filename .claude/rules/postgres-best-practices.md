@@ -32,7 +32,42 @@ const result = await pool.query(
 );
 ```
 
+## Security Patterns
+
+**NEVER** expose sensitive information:
+- Don't log database credentials or connection strings
+- Don't expose internal error details to users
+- Use environment variables for PostgreSQL credentials
+- Use parameterized queries (prevent SQL injection)
+- Validate and sanitize all user input
+- Follow principle of least privilege
+
+**Configuration Pattern:**
+- Never hardcode secrets or credentials
+- Provide sensible defaults
+- Validate required configuration on startup
+- Document all configuration options
+- Use different configs for dev/staging/production
+
+## Error Handling
+
+**ALWAYS** handle errors gracefully:
+- Catch specific PostgreSQL errors, not generic ones
+- Log errors with context (but not credentials)
+- Return meaningful error messages
+- Don't expose internal implementation details
+
+## Logging Pattern
+
+**USE** consistent logging levels:
+- **Debug**: Detailed query information (development only)
+- **Info**: Connection events and milestones
+- **Warning**: Potential issues that don't stop execution
+- **Error**: Query failures and exceptions
+
 ## Invariants
 - ✅ group_id on every query
 - ✅ Append-only events
 - ✅ Validate with Zod at boundaries
+- ✅ Parameterized queries only
+- ✅ Environment variables for credentials

@@ -61,6 +61,14 @@ export type {
 // Backward compatibility function exports
 export { write, relate, read } from "./writer";
 
+// Traceable Memory (Story 1.2) - TraceMiddleware integration
+export {
+  createTraceableMemory,
+  traceableMemory,
+  type TraceableMemoryConfig,
+  type TraceableMemoryAPI,
+} from "./traceable-memory";
+
 // Convenience re-exports
 export {
   buildTopicKey,

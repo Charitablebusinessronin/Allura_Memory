@@ -44,63 +44,6 @@
         "src/mcp/memory-server-canonical.ts"
       ],
       "cwd": "/home/ronin704/Projects/allura memory"
-    },
-    "exa": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "mcp/exa"
-      ],
-      "env": {
-        "EXA_API_KEY": "${EXA_API_KEY}"
-      }
-    },
-    "tavily": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "mcp/tavily"
-      ],
-      "env": {
-        "TAVILY_API_TOKEN": "${TAVILY_API_TOKEN}"
-      }
-    },
-    "hyperbrowser": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "mcp/hyperbrowser"
-      ],
-      "env": {
-        "HYPERBROWSER_API_KEY": "${HYPERBROWSER_API_KEY}"
-      }
-    },
-    "context7": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "mcp/context7"
-      ]
-    },
-    "notion": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "mcp/notion"
-      ],
-      "env": {
-        "NOTION_INTERNAL_INTEGRATION_TOKEN": "${NOTION_TOKEN}"
-      }
     }
   },
   "commands": {

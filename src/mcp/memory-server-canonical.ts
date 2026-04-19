@@ -23,18 +23,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js"
 
-import {
-  memory_add,
-  memory_search,
-  memory_get,
-  memory_list,
-  memory_delete,
-  memory_update,
-  memory_promote,
-  memory_export,
-  memory_restore,
-  memory_list_deleted,
-} from "./canonical-tools.js"
+import { coordinator } from "@/lib/memory/memory-coordinator"
 
 // Server setup
 const server = new Server(
@@ -365,132 +354,47 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   }
 })
 
-// Tool execution
+// Tool execution — routed through MemoryCoordinator (F-001)
+// The coordinator validates group_id, wraps responses in the standard
+// envelope (F-002), and logs policy decisions. canonical-tools remains
+// the data layer — the coordinator is a thin policy layer above it.
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params
 
   try {
+    let envelope: { data: unknown; meta: unknown; error: { code: number; message: string; details?: unknown } | null }
+
     switch (name) {
-      case "memory_add": {
-        const result = await memory_add(args as any)
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(result, null, 2),
-            },
-          ],
-        }
-      }
-
-      case "memory_search": {
-        const result = await memory_search(args as any)
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(result, null, 2),
-            },
-          ],
-        }
-      }
-
-      case "memory_get": {
-        const result = await memory_get(args as any)
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(result, null, 2),
-            },
-          ],
-        }
-      }
-
-      case "memory_list": {
-        const result = await memory_list(args as any)
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(result, null, 2),
-            },
-          ],
-        }
-      }
-
-      case "memory_delete": {
-        const result = await memory_delete(args as any)
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(result, null, 2),
-            },
-          ],
-        }
-      }
-
-      case "memory_update": {
-        const result = await memory_update(args as any)
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(result, null, 2),
-            },
-          ],
-        }
-      }
-
-      case "memory_promote": {
-        const result = await memory_promote(args as any)
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(result, null, 2),
-            },
-          ],
-        }
-      }
-
-      case "memory_export": {
-        const result = await memory_export(args as any)
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(result, null, 2),
-            },
-          ],
-        }
-      }
-
-      case "memory_restore": {
-        const result = await memory_restore(args as any)
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(result, null, 2),
-            },
-          ],
-        }
-      }
-
-      case "memory_list_deleted": {
-        const result = await memory_list_deleted(args as any)
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(result, null, 2),
-            },
-          ],
-        }
-      }
-
+      case "memory_add":
+        envelope = await coordinator.memory_add(args as any)
+        break
+      case "memory_search":
+        envelope = await coordinator.memory_search(args as any)
+        break
+      case "memory_get":
+        envelope = await coordinator.memory_get(args as any)
+        break
+      case "memory_list":
+        envelope = await coordinator.memory_list(args as any)
+        break
+      case "memory_delete":
+        envelope = await coordinator.memory_delete(args as any)
+        break
+      case "memory_update":
+        envelope = await coordinator.memory_update(args as any)
+        break
+      case "memory_promote":
+        envelope = await coordinator.memory_promote(args as any)
+        break
+      case "memory_export":
+        envelope = await coordinator.memory_export(args as any)
+        break
+      case "memory_restore":
+        envelope = await coordinator.memory_restore(args as any)
+        break
+      case "memory_list_deleted":
+        envelope = await coordinator.memory_list_deleted(args as any)
+        break
       default:
         return {
           content: [
@@ -502,7 +406,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           isError: true,
         }
     }
+
+    // The envelope already contains { data, meta, error } — serialize directly.
+    // isError flag is set when the envelope carries an error payload.
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(envelope, null, 2),
+        },
+      ],
+      isError: envelope.error !== null,
+    }
   } catch (error) {
+    // Catch-all for truly unexpected errors (coordinator itself should never throw,
+    // but we keep this as a safety net).
     const errorMessage = error instanceof Error ? error.message : String(error)
     return {
       content: [

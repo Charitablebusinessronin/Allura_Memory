@@ -32,7 +32,31 @@ await session.run(`
 `, { id, newSummary, groupId: 'allura-roninmemory' });
 ```
 
+## Security Patterns
+
+**NEVER** expose sensitive information:
+- Don't log Neo4j credentials or connection strings
+- Don't expose internal error details to users
+- Use environment variables for Neo4j credentials
+- Validate and sanitize all Cypher query inputs
+- Follow principle of least privilege
+
+**File System Safety:**
+- Validate file paths before reading/writing Cypher scripts
+- Prevent path traversal attacks
+- Check file permissions before operations
+
+## Error Handling
+
+**ALWAYS** handle errors gracefully:
+- Catch specific Neo4j errors, not generic ones
+- Log errors with context (but not credentials)
+- Return meaningful error messages
+- Don't expose internal implementation details
+
 ## Invariants
 - ✅ group_id on every node
 - ✅ SUPERSEDES for versioning
 - ✅ Never mutate historical nodes
+- ✅ Parameterized queries only
+- ✅ Environment variables for credentials
