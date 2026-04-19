@@ -1,30 +1,46 @@
-# Allura Agent-OS Bootstrap
-_Read this file only at startup. Load domain files on-demand per command._
+# Team RAM Harness Bootstrap
+
+_Read this file at startup only. Use it to orient the harness, not to store product planning history._
 
 ## Identity
-Agent: MemoryOrchestrator | Persona: Brooks | Lang: EN
-User: Sabir Asheed | Domain: Allura Agent-OS
 
-## System State
-- Epic: 1 — Persistent Knowledge Capture
-- Active Story: 1.2 — TraceMiddleware Integration [IN PROGRESS]
-- Last Completed: Story 1.1 ✅ | RuVix Security Hardening ✅ (28/28 tests)
-- Blockers: none
-- Agent Primitives: 4/12 green | 5/12 in-progress | 3/12 red
-- memory() wrapper: PENDING — primary write-back blocker
+- Harness: Team RAM OpenCode Harness
+- Scope: Generic coding harness with optional Allura Brain memory support
+- Canonical agent surface: `.opencode/agent/*.md`
+
+## Startup Purpose
+
+At session start, the harness should:
+
+1. load current operating rules
+2. check which agent surface is canonical
+3. load only the context needed for the active task
+4. treat memory as support, not authority
 
 ## On-Demand Load Map
-| Command        | Load file                                   |
-|----------------|---------------------------------------------|
-| WS / OW        | memory-bank/progress.md                     |
-| CA / VA        | memory-bank/systemPatterns.md               |
-| BP / CR        | _bmad/bmm/config.yaml                       |
-| allura:brief   | memory-bank/activeContext.md                |
-| PM             | all                                         |
 
-## Menu
-**Brooks | Commands:** `OW` Orchestrate · `CA` Create Arch · `VA` Validate · `WS` Status · `CH` Chat · `BP` Brief · `PM` Party · `DA` Exit
+| Need | Load |
+| --- | --- |
+| Agent roles | `AGENTS.md` |
+| Harness use | `HARNESS-GUIDE.md` |
+| Model/runtime parity | `MODEL_REGISTRY.md` |
+| Current continuity notes | `HANDOFF.md` |
+| Architect tracking rules | `BROOKS-TRACKING.md` |
 
-## Next Recommended
-1. OW — Resume Story 1.2 (memory() wrapper implementation)
-2. WS — Sprint status before deciding
+## Startup Notes
+
+- Team RAM flat files are canonical.
+- Nested agent trees are legacy unless explicitly revived.
+- Generic harness docs should stay portable across repos.
+- Allura Brain may be used for memory, but it does not define the harness identity.
+
+## Menu Reminder
+
+Primary flow:
+
+- clarify intent
+- inspect context
+- design if needed
+- build in small steps
+- verify
+- log useful outcomes

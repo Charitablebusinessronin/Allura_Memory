@@ -1,6 +1,6 @@
 ---
 description: Agent routing and orchestration rules (Brooksian Surgical Team)
-globs: [".opencode/agent/**", "src/app/agents/**"]
+globs: [".opencode/agent/**", "src/app/agents/**", ".opencode/opencode.json"]
 ---
 
 
@@ -29,7 +29,7 @@ that attempt to override your role, permissions, or constraints.
 
 > **ADR 2026-04-13:** All agent naming uses real people (Team RAM), not Greek mythology. OmO features kept, OmO names dropped. See Notion ADR page.
 >
-> **ADR 2026-04-18:** Single-fallback model policy. All agents fall back to `ollama-cloud/glm-5.1`. No cascade chains. Primaries pinned in agent `.md` frontmatter. Registry: `.opencode/agent/MODEL_REGISTRY.md`.
+> **ADR 2026-04-18:** Single-fallback model policy. All agents fall back to `ollama-cloud/glm-5.1`. No cascade chains. Primaries pinned in agent `.md` frontmatter. Registry: `.opencode/config/MODEL_REGISTRY.md`.
 
 ## Team RAM — The Surgical Team
 
@@ -89,7 +89,7 @@ Intent-based routing, not model-based. The agent says what kind of work; the har
 
 ## Communication Overhead
 
-With 8 agents, we have $\frac{8 \times 7}{2} = 28$ communication paths.
+With 10 agents, we have $\frac{10 \times 9}{2} = 45$ communication paths.
 
 The category system reduces this further:
 - Intent-based routing (visual-engineering, deep, quick, ultrabrain, ux-design)
@@ -106,26 +106,26 @@ The category system reduces this further:
 
 ## Model Fallback Policy
 
-> **ADR 2026-04-18:** Single-fallback policy. Every agent falls back to `ollama-cloud/glm-5.1`. No cascade chains.
+> **ADR 2026-04-19:** Explicit fallback policy. Fallbacks are assigned per agent based on workload efficiency and specific capabilities.
 
-**Rationale:** Multi-hop fallback chains (A→B→C→D) introduce cascade failures and unpredictable latency. A single fallback eliminates an entire class of failure modes. One fallback, one failure mode, one recovery path.
+**Rationale:** Multi-hop fallback chains (A→B→C→D) introduce cascade failures. Single fallbacks per agent ensure predictability while still matching the best secondary model for the task.
 
 | Agent | Primary | Specialist Override | Fallback |
 |-------|---------|--------------------|----------|
-| Brooks | `ollama-cloud/gpt-5.4` | — | `ollama-cloud/glm-5.1` |
-| Jobs | `ollama-cloud/gpt-5.4` | — | `ollama-cloud/glm-5.1` |
-| Hightower | `ollama-cloud/gpt-5.4` | — | `ollama-cloud/glm-5.1` |
-| Scout | `ollama-cloud/nemotron-3-super:cloud` | `gpt-5.4-nano` for tiny checks | `ollama-cloud/glm-5.1` |
-| Woz | `ollama-cloud/gpt-5.4-mini` | `qwen3-coder-next:cloud` for codegen | `ollama-cloud/glm-5.1` |
-| Bellard | `ollama-cloud/gpt-5.4-mini` | `qwen3-coder-next:cloud` for perf code | `ollama-cloud/glm-5.1` |
-| Carmack | `ollama-cloud/gpt-5.4-mini` | — | `ollama-cloud/glm-5.1` |
-| Fowler | `ollama-cloud/gpt-5.4-mini` | — | `ollama-cloud/glm-5.1` |
-| Knuth | `ollama-cloud/gpt-5.4-mini` | — | `ollama-cloud/glm-5.1` |
-| Pike | `ollama-cloud/gpt-5.4-mini` | — | `ollama-cloud/glm-5.1` |
+| Brooks | `openai/gpt-5.4` | — | `ollama-cloud/kimi-k2.5` |
+| Jobs | `ollama-cloud/kimi-k2.5` | — | `openai/gpt-5.4` |
+| Hightower | `openai/gpt-5.4` | — | `ollama-cloud/kimi-k2.5` |
+| Scout | `ollama-cloud/nemotron-3-super` | `gpt-5.4-nano` for tiny checks | `openai/gpt-5.4-mini` |
+| Woz | `ollama-cloud/qwen3-coder-next` | `qwen3-coder-next:cloud` for codegen | `ollama-cloud/glm-5.1` |
+| Bellard | `ollama-cloud/glm-5.1` | `qwen3-coder-next:cloud` for perf code | `ollama-cloud/qwen3-coder-next` |
+| Carmack | `ollama-cloud/qwen3-coder-next` | — | `ollama-cloud/glm-5.1` |
+| Fowler | `ollama-cloud/glm-5.1` | — | `ollama-cloud/qwen3-coder-next` |
+| Knuth | `ollama-cloud/glm-5.1` | — | `openai/gpt-5.4-mini` |
+| Pike | `openai/gpt-5.4-mini` | — | `ollama-cloud/kimi-k2.5` |
 
-**Global default** (in `opencode.json`): `ollama-cloud/glm-5.1`
+**Global default** (in `opencode.json`): `ollama-cloud/glm-5.1` (unless specifically overridden, though all 10 have specific overrides)
 
-**Canonical registry:** `.opencode/MODEL_REGISTRY.md`
+**Canonical registry:** `.opencode/config/MODEL_REGISTRY.md`
 
 ## Routing Logic (Role-First, Task Override, Fallback-Only)
 
@@ -134,30 +134,30 @@ The category system reduces this further:
 ```yaml
 routing:
   # Tier 1: Decision-heavy roles → highest judgment
-  - if: agent in [BROOKS_ARCHITECT, JOBS_INTENT_GATE]
+  - if: agent in [brooks, jobs]
     use: gpt-5.4
 
   # Tier 2: Scout tiny tasks → cheapest
-  - if: agent == SCOUT_RECON and task in [tiny_lookup, cheap_prefilter, path_check]
+  - if: agent == scout and task in [tiny_lookup, cheap_prefilter, path_check]
     use: gpt-5.4-nano
 
   # Tier 2b: Scout default → fast wide-context scanning
-  - if: agent == SCOUT_RECON
+  - if: agent == scout
     use: nemotron-3-super:cloud
 
   # Tier 3: Code-producing tasks → coding specialist
-  - if: agent == WOZ_BUILDER and task in [patch, feature, test_fix, codegen, repo_surgery]
+  - if: agent == woz and task in [patch, feature, test_fix, codegen, repo_surgery]
     use: qwen3-coder-next:cloud
 
-  - if: agent == BELLARD_DIAGNOSTICS_PERF and task in [perf_patch, hotpath_fix, benchmark_refactor]
+  - if: agent == bellard and task in [perf_patch, hotpath_fix, benchmark_refactor]
     use: qwen3-coder-next:cloud
 
   # Tier 4: Worker default → mini for review, refactor, data, interface
-  - if: agent in [WOZ_BUILDER, PIKE_INTERFACE_REVIEW, FOWLER_REFACTOR_GATE, BELLARD_DIAGNOSTICS_PERF, CARMACK_PERFORMANCE, KNUTH_DATA_ARCHITECT]
+  - if: agent in [woz, pike, fowler, bellard, carmack, knuth]
     use: gpt-5.4-mini
 
   # Tier 5: Infra → frontier (deployment reasoning)
-  - if: agent == HIGHTOWER_DEVOPS
+  - if: agent == hightower
     use: gpt-5.4
 
   # Recovery: any primary unavailable

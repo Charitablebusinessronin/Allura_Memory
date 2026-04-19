@@ -1,110 +1,101 @@
 ---
-description: "Quick slash commands for Allura Memory surgical team"
-allowed-tools: ["Read", "Grep", "Bash", "mcp__MCP_DOCKER__*"]
+description: "Quick slash commands for the Team RAM OpenCode Harness"
+allowed-tools: ["Read", "Grep", "Bash"]
 ---
 
 # Quick Slash Commands
 
-Type these directly in your IDE for fast access to Allura Memory workflows.
+Type these directly in your IDE for fast access to common Team RAM harness workflows.
 
 ## Session Commands
 
-| Command          | Action        | Equivalent      |
-| ---------------- | ------------- | --------------- |
-| `/start`         | Start session | `start-session` |
-| `/end <summary>` | End session   | `end-session`   |
-| `/dash`          | Dashboard     | `dashboard`     |
+| Command | Action | Equivalent |
+| --- | --- | --- |
+| `/start` | Start session | `start-session` |
+| `/end <summary>` | End session | `end-session` |
+| `/dash` | Harness status | `dashboard` |
 
 ## Task Commands
 
-| Command        | Action         | Equivalent             |
-| -------------- | -------------- | ---------------------- |
-| `/task <desc>` | Create task    | `task-creator`         |
-| `/promote`     | HITL promotion | `curator-team-promote` |
-| `/review`      | Code review    | `code-review`          |
+| Command | Action | Equivalent |
+| --- | --- | --- |
+| `/task <desc>` | Create or shape a task | `task-creator` |
+| `/promote` | Human-in-the-loop promotion | `curator-team-promote` |
+| `/review` | Code review workflow | `code-review` |
 
-## Memory Commands
+## Memory and Coordination Commands
 
-| Command            | Action       | Equivalent                         |
-| ------------------ | ------------ | ---------------------------------- |
-| `/query <term>`    | Memory query | `mcp__MCP_DOCKER__search_memories` |
-| `/update <target>` | Quick update | `quick-update`                     |
-| `/party <task>`    | Party mode   | `party-mode`                       |
+| Command | Action | Equivalent |
+| --- | --- | --- |
+| `/query <term>` | Search memory (Allura Brain, if enabled) | `query` |
+| `/update <target>` | Log a short update | `quick-update` |
+| `/party <task>` | Parallel specialist collaboration | `party-mode` |
 
-## Skill Commands
+## Team RAM Agent Shortcuts
 
-| Command                      | Action              | Equivalent             |
-| ---------------------------- | ------------------- | ---------------------- |
-| `/create <name>`             | Create new skill    | `skill-create`         |
-| `/create <name> --improve`   | Improve skill       | `skill-create --improve` |
-| `/create <name> --eval`      | Eval skill          | `skill-create --eval`  |
-| `/create <name> --optimize`  | Optimize triggering | `skill-create --optimize` |
-| `/propose <skill>`           | Propose skill route | `skill-propose`        |
-| `/load <skill>`              | Load & execute      | `skill-load`           |
-
-## Agent Shortcuts
-
-| Shortcut                 | Agent  | Persona         |
-| ------------------------ | ------ | --------------- |
-| `@brooks`      | Brooks | Rich Hickey     |
-| `@brooks`      | Brooks | Gergely Orosz   |
-| `@woz`           | Woz    | Fabrice Bellard |
-| `@pike` | Pike   | Rob Pike        |
-| `@scout`           | Scout  | Julia Evans     |
-| `@scout`           | Scout  | Peter Bourgon   |
-| `@fowler`  | Fowler | Martin Fowler   |
-| `@ux`                    | UX     | Sara Soueidan   |
+| Shortcut | Agent | Role |
+| --- | --- | --- |
+| `@brooks` | Brooks | Architecture and orchestration |
+| `@jobs` | Jobs | Intent and scope |
+| `@woz` | Woz | Implementation |
+| `@scout` | Scout | Discovery |
+| `@pike` | Pike | Interface review |
+| `@fowler` | Fowler | Refactor gate |
+| `@bellard` | Bellard | Diagnostics |
+| `@carmack` | Carmack | Performance |
+| `@knuth` | Knuth | Data architecture |
+| `@hightower` | Hightower | Infra and deployment |
 
 ## Usage Examples
 
 ### Start a Session
 
-```bash
+```text
 /start
 ```
 
-Loads memory, verifies infrastructure, prepares tools.
+Hydrates context, checks readiness, and prepares tools.
 
 ### Create a Task
 
-```bash
+```text
 /task Add OAuth2 authentication with Google provider
 ```
 
-Generates structured task file with memory links.
+Creates a structured starting point for implementation.
 
-### Launch Party Mode
+### Launch Parallel Review or Build Support
 
-```bash
-/party Implement user dashboard with charts
+```text
+/party Investigate flaky integration tests and propose fixes
 ```
 
-Spawns all agents in parallel for maximum throughput.
+Uses multiple specialists when the task benefits from parallel viewpoints.
 
-### Quick Update
+### Log Progress
 
-```bash
-/update progress Added OAuth2 authentication
+```text
+/update progress Added OAuth2 callback validation and tests
 ```
 
-Updates Allura Brain and logs to events.
+Records a concise progress update. If Allura Brain is enabled, this also supports persistent session memory.
 
-### Query Memory
+### Query Prior Context
 
-```bash
+```text
 /query authentication patterns
 ```
 
-Searches Allura Brain for relevant insights.
+Searches memory for relevant prior fixes, decisions, and patterns. Requires Allura Brain or another memory backend.
 
-### Code Review
+### Run a Review
 
-```bash
+```text
 /review
 ```
 
-Launches Pike, Scout, and UX in parallel for review.
+Runs the review workflow using the appropriate skill and specialist path.
 
 ---
 
-**All commands work with Allura Brain integration.**
+Allura Brain integration is optional here: useful for persistent coding context, but not required for the harness to be valid.

@@ -68,7 +68,7 @@ If a plan disagrees with the running code, trust the running code until the plan
 
 ### Deprecated / Risky Assumptions
 
-- `project/project-context.md` was removed (2026-04-17); use `project-intelligence/technical-domain.md` instead
+- `project/project-context.md` is deprecated; prefer `project-intelligence/`
 - older docs may still reference root `postgres-init/` paths that are no longer the real bootstrap path
 - older docs may still assume admin/dashboard routes or MCP entrypoints that are no longer authoritative
 

@@ -15,13 +15,10 @@ This command enforces the 5-phase debugging protocol from `AGENTS.md` section 10
 
 ## Phase 0: Memory Hydration
 
-Search for previous debugging sessions on this issue:
+Search for previous debugging sessions on this issue (when memory is available):
 
-```javascript
-mcp__MCP_DOCKER__search_memories({ query: "$ARGUMENTS" })
-```
-
-If a prior session exists: read what was tried, what failed, and why.
+- Query memory backend for prior sessions on this issue
+- If a prior session exists: read what was tried, what failed, and why
 
 ---
 
@@ -33,12 +30,10 @@ Gather evidence before forming any hypothesis:
 2. Identify the exact file and line where the failure originates
 3. Check recent changes: `git log --oneline -10` and `git diff HEAD~5`
 4. Reproduce consistently: run the failing test in isolation
+
    ```bash
    bun vitest run -t "$ARGUMENTS"
    ```
-5. Identify what changed recently that could cause this
-
-**Do not form a hypothesis until you have evidence.**
 
 ---
 
@@ -56,7 +51,7 @@ Find working examples of similar code in the codebase:
 
 State one hypothesis. Test it:
 
-```
+```text
 Hypothesis: [specific, falsifiable claim]
 Test: [how to confirm or refute it]
 Result: [what the test showed]
@@ -79,27 +74,13 @@ Only after root cause is confirmed:
 
 ## Phase 5: Persist
 
-Log the debugging session to memory:
+Log the debugging session to memory (when available):
 
-```javascript
-mcp__MCP_DOCKER__create_entities({
-  entities: [{
-    name: "Debug Session " + new Date().toISOString(),
-    type: "Episode",
-    observations: [
-      "group_id: allura-roninmemory",
-      "issue: $ARGUMENTS",
-      "root_cause: [what caused it]",
-      "fix: [what fixed it]",
-      "lesson: [what to watch for]"
-    ]
-  }]
-})
-```
+- Event type: `debug_session`
+- Group ID: `<group_id>` (from project configuration)
+- Issue, root cause, fix, and lesson learned
 
----
-
-## Red Flags — STOP if you catch yourself thinking:
+## Red Flags — STOP if you catch yourself thinking
 
 - "Quick fix for now, investigate later"
 - "Let me just try changing X"

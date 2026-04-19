@@ -11,43 +11,27 @@ Propose a skill and see which specialist agent handles it.
 ## Examples
 
 ```bash
-/skill-propose code-review           # Code review specialist (@Pike)
-/skill-propose postgres-optimization # Database specialist (@Woz)
-/skill-propose system-design         # Architecture specialist (@Fowler)
+/skill-propose code-review           # Code review specialist (pike)
+/skill-propose context7              # Documentation and API lookup (scout)
+/skill-propose mcp-harness           # Harness orchestration (brooks)
 ```
 
 ## How It Works
 
 1. Harness looks up skill in registry
 2. Shows skill metadata: purpose, preferred executor, requirements
-3. Logs `SKILL_PROPOSED` event to PostgreSQL
+3. Logs `SKILL_PROPOSED` event (when memory logging is enabled)
 4. Shows next step: execute with `/skill-load`
 
-## Surgical Team
+## Team RAM Skill Routing
 
-| Skill                      | Executor     | Specialty                                    |
-| -------------------------- | ------------ | -------------------------------------------- |
-| `code-review`              | `@Pike`      | Read-only architecture review                |
-| `postgres-optimization`    | `@Knuth`     | Deep database work                           |
-| `system-design`            | `@Fowler`    | Strategic planning                           |
-| `frontend-design`          | `@ux`        | Accessibility-first design                   |
-| `deep-research`            | `@Scout`     | Documentation search                         |
-| `codebase-search`          | `@Scout`     | Pattern discovery                            |
-| `intelligence-sources`     | `@Scout`     | Intelligence source discovery and evaluation |
-| `multi-search`             | `@Scout`     | Multi-source research orchestration          |
-| `mcp-builder`              | `@Woz`       | MCP server construction                      |
-| `skill-creator`            | `@Brooks`    | Skill creation, improvement, eval, and description optimization |
-| `skill-creator --improve`  | `@Brooks`    | Improve existing skill with eval loop       |
-| `skill-creator --eval`     | `@Brooks`    | Run evals and benchmark skill performance   |
-| `skill-creator --optimize` | `@Brooks`    | Optimize skill description for triggering   |
-| `github`                   | `@Woz`       | GitHub operations                            |
-| `mcp-docker`               | `@Hightower` | Docker-based MCP management                  |
-| `mcp-docker-memory-system` | `@Knuth`     | Memory system MCP operations                 |
-| `memory-client`            | `@Brooks`    | Allura Brain memory operations               |
-| `systematic-debugging`     | `@Bellard`   | Systematic debugging with memory             |
-| `party-mode`               | `@Brooks`    | Parallel agent orchestration                 |
-| `task-creator`             | `@Brooks`    | Structured task creation with memory         |
-| `task-management`          | `@Brooks`    | Task tracking and management                 |
+| Skill | Executor | Specialty |
+| ----- | -------- | --------- |
+| `code-review` | `pike` | Read-only architecture review |
+| `context7` | `scout` | Documentation and API lookup |
+| `mcp-harness` | `brooks` | Harness orchestration |
+| `multi-search` | `scout` | Combined repo and web research |
+| `task-management` | `woz` | Task execution support |
 
 ## Result
 
@@ -61,4 +45,4 @@ Propose a skill and see which specialist agent handles it.
 }
 ```
 
-**Note:** Only Brooks routes to specific executors. See `/skill-load`.
+**Note:** The orchestrator routes skills to specific executors. See `/skill-load`.

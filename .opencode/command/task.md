@@ -56,7 +56,7 @@ User: /task Add OAuth2 authentication with Google provider
 Creates:
 - TASK-042: Add OAuth2 authentication
 - Links to memory insights
-- Assigns to Hephaestus
+- Assigns to Woz
 ```
 
 ---

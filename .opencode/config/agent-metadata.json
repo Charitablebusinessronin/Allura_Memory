@@ -1,148 +1,363 @@
 {
   "$schema": "https://opencode.ai/schemas/agent-metadata.json",
   "schema_version": "1.0.0",
-  "description": "Centralized metadata for Team RAM agents. This file stores metadata that is not part of the OpenCode agent schema but is needed for registry management, installation, and documentation.",
+  "description": "Centralized metadata for OpenAgents Control agents. This file stores metadata that is not part of the OpenCode agent schema but is needed for registry management, installation, and documentation.",
   "agents": {
-    "brooks": {
-      "id": "brooks",
-      "name": "Brooks",
+    "openagent": {
+      "id": "openagent",
+      "name": "OpenAgent",
       "category": "core",
       "type": "agent",
       "version": "1.0.0",
-      "author": "roninmemory",
-      "tags": ["orchestrator", "architect", "primary"],
+      "author": "opencode",
+      "tags": ["universal", "coordination", "primary"],
       "dependencies": [
+        "subagent:task-manager",
+        "subagent:batch-executor",
+        "subagent:documentation",
+        "subagent:contextscout",
+        "subagent:externalscout",
         "context:standards-code",
         "context:standards-docs",
         "context:standards-tests",
         "context:review-ref",
-        "context:delegation-ref"
+        "context:delegation-ref",
+        "context:external-libraries-workflow"
       ]
     },
-    "jobs": {
-      "id": "jobs",
-      "name": "Jobs",
+    "opencoder": {
+      "id": "opencoder",
+      "name": "OpenCoder",
       "category": "core",
       "type": "agent",
       "version": "1.0.0",
-      "author": "roninmemory",
-      "tags": ["intent-gate", "scope", "primary"],
+      "author": "opencode",
+      "tags": ["development", "coding", "implementation"],
       "dependencies": [
-        "context:standards-docs",
-        "context:review-ref"
-      ]
-    },
-    "woz": {
-      "id": "woz",
-      "name": "Woz",
-      "category": "code",
-      "type": "agent",
-      "version": "1.0.0",
-      "author": "roninmemory",
-      "tags": ["builder", "implementation", "coding"],
-      "dependencies": [
+        "subagent:documentation",
+        "subagent:task-manager",
+        "subagent:batch-executor",
+        "subagent:coder-agent",
+        "subagent:tester",
+        "subagent:reviewer",
+        "subagent:build-agent",
+        "subagent:contextscout",
+        "subagent:externalscout",
         "context:standards-code",
-        "context:standards-tests"
+        "context:task-delegation-basics",
+        "context:component-planning",
+        "context:external-libraries-workflow"
       ]
     },
-    "bellard": {
-      "id": "bellard",
-      "name": "Bellard",
-      "category": "code",
+    "repo-manager": {
+      "id": "repo-manager",
+      "name": "Repo Manager",
+      "category": "meta",
       "type": "agent",
       "version": "1.0.0",
-      "author": "roninmemory",
-      "tags": ["diagnostics", "performance", "measurement"],
+      "author": "opencode",
+      "tags": ["repository", "management", "orchestration"],
       "dependencies": [
-        "context:standards-code",
-        "context:standards-tests"
+        "subagent:task-manager",
+        "subagent:contextscout",
+        "subagent:documentation",
+        "subagent:coder-agent",
+        "subagent:tester",
+        "subagent:reviewer",
+        "subagent:build-agent"
       ]
     },
-    "carmack": {
-      "id": "carmack",
-      "name": "Carmack",
-      "category": "code",
+    "system-builder": {
+      "id": "system-builder",
+      "name": "System Builder",
+      "category": "meta",
       "type": "agent",
       "version": "1.0.0",
-      "author": "roninmemory",
-      "tags": ["performance", "optimization", "latency"],
+      "author": "opencode",
+      "tags": ["system-generation", "architecture", "scaffolding"],
       "dependencies": [
-        "context:standards-code"
+        "subagent:agent-generator",
+        "subagent:command-creator",
+        "subagent:domain-analyzer",
+        "subagent:context-organizer",
+        "subagent:workflow-designer"
       ]
     },
-    "fowler": {
-      "id": "fowler",
-      "name": "Fowler",
-      "category": "code",
+    "copywriter": {
+      "id": "copywriter",
+      "name": "Copywriter",
+      "category": "content",
       "type": "agent",
       "version": "1.0.0",
-      "author": "roninmemory",
-      "tags": ["refactor", "maintainability", "gate"],
+      "author": "opencode",
+      "tags": ["content", "marketing", "writing"],
       "dependencies": [
-        "context:standards-code",
-        "context:review-ref"
+        "context:standards-docs"
       ]
     },
-    "hightower": {
-      "id": "hightower",
-      "name": "Hightower",
-      "category": "infrastructure",
+    "technical-writer": {
+      "id": "technical-writer",
+      "name": "Technical Writer",
+      "category": "content",
       "type": "agent",
       "version": "1.0.0",
-      "author": "roninmemory",
-      "tags": ["devops", "infrastructure", "deployment"],
+      "author": "opencode",
+      "tags": ["documentation", "technical", "writing"],
       "dependencies": [
-        "context:standards-code"
+        "context:standards-docs"
       ]
     },
-    "knuth": {
-      "id": "knuth",
-      "name": "Knuth",
+    "data-analyst": {
+      "id": "data-analyst",
+      "name": "Data Analyst",
       "category": "data",
       "type": "agent",
       "version": "1.0.0",
-      "author": "roninmemory",
-      "tags": ["data-architect", "schema", "correctness"],
+      "author": "opencode",
+      "tags": ["data", "analysis", "visualization"],
+      "dependencies": []
+    },
+    "eval-runner": {
+      "id": "eval-runner",
+      "name": "Eval Runner",
+      "category": "testing",
+      "type": "agent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["testing", "evaluation", "quality"],
+      "dependencies": [
+        "context:standards-tests"
+      ]
+    },
+    "task-manager": {
+      "id": "task-manager",
+      "name": "TaskManager",
+      "category": "subagents/core",
+      "type": "subagent",
+      "version": "2.0.0",
+      "author": "opencode",
+      "tags": ["task-breakdown", "planning", "coordination"],
+      "dependencies": [
+        "context:task-delegation-basics"
+      ]
+    },
+    "batch-executor": {
+      "id": "batch-executor",
+      "name": "BatchExecutor",
+      "category": "subagents/core",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["parallel-execution", "batch-management", "coordination"],
+      "dependencies": [
+        "subagent:coder-agent",
+        "subagent:task-manager"
+      ]
+    },
+    "documentation": {
+      "id": "documentation",
+      "name": "DocWriter",
+      "category": "subagents/core",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["documentation", "writing"],
+      "dependencies": [
+        "context:standards-docs"
+      ]
+    },
+    "contextscout": {
+      "id": "contextscout",
+      "name": "ContextScout",
+      "category": "subagents/core",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["context", "discovery", "search"],
+      "dependencies": []
+    },
+    "externalscout": {
+      "id": "externalscout",
+      "name": "ExternalScout",
+      "category": "subagents/core",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["external", "documentation", "search"],
+      "dependencies": []
+    },
+    "context-manager": {
+      "id": "context-manager",
+      "name": "ContextManager",
+      "category": "subagents/core",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["context", "management", "organization"],
+      "dependencies": []
+    },
+    "context-retriever": {
+      "id": "context-retriever",
+      "name": "Context Retriever",
+      "category": "subagents/core",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["context", "retrieval", "search"],
+      "dependencies": []
+    },
+    "coder-agent": {
+      "id": "coder-agent",
+      "name": "CoderAgent",
+      "category": "subagents/code",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["coding", "implementation"],
       "dependencies": [
         "context:standards-code"
       ]
     },
-    "pike": {
-      "id": "pike",
-      "name": "Pike",
-      "category": "code",
-      "type": "agent",
+    "tester": {
+      "id": "tester",
+      "name": "TestEngineer",
+      "category": "subagents/code",
+      "type": "subagent",
       "version": "1.0.0",
-      "author": "roninmemory",
-      "tags": ["interface", "review", "simplicity"],
+      "author": "opencode",
+      "tags": ["testing", "tdd", "quality"],
+      "dependencies": [
+        "context:standards-tests"
+      ]
+    },
+    "reviewer": {
+      "id": "reviewer",
+      "name": "CodeReviewer",
+      "category": "subagents/code",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["review", "security", "quality"],
       "dependencies": [
         "context:standards-code",
         "context:review-ref"
       ]
     },
-    "scout": {
-      "id": "scout",
-      "name": "Scout",
-      "category": "recon",
-      "type": "agent",
+    "build-agent": {
+      "id": "build-agent",
+      "name": "BuildAgent",
+      "category": "subagents/code",
+      "type": "subagent",
       "version": "1.0.0",
-      "author": "roninmemory",
-      "tags": ["recon", "search", "discovery"],
+      "author": "opencode",
+      "tags": ["build", "validation", "type-checking"],
+      "dependencies": []
+    },
+    "frontend-specialist": {
+      "id": "frontend-specialist",
+      "name": "OpenFrontendSpecialist",
+      "category": "subagents/development",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["frontend", "ui", "design"],
+      "dependencies": [
+        "context:standards-code"
+      ]
+    },
+    "devops-specialist": {
+      "id": "devops-specialist",
+      "name": "OpenDevopsSpecialist",
+      "category": "subagents/development",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["devops", "ci-cd", "infrastructure"],
+      "dependencies": []
+    },
+    "agent-generator": {
+      "id": "agent-generator",
+      "name": "AgentGenerator",
+      "category": "subagents/system-builder",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["generation", "agents", "scaffolding"],
+      "dependencies": []
+    },
+    "command-creator": {
+      "id": "command-creator",
+      "name": "CommandCreator",
+      "category": "subagents/system-builder",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["commands", "generation", "scaffolding"],
+      "dependencies": []
+    },
+    "domain-analyzer": {
+      "id": "domain-analyzer",
+      "name": "DomainAnalyzer",
+      "category": "subagents/system-builder",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["analysis", "domain", "architecture"],
+      "dependencies": []
+    },
+    "context-organizer": {
+      "id": "context-organizer",
+      "name": "ContextOrganizer",
+      "category": "subagents/system-builder",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["context", "organization", "structure"],
+      "dependencies": []
+    },
+    "workflow-designer": {
+      "id": "workflow-designer",
+      "name": "WorkflowDesigner",
+      "category": "subagents/system-builder",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["workflow", "design", "architecture"],
+      "dependencies": []
+    },
+    "image-specialist": {
+      "id": "image-specialist",
+      "name": "Image Specialist",
+      "category": "subagents/utils",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["images", "editing", "generation"],
+      "dependencies": []
+    },
+    "simple-responder": {
+      "id": "simple-responder",
+      "name": "Simple Responder",
+      "category": "subagents/test",
+      "type": "subagent",
+      "version": "1.0.0",
+      "author": "opencode",
+      "tags": ["testing", "evaluation"],
       "dependencies": []
     }
   },
   "defaults": {
     "agent": {
       "version": "1.0.0",
-      "author": "roninmemory",
+      "author": "opencode",
       "type": "agent",
-      "tags": ["team-ram"]
+      "tags": []
     },
     "subagent": {
       "version": "1.0.0",
-      "author": "roninmemory",
+      "author": "opencode",
       "type": "subagent",
-      "tags": ["team-ram"]
+      "tags": []
     }
   }
 }

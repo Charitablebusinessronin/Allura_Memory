@@ -16,7 +16,6 @@ This contract defines the minimum viable harness for deterministic multi-agent o
 **Command:** `opencode run --mode=day`
 
 **Behavior:**
-
 - Interactive execution with approval gates
 - Stops on ambiguous routing (asks user)
 - Logs all events to Postgres
@@ -25,14 +24,12 @@ This contract defines the minimum viable harness for deterministic multi-agent o
 **Entrypoint:** `.opencode/command/run-day.md`
 
 **Validation:**
-
 ```bash
 opencode run --mode=day --task="test scout"
 # Expected: ContextScout invoked, report generated, approval requested
 ```
 
 **Execution Flow:**
-
 1. Load AI-GUIDELINES.md as required context
 2. Invoke ContextScout to produce Scout Report
 3. Invoke OpenAgent to produce Intent Brief + Acceptance Criteria
@@ -52,7 +49,6 @@ opencode run --mode=day --task="test scout"
 **Command:** `opencode run --mode=night`
 
 **Behavior:**
-
 - No-brakes execution (no clarifying questions unless destructive)
 - Picks best-known route immediately
 - Executes → validates → continues
@@ -61,14 +57,12 @@ opencode run --mode=day --task="test scout"
 **Entrypoint:** `.opencode/command/run-night.md`
 
 **Validation:**
-
 ```bash
 opencode run --mode=night --task="fix lint errors"
 # Expected: CoderAgent invoked, fixes applied, validation run, no approval needed
 ```
 
 **Execution Flow:**
-
 1. Load AI-GUIDELINES.md as required context
 2. Invoke ContextScout to produce Scout Report
 3. Invoke OpenAgent to produce Intent Brief + Acceptance Criteria
@@ -88,34 +82,34 @@ opencode run --mode=night --task="fix lint errors"
 
 ### Routing Table
 
-| Task Type      | Primary Agent | Fallback Agent                 | Condition               |
-| -------------- | ------------- | ------------------------------ | ----------------------- |
-| Discovery      | ContextScout  | None                           | Always                  |
-| Intent/Scope   | OpenAgent     | None                           | Always                  |
-| Architecture   | OpenAgent     | None                           | Always                  |
-| Implementation | CoderAgent    | OpenCoder (if interface added) | Always                  |
-| Refactor       | OpenCoder     | None                           | Always                  |
-| Performance    | OpenCoder     | None                           | Only if perf constraint |
-| Validation     | OpenCoder     | OpenCoder                      | Always                  |
+| Task Type | Primary Agent | Fallback Agent | Condition |
+|-----------|---------------|----------------|-----------|
+| Discovery | ContextScout | None | Always |
+| Intent/Scope | OpenAgent | None | Always |
+| Architecture | OpenAgent | None | Always |
+| Implementation | CoderAgent | OpenCoder (if interface added) | Always |
+| Refactor | OpenCoder | None | Always |
+| Performance | OpenCoder | None | Only if perf constraint |
+| Validation | OpenCoder | OpenCoder | Always |
 
 ### Fallback Logic
 
 ```
 function selectFallbackAgent(taskType, primaryAgent, error):
     fallbackAgent = routingTable[taskType].fallbackAgent
-
+    
     if fallbackAgent is None:
         log BLOCKER_HIT (reason="No fallback agent for task type")
         return OpenAgent  // Escalate to architect
-
+    
     if error is "Agent exceeded authority":
         log BLOCKER_HIT (reason="Authority violation")
         return OpenAgent  // Escalate to architect
-
+    
     if error is "Agent failed validation":
         log FALLBACK_TRIGGERED (from=primaryAgent, to=fallbackAgent)
         return fallbackAgent
-
+    
     return fallbackAgent
 ```
 
@@ -132,7 +126,6 @@ function selectFallbackAgent(taskType, primaryAgent, error):
 **Table:** `events`
 
 **Columns:**
-
 ```sql
 CREATE TABLE IF NOT EXISTS events (
   id SERIAL PRIMARY KEY,
@@ -146,7 +139,6 @@ CREATE TABLE IF NOT EXISTS events (
 ```
 
 **Event Types:**
-
 - `TASK_START`
 - `TASK_COMPLETE`
 - `TASK_FAILED`
@@ -161,7 +153,6 @@ CREATE TABLE IF NOT EXISTS events (
 - `DOC_COMPLIANCE_CHECK`
 
 **Logging Contract:**
-
 - Every agent invocation MUST log `AGENT_INVOKED` + `AGENT_COMPLETED` or `AGENT_FAILED`
 - Every task MUST log `TASK_START` + `TASK_COMPLETE` or `TASK_FAILED`
 - Fallbacks MUST log `FALLBACK_TRIGGERED`
@@ -170,7 +161,6 @@ CREATE TABLE IF NOT EXISTS events (
 
 **Performance Logging (must include doc adherence):**
 Every run logs:
-
 - `task_type` — Category of work
 - `route_selected` — Primary + fallback chain
 - `outcome` — success/fail/stuck
@@ -182,7 +172,6 @@ Every run logs:
   - `adr_written_if_needed`: yes/no/not-applicable
 
 **Validation:**
-
 ```bash
 # Check if logging works
 psql -d allura -c "SELECT COUNT(*) FROM events WHERE agent_id = 'contextscout';"
@@ -196,14 +185,12 @@ psql -d allura -c "SELECT COUNT(*) FROM events WHERE agent_id = 'contextscout';"
 **Rule:** All agents MUST load `.opencode/AI-GUIDELINES.md` as required context before execution. This is not "nice to have." It is a routing gate, a logging signal, and part of Definition of Done.
 
 **Compliance Rules (hard gates):**
-
 1. No agent may produce a "final" plan without confirming AI-GUIDELINES.md was loaded
 2. DoD MUST include documentation artifacts validation
 3. Performance logging MUST include documentation adherence signals
 4. Any work that creates/changes behavior MUST update traceability artifacts (requirements + risks/decisions) per AI-GUIDELINES
 
 **Required Artifacts (canonical location: `docs/allura/`):**
-
 1. `BLUEPRINT.md` — Single source of design intent
 2. `SOLUTION-ARCHITECTURE.md` — Topological view
 3. `DESIGN-ALLURA.md` (or approved `DESIGN-<AREA>.md`) — Functional design
@@ -211,11 +198,10 @@ psql -d allura -c "SELECT COUNT(*) FROM events WHERE agent_id = 'contextscout';"
 5. `RISKS-AND-DECISIONS.md` — Architectural decisions and risks
 6. `DATA-DICTIONARY.md` — Field-level reference
 
-**Canonical Surface Rule:** No net-new files may be created under `docs/allura/` unless they are one of the six canonical document types above. All other artifacts go to `docs/archive/allura/` or Allura Brain.
+**Canonical Surface Rule:** No net-new files may be created under `docs/allura/` unless they are one of the six canonical document types above. All other artifacts go to `docs/archive/allura/`, `memory-bank`, or Allura Brain.
 
 **DOC COMPLIANCE GATE (always-on):**
 Before any agent marks a task complete, it must output:
-
 - AI-GUIDELINES.md loaded? (yes/no)
 - Which required artifacts were created/updated? (list)
 - Requirements Matrix updated? (yes/no)
@@ -224,7 +210,6 @@ Before any agent marks a task complete, it must output:
 If any answer is "no", the task is not complete and must continue.
 
 **Validation:**
-
 ```bash
 # Check if canonical artifacts exist
 ls -1 docs/allura/BLUEPRINT.md docs/allura/SOLUTION-ARCHITECTURE.md docs/allura/DESIGN-ALLURA.md docs/allura/REQUIREMENTS-MATRIX.md docs/allura/RISKS-AND-DECISIONS.md docs/allura/DATA-DICTIONARY.md

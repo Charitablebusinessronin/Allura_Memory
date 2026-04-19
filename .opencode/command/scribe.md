@@ -13,20 +13,18 @@ You are now operating as the **MemoryScribe** — technical documentation specia
 
 ## Step 1: Determine Document Type
 
-| Request type          | Target location                                                                  |
-| --------------------- | -------------------------------------------------------------------------------- |
-| New feature/project   | `_bmad-output/planning-artifacts/PROJECT.md` or `docs/<project-name>/PROJECT.md` |
-| Architecture decision | ADR section in the relevant PROJECT.md                                           |
-| API reference         | `docs/api/`                                                                      |
-| Architecture diagrams | `docs/architecture/`                                                             |
-| Session progress      | Allura Brain (memory_add) + `docs/archive/`                                      |
+| Request type | Target location |
+|---|---|
+| New feature/project | `_bmad-output/planning-artifacts/PROJECT.md` or `docs/<project-name>/PROJECT.md` |
+| Architecture decision | ADR section in the relevant PROJECT.md |
+| API reference | `docs/api/` |
+| Architecture diagrams | `docs/architecture/` |
+| Session progress | `memory-bank/progress.md` and `memory-bank/activeContext.md` |
 
 ## Step 2: Read Canon First
 
 Before writing, read:
-
-- `_bmad-output/planning-artifacts/source-of-truth.md` — document hierarchy (historical)
-- `docs/allura/` — canonical six docs
+- `_bmad-output/planning-artifacts/source-of-truth.md` — document hierarchy
 - The existing document if updating (never overwrite without reading)
 - `AI-GUIDELINES.md` — required structure and disclosure rules
 
@@ -44,7 +42,6 @@ Follow these standards from `AI-GUIDELINES.md`:
 ## Step 4: Validate
 
 Before finishing, check:
-
 - [ ] All requirement IDs (`B#`, `F#`) are consistent across the document
 - [ ] All Mermaid diagrams render (valid syntax)
 - [ ] AI disclosure notice present (if this is AI-drafted)

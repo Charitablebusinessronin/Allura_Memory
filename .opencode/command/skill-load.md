@@ -11,9 +11,9 @@ Execute a skill by routing it to a specialist agent executor.
 ## Examples
 
 ```bash
-/skill-load code-review                       # Use default executor (@Pike)
-/skill-load code-review --executor pike     # Explicit routing
-/skill-load postgres-optimization --executor woz
+/skill-load code-review                       # Use default executor (pike)
+/skill-load code-review --executor pike       # Explicit routing
+/skill-load context7 --executor scout
 ```
 
 ## How It Works
@@ -21,23 +21,23 @@ Execute a skill by routing it to a specialist agent executor.
 1. Validates skill exists and is available
 2. Routes to preferred executor (or specified override)
 3. Executor receives skill context + permissions
-4. Logs `SKILL_LOADED` event to PostgreSQL
+4. Logs `SKILL_LOADED` event (when memory logging is enabled)
 5. Executor begins work
 
-## Surgical Team Executors
+## Team RAM Executors
 
 | Executor | Specialty | Permissions |
 | -------- | --------- | ----------- |
-| `pike` | Architecture review | Read-only (no writes) |
+| `pike` | Architecture and interface review | Read-only (no writes) |
 | `woz` | Deep implementation | Full read/write |
-| `fowler` | Strategic planning | Read + planning tools |
-| `ux` | Design + accessibility | Design tools only |
-| `scout` | Documentation search | Search tools only |
-| `scout` | Codebase patterns | Read + grep tools |
-| `brooks` | Todo coordination | Task + memory tools |
-| `brooks` | Orchestration | All tools (planning only) |
-| `brooks` | Skill creation & eval | All tools + subagents |
-| `woz` | Skill implementation | Full read/write + scripts |
+| `brooks` | Strategic planning | Read + planning tools |
+| `hightower` | Infrastructure and deployment | Infra tools only |
+| `scout` | Documentation and repo search | Search tools only |
+| `bellard` | Diagnostics and measurement | Read + diagnostics tools |
+| `jobs` | Intent, scope, and task coordination | Task + memory tools |
+| `fowler` | Refactor safety | Read + refactor tools |
+| `carmack` | Performance optimization | Read + profiling tools |
+| `knuth` | Data architecture and schema | Read + data tools |
 
 ## Result
 
@@ -46,22 +46,9 @@ Execute a skill by routing it to a specialist agent executor.
   "event": "SKILL_LOADED",
   "skill_name": "code-review",
   "executor": "pike",
-  "context": "project root directory",
+  "context": "<project context>",
   "permissions": ["read", "grep", "lsp"]
 }
 ```
 
-## Skill-Creator Integration
-
-When loading `skill-creator`, Brooks orchestrates the full workflow:
-
-```bash
-/skill-load skill-creator              # Full: draft → test → review → improve → optimize
-/skill-load skill-creator --improve     # Improve existing skill
-/skill-load skill-creator --eval        # Run evals + benchmark
-/skill-load skill-creator --optimize    # Description optimization only
-```
-
-See `/skill-create` for the complete skill-creator command.
-
-**Note:** Only Brooks can route to executors. See `/skill-propose` for skill details.
+**Note:** The orchestrator routes skills to executors. See `/skill-propose` for skill details.

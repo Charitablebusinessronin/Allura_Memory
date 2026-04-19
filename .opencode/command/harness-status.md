@@ -4,7 +4,7 @@ Show the harness health, loaded servers, and available skills.
 
 ## Usage
 
-```
+```bash
 /harness-status
 ```
 
@@ -13,7 +13,7 @@ Show the harness health, loaded servers, and available skills.
 1. Checks harness configuration
 2. Lists loaded MCP servers (from settings.json)
 3. Shows available skills with preferred executors
-4. Displays last N events from PostgreSQL
+4. Displays recent events (when memory logging is enabled)
 5. Reports any errors or pending approvals
 
 ## Result
@@ -21,18 +21,18 @@ Show the harness health, loaded servers, and available skills.
 ```json
 {
   "harness": {
-    "group_id": "allura-system",
-    "agent_id": "brooks",
+    "group_id": "<group_id>",
+    "agent_id": "<agent_id>",
     "postgres_available": true
   },
-  "loaded_servers": ["allura-memory", "tavily", "context7"],
-  "approved_pending": ["postgresql", "neo4j"],
+  "loaded_servers": ["<server-name>", "tavily", "context7"],
+  "approved_pending": ["<pending-server>"],
   "available_skills": [
     {"name": "code-review", "executor": "pike"},
-    {"name": "postgres-optimization", "executor": "woz"}
+    {"name": "postgres-optimization", "executor": "knuth"}
   ],
   "recent_events": 12
 }
 ```
 
-**Note:** Use this to verify the harness is healthy before running operations.
+**Note:** Values depend on project configuration. Use this to verify the harness is healthy before running operations.
