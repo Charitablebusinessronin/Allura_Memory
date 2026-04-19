@@ -80,6 +80,7 @@ describe("insert-insight", () => {
         group_id: testGroupId,
         content: "Test insight",
         confidence: 0.9,
+        topic_key: "test.insight",
       };
 
       await expect(createInsight(insight)).rejects.toThrow(InsightValidationError);
@@ -92,6 +93,7 @@ describe("insert-insight", () => {
         group_id: "",
         content: "Test insight",
         confidence: 0.9,
+        topic_key: "test.insight",
       };
 
       await expect(createInsight(insight)).rejects.toThrow("group_id is required");
@@ -103,6 +105,7 @@ describe("insert-insight", () => {
         group_id: testGroupId,
         content: "",
         confidence: 0.9,
+        topic_key: "test.insight",
       };
 
       await expect(createInsight(insight)).rejects.toThrow("content is required");
@@ -114,6 +117,7 @@ describe("insert-insight", () => {
         group_id: testGroupId,
         content: "Test",
         confidence: -0.1,
+        topic_key: "test.insight",
       };
 
       await expect(createInsight(insight1)).rejects.toThrow(
@@ -125,6 +129,7 @@ describe("insert-insight", () => {
         group_id: testGroupId,
         content: "Test",
         confidence: 1.1,
+        topic_key: "test.insight",
       };
 
       await expect(createInsight(insight2)).rejects.toThrow(
@@ -138,6 +143,7 @@ describe("insert-insight", () => {
         group_id: testGroupId,
         content: "First insight",
         confidence: 0.9,
+        topic_key: "test.insight",
       };
 
       const result1 = await createInsight(insight);
@@ -159,6 +165,7 @@ describe("insert-insight", () => {
         group_id: testGroupId,
         content: "This is a test insight",
         confidence: 0.85,
+        topic_key: "test.insight",
         source_type: "manual",
         created_by: "test-agent",
       };
@@ -181,6 +188,7 @@ describe("insert-insight", () => {
         group_id: testGroupId,
         content: "Test for head node",
         confidence: 0.75,
+        topic_key: "test.insight",
       };
 
       await createInsight(insight);
@@ -209,6 +217,7 @@ describe("insert-insight", () => {
         group_id: testGroupId,
         content: "Test with metadata",
         confidence: 0.8,
+        topic_key: "test.insight",
         metadata: { key: "value", nested: { foo: "bar" } },
       };
 
@@ -231,6 +240,7 @@ describe("insert-insight", () => {
         group_id: testGroupId,
         content: "Version 1",
         confidence: 0.7,
+        topic_key: "test.insight",
       };
 
       await createInsight(insight);
@@ -254,6 +264,7 @@ describe("insert-insight", () => {
         group_id: testGroupId,
         content: "Version 1",
         confidence: 0.7,
+        topic_key: "test.insight",
       };
 
       const v1 = await createInsight(insight);
@@ -311,6 +322,7 @@ describe("insert-insight", () => {
         group_id: testGroupId,
         content: "To be deprecated",
         confidence: 0.8,
+        topic_key: "test.insight",
       };
 
       await createInsight(insight);
@@ -342,6 +354,7 @@ describe("insert-insight", () => {
         group_id: testGroupId,
         content: "Version 1",
         confidence: 0.7,
+        topic_key: "test.insight",
       };
 
       await createInsight(insight);
@@ -378,6 +391,7 @@ describe("insert-insight", () => {
         group_id: testGroupId,
         content: "Group 1 insight",
         confidence: 0.9,
+        topic_key: "test.insight",
       };
 
       const insight2: InsightInsert = {
@@ -385,6 +399,7 @@ describe("insert-insight", () => {
         group_id: otherGroupId,
         content: "Group 2 insight",
         confidence: 0.8,
+        topic_key: "test.insight",
       };
 
       // Same insight_id but different groups should both succeed
@@ -401,6 +416,7 @@ describe("insert-insight", () => {
         group_id: testGroupId,
         content: "Original",
         confidence: 0.9,
+        topic_key: "test.insight",
       };
 
       await createInsight(insight);

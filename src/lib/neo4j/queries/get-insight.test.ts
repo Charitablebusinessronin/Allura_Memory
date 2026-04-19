@@ -154,6 +154,7 @@ describe("get-insight", () => {
         group_id: testGroupId,
         content: "Version 1",
         confidence: 0.7,
+        topic_key: "test.insight",
       };
 
       await createInsight(insight);
@@ -193,6 +194,7 @@ describe("get-insight", () => {
         group_id: testGroupId,
         content: "Version 1",
         confidence: 0.7,
+        topic_key: "test.insight",
       };
 
       await createInsight(insight);
@@ -228,6 +230,7 @@ describe("get-insight", () => {
         group_id: testGroupId,
         content: "Version 1",
         confidence: 0.7,
+        topic_key: "test.insight",
       };
 
       await createInsight(insight);
@@ -271,6 +274,7 @@ describe("get-insight", () => {
           group_id: testGroupId,
           content: `Insight ${i}`,
           confidence: 0.5 + i * 0.1,
+          topic_key: "test.insight",
           source_type: i % 2 === 0 ? "promotion" : "manual",
         });
       }
@@ -346,6 +350,7 @@ describe("get-insight", () => {
         group_id: otherGroupId,
         content: "Other",
         confidence: 0.9,
+        topic_key: "test.insight",
       });
 
       const result = await listInsights({ group_id: testGroupId });
@@ -365,6 +370,7 @@ describe("get-insight", () => {
         group_id: testGroupId,
         content: "The quick brown fox",
         confidence: 0.9,
+        topic_key: "test.insight",
       });
 
       await createInsight({
@@ -372,6 +378,7 @@ describe("get-insight", () => {
         group_id: testGroupId,
         content: "The lazy dog",
         confidence: 0.8,
+        topic_key: "test.insight",
       });
 
       await createInsight({
@@ -379,6 +386,7 @@ describe("get-insight", () => {
         group_id: testGroupId,
         content: "Quick thinking required",
         confidence: 0.7,
+        topic_key: "test.insight",
       });
     });
 
@@ -405,6 +413,7 @@ describe("get-insight", () => {
         group_id: otherGroupId,
         content: "Quick in other group",
         confidence: 0.9,
+        topic_key: "test.insight",
       });
 
       const result = await searchInsights("Quick", { group_id: testGroupId });
@@ -424,6 +433,7 @@ describe("get-insight", () => {
         group_id: testGroupId,
         content: "Test insight",
         confidence: 0.9,
+        topic_key: "test.insight",
       });
 
       const result = await getInsightById(created.id, testGroupId);
@@ -444,6 +454,7 @@ describe("get-insight", () => {
         group_id: testGroupId,
         content: "Test",
         confidence: 0.9,
+        topic_key: "test.insight",
       });
 
       const result = await getInsightById(created.id, otherGroupId);
@@ -462,6 +473,7 @@ describe("get-insight", () => {
         group_id: testGroupId,
         content: "Active 1",
         confidence: 0.9,
+        topic_key: "test.insight",
       });
 
       await createInsight({
@@ -469,6 +481,7 @@ describe("get-insight", () => {
         group_id: testGroupId,
         content: "Active 2",
         confidence: 0.8,
+        topic_key: "test.insight",
       });
 
       await createInsight({
@@ -476,6 +489,7 @@ describe("get-insight", () => {
         group_id: testGroupId,
         content: "To deprecate",
         confidence: 0.7,
+        topic_key: "test.insight",
       });
 
       await deprecateInsight("count-test-3", testGroupId);
@@ -490,6 +504,7 @@ describe("get-insight", () => {
         group_id: testGroupId,
         content: "Test",
         confidence: 0.9,
+        topic_key: "test.insight",
       });
 
       await createInsight({
@@ -497,6 +512,7 @@ describe("get-insight", () => {
         group_id: otherGroupId,
         content: "Test",
         confidence: 0.9,
+        topic_key: "test.insight",
       });
 
       const count = await getActiveInsightCount(testGroupId);

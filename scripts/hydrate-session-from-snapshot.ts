@@ -568,6 +568,7 @@ async function ingestSnapshotEntry(
       group_id: groupId,
       content,
       confidence,
+      topic_key: entry.tags.length > 0 ? `snapshot.${entry.tags[0].toLowerCase()}` : "snapshot.general",
       metadata,
     });
   } else {
@@ -586,6 +587,7 @@ async function ingestSnapshotEntry(
           group_id: groupId,
           content,
           confidence,
+          topic_key: entry.tags.length > 0 ? `snapshot.${entry.tags[0].toLowerCase()}` : "snapshot.general",
           metadata,
         });
       } else {

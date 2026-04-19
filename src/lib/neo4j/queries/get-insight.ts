@@ -156,6 +156,7 @@ function neo4jToRecord(node: { properties: Record<string, unknown> } | Record<st
     version: unknown;
     content: unknown;
     confidence: unknown;
+    topic_key: unknown;
     group_id: unknown;
     source_type: unknown;
     source_ref: unknown;
@@ -171,6 +172,7 @@ function neo4jToRecord(node: { properties: Record<string, unknown> } | Record<st
     version: convertValue(p.version) as number,
     content: p.content as string,
     confidence: convertValue(p.confidence) as number,
+    topic_key: (p.topic_key as string) || "uncategorized",
     group_id: p.group_id as string,
     source_type: p.source_type as InsightRecord["source_type"],
     source_ref: p.source_ref as string | null,

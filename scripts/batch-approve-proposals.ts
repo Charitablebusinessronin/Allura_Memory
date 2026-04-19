@@ -64,6 +64,7 @@ async function main() {
         group_id: p.group_id,
         content: p.content,
         confidence: parseFloat(p.score),
+        topic_key: `curator.${p.tier}`,
         source_type: "promotion",
         created_by: CURATOR_ID,
         metadata: {

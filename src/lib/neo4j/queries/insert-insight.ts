@@ -23,6 +23,8 @@ export interface InsightInsert {
   content: string;
   /** Required: Confidence score (0.0 to 1.0) */
   confidence: number;
+  /** Required: Dot-separated topic key for scoped retrieval (e.g., "allura.agent.config") */
+  topic_key: string;
   /** Optional: Source type (defaults to 'manual') */
   source_type?: InsightSourceType;
   /** Optional: Reference to source evidence (e.g., PostgreSQL event ID) */
@@ -47,6 +49,8 @@ export interface InsightRecord {
   content: string;
   /** Confidence score */
   confidence: number;
+  /** Dot-separated topic key for scoped retrieval */
+  topic_key: string;
   /** Tenant identifier */
   group_id: string;
   /** Source type */
@@ -69,6 +73,7 @@ export interface InsightRecord {
 export interface InsightHeadRecord {
   insight_id: string;
   group_id: string;
+  topic_key: string;
   current_version: number;
   current_id: string;
   created_at: Date;
@@ -186,6 +191,7 @@ function neo4jToRecord(record: Record<string, unknown>): InsightRecord {
     version: unknown;
     content: unknown;
     confidence: unknown;
+    topic_key: unknown;
     group_id: unknown;
     source_type: unknown;
     source_ref: unknown;
@@ -201,6 +207,7 @@ function neo4jToRecord(record: Record<string, unknown>): InsightRecord {
     version: convertValue(p.version) as number,
     content: p.content as string,
     confidence: convertValue(p.confidence) as number,
+    topic_key: (p.topic_key as string) || "uncategorized",
     group_id: p.group_id as string,
     source_type: p.source_type as InsightSourceType,
     source_ref: p.source_ref as string | null,
@@ -249,6 +256,7 @@ export async function createInsight(insight: InsightInsert): Promise<InsightReco
           version: 1,
           content: $content,
           confidence: $confidence,
+          topic_key: $topic_key,
           group_id: $group_id,
           source_type: $source_type,
           source_ref: $source_ref,
@@ -265,6 +273,7 @@ export async function createInsight(insight: InsightInsert): Promise<InsightReco
         SET
           h.current_version = 1,
           h.current_id = i.id,
+          h.topic_key = $topic_key,
           h.updated_at = datetime()
         CREATE (i)-[:VERSION_OF]->(h)
         RETURN i
@@ -274,6 +283,7 @@ export async function createInsight(insight: InsightInsert): Promise<InsightReco
         insight_id: insight.insight_id,
         content: insight.content,
         confidence: insight.confidence,
+        topic_key: insight.topic_key,
         group_id: insight.group_id,
         source_type: insight.source_type || "manual",
         source_ref: insight.source_ref || null,
@@ -330,7 +340,7 @@ export async function createInsightVersion(
       // Get the InsightHead and current version
       const headQuery = `
         MATCH (h:InsightHead {insight_id: $insight_id, group_id: $group_id})
-        RETURN h.current_id as current_id, h.current_version as current_version
+        RETURN h.current_id as current_id, h.current_version as current_version, h.topic_key as topic_key
       `;
       const headResult = await tx.run(headQuery, { insight_id, group_id });
 
@@ -345,6 +355,7 @@ export async function createInsightVersion(
         "toNumber" in (headResult.records[0].get("current_version") as object)
         ? (headResult.records[0].get("current_version") as { toNumber: () => number }).toNumber()
         : (headResult.records[0].get("current_version") as number);
+      const topicKey = (headResult.records[0].get("topic_key") as string) || "uncategorized";
 
       // Create new version and supersede the old one
       const query = `
@@ -356,6 +367,7 @@ export async function createInsightVersion(
           version: $new_version,
           content: $content,
           confidence: $confidence,
+          topic_key: $topic_key,
           group_id: $group_id,
           source_type: 'promotion',
           source_ref: null,
@@ -378,6 +390,7 @@ export async function createInsightVersion(
         new_version: currentVersion + 1,
         content,
         confidence,
+        topic_key: topicKey,
         metadata: JSON.stringify(metadata || {}),
       });
 
@@ -486,7 +499,7 @@ export async function revertInsightVersion(
       // Get current head
       const headQuery = `
         MATCH (h:InsightHead {insight_id: $insight_id, group_id: $group_id})
-        RETURN h.current_id as current_id, h.current_version as current_version
+        RETURN h.current_id as current_id, h.current_version as current_version, h.topic_key as topic_key
       `;
       const headResult = await tx.run(headQuery, { insight_id, group_id });
 
@@ -501,6 +514,7 @@ export async function revertInsightVersion(
         "toNumber" in (headResult.records[0].get("current_version") as object)
         ? (headResult.records[0].get("current_version") as { toNumber: () => number }).toNumber()
         : (headResult.records[0].get("current_version") as number);
+      const topicKey = (headResult.records[0].get("topic_key") as string) || "uncategorized";
 
       // Create new version pointing back to the reverted version
       const query = `
@@ -513,6 +527,7 @@ export async function revertInsightVersion(
           version: $new_version,
           content: $content,
           confidence: $confidence,
+          topic_key: $topic_key,
           group_id: $group_id,
           source_type: 'promotion',
           source_ref: null,
@@ -537,6 +552,7 @@ export async function revertInsightVersion(
         new_version: currentVersion + 1,
         content,
         confidence,
+        topic_key: topicKey,
         metadata,
       });
 

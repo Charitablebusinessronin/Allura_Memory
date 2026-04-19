@@ -592,6 +592,7 @@ describe.skipIf(!shouldRunHydration)("hydrate-session-from-snapshot", () => {
       version: overrides.version ?? 1,
       content: overrides.content ?? "Content",
       confidence: overrides.confidence ?? 0.8,
+      topic_key: overrides.topic_key ?? "test.insight",
       group_id: overrides.group_id ?? "roninmemory",
       source_type: overrides.source_type ?? "manual",
       source_ref: overrides.source_ref ?? null,
