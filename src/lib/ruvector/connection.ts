@@ -67,7 +67,7 @@ export function getRuVectorConnectionConfig(): RuVectorConnectionConfig {
 
   return {
     host: env.RUVECTOR_HOST || "localhost",
-    port: parseInt(env.RUVECTOR_PORT || "5433", 10),
+    port: parseInt(env.RUVECTOR_PORT || "5432", 10),
     database: env.RUVECTOR_DB || env.POSTGRES_DB || "ruvector_test",
     user: env.RUVECTOR_USER || env.POSTGRES_USER || "ruvector",
     password,
