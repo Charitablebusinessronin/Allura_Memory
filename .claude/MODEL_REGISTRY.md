@@ -1,1 +1,1 @@
-../.opencode/MODEL_REGISTRY.md
+../.opencode/config/MODEL_REGISTRY.md

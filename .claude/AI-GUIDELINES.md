@@ -1,1 +1,1 @@
-../.opencode/AI-GUIDELINES.md
+../.opencode/rules/AI-GUIDELINES.md
