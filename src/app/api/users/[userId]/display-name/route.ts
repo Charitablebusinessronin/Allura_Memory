@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { NextRequest, NextResponse } from "next/server"
+
+import { getPool } from "@/lib/postgres/connection"
 
 /**
  * GET /api/users/:userId/display-name
@@ -8,42 +9,38 @@ import { db } from '@/lib/db'
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
-  const { userId } = params
+  void request
+  const { userId } = await params
 
-  if (!userId || userId.trim() === '') {
+  if (!userId || userId.trim() === "") {
     return NextResponse.json(
-      { error: 'userId is required' },
+      { error: "userId is required" },
       { status: 400 }
     )
   }
 
   try {
-    // Try to fetch user display name from database
-    // Adjust this query based on your actual user table schema
-    const result = await db.query(
+    const result = await getPool().query<{ display_name: string | null; email: string | null; name: string | null }>(
       `SELECT display_name, email, name FROM users WHERE id = $1 LIMIT 1`,
       [userId]
     )
 
     if (result.rows.length > 0) {
       const user = result.rows[0]
-      // Prefer display_name > name > email prefix
       const displayName =
-        user.display_name ||
-        user.name ||
-        user.email?.split('@')[0] ||
-        'your memories'
+        user?.display_name ||
+        user?.name ||
+        user?.email?.split("@")[0] ||
+        "your memories"
 
       return NextResponse.json({ displayName })
     }
 
-    // User not found - return friendly fallback
-    return NextResponse.json({ displayName: 'your memories' })
+    return NextResponse.json({ displayName: "your memories" })
   } catch (error) {
-    console.error('Error fetching user display name:', error)
-    // On error, return graceful fallback
-    return NextResponse.json({ displayName: 'your memories' })
+    console.error("Error fetching user display name:", error)
+    return NextResponse.json({ displayName: "your memories" })
   }
 }
