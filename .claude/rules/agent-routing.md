@@ -57,7 +57,7 @@ We don't hire 10 surgeons. We hire one surgeon and a team of specialists who own
 | **Pike** | Rob Pike | Interface Gate | `openai/gpt-5.4-mini` | — | `ollama-cloud/kimi-k2.5` | Read-only architecture consultation |
 | **Bellard** | Fabrice Bellard | Diagnostics + Perf | `ollama-cloud/glm-5.1` | `qwen3-coder-next:cloud` for perf code | `ollama-cloud/qwen3-coder-next` | Performance, measurement, low-level fixes |
 | **Fowler** | Martin Fowler | Refactor Gate | `ollama-cloud/glm-5.1` | — | `ollama-cloud/qwen3-coder-next` | Maintainability, incremental change |
-| **Scout** | (none) | Recon + Discovery | `ollama-cloud/nemotron-3-super` | `gpt-5.4-nano` for tiny checks | `openai/gpt-5.4-mini` | Fast codebase search, pattern discovery |
+| **Scout** | (none) | Recon + Discovery | `openai/gpt-5.4-mini` | — | `ollama-cloud/nemotron-3-super` | Fast codebase search, pattern discovery |
 | **Carmack** | John Carmack | Performance Specialist | `ollama-cloud/qwen3-coder-next` | — | `ollama-cloud/glm-5.1` | Optimization, API design, latency |
 | **Knuth** | Donald Knuth | Data Architect | `ollama-cloud/glm-5.1` | — | `openai/gpt-5.4-mini` | Schema design, query optimization |
 | **Hightower** | Kelsey Hightower | DevOps Specialist | `openai/gpt-5.4` | — | `ollama-cloud/kimi-k2.5` | CI/CD, IaC, deployment, observability |
@@ -131,7 +131,7 @@ The category system reduces this further:
 | Brooks | `openai/gpt-5.4` | — | `ollama-cloud/kimi-k2.5` |
 | Jobs | `ollama-cloud/kimi-k2.5` | — | `openai/gpt-5.4` |
 | Hightower | `openai/gpt-5.4` | — | `ollama-cloud/kimi-k2.5` |
-| Scout | `ollama-cloud/nemotron-3-super` | `gpt-5.4-nano` for tiny checks | `openai/gpt-5.4-mini` |
+| Scout | `openai/gpt-5.4-mini` | — | `ollama-cloud/nemotron-3-super` |
 | Woz | `ollama-cloud/qwen3-coder-next` | `qwen3-coder-next:cloud` for codegen | `ollama-cloud/glm-5.1` |
 | Bellard | `ollama-cloud/glm-5.1` | `qwen3-coder-next:cloud` for perf code | `ollama-cloud/qwen3-coder-next` |
 | Carmack | `ollama-cloud/qwen3-coder-next` | — | `ollama-cloud/glm-5.1` |
@@ -139,9 +139,9 @@ The category system reduces this further:
 | Knuth | `ollama-cloud/glm-5.1` | — | `openai/gpt-5.4-mini` |
 | Pike | `openai/gpt-5.4-mini` | — | `ollama-cloud/kimi-k2.5` |
 
-**Global default** (in `opencode.json`): `ollama-cloud/glm-5.1` (unless specifically overridden, though all 10 have specific overrides)
+**Global default** (in `opencode.json`): `openai/gpt-5.4`
 
-**Canonical registry:** `.opencode/config/MODEL_REGISTRY.md`
+**Canonical registry:** `.claude/docs/MODEL_REGISTRY.md`
 
 ## Routing Logic (Role-First, Task Override, Fallback-Only)
 
@@ -153,13 +153,9 @@ routing:
   - if: agent in [brooks, jobs]
     use: gpt-5.4
 
-  # Tier 2: Scout tiny tasks → cheapest
-  - if: agent == scout and task in [tiny_lookup, cheap_prefilter, path_check]
-    use: gpt-5.4-nano
-
-  # Tier 2b: Scout default → fast wide-context scanning
+  # Tier 2: Scout default → fast recon with GPT-5.4 mini
   - if: agent == scout
-    use: nemotron-3-super:cloud
+    use: gpt-5.4-mini
 
   # Tier 3: Code-producing tasks → coding specialist
   - if: agent == woz and task in [patch, feature, test_fix, codegen, repo_surgery]
@@ -180,6 +176,8 @@ routing:
   - if: any_primary_unavailable
     use: glm-5.1:cloud
 ```
+
+Scout-specific fallback: if `gpt-5.4-mini` is unavailable or out of credits, use `ollama-cloud/nemotron-3-super`.
 
 **Key principle:** Qwen3-Coder-Next is used ONLY for code-producing or code-repair tasks, not for non-code review chatter where mini is cheaper and sufficient.
 

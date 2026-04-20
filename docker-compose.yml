@@ -79,6 +79,32 @@ services:
         limits:
           memory: 2G
 
+  # Neo4j schema initializer — applies indexes/constraints on first startup
+  neo4j-init:
+    image: neo4j:5.26.0-community
+    container_name: allura-neo4j-init
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    environment:
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: ${NEO4J_USER}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
+    volumes:
+      - ./docker/neo4j-init:/cypher:ro
+    networks:
+      - knowledge-network
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        echo "Applying Neo4j schema..."
+        for f in /cypher/*.cypher; do
+          echo "  Running: $$f"
+          cypher-shell -a bolt://neo4j:7687 -u "$${NEO4J_USER}" -p "$${NEO4J_PASSWORD}" --format plain < "$$f" || echo "  WARN: $$f had errors (may already exist)"
+        done
+        echo "Schema applied."
+    restart: "no"
+
   # Web frontend (Next.js)
   web:
     build:
@@ -135,7 +161,7 @@ services:
     networks:
       - knowledge-network
     healthcheck:
-      test: ["CMD", "dozzle", "--healthcheck"]
+      test: ["CMD", "/dozzle", "healthcheck"]
       interval: 30s
       timeout: 5s
       retries: 5
@@ -219,7 +245,7 @@ services:
       - knowledge-network
     command: ["bun", "run", "src/mcp/canonical-http-gateway.ts"]
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3201/health >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "bun -e \"fetch('http://localhost:3201/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -10,38 +10,11 @@ platform: Both
 status: active
 model: openai/gpt-5.4
 permission:
-  edit: ask
-  bash:
-    "*": ask
-    "git diff*": allow
-    "git log*": allow
-    "git status*": allow
-    "git show*": allow
-    "git branch*": allow
-    "git add*": allow
-    "git commit*": allow
-    "git push*": allow
-    "git pull*": allow
-    "git checkout*": allow
-    "terraform*": allow
-    "docker*": allow
-    "kubectl*": allow
-    "bun vitest*": allow
-    "bun run lint*": allow
-    "bun run typecheck*": allow
+  edit: allow
+  bash: allow
   webfetch: allow
   skill:
     "*": allow
-  # neo4j-cypher
-  read_neo4j_cypher: allow
-  write_neo4j_cypher: allow
-  get_neo4j_schema: allow
-  # neo4j-memory
-  search_memories: allow
-  read_graph: allow
-  find_memories_by_name: allow
-  create_entities: allow
-  add_observations: allow
   # MCP_DOCKER toolkit
   MCP_DOCKER_mcp-find: allow
   MCP_DOCKER_mcp-add: allow

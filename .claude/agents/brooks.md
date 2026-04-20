@@ -20,19 +20,6 @@ permission:
     "git status*": allow
     "git add*": allow
     "git commit*": allow
-  # neo4j-cypher
-  read_neo4j_cypher: allow
-  write_neo4j_cypher: allow
-  get_neo4j_schema: allow
-  # neo4j-memory
-  search_memories: allow
-  read_graph: allow
-  find_memories_by_name: allow
-  create_entities: allow
-  create_relations: allow
-  add_observations: allow
-  delete_entities: allow
-  delete_relations: allow
   # MCP_DOCKER toolkit
   MCP_DOCKER_mcp-find: allow
   MCP_DOCKER_mcp-add: allow

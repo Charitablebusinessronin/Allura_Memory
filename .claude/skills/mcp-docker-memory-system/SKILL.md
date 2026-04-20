@@ -10,6 +10,8 @@ description: Use MCP_DOCKER to discover, configure, and operate memory-system to
 Use this skill to run memory workflows through MCP_DOCKER without hardcoding one fixed server setup.
 Apply it to discover servers, configure credentials safely, connect tools, and execute memory queries/actions with tenant-safe defaults.
 
+For this repo, prefer the first-party `allura-brain_*` tools when they are already available. Use MCP_DOCKER to add missing infrastructure capabilities or governed database access.
+
 ## When to Use
 
 - Add memory capabilities to a session that does not yet have the needed MCP servers.
@@ -20,9 +22,11 @@ Apply it to discover servers, configure credentials safely, connect tools, and e
 ## Required Safety Defaults
 
 - Set and pass `group_id` for every memory operation unless the task is explicitly global.
+- In this repository, the default tenant is `allura-roninmemory`.
 - Prefer read operations first (`search`, `list`, schema checks) before any write operation.
 - Keep credentials in config/env, not in markdown examples committed to source.
 - Verify server identity and tool availability before execution.
+- PostgreSQL events are append-only; Neo4j knowledge evolves via `SUPERSEDES`, never in-place mutation.
 
 ## Core Workflow
 
@@ -59,8 +63,9 @@ MCP_DOCKER_mcp-add {"name":"postgres", "activate": true}
 Use server-native read tools for initial checks, then memory-specific tools as needed:
 
 ```text
-MCP_DOCKER_mcp-exec {"name":"read_neo4j_cypher"}
-MCP_DOCKER_mcp-exec {"name":"query_database"}
+allura-brain_memory_search {"query":"recent blockers", "group_id":"allura-roninmemory"}
+MCP_DOCKER_read_neo4j_cypher {"query":"MATCH (n) RETURN count(n) AS node_count"}
+MCP_DOCKER_execute_sql {"sql_query":"SELECT COUNT(*) FROM events WHERE group_id = 'allura-roninmemory'"}
 ```
 
 ### 5) Verify and document
@@ -82,22 +87,25 @@ MCP_DOCKER_mcp-exec {"name":"query_database"}
 
 ### Playbook A: Find historical insights for one tenant
 
-1. Add Neo4j server via MCP_DOCKER workflow.
-2. Run read query for `Insight` nodes filtered by `group_id`.
-3. Check version lineage (`SUPERSEDES`) before reporting latest state.
+1. Use `allura-brain_memory_search` first if available.
+2. If deeper graph inspection is required, add Neo4j server via MCP_DOCKER workflow.
+3. Run read query for insight/version nodes filtered by `group_id`.
+4. Check version lineage (`SUPERSEDES`) before reporting latest state.
 
 ### Playbook B: Audit raw trace events in PostgreSQL
 
-1. Add PostgreSQL server.
-2. List tables and describe event schema.
-3. Query by `group_id` and time window.
-4. Correlate with graph-side insight IDs.
+1. Use `allura-brain_memory_search` or `memory_list` first for a quick read.
+2. Add PostgreSQL server when you need raw SQL or schema inspection.
+3. List tables and describe event schema.
+4. Query by `group_id` and time window.
+5. Correlate with graph-side insight IDs.
 
 ### Playbook C: Hybrid memory triage
 
 1. Read traces from PostgreSQL for incident window.
 2. Read derived knowledge from Neo4j for same `group_id`.
 3. Identify mismatch between raw evidence and promoted insight state.
+4. If a reusable pattern emerges, log it through `allura-brain_memory_add` and request promotion separately.
 
 ## Troubleshooting
 

@@ -12,21 +12,8 @@ model: ollama-cloud/kimi-k2.5
 permission:
   skill:
     "*": allow
-  edit: ask
-  bash:
-    "*": ask
-    "git status*": allow
-    "git diff*": allow
-    "git log*": allow
-    "git show*": allow
-    "git branch*": allow
-  # neo4j-cypher (read-only)
-  read_neo4j_cypher: allow
-  get_neo4j_schema: allow
-  # neo4j-memory (read-only)
-  search_memories: allow
-  read_graph: allow
-  find_memories_by_name: allow
+  edit: allow
+  bash: allow
   # MCP_DOCKER toolkit
   MCP_DOCKER_mcp-find: allow
   MCP_DOCKER_mcp-add: allow

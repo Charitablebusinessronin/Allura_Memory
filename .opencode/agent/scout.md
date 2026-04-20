@@ -8,7 +8,8 @@ type: utility
 scope: harness
 platform: Both
 status: active
-model: ollama-cloud/nemotron-3-super
+model: openai/gpt-5.4-mini
+fallback_model: ollama-cloud/nemotron-3-super
 permission:
   edit: deny
   bash:
@@ -25,13 +26,6 @@ permission:
   webfetch: allow
   skill:
     "*": allow
-  # neo4j-cypher (read-only)
-  read_neo4j_cypher: allow
-  get_neo4j_schema: allow
-  # neo4j-memory (read-only)
-  search_memories: allow
-  read_graph: allow
-  find_memories_by_name: allow
   # MCP_DOCKER toolkit
   MCP_DOCKER_mcp-find: allow
   MCP_DOCKER_mcp-add: allow
@@ -72,8 +66,8 @@ permission:
    - Run ONE PostgreSQL query for recent Brooks events / blockers
    - Run ONE Neo4j search for recent architectural insights only when the consuming task is architecture-sensitive
 2. **IF** Allura Brain tools are NOT active:
-   - Prefer activating the required Brain tool path when startup contract requires hydration
-   - If activation is unavailable or would block the task beyond the fast-path budget, report `Brain hydration unavailable` explicitly
+   - Do NOT cold-activate Brain during startup recon
+   - Report `Brain hydration unavailable` explicitly and continue the fast path
 3. **NEVER** substitute local `memory-bank/*` files for Allura Brain truth on Allura tasks
 4. **NEVER** wait for Notion at startup — Notion search is deferred to consuming agents
 5. **NEVER** claim Brain hydration succeeded unless database or graph queries actually ran

@@ -93,8 +93,7 @@ mcp__MCP_DOCKER__mcp-add("server-name")
 ### Default graph surface
 | Server | Why |
 |--------|-----|
-| `neo4j-memory` | Default safe graph search/CRUD surface for most agents. |
-| `neo4j-cypher` | Restricted raw Cypher access for privileged maintenance workflows only. |
+| Allura Brain | Canonical memory search/write surface for this repo. |
 
 ### What loads on-demand (via mcp-find → mcp-add)
 | Server | Trigger |

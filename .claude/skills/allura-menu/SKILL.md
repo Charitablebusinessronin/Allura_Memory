@@ -1,7 +1,7 @@
 ---
 name: allura-menu
 description: "Interactive menu for Allura Memory surgical team. Quick prompts for common workflows."
-allowed-tools: ["Read", "Grep", "Bash", "mcp__MCP_DOCKER__*"]
+allowed-tools: ["Read", "Grep", "Bash", "mcp__MCP_DOCKER__*", "allura-brain_*"]
 ---
 
 # Allura Menu — Quick Prompts
@@ -46,16 +46,16 @@ Interactive menu for common Allura Memory workflows.
 
 ### [2] 📋 Create Task
 
-**Trigger:** `task-creator`
+**Trigger:** `task-management`
 
 **What it does:**
 
-- Gathers context from Allura Brain
-- Generates structured task file
-- Links to memory insights
-- Assigns to appropriate agent
+- Creates structured task files with dependency resolution
+- Tracks progress via CLI (`router.sh status/next/blocked`)
+- Validates task integrity and dependency trees
+- Links to memory insights via Brain
 
-**Equivalent skill:** `task-creator <description>`
+**Equivalent skill:** `task-management <description>`
 
 ---
 
@@ -76,16 +76,16 @@ Interactive menu for common Allura Memory workflows.
 
 ### [4] 📝 Quick Update
 
-**Trigger:** `quick-update`
+**Trigger:** `memory-client`
 
 **What it does:**
 
-- Stores updates to Allura Brain via MCP tools
-- Syncs with canonical docs in docs/allura/
-- Logs changes to events
-- Maintains consistency
+- Stores updates to Allura Brain via `allura-brain_*` tools
+- Search-before-write discipline (Hydrate → Plan → Build → Debug → Reflect)
+- Syncs with canonical docs in `docs/allura/`
+- Logs changes to PostgreSQL events
 
-**Equivalent skill:** `quick-update <target> <changes>`
+**Equivalent skill:** `memory-client` (Build mode)
 
 ---
 
@@ -136,16 +136,16 @@ Interactive menu for common Allura Memory workflows.
 
 ### [8] 📤 Promote
 
-**Trigger:** `curator-team-promote`
+**Trigger:** `hitl-governance`
 
 **What it does:**
 
 - Proposes promotion from PostgreSQL to Neo4j
-- Runs curator team workflow
-- Requires HITL approval
+- Runs HITL governance workflow (draft → evaluating → proposed → approved → promoted)
+- Requires human approval
 - Logs to audit trail
 
-**Equivalent command:** `/curator-team-promote`
+**Equivalent skill:** `hitl-governance`
 
 ---
 
@@ -186,13 +186,14 @@ Type these directly in your IDE:
 | Prompt            | Action            |
 | ----------------- | ----------------- |
 | `start`           | Start session     |
-| `task <desc>`     | Create task       |
+| `task <desc>`     | Create/manage task |
 | `party <task>`    | Launch party mode |
-| `update <target>` | Quick update      |
+| `update <target>` | Memory client sync |
 | `review`          | Code review       |
 | `dash`            | Dashboard         |
 | `query <term>`    | Memory query      |
 | `promote`         | HITL promotion    |
+| `debug <issue>`   | Systematic debug  |
 | `end <summary>`   | End session       |
 
 ---

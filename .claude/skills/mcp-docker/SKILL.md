@@ -9,6 +9,8 @@ description: Discover, configure, and manage MCP servers from Docker Hub's MCP C
 
 This skill enables dynamic discovery and management of MCP (Model Context Protocol) servers from Docker Hub's MCP Catalog using the MCP_DOCKER toolset. Rather than pre-installing all possible MCP tools, you can discover, configure, and add MCP servers on-demand during your session.
 
+Prefer tools already present in the session first. Use MCP_DOCKER when you need a missing capability, not as a replacement for repo-native tools.
+
 ## When to Use This Skill
 
 - **Adding new capabilities**: Need web search, database access, file system operations, or browser automation?
@@ -60,14 +62,11 @@ MCP_DOCKER_mcp-add --name tavily --activate
 MCP_DOCKER_mcp-add --name filesystem --activate
 ```
 
-### Step 4: Execute Tools
+### Step 4: Use the Activated Tools
 
-Once added, use `MCP_DOCKER_mcp-exec` to call tools from the server:
+Once added, the server's tools usually surface directly in the session. Call the surfaced tool directly.
 
-```
-MCP_DOCKER_mcp-exec --name neo4j --tool read_neo4j_cypher --arguments '{"query":"MATCH (n) RETURN count(n)"}'
-MCP_DOCKER_mcp-exec --name tavily --tool search --arguments '{"query":"latest TypeScript features","max_results":10}'
-```
+Use `MCP_DOCKER_mcp-exec` only when a server tool exists in the session but is not exposed in the normal tool list.
 
 ## Complete Examples
 
@@ -127,21 +126,13 @@ MCP_DOCKER_mcp-exec --name filesystem --tool read_file --arguments '{
 }'
 ```
 
-### Example 4: Custom MCP Server
+### Example 4: Repo Policy Guardrail
 
-```
-# Build your custom MCP server image
-docker build -f Dockerfile.mcp -t project-neo4j-memory-mcp:latest .
+For this repository, do **not** configure or add a local `allura-memory` MCP server through MCP_DOCKER.
 
-# Add to MCP_DOCKER
-MCP_DOCKER_mcp-add --name project-neo4j-memory-mcp --activate
-
-# Execute tools
-MCP_DOCKER_mcp-exec --name project-neo4j-memory-mcp --tool search_memories --arguments '{
-  "query": "authentication patterns",
-  "group_id": "myproject"
-}'
-```
+Use:
+- first-party `allura-brain_*` tools when available
+- `MCP_DOCKER` for approved Docker-backed servers such as Neo4j, PostgreSQL, GitHub, Tavily, and Context7
 
 ## Essential MCP Servers
 
@@ -234,6 +225,7 @@ Remove an MCP server from the session.
 4. **One-time setup**: Configure once per session, reuse multiple times
 5. **Clean up**: Remove servers when done if experiencing context bloat: `MCP_DOCKER_mcp-remove --name unused-server`
 6. **Check documentation**: Some servers have specific configuration requirements
+7. **Respect repo policy**: Avoid local ad hoc memory servers when the repo defines a governed memory surface
 
 ## Troubleshooting
 

@@ -7,6 +7,11 @@ description: Add memory logging and hydration to Superpowers skills. Use at sess
 
 Add persistent memory logging and hydration to Superpowers skills using PostgreSQL (raw events) and Neo4j (curated insights).
 
+Canonical defaults for this repo:
+- `group_id`: `allura-roninmemory`
+- status values: `pending`, `completed`, `failed`, `cancelled`
+- prefer `allura-brain_*` tools for memory search and logging
+
 ## When to Use
 
 - At session start: Retrieve previous context for this group/workflow
@@ -38,35 +43,30 @@ Session End:
 
 ```typescript
 // At skill start
-await logEvent({
-  group_id: "roninmemory",
-  event_type: "skill:brainstorming:start",
-  agent_id: "roninmemory-agent",
-  workflow_id: "feature-123",
-  status: "pending",
-  metadata: { topic: "user request description" }
+await alluraBrain.memory_add({
+  group_id: "allura-roninmemory",
+  user_id: "brooks",
+  content: "skill:brainstorming:start workflow=feature-123 topic=user request description",
+  metadata: { source: "conversation", conversation_id: "<id>", agent_id: "brooks" }
 });
 
 // At skill end
-await logEvent({
-  group_id: "roninmemory",
-  event_type: "skill:brainstorming:end",
-  agent_id: "roninmemory-agent",
-  workflow_id: "feature-123",
-  status: "completed",
-  metadata: { spec_path: "docs/superpowers/specs/YYYY-MM-DD-feature.md" }
+await alluraBrain.memory_add({
+  group_id: "allura-roninmemory",
+  user_id: "brooks",
+  content: "skill:brainstorming:end workflow=feature-123 spec=docs/superpowers/specs/YYYY-MM-DD-feature.md",
+  metadata: { source: "conversation", conversation_id: "<id>", agent_id: "brooks" }
 });
 ```
 
 ### Create Insight
 
 ```typescript
-await createInsight({
-  title: "Design Decision: [Topic]",
-  content: "What was decided and why",
-  category: "Architecture", // or "Bugfix", "Refactor", "Performance"
-  tags: ["superpowers", "brainstorming", "design"],
-  sourceEventIds: [123, 124] // Link to events
+await alluraBrain.memory_add({
+  group_id: "allura-roninmemory",
+  user_id: "brooks",
+  content: "Design Decision: [Topic]. What was decided and why.",
+  metadata: { source: "conversation", conversation_id: "<id>", agent_id: "brooks" }
 });
 ```
 
@@ -74,13 +74,15 @@ await createInsight({
 
 ```typescript
 // Get recent events for this workflow
-const recentEvents = await searchEvents({
-  query: "roninmemory brainstorming feature-123"
+const recentEvents = await alluraBrain.memory_search({
+  query: "skill brainstorming feature-123",
+  group_id: "allura-roninmemory"
 });
 
 // Get related insights
-const insights = await searchInsights({
-  query: "brainstorming design decisions"
+const insights = await alluraBrain.memory_search({
+  query: "brainstorming design decisions",
+  group_id: "allura-roninmemory"
 });
 ```
 
@@ -187,67 +189,57 @@ At session end:
 
 | Action | MCP Tool |
 |--------|----------|
-| Log event | `MCP_DOCKER_insert_data` on `events` table |
-| Create insight | `MCP_DOCKER_create_entities` in Neo4j |
-| Link to events | `MCP_DOCKER_create_relations` |
-| Search events | `MCP_DOCKER_query_database` with SQL |
-| Search insights | `MCP_DOCKER_search_memories` |
-| Verify write | `MCP_DOCKER_query_database` by event ID |
+| Log event / summary | `allura-brain_memory_add` |
+| Search events / insights | `allura-brain_memory_search` |
+| Deep SQL verification | `MCP_DOCKER_execute_sql` |
+| Deep graph verification | `MCP_DOCKER_read_neo4j_cypher` |
+| Request promotion | `allura-brain_memory_promote` |
 
 ## Example: Complete Session Flow
 
 ```typescript
 // === SESSION START ===
 // 1. Hydrate context
-const previousWork = await searchEvents({
-  query: "roninmemory feature-123 last-7-days"
+const previousWork = await alluraBrain.memory_search({
+  query: "feature-123 last-7-days",
+  group_id: "allura-roninmemory"
 });
 
 // 2. Log session start
-const startEvent = await logEvent({
-  group_id: "roninmemory",
-  event_type: "skill:brainstorming:start",
-  agent_id: "roninmemory-agent",
-  workflow_id: "feature-123",
-  status: "pending",
-  metadata: { previous_work_count: previousWork.length }
+await alluraBrain.memory_add({
+  group_id: "allura-roninmemory",
+  user_id: "brooks",
+  content: "skill:brainstorming:start workflow=feature-123 previous_work_count=" + previousWork.length,
+  metadata: { source: "conversation", conversation_id: "<id>", agent_id: "brooks" }
 });
 
 // === DURING EXECUTION ===
 // Log checkpoint
-await logEvent({
-  group_id: "roninmemory",
-  event_type: "decision:approach",
-  agent_id: "roninmemory-agent",
-  workflow_id: "feature-123",
-  status: "completed",
-  metadata: { chosen_approach: "option-b", reason: "better testability" }
+await alluraBrain.memory_add({
+  group_id: "allura-roninmemory",
+  user_id: "brooks",
+  content: "decision:approach workflow=feature-123 chosen_approach=option-b reason=better testability",
+  metadata: { source: "conversation", conversation_id: "<id>", agent_id: "brooks" }
 });
 
 // === SESSION END ===
 // Log completion
-await logEvent({
-  group_id: "roninmemory",
-  event_type: "skill:brainstorming:end",
-  agent_id: "roninmemory-agent",
-  workflow_id: "feature-123",
-  status: "completed",
-  metadata: { 
-    spec_path: "docs/superpowers/specs/2024-01-15-feature-design.md",
-    start_event_id: startEvent.eventId
-  }
+await alluraBrain.memory_add({
+  group_id: "allura-roninmemory",
+  user_id: "brooks",
+  content: "skill:brainstorming:end workflow=feature-123 spec=docs/superpowers/specs/2024-01-15-feature-design.md",
+  metadata: { source: "conversation", conversation_id: "<id>", agent_id: "brooks" }
 });
 
 // Create insight
-await createInsight({
-  title: "Design: Feature 123 - Approach Selection",
-  content: "Chose option B for better testability...",
-  category: "Architecture",
-  tags: ["superpowers", "brainstorming", "design"],
-  group_id: "roninmemory"
+await alluraBrain.memory_add({
+  group_id: "allura-roninmemory",
+  user_id: "brooks",
+  content: "Design: Feature 123 - Approach Selection. Chose option B for better testability.",
+  metadata: { source: "conversation", conversation_id: "<id>", agent_id: "brooks" }
 });
 
 // Verify
-const verify = await searchEvents({ query: "feature-123" });
+const verify = await alluraBrain.memory_search({ query: "feature-123", group_id: "allura-roninmemory" });
 console.log(`Logged ${verify.length} events for this workflow`);
 ```

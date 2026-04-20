@@ -31,7 +31,10 @@ import { captureException } from "@/lib/observability/sentry";
  * - filters: { status, source_type, min_confidence, max_confidence, since, until }
  * - limit: number (default: 10)
  */
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest,
+  _context: { params: Promise<Record<string, string | string[] | undefined>> }
+) {
   // Auth: require viewer or above role
   const roleCheck = requireRole(request, "viewer");
   if (!roleCheck.user) {

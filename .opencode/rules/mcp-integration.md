@@ -62,9 +62,9 @@ mcp__MCP_DOCKER__mcp-add("server-name")
 | `mcp__MCP_DOCKER__write_neo4j_cypher` | Neo4j writes (SUPERSEDES) |
 
 ## Server Policy
-- `neo4j-memory` is the default safe graph server for most agents.
-- `neo4j-cypher` is restricted and should only be loaded for governed graph maintenance.
-- Do not configure or load a local `allura-memory` MCP server.
+- Allura Brain is the canonical memory surface for this repo.
+- Do not configure or load standalone Neo4j MCP servers here.
+- Use approved Docker-backed servers on demand.
 
 ## Settings
 Use approved Docker-backed MCP servers only; prefer on-demand activation through MCP Docker Toolkit.
