@@ -201,7 +201,7 @@ services:
     networks:
       - knowledge-network
     healthcheck:
-      test: ["CMD-SHELL", "exit 0"]
+      test: ["CMD", "bun", "run", "scripts/mcp-container-healthcheck.ts"]
       interval: 30s
       timeout: 10s
       start_period: 30s
@@ -245,7 +245,7 @@ services:
       - knowledge-network
     command: ["bun", "run", "src/mcp/canonical-http-gateway.ts"]
     healthcheck:
-      test: ["CMD-SHELL", "bun -e \"fetch('http://localhost:3201/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""]
+      test: ["CMD-SHELL", "bun -e \"fetch('http://localhost:3201/ready').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""]
       interval: 10s
       timeout: 5s
       retries: 5

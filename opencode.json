@@ -18,6 +18,7 @@
     "webfetch": "allow",
     "skill": {
       "allura-menu": "allow",
+      "brain-reliability": "allow",
       "bun-security": "allow",
       "code-review": "allow",
       "github": "allow",
