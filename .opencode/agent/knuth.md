@@ -10,34 +10,11 @@ platform: Both
 status: active
 model: ollama-cloud/glm-5.1
 permission:
-  edit: ask
-  bash:
-    "*": ask
-    "git diff*": allow
-    "git log*": allow
-    "git status*": allow
-    "git show*": allow
-    "git branch*": allow
-    "docker exec knowledge-postgres*": allow
-    "bun vitest*": allow
-    "bun run typecheck*": allow
-    "bun run lint*": allow
-  webfetch: deny
+  edit: allow
+  bash: allow
+  webfetch: allow
   skill:
     "*": allow
-  # neo4j-cypher
-  read_neo4j_cypher: allow
-  write_neo4j_cypher: allow
-  get_neo4j_schema: allow
-  # neo4j-memory
-  search_memories: allow
-  read_graph: allow
-  find_memories_by_name: allow
-  create_entities: allow
-  create_relations: allow
-  add_observations: allow
-  delete_entities: allow
-  delete_relations: allow
   MCP_DOCKER_mcp-find: allow
   MCP_DOCKER_mcp-add: allow
 ---

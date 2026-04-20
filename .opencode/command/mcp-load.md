@@ -11,9 +11,8 @@ Load an approved MCP server and activate its tools.
 ## Examples
 
 ```
- /mcp-load neo4j-memory          # Load default safe Neo4j memory surface
  /mcp-load tavily                # Load Tavily web search + crawl
- /mcp-load neo4j-cypher          # Load restricted raw Cypher surface (if approved)
+ /mcp-load exa                   # Load neural web search (if approved)
 ```
 
 ## How It Works

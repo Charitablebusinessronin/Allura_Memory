@@ -9,7 +9,7 @@ It contains the agent definitions, commands, skills, context files, and supporti
 - `opencode.json` holds top-level OpenCode configuration
 - `.opencode/agent/` holds active Team RAM agent definitions
 - `.opencode/command/` holds reusable workflow commands
-- `.opencode/skills/` holds skill definitions and supporting assets
+- `.opencode/skills/` holds **canonical** skill definitions and supporting assets (source of truth)
 - `.opencode/config/` holds registry and harness metadata
 
 ## Purpose

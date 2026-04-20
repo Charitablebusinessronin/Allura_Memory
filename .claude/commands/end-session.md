@@ -10,7 +10,7 @@ global: false
 
 **MANDATORY: Run this at the end of EVERY session**
 
-This command persists a durable session reflection and verifies write success using MCP Neo4j Memory tools.
+This command persists a durable session reflection and verifies write success using the Allura Brain memory surface.
 
 ## Usage
 
@@ -20,11 +20,11 @@ This command persists a durable session reflection and verifies write success us
 
 ## Required Steps
 
-1. Ensure Neo4j Memory MCP server is configured (`neo4j-memory` active)
+1. Ensure Allura Brain memory access is configured and reachable
 2. Create a Reflection entity scoped to `group_id='roninmemory'`
 3. Read back to prove durability
 
-## Canonical Write Template (Using MCP Memory Tools)
+## Canonical Write Template (Using Allura Brain Tools)
 
 ```javascript
 // Step 1: Create Reflection entity
@@ -86,6 +86,6 @@ MCP_DOCKER_add_observations({
 
 ## Always Do This
 
-✅ Use MCP Neo4j Memory tools: `MCP_DOCKER_create_entities`, `MCP_DOCKER_add_observations`
+✅ Use the Allura Brain memory surface and approved MCP write tools
 ✅ Verify by searching or reading back
 ✅ Include timestamp and group_id in observations

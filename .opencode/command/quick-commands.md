@@ -19,8 +19,8 @@ Type these directly in your IDE for fast access to common Team RAM harness workf
 
 | Command | Action | Equivalent |
 | --- | --- | --- |
-| `/task <desc>` | Create or shape a task | `task-creator` |
-| `/promote` | Human-in-the-loop promotion | `curator-team-promote` |
+| `/task <desc>` | Create or shape a task | `task-management` |
+| `/promote` | Human-in-the-loop promotion | `hitl-governance` |
 | `/review` | Code review workflow | `code-review` |
 
 ## Memory and Coordination Commands
@@ -28,7 +28,7 @@ Type these directly in your IDE for fast access to common Team RAM harness workf
 | Command | Action | Equivalent |
 | --- | --- | --- |
 | `/query <term>` | Search memory (Allura Brain, if enabled) | `query` |
-| `/update <target>` | Log a short update | `quick-update` |
+| `/update <target>` | Memory sync | `memory-client` |
 | `/party <task>` | Parallel specialist collaboration | `party-mode` |
 
 ## Team RAM Agent Shortcuts

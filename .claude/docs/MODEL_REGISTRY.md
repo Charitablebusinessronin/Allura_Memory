@@ -4,7 +4,7 @@
 # This is the authoritative contract between OpenCode and Claude Code agent equivalents.
 
 version: "3.0.0"
-last_updated: "2026-04-18"
+last_updated: "2026-04-20"
 
 ## Primary Assignments
 
@@ -13,7 +13,7 @@ last_updated: "2026-04-18"
 | brooks       | Orchestrator   | openai/gpt-5.4                    | —                                     | ollama-cloud/glm-5.1    |
 | hightower    | Infra          | openai/gpt-5.4                    | —                                     | ollama-cloud/glm-5.1    |
 | jobs         | Strategy       | ollama-cloud/kimi-k2.5            | —                                     | ollama-cloud/glm-5.1    |
-| scout        | Search/Triage  | ollama-cloud/nemotron-3-super      | —                                     | ollama-cloud/glm-5.1    |
+| scout        | Search/Triage  | openai/gpt-5.4-mini               | —                                     | ollama-cloud/nemotron-3-super |
 | woz          | Code           | ollama-cloud/qwen3-coder-next     | —                                     | ollama-cloud/glm-5.1    |
 | bellard      | Code/Diag      | ollama-cloud/glm-5.1              | —                                     | ollama-cloud/glm-5.1    |
 | carmack      | Code/Perf      | ollama-cloud/qwen3-coder-next     | —                                     | ollama-cloud/glm-5.1    |
@@ -33,7 +33,7 @@ Specialist overrides activate when the task type matches. The agent stays on its
 
 ```json
 {
-  "model": "ollama-cloud/glm-5.1"
+  "model": "openai/gpt-5.4"
 }
 ```
 
@@ -49,7 +49,7 @@ model: openai/gpt-5.4
 model: ollama-cloud/kimi-k2.5
 
 # scout.md
-model: ollama-cloud/nemotron-3-super
+model: openai/gpt-5.4-mini
 
 # woz.md / carmack.md
 model: ollama-cloud/qwen3-coder-next
@@ -69,7 +69,7 @@ model: openai/gpt-5.4-mini
 | Architect          | MemoryArchitect      | ollama-cloud/gpt-5.4        | brooks-architect           | claude-opus-4-6     | CA/VA commands; ADR discipline identical                      |
 | Builder            | MemoryBuilder        | ollama-cloud/gpt-5.4-mini   | memory-builder             | claude-sonnet-4-6   | Write templates identical; Postgres append-only enforced      |
 | Guardian           | MemoryGuardian       | ollama-cloud/glm-5.1        | memory-guardian            | claude-sonnet-4-6   | HITL gating identical; invariant checklist identical          |
-| Scout              | MemoryScout          | ollama-cloud/gpt-5.4-nano   | memory-scout               | claude-sonnet-4-6   | Memory-first search pattern identical; tools differ (see note)|
+| Scout              | MemoryScout          | openai/gpt-5.4-mini         | memory-scout               | claude-sonnet-4-6   | Memory-first search pattern identical; tools differ (see note)|
 | Analyst            | MemoryAnalyst        | ollama-cloud/gpt-5.4-mini   | memory-analyst             | claude-sonnet-4-6   | SQL/Cypher queries identical; report formats identical        |
 | Chronicler         | MemoryChronicler     | ollama-cloud/gpt-5.4-mini   | memory-chronicler          | claude-sonnet-4-6   | ADR format identical; Notion sync uses Smithery MCP           |
 | Gap Auditor        | (no equivalent)      | —                           | architecture-gap-auditor   | claude-sonnet-4-6   | Claude Code only — no OpenCode counterpart                    |
@@ -105,7 +105,8 @@ The following behaviors MUST be identical across both runtimes:
 | ollama-cloud/gpt-5.4-mini          | Strongest mini model for coding subagents (review, refactor, data)        |
 | ollama-cloud/nemotron-3-super:cloud | Fast wide-context scanning for recon; internal benchmark: 1.63s avg latency |
 | ollama-cloud/qwen3-coder-next:cloud | Coding specialist — 262K context, optimized for codegen and repo surgery  |
-| ollama-cloud/gpt-5.4-nano          | Cheapest for tiny lookups, path checks, and prefiltering                   |
+| openai/gpt-5.4-mini                | Default Scout model for fast recon and synthesis                           |
+| ollama-cloud/nemotron-3-super      | Scout fallback when GPT-5.4-mini is unavailable or out of credits         |
 | ollama-cloud/kimi-k2.5             | Jobs primary — fast intent gating and scope control                      |
 | ollama-cloud/glm-5.1               | Universal fallback — instruction-following, always-on                      |
 

@@ -19,8 +19,8 @@ Type these directly in your IDE for fast access to Allura Memory workflows.
 
 | Command        | Action         | Equivalent             |
 | -------------- | -------------- | ---------------------- |
-| `/task <desc>` | Create task    | `task-creator`         |
-| `/promote`     | HITL promotion | `curator-team-promote` |
+| `/task <desc>` | Create task    | `task-management`     |
+| `/promote`     | HITL promotion | `hitl-governance`     |
 | `/review`      | Code review    | `code-review`          |
 
 ## Memory Commands
@@ -28,7 +28,7 @@ Type these directly in your IDE for fast access to Allura Memory workflows.
 | Command            | Action       | Equivalent                         |
 | ------------------ | ------------ | ---------------------------------- |
 | `/query <term>`    | Memory query | `mcp__MCP_DOCKER__search_memories` |
-| `/update <target>` | Quick update | `quick-update`                     |
+| `/update <target>` | Memory sync | `memory-client`                   |
 | `/party <task>`    | Party mode   | `party-mode`                       |
 
 ## Skill Commands

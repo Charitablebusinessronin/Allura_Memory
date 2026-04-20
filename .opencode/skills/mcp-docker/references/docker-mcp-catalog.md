@@ -4,13 +4,6 @@
 
 ### Databases & Storage
 
-#### Neo4j (neo4j-cypher)
-- **Publisher**: neo4j
-- **Description**: Official Neo4j MCP server for graph database operations using Cypher queries
-- **Tools**: read_neo4j_cypher, write_neo4j_cypher, get_neo4j_schema
-- **Config**: url, username, password
-- **Docker**: mcp/neo4j
-
 #### PostgreSQL (postgres)
 - **Publisher**: Various
 - **Description**: PostgreSQL database connector with SQL query support

@@ -23,8 +23,7 @@
 
 | Server | Purpose | Trigger |
 |--------|---------|---------|
-| **neo4j-memory** | Default safe graph memory surface | On-demand |
-| **neo4j-cypher** | Restricted raw graph maintenance | Privileged on-demand |
+| **allura-brain** | Canonical memory search/write surface | On-demand |
 | **tavily** | Web search/research | On-demand |
 | **exa** | Neural search | On-demand |
 | **hyperbrowser** | Browser automation | On-demand |

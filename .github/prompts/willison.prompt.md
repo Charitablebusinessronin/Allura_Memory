@@ -199,15 +199,6 @@ Design, validate, and document OpenClaw platform configurations. Reference spec:
 
   // MCP server definitions
   mcpServers: {
-    "neo4j-cypher": {
-      command: "npx",
-      args: ["-y", "neo4j-mcpserver"],
-      env: {
-        NEO4J_URI: "bolt://host.docker.internal:7687",
-        NEO4J_USERNAME: "neo4j",
-        NEO4J_PASSWORD: "$SECRET_NEO4J_PASSWORD"
-      }
-    },
     notion: {
       command: "npx",
       args: ["-y", "@modelcontextprotocol/server-notion"],
@@ -263,22 +254,21 @@ Design, validate, and document OpenClaw platform configurations. Reference spec:
 
 Primary memory system: Allura Memory Control Center
 
-### Universal MCP_DOCKER Rule
+### Canonical Memory Access Rule
 
 - **NEVER** use `docker exec` for database operations.
-- **ALWAYS** use MCP_DOCKER tools.
+- **ALWAYS** use the approved Allura Brain tools.
 
 ### Canonical Tool Names
 
 | Operation | Tool |
 | --- | --- |
-| Natural language SQL | `mcp_mcp_docker_query_database` |
-| Raw SQL read/write | `mcp_mcp_docker_execute_sql` |
-| Insert event row | `mcp_mcp_docker_insert_data` |
-| Read from Neo4j | `mcp_mcp_docker_read_graph` (via `mcp_mcp_docker_open_nodes`) |
-| Write to Neo4j | `mcp_mcp_docker_create_entities` |
-| Discover MCP servers | `mcp_mcp_docker_mcp-find` |
-| Add MCP server | `mcp_mcp_docker_mcp-add` |
+| Natural language SQL | `allura-brain_memory_search` |
+| Event logging | `allura-brain_memory_add` |
+| Memory lookup | `allura-brain_memory_get` |
+| Memory listing | `allura-brain_memory_list` |
+| Versioned update | `allura-brain_memory_update` |
+| Promotion request | `allura-brain_memory_promote` |
 
 ### Memory Logging Event Types (Willison-specific)
 
@@ -299,7 +289,7 @@ Primary memory system: Allura Memory Control Center
 
 On session start, run EXACTLY these two calls in parallel, then STOP and greet:
 
-1. `mcp_mcp_docker_execute_sql`: `SELECT id, metadata FROM events WHERE agent_id = 'willison' ORDER BY created_at DESC LIMIT 1`
+1. `MCP_DOCKER_execute_sql`: `SELECT id, metadata FROM events WHERE agent_id = 'willison' ORDER BY created_at DESC LIMIT 1`
 2. `Read` file: `_bmad/bmm/config.yaml` (first 40 lines only)
 
 After both return → render Bootstrap Report and menu → WAIT for user input.
@@ -311,7 +301,7 @@ After both return → render Bootstrap Report and menu → WAIT for user input.
 ### On EVERY significant action → Postgres write:
 
 ```javascript
-mcp_mcp_docker_insert_data({
+MCP_DOCKER_insert_data({
   table_name: "events",
   data: {
     event_type: "{EVENT_TYPE}",
@@ -327,12 +317,12 @@ mcp_mcp_docker_insert_data({
 
 ```javascript
 // 1. Search first
-mcp_mcp_docker_search_nodes({
+MCP_DOCKER_search_nodes({
   query: "pattern name: '{name}' group_id: 'allura-system'"
 })
 
 // 2. Only write if no duplicate
-mcp_mcp_docker_create_entities({
+MCP_DOCKER_create_entities({
   entities: [{
     name: "{pattern_name}",
     type: "Pattern",
@@ -479,7 +469,7 @@ When creating or modifying OpenClaw config:
 Run this query — must return at least one prompt engineering event from this session:
 
 ```javascript
-mcp_mcp_docker_execute_sql({
+MCP_DOCKER_execute_sql({
   sql_query: `
     SELECT event_type, COUNT(*)
     FROM events

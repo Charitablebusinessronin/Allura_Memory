@@ -46,7 +46,7 @@ Propose a skill and see which specialist agent handles it.
 | `memory-client`            | `@Brooks`    | Allura Brain memory operations               |
 | `systematic-debugging`     | `@Bellard`   | Systematic debugging with memory             |
 | `party-mode`               | `@Brooks`    | Parallel agent orchestration                 |
-| `task-creator`             | `@Brooks`    | Structured task creation with memory         |
+| `task-management`         | `@Brooks`    | Task tracking, deps, and management           |
 | `task-management`          | `@Brooks`    | Task tracking and management                 |
 
 ## Result
