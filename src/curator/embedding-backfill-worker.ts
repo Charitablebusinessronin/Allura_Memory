@@ -5,7 +5,7 @@
  * This worker runs as a separate Bun process and:
  * 1. Polls `allura_memories` WHERE `embedding IS NULL AND deleted_at IS NULL`
  * 2. Calls `generateEmbeddingBatch()` in batches of 10
- * 3. Updates rows with generated embeddings using `::ruvector` cast
+ * 3. Updates rows with generated embeddings using `::vector` cast
  * 4. Handles failures gracefully — failed embeddings remain NULL (retried next cycle)
  * 5. Tracks progress with simple stats logging
  *
@@ -172,7 +172,7 @@ export async function getPendingRows(
  * Format an embedding vector as a string literal for the ruvector column type.
  *
  * RuVector requires the embedding as a string literal `'[0.1,0.2,...]'`
- * that is then cast with `::ruvector` in the SQL.
+ * that is then cast with `::vector` in the SQL.
  *
  * @param embedding - Array of numbers from the embedding model
  * @returns String representation like '[0.1,0.2,...,0.768]'
@@ -184,7 +184,7 @@ export function formatEmbeddingForUpdate(embedding: number[]): string {
 /**
  * Update a single row with its generated embedding.
  *
- * Uses the `::ruvector` cast to convert the string literal
+ * Uses the `::vector` cast to convert the string literal
  * into the proper vector type for the column.
  *
  * @param id - Row id (BIGSERIAL, stringified)
