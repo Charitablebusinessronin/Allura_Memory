@@ -103,6 +103,7 @@ import { createGraphAdapter } from "@/lib/graph-adapter"
 import { curatorScore } from "@/lib/curator/score"
 import { createProposalDedupChecker, getDedupThreshold, type ProposalCandidate } from "@/lib/dedup/proposal-dedup"
 import { searchWithFeedback } from "@/lib/ruvector/retrieval-adapter"
+import { storeMemory } from "@/lib/ruvector/bridge"
 
 // ── Canonical Operations ───────────────────────────────────────────────────
 
@@ -169,6 +170,32 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
     )
 
     const eventId = eventResult.rows[0].id
+
+    // ── Project to RuVector (allura_memories) for immediate semantic searchability ──
+    // Every episodic write is also projected to the vector store so that
+    // memory_search can find it via RuVector without waiting for curator promotion.
+    // This is idempotent: re-running the projection for the same content is safe
+    // because the bridge inserts a new row each time (BIGSERIAL id).
+    try {
+      const sessionId = request.metadata?.conversation_id || `episodic-${eventId}`
+      await storeMemory({
+        userId: groupId,
+        sessionId,
+        content: request.content,
+        memoryType: "episodic",
+        metadata: {
+          memory_id: memoryId,
+          event_id: String(eventId),
+          source: request.metadata?.source || "conversation",
+        },
+      })
+      console.info(`[memory_add] Projected to RuVector: memory_id=${memoryId} event_id=${eventId}`)
+    } catch (ruvectorErr) {
+      // Projection failure is non-blocking: episodic memory is already persisted in PG.
+      // Search will fall back to ILIKE on events table.
+      const msg = ruvectorErr instanceof Error ? ruvectorErr.message : String(ruvectorErr)
+      console.warn(`[memory_add] RuVector projection failed (non-blocking): ${msg}`)
+    }
 
     // 3. Score content
     // Map MemoryProvenance ('conversation'|'manual') to curatorScore source ('conversation'|'manually_added')

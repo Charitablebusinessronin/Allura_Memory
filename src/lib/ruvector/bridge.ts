@@ -233,7 +233,7 @@ export async function storeMemory(params: StoreMemoryParams): Promise<StoreMemor
     result = await pool.query(
       `INSERT INTO ${MEMORIES_TABLE}
          (user_id, session_id, content, memory_type, embedding, metadata, group_id)
-       VALUES ($1, $2, $3, $4, $5::ruvector, $6::jsonb, $7)
+       VALUES ($1, $2, $3, $4, $5::vector, $6::jsonb, $7)
        RETURNING id, created_at`,
       [
         groupId, // user_id — same as group_id per ARCH-001 tenant model
@@ -357,12 +357,12 @@ export async function retrieveMemories(params: RetrieveMemoriesParams): Promise<
              id,
              content,
              memory_type,
-             1 - ruvector_cosine_distance(embedding, $1::ruvector) AS vector_score
+             1 - (embedding <=> $1::vector) AS vector_score
            FROM ${MEMORIES_TABLE}
            WHERE user_id = $2
              AND embedding IS NOT NULL
              AND deleted_at IS NULL
-           ORDER BY ruvector_cosine_distance(embedding, $1::ruvector) ASC
+           ORDER BY embedding <=> $1::vector ASC
            LIMIT $3`,
           [embeddingValue, groupId, limit]
         )

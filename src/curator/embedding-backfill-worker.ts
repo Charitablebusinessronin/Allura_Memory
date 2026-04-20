@@ -198,7 +198,7 @@ export async function updateRowEmbedding(id: string, embedding: number[]): Promi
   // Embedding backfill fills a computed column that was NULL.
   // The original event is preserved — this mutates only the derived vector column,
   // not the event trace.
-  await pool.query(`UPDATE allura_memories SET embedding = $1::ruvector WHERE id = $2`, [embeddingStr, id])
+  await pool.query(`UPDATE allura_memories SET embedding = $1::vector WHERE id = $2`, [embeddingStr, id])
 }
 
 /**
