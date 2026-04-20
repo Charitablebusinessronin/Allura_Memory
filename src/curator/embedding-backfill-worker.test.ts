@@ -225,7 +225,7 @@ describe("processBatch", () => {
     expect(generateEmbeddingBatch).not.toHaveBeenCalled();
   });
 
-  it("should update rows with generated embeddings using ::ruvector cast", async () => {
+  it("should update rows with generated embeddings using ::vector cast", async () => {
     const rows = makePendingRows(3);
     const embeddings = rows.map(() => makeFakeEmbedding(768));
 
@@ -237,10 +237,10 @@ describe("processBatch", () => {
     expect(result.succeeded).toBe(3);
     expect(result.failed).toBe(0);
 
-    // Verify each UPDATE uses ::ruvector and the formatted embedding string
+    // Verify each UPDATE uses ::vector and the formatted embedding string
     for (let i = 0; i < 3; i++) {
       const updateCall = mockPool.query.mock.calls[i];
-      expect(updateCall[0]).toContain("::ruvector");
+      expect(updateCall[0]).toContain("::vector");
       expect(updateCall[0]).toContain("UPDATE allura_memories");
       // First param is the embedding string literal
       expect(updateCall[1][0]).toMatch(/^\[.*\]$/);
