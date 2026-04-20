@@ -5,25 +5,22 @@ WORKDIR /app
 COPY package.json ./
 COPY tsconfig.json ./
 COPY src ./src
+COPY scripts ./scripts
 
 RUN bun install
 
 ENV NODE_ENV=production
 
-# MCP is a stdio server — it needs stdin to stay alive.
-# When run via docker-compose, keep the container running
-# so it's available for HTTP gateway or exec-based tool calls.
+# The MCP container is a warm execution environment for docker exec-based
+# stdio sessions. The actual MCP stdio server is launched on demand by the
+# harness, not as a long-running background process inside the container.
 COPY <<'EOF' /app/entrypoint.sh
 #!/bin/sh
-# Start the MCP HTTP gateway server
-# This provides both stdio (for MCP protocol) and HTTP (for external access)
-export ALLURA_MCP_HTTP_PORT=3201
-export ALLURA_MCP_HTTP_ENABLED=true
-bun src/mcp/memory-server-canonical.ts &
-MCP_PID=$!
+set -eu
 
-# Keep container alive
-exec sleep infinity
+# Keep the container alive as an execution target for docker exec-based MCP
+# sessions. Readiness is checked via the compose healthcheck.
+exec tail -f /dev/null
 EOF
 RUN chmod +x /app/entrypoint.sh
 

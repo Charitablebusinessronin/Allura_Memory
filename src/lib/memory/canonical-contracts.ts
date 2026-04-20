@@ -101,6 +101,33 @@ export interface MemoryResponseMeta {
  *    - soc2 mode: Queue in proposals table
  * 5. Return memory ID and storage location
  */
+/**
+ * Scope tuple — full identity context for governed memory operations.
+ * Every Allura call carries this; fields default from session metadata
+ * when not explicitly provided.
+ *
+ * Resolution order: explicit parameter → session metadata → defaults
+ */
+export interface ScopeTuple {
+  /** Required: Tenant namespace (format: allura-*) */
+  group_id: GroupId
+  /** Optional: Project within the tenant */
+  project_id?: string
+  /** Optional: Agent identity (defaults from session) */
+  agent_id?: string
+  /** Optional: Session identity (defaults from OpenClaw session key) */
+  session_id?: string
+}
+
+/**
+ * Memory status for retrieval filtering
+ * - 'approved': Passed curator + approval (active in Neo4j)
+ * - 'proposed': Awaiting approval (in canonical_proposals table)
+ * - 'deprecated': Superseded or soft-deleted
+ * - 'all': Return regardless of status
+ */
+export type MemoryRetrievalStatus = "approved" | "proposed" | "deprecated" | "all"
+
 export interface MemoryAddRequest {
   /** Required: Tenant namespace (format: allura-*) */
   group_id: GroupId
@@ -110,6 +137,12 @@ export interface MemoryAddRequest {
 
   /** Required: Memory content text */
   content: MemoryContent
+
+  /** Optional: Scope tuple for governed memory (project/agent/session) */
+  scope?: ScopeTuple
+
+  /** Optional: Trace type for raw trace ingestion */
+  trace_type?: "run" | "tool" | "failure" | "cron" | "conversation"
 
   /** Optional: Metadata (source, context, etc.) */
   metadata?: {
@@ -165,6 +198,12 @@ export interface MemorySearchRequest {
 
   /** Required: Tenant namespace */
   group_id: GroupId
+
+  /** Optional: Scope tuple for governed retrieval (project/agent/session) */
+  scope?: ScopeTuple
+
+  /** Optional: Filter by memory status (default: 'approved' — only approved insights) */
+  status?: MemoryRetrievalStatus
 
   /** Optional: User identifier (scope to user) */
   user_id?: UserId

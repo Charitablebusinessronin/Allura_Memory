@@ -89,6 +89,8 @@ import type {
   StorageLocation,
   MemoryProvenance,
   MemoryResponseMeta,
+  ScopeTuple,
+  MemoryRetrievalStatus,
 } from "@/lib/memory/canonical-contracts"
 import {
   MemoryNotFoundError,
@@ -128,10 +130,14 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
   console.log(`[DEBUG memory_add] PROMOTION_MODE=${PROMOTION_MODE}, AUTO_APPROVAL_THRESHOLD=${AUTO_APPROVAL_THRESHOLD}`)
 
   const groupId = validateGroupId(request.group_id)
-  const agentId = request.metadata?.agent_id || "api"
+  const agentId = request.metadata?.agent_id || request.scope?.agent_id || "api"
+  const traceType = request.trace_type || "conversation"
+  const scope = request.scope || { group_id: groupId }
   const memoryId = generateMemoryId()
   const createdAt = new Date().toISOString()
   const startTime = Date.now()
+
+  console.log(`[memory_add] scope: group=${groupId} project=${scope.project_id || "none"} agent=${agentId} session=${scope.session_id || "none"} trace_type=${traceType}`)
 
   // Budget pre-check: memory_add is write-intensive, enforce budget before proceeding
   const budgetResult = await checkBudget(groupId, agentId, "memory_add")
@@ -163,6 +169,13 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
             content: request.content,
             source: request.metadata?.source || "conversation",
             conversation_id: request.metadata?.conversation_id,
+            trace_type: traceType,
+            scope: {
+              group_id: groupId,
+              project_id: scope.project_id || null,
+              agent_id: agentId,
+              session_id: scope.session_id || null,
+            },
           }),
           createdAt,
         ]
@@ -426,6 +439,19 @@ export async function memory_search(request: MemorySearchRequest): Promise<Memor
   const groupId = validateGroupId(request.group_id)
   const limit = Math.floor(request.limit || 10)
   const startTime = Date.now()
+  const retrievalStatus = request.status || "approved" // Default: approved-only retrieval
+
+  // ── Scope resolution (implicit) ────────────────────────────────────────────
+  const scope = request.scope || { group_id: groupId }
+  console.log(`[memory_search] scope: group=${groupId} project=${scope.project_id || "none"} agent=${scope.agent_id || "none"} session=${scope.session_id || "none"} status=${retrievalStatus}`)
+
+  // ── Approved-only filter ──────────────────────────────────────────────────
+  // When status is 'approved' (default), skip episodic stores and return only
+  // canonical Neo4j insights. This prevents unapproved traces from polluting
+  // production reasoning.
+  if (retrievalStatus === "approved") {
+    return searchApprovedOnly(request, groupId, limit, startTime, scope)
+  }
 
   const storesUsed: Array<"postgres" | "neo4j" | "ruvector" | "graph"> = []
   const warnings: string[] = []
@@ -611,6 +637,78 @@ export async function memory_search(request: MemorySearchRequest): Promise<Memor
     count: combined.length,
     latency_ms: latency,
     meta: searchMeta,
+  }
+}
+
+/**
+ * Approved-only search — returns only canonical Neo4j insights.
+ * Used when status filter is 'approved' (the default).
+ * Falls back to native memory_search if Neo4j is unavailable.
+ */
+async function searchApprovedOnly(
+  request: MemorySearchRequest,
+  groupId: GroupId,
+  limit: number,
+  startTime: number,
+  scope: ScopeTuple
+): Promise<MemorySearchResponse> {
+  try {
+    const { pg, neo4j: neo4jDriver } = await getConnections()
+    const graphAdapter = createGraphAdapter({ pg, neo4j: neo4jDriver })
+
+    const graphResults = await graphAdapter.searchMemories({
+      query: request.query,
+      group_id: groupId,
+      limit,
+    })
+
+    const results = graphResults.map((item) => ({
+      id: item.id,
+      content: item.content,
+      score: item.score,
+      source: "semantic" as StorageLocation,
+      provenance: item.provenance,
+      created_at: item.created_at,
+      usage_count: item.usage_count,
+      tags: item.tags,
+    }))
+
+    const elapsed = Date.now() - startTime
+    console.log(
+      `[memory_search:approved] ${results.length} approved insights for "${request.query}" in ${elapsed}ms`
+    )
+
+    return {
+      results,
+      count: results.length,
+      latency_ms: elapsed,
+      meta: {
+        contract_version: "v1",
+        degraded: false,
+        stores_used: ["graph"],
+        stores_attempted: ["graph"],
+        warnings: [],
+      },
+    }
+  } catch (error) {
+    const elapsed = Date.now() - startTime
+    const msg = error instanceof Error ? error.message : String(error)
+    console.warn(`[memory_search:approved] Neo4j unavailable (${elapsed}ms): ${msg}`)
+
+    // Return explicit no_approved_memory — NOT silent empty array
+    return {
+      results: [],
+      count: 0,
+      latency_ms: elapsed,
+      meta: {
+        contract_version: "v1",
+        degraded: true,
+        degraded_reason: "graph_unavailable",
+        stores_used: [],
+        stores_attempted: ["graph"],
+        warnings: [`no_approved_memory: graph backend unavailable — ${msg}`],
+      },
+    }
   }
 }
 
