@@ -128,5 +128,8 @@
       "source": ".claude/commands/harness-status.md",
       "description": "Show harness health and loaded servers"
     }
+  },
+  "qr": {
+    "currentQR": null
   }
 }
