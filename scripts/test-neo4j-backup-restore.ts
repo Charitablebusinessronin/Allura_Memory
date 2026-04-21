@@ -28,18 +28,16 @@ function runCypher(query: string): string {
   return result;
 }
 
-function parseRows(output: string): Map<string, string[]> {
+function parseRows(output: string): { headers: string[]; rows: string[][] } {
   // Parse comma-separated output from cypher-shell plain format
   const lines = output.trim().split("\n").filter((l) => l.trim());
-  if (lines.length < 2) return new Map();
+  if (lines.length < 2) return { headers: [], rows: [] };
 
   // First line is header
   const headers = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, ""));
 
   // Data lines (skip separator line with dashes)
   const dataLines = lines.filter((l) => !l.match(/^[-,|]+$/));
-  const rows: Map<string, string[]> = new Map();
-  rows.set("_headers", headers);
 
   const dataRows: string[][] = [];
   for (let i = 1; i < dataLines.length; i++) {
@@ -56,8 +54,7 @@ function parseRows(output: string): Map<string, string[]> {
     cells.push(current.trim());
     dataRows.push(cells);
   }
-  rows.set("_rows", dataRows as any);
-  return rows;
+  return { headers, rows: dataRows };
 }
 
 async function testBackupRestore() {
@@ -72,8 +69,7 @@ async function testBackupRestore() {
     const result = runCypher(
       "MATCH (m:Memory {group_id: 'allura-default', status: 'active'}) RETURN COUNT(m) AS count"
     );
-    const rows = parseRows(result);
-    const dataRows = rows.get("_rows") as string[][] || [];
+    const { rows: dataRows } = parseRows(result);
     const count = parseInt(dataRows[0]?.[0] || "0");
 
     if (count > 0) {
@@ -94,9 +90,7 @@ async function testBackupRestore() {
     const result = runCypher(
       "MATCH (m:Memory {group_id: 'allura-default', status: 'active'}) RETURN m.id, m.content, m.score ORDER BY m.id"
     );
-    const rows = parseRows(result);
-    const dataRows = rows.get("_rows") as string[][] || [];
-    const headers = rows.get("_headers") || [];
+    const { headers, rows: dataRows } = parseRows(result);
     const recordCount = dataRows.length;
 
     if (recordCount > 0) {
@@ -118,8 +112,7 @@ async function testBackupRestore() {
     const result = runCypher(
       "MATCH (m:Memory {group_id: 'allura-default', status: 'active'}) RETURN m.id, m.content, m.score, m.created_at ORDER BY m.id"
     );
-    const rows = parseRows(result);
-    const dataRows = rows.get("_rows") as string[][] || [];
+    const { rows: dataRows } = parseRows(result);
     const allHaveFields = dataRows.every(
       (row) => row.length >= 4 && row[0] && row[1]
     );
@@ -141,8 +134,7 @@ async function testBackupRestore() {
   console.log("\nStep 4: Verifying Neo4j indexes...");
   try {
     const result = runCypher("SHOW INDEXES");
-    const rows = parseRows(result);
-    const dataRows = rows.get("_rows") as string[][] || [];
+    const { rows: dataRows } = parseRows(result);
 
     if (dataRows.length >= 5) {
       console.log(`  ✅ PASS: ${dataRows.length} indexes exist`);
