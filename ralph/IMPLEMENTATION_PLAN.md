@@ -6,11 +6,11 @@
 
 ## P0 Tasks (MUST complete first)
 
-- [ ] **S7-8**: Fix MODEL_REGISTRY provider prefixes
-  - Files: `.opencode/MODEL_REGISTRY.md`, `.opencode/config/MODEL_REGISTRY.md`
+- [x] **S7-8**: Fix MODEL_REGISTRY provider prefixes
+  - Files: `.claude/docs/MODEL_REGISTRY.md` (actual canonical registry in repo)
   - Fix: `ollama-cloud/gpt-5.4` → `openai/gpt-5.4`, `ollama-cloud/gpt-5.4-mini` → `openai/gpt-5.4-mini`
-  - Fix: Primary models for Woz, Bellard, Fowler, Knuth, Carmack in config/MODEL_REGISTRY.md to match `.md` frontmatter
-  - Acceptance: `grep -r 'ollama-cloud/gpt-5' .opencode/MODEL_REGISTRY.md .opencode/config/MODEL_REGISTRY.md` returns zero matches
+  - Fix: Cross-runtime registry entries now match current provider prefixes used by `.opencode/agent/*.md` frontmatter
+  - Acceptance: `grep 'ollama-cloud/gpt-5\.4\|ollama-cloud/gpt-5\.4-mini' .claude/docs/MODEL_REGISTRY.md` returns zero matches
 
 - [ ] **S7-9**: Align agent-routing.md primary/fallback models
   - File: `.opencode/rules/agent-routing.md`
@@ -251,3 +251,4 @@
 |------|------|--------|--------|
 | 2026-04-19 06:00Z | - | Ralph loop started | - |
 | 2026-04-19 08:15Z | P1-P4 | ULW Loop files created | ulw-loop.sh, PROMPT_ulw.md, updated plan, command |
+| 2026-04-21 07:00Z | S7-8 | Fixed MODEL_REGISTRY provider prefixes in canonical registry | `.claude/docs/MODEL_REGISTRY.md` updated; typecheck passed |
