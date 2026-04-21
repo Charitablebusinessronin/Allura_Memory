@@ -18,11 +18,12 @@
   - Fix: removed stale specialist override claims, corrected `opencode.json` path, and simplified routing YAML to role-first frontmatter alignment
   - Acceptance: Every agent row in both routing docs matches `.opencode/agent/*.md` frontmatter
 
-- [ ] **S7-10**: Add NOTION_API_KEY + env vars
-  - Files: `.env.example`, `docker/docker-compose.yml`, `src/curator/config.ts`, `src/lib/notion/client.ts`
-  - Add: NOTION_API_KEY, NOTION_INSIGHTS_DB_ID, NOTION_KNOWLEDGE_DB_ID, NOTION_AGENTS_DB_ID
-  - Throw on missing NOTION_API_KEY in production
-  - Acceptance: App throws clear error on startup if NOTION_API_KEY missing in production
+- [x] **S7-10**: Correct Notion integration plan to MCP_DOCKER remote
+  - Files: `ralph/IMPLEMENTATION_PLAN.md`
+  - Finding: planned direct Notion app wiring is stale; `src/curator/config.ts` and `src/lib/notion/client.ts` do not exist in this repo
+  - Finding: repo guidance already says Notion integration uses remote MCP tools exclusively and should not block startup on a local `NOTION_API_KEY`
+  - Replacement direction: use MCP_DOCKER/remote Notion tooling for sync and hydration paths; treat any required secrets/config as MCP server configuration, not app-runtime env gating
+  - Acceptance: Ralph plan no longer instructs direct app-runtime Notion API wiring that contradicts current repo architecture
 
 ## P1 Tasks (after all P0s)
 
@@ -39,8 +40,8 @@
   - BLOCKED BY: None (independent)
 
 - [ ] **S7-4**: Resolve 28 stuck notion_sync_pending events
-  - BLOCKED BY: S7-10 (need NOTION_API_KEY first)
-  - After API key is configured, re-process or resolve stuck events
+  - BLOCKED BY: MCP_DOCKER remote Notion configuration validation
+  - After remote Notion MCP configuration is verified, re-process or resolve stuck events
 
 ## P2 Tasks (after all P1s)
 
@@ -253,3 +254,4 @@
 | 2026-04-19 08:15Z | P1-P4 | ULW Loop files created | ulw-loop.sh, PROMPT_ulw.md, updated plan, command |
 | 2026-04-21 07:00Z | S7-8 | Fixed MODEL_REGISTRY provider prefixes in canonical registry | `.claude/docs/MODEL_REGISTRY.md` updated; typecheck passed |
 | 2026-04-21 07:20Z | S7-9 | Aligned routing docs with live agent frontmatter | `.opencode/rules/agent-routing.md` + `.claude/rules/agent-routing.md`; typecheck passed |
+| 2026-04-21 07:35Z | S7-10 | Corrected stale Notion slice to MCP_DOCKER remote architecture | Direct `NOTION_API_KEY` app wiring removed from plan |
