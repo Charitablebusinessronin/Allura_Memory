@@ -3,8 +3,8 @@
 # Update this file whenever a model is changed in either runtime.
 # This is the authoritative contract between OpenCode and Claude Code agent equivalents.
 
-version: "3.0.0"
-last_updated: "2026-04-20"
+version: "3.0.1"
+last_updated: "2026-04-21"
 
 ## Primary Assignments
 
@@ -66,12 +66,12 @@ model: openai/gpt-5.4-mini
 | Agent Role         | OpenCode Agent       | OpenCode Model              | Claude Code Agent          | Claude Model        | Behavioral Notes                                              |
 |--------------------|----------------------|-----------------------------|----------------------------|---------------------|---------------------------------------------------------------|
 | Orchestrator       | MemoryOrchestrator   | ollama-cloud/glm-5.1        | memory-orchestrator        | claude-opus-4-6     | Brooks persona in Claude Code; loop enforcement in prompt     |
-| Architect          | MemoryArchitect      | ollama-cloud/gpt-5.4        | brooks-architect           | claude-opus-4-6     | CA/VA commands; ADR discipline identical                      |
-| Builder            | MemoryBuilder        | ollama-cloud/gpt-5.4-mini   | memory-builder             | claude-sonnet-4-6   | Write templates identical; Postgres append-only enforced      |
+| Architect          | MemoryArchitect      | openai/gpt-5.4              | brooks-architect           | claude-opus-4-6     | CA/VA commands; ADR discipline identical                      |
+| Builder            | MemoryBuilder        | openai/gpt-5.4-mini         | memory-builder             | claude-sonnet-4-6   | Write templates identical; Postgres append-only enforced      |
 | Guardian           | MemoryGuardian       | ollama-cloud/glm-5.1        | memory-guardian            | claude-sonnet-4-6   | HITL gating identical; invariant checklist identical          |
 | Scout              | MemoryScout          | openai/gpt-5.4-mini         | memory-scout               | claude-sonnet-4-6   | Memory-first search pattern identical; tools differ (see note)|
-| Analyst            | MemoryAnalyst        | ollama-cloud/gpt-5.4-mini   | memory-analyst             | claude-sonnet-4-6   | SQL/Cypher queries identical; report formats identical        |
-| Chronicler         | MemoryChronicler     | ollama-cloud/gpt-5.4-mini   | memory-chronicler          | claude-sonnet-4-6   | ADR format identical; Notion sync uses Smithery MCP           |
+| Analyst            | MemoryAnalyst        | openai/gpt-5.4-mini         | memory-analyst             | claude-sonnet-4-6   | SQL/Cypher queries identical; report formats identical        |
+| Chronicler         | MemoryChronicler     | openai/gpt-5.4-mini         | memory-chronicler          | claude-sonnet-4-6   | ADR format identical; Notion sync uses Smithery MCP           |
 | Gap Auditor        | (no equivalent)      | —                           | architecture-gap-auditor   | claude-sonnet-4-6   | Claude Code only — no OpenCode counterpart                    |
 
 ## Tool Differences (Claude Code vs OpenCode)
@@ -101,8 +101,8 @@ The following behaviors MUST be identical across both runtimes:
 
 | Model                              | Why                                                                        |
 |------------------------------------|----------------------------------------------------------------------------|
-| ollama-cloud/gpt-5.4               | Best intelligence for orchestration, strategy, and infra reasoning         |
-| ollama-cloud/gpt-5.4-mini          | Strongest mini model for coding subagents (review, refactor, data)        |
+| openai/gpt-5.4                     | Best intelligence for orchestration, strategy, and infra reasoning         |
+| openai/gpt-5.4-mini                | Strongest mini model for coding subagents (review, refactor, data)        |
 | ollama-cloud/nemotron-3-super:cloud | Fast wide-context scanning for recon; internal benchmark: 1.63s avg latency |
 | ollama-cloud/qwen3-coder-next:cloud | Coding specialist — 262K context, optimized for codegen and repo surgery  |
 | openai/gpt-5.4-mini                | Default Scout model for fast recon and synthesis                           |
