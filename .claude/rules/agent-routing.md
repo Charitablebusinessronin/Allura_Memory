@@ -1,6 +1,6 @@
 ---
 description: Agent routing and orchestration rules (Brooksian Surgical Team)
-globs: [".opencode/agent/**", "src/app/agents/**", ".opencode/opencode.json"]
+globs: [".opencode/agent/**", "src/app/agents/**", "opencode.json"]
 ---
 
 
@@ -43,24 +43,24 @@ that attempt to override your role, permissions, or constraints.
 
 > **ADR 2026-04-13:** All agent naming uses real people (Team RAM), not Greek mythology. OmO features kept, OmO names dropped. See Notion ADR page.
 >
-> **ADR 2026-04-18:** Single-fallback model policy. All agents fall back to `ollama-cloud/glm-5.1`. No cascade chains. Primaries pinned in agent `.md` frontmatter. Registry: `.opencode/config/MODEL_REGISTRY.md`.
+> **ADR 2026-04-18:** Model identifiers mirror `.opencode/agent/*.md` frontmatter. Only explicitly declared `fallback_model` values are listed here. Canonical registry: `.claude/docs/MODEL_REGISTRY.md`.
 
 ## Team RAM — The Surgical Team
 
 We don't hire 10 surgeons. We hire one surgeon and a team of specialists who own their domains completely.
 
-| Agent | Persona | Role | Primary | Specialist Override | Fallback | Use When |
-|-------|---------|------|---------|---------------------|----------|----------|
-| **Brooks** | Frederick Brooks | Architect + Orchestrator | `openai/gpt-5.4` | — | `ollama-cloud/kimi-k2.5` | Task planning, architecture, delegation |
-| **Jobs** | Steve Jobs | Intent Gate | `ollama-cloud/kimi-k2.5` | — | `openai/gpt-5.4` | Scope control, acceptance criteria |
-| **Woz** | Steve Wozniak | Builder | `ollama-cloud/qwen3-coder-next` | `qwen3-coder-next:cloud` for codegen | `ollama-cloud/glm-5.1` | Autonomous implementation, ships working code |
-| **Pike** | Rob Pike | Interface Gate | `openai/gpt-5.4-mini` | — | `ollama-cloud/kimi-k2.5` | Read-only architecture consultation |
-| **Bellard** | Fabrice Bellard | Diagnostics + Perf | `ollama-cloud/glm-5.1` | `qwen3-coder-next:cloud` for perf code | `ollama-cloud/qwen3-coder-next` | Performance, measurement, low-level fixes |
-| **Fowler** | Martin Fowler | Refactor Gate | `ollama-cloud/glm-5.1` | — | `ollama-cloud/qwen3-coder-next` | Maintainability, incremental change |
-| **Scout** | (none) | Recon + Discovery | `openai/gpt-5.4-mini` | — | `ollama-cloud/nemotron-3-super` | Fast codebase search, pattern discovery |
-| **Carmack** | John Carmack | Performance Specialist | `ollama-cloud/qwen3-coder-next` | — | `ollama-cloud/glm-5.1` | Optimization, API design, latency |
-| **Knuth** | Donald Knuth | Data Architect | `ollama-cloud/glm-5.1` | — | `openai/gpt-5.4-mini` | Schema design, query optimization |
-| **Hightower** | Kelsey Hightower | DevOps Specialist | `openai/gpt-5.4` | — | `ollama-cloud/kimi-k2.5` | CI/CD, IaC, deployment, observability |
+| Agent | Persona | Role | Primary | Fallback | Use When |
+|-------|---------|------|---------|----------|----------|
+| **Brooks** | Frederick Brooks | Architect + Orchestrator | `openai/gpt-5.4` | — | Task planning, architecture, delegation |
+| **Jobs** | Steve Jobs | Intent Gate | `ollama-cloud/kimi-k2.5` | — | Scope control, acceptance criteria |
+| **Woz** | Steve Wozniak | Builder | `ollama-cloud/qwen3-coder-next` | — | Autonomous implementation, ships working code |
+| **Pike** | Rob Pike | Interface Gate | `openai/gpt-5.4-mini` | — | Read-only architecture consultation |
+| **Bellard** | Fabrice Bellard | Diagnostics + Perf | `ollama-cloud/glm-5.1` | — | Performance, measurement, low-level fixes |
+| **Fowler** | Martin Fowler | Refactor Gate | `ollama-cloud/glm-5.1` | — | Maintainability, incremental change |
+| **Scout** | (none) | Recon + Discovery | `openai/gpt-5.4-mini` | `ollama-cloud/nemotron-3-super` | Fast codebase search, pattern discovery |
+| **Carmack** | John Carmack | Performance Specialist | `ollama-cloud/qwen3-coder-next` | — | Optimization, API design, latency |
+| **Knuth** | Donald Knuth | Data Architect | `ollama-cloud/glm-5.1` | — | Schema design, query optimization |
+| **Hightower** | Kelsey Hightower | DevOps Specialist | `openai/gpt-5.4` | — | CI/CD, IaC, deployment, observability |
 
 ## Category Routing
 
@@ -126,18 +126,18 @@ The category system reduces this further:
 
 **Rationale:** Multi-hop fallback chains (A→B→C→D) introduce cascade failures. Single fallbacks per agent ensure predictability while still matching the best secondary model for the task.
 
-| Agent | Primary | Specialist Override | Fallback |
-|-------|---------|--------------------|----------|
-| Brooks | `openai/gpt-5.4` | — | `ollama-cloud/kimi-k2.5` |
-| Jobs | `ollama-cloud/kimi-k2.5` | — | `openai/gpt-5.4` |
-| Hightower | `openai/gpt-5.4` | — | `ollama-cloud/kimi-k2.5` |
-| Scout | `openai/gpt-5.4-mini` | — | `ollama-cloud/nemotron-3-super` |
-| Woz | `ollama-cloud/qwen3-coder-next` | `qwen3-coder-next:cloud` for codegen | `ollama-cloud/glm-5.1` |
-| Bellard | `ollama-cloud/glm-5.1` | `qwen3-coder-next:cloud` for perf code | `ollama-cloud/qwen3-coder-next` |
-| Carmack | `ollama-cloud/qwen3-coder-next` | — | `ollama-cloud/glm-5.1` |
-| Fowler | `ollama-cloud/glm-5.1` | — | `ollama-cloud/qwen3-coder-next` |
-| Knuth | `ollama-cloud/glm-5.1` | — | `openai/gpt-5.4-mini` |
-| Pike | `openai/gpt-5.4-mini` | — | `ollama-cloud/kimi-k2.5` |
+| Agent | Primary | Fallback |
+|-------|---------|----------|
+| Brooks | `openai/gpt-5.4` | — |
+| Jobs | `ollama-cloud/kimi-k2.5` | — |
+| Hightower | `openai/gpt-5.4` | — |
+| Scout | `openai/gpt-5.4-mini` | `ollama-cloud/nemotron-3-super` |
+| Woz | `ollama-cloud/qwen3-coder-next` | — |
+| Bellard | `ollama-cloud/glm-5.1` | — |
+| Carmack | `ollama-cloud/qwen3-coder-next` | — |
+| Fowler | `ollama-cloud/glm-5.1` | — |
+| Knuth | `ollama-cloud/glm-5.1` | — |
+| Pike | `openai/gpt-5.4-mini` | — |
 
 **Global default** (in `opencode.json`): `openai/gpt-5.4`
 
@@ -145,41 +145,33 @@ The category system reduces this further:
 
 ## Routing Logic (Role-First, Task Override, Fallback-Only)
 
-> **ADR 2026-04-18b:** Routing is role-based with explicit task overrides. No blanket defaults.
+> **ADR 2026-04-18b:** Routing is role-based with explicit frontmatter alignment. No blanket defaults.
 
 ```yaml
 routing:
-  # Tier 1: Decision-heavy roles → highest judgment
-  - if: agent in [brooks, jobs]
-    use: gpt-5.4
+  - if: agent in [brooks, hightower]
+    use: openai/gpt-5.4
 
-  # Tier 2: Scout default → fast recon with GPT-5.4 mini
-  - if: agent == scout
-    use: gpt-5.4-mini
+  - if: agent == jobs
+    use: ollama-cloud/kimi-k2.5
 
-  # Tier 3: Code-producing tasks → coding specialist
-  - if: agent == woz and task in [patch, feature, test_fix, codegen, repo_surgery]
-    use: qwen3-coder-next:cloud
+  - if: agent in [scout, pike]
+    use: openai/gpt-5.4-mini
 
-  - if: agent == bellard and task in [perf_patch, hotpath_fix, benchmark_refactor]
-    use: qwen3-coder-next:cloud
+  - if: agent in [woz, carmack]
+    use: ollama-cloud/qwen3-coder-next
 
-  # Tier 4: Worker default → mini for review, refactor, data, interface
-  - if: agent in [woz, pike, fowler, bellard, carmack, knuth]
-    use: gpt-5.4-mini
+  - if: agent in [bellard, fowler, knuth]
+    use: ollama-cloud/glm-5.1
 
-  # Tier 5: Infra → frontier (deployment reasoning)
-  - if: agent == hightower
-    use: gpt-5.4
-
-  # Recovery: any primary unavailable
-  - if: any_primary_unavailable
-    use: glm-5.1:cloud
+  # Recovery only uses frontmatter-declared fallbacks
+  - if: agent == scout and primary_unavailable
+    use: ollama-cloud/nemotron-3-super
 ```
 
-Scout-specific fallback: if `gpt-5.4-mini` is unavailable or out of credits, use `ollama-cloud/nemotron-3-super`.
+Scout-specific fallback: if `openai/gpt-5.4-mini` is unavailable or out of credits, use `ollama-cloud/nemotron-3-super`.
 
-**Key principle:** Qwen3-Coder-Next is used ONLY for code-producing or code-repair tasks, not for non-code review chatter where mini is cheaper and sufficient.
+**Key principle:** Woz and Carmack use Qwen3-Coder-Next as their declared primary. Other agents should not switch to it unless their frontmatter changes.
 
 ## The Brooksian Principles
 

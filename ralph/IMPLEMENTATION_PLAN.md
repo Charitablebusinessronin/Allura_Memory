@@ -12,11 +12,11 @@
   - Fix: Cross-runtime registry entries now match current provider prefixes used by `.opencode/agent/*.md` frontmatter
   - Acceptance: `grep 'ollama-cloud/gpt-5\.4\|ollama-cloud/gpt-5\.4-mini' .claude/docs/MODEL_REGISTRY.md` returns zero matches
 
-- [ ] **S7-9**: Align agent-routing.md primary/fallback models
-  - File: `.opencode/rules/agent-routing.md`
-  - Fix primary models: Woz→openai/gpt-5.4-mini, Bellard→openai/gpt-5.4-mini, Carmack→openai/gpt-5.4-mini, Fowler→openai/gpt-5.4-mini, Knuth→openai/gpt-5.4-mini
-  - Fix fallbacks to match `.md` frontmatter exactly
-  - Acceptance: Every agent row in the routing table matches `.opencode/agent/*.md`
+- [x] **S7-9**: Align agent-routing.md primary/fallback models
+  - Files: `.opencode/rules/agent-routing.md`, `.claude/rules/agent-routing.md`
+  - Fix: routing tables now mirror `.opencode/agent/*.md` frontmatter exactly for `model` and declared `fallback_model`
+  - Fix: removed stale specialist override claims, corrected `opencode.json` path, and simplified routing YAML to role-first frontmatter alignment
+  - Acceptance: Every agent row in both routing docs matches `.opencode/agent/*.md` frontmatter
 
 - [ ] **S7-10**: Add NOTION_API_KEY + env vars
   - Files: `.env.example`, `docker/docker-compose.yml`, `src/curator/config.ts`, `src/lib/notion/client.ts`
@@ -252,3 +252,4 @@
 | 2026-04-19 06:00Z | - | Ralph loop started | - |
 | 2026-04-19 08:15Z | P1-P4 | ULW Loop files created | ulw-loop.sh, PROMPT_ulw.md, updated plan, command |
 | 2026-04-21 07:00Z | S7-8 | Fixed MODEL_REGISTRY provider prefixes in canonical registry | `.claude/docs/MODEL_REGISTRY.md` updated; typecheck passed |
+| 2026-04-21 07:20Z | S7-9 | Aligned routing docs with live agent frontmatter | `.opencode/rules/agent-routing.md` + `.claude/rules/agent-routing.md`; typecheck passed |
