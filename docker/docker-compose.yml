@@ -83,6 +83,8 @@ services:
       NEO4J_PASSWORD: ${NEO4J_PASSWORD}
       OLLAMA_API_KEY: ${OLLAMA_API_KEY}
       OLLAMA_CLOUD_URL: ${OLLAMA_CLOUD_URL:-https://ollama.com}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-qwen3-embedding:8b}
+      RUVECTOR_EMBEDDING_MODEL: ${RUVECTOR_EMBEDDING_MODEL:-qwen3-embedding:8b}
     healthcheck:
       test: ["CMD", "pgrep", "-f", "legacy"]
       interval: 30s
