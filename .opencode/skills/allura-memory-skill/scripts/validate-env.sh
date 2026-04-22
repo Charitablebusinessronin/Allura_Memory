@@ -1,5 +1,6 @@
 #!/bin/bash
 # validate-env.sh — Check that Allura Brain environment is properly configured
+# Uses direct Docker access for health checks; for memory operations, use MCP tools: allura-brain_memory_*
 
 set -e
 
@@ -25,7 +26,7 @@ echo "EMBEDDING_BASE_URL = ${EMBEDDING_BASE_URL:-http://localhost:11434}"
 # Check Docker containers
 echo ""
 echo "=== Docker Containers ==="
-for container in knowledge-postgres knowledge-neo4j allura-memory-mcp allura-http-gateway; do
+for container in knowledge-postgres knowledge-neo4j; do
   if docker ps --format '{{.Names}}' | grep -q "^${container}$"; then
     echo "✅ $container running"
   else

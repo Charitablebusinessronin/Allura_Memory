@@ -53,7 +53,7 @@ permission:
 
 2. Search Neo4j for relevant build patterns and past implementations
 
-3. Load memory-client skill (`skill({ name: "memory-client" })`) for canonical interface reference
+3. Load allura-memory-skill (`skill({ name: "allura-memory-skill" })`) for canonical interface reference
 
 ### On Task Complete
 

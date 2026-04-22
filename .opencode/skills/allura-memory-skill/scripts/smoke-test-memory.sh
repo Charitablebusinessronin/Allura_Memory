@@ -1,5 +1,6 @@
 #!/bin/bash
 # smoke-test-memory.sh — Quick smoke test for Allura Brain memory operations
+# Uses direct Docker access for health checks; for memory operations, use MCP tools: allura-brain_memory_*
 
 set -e
 

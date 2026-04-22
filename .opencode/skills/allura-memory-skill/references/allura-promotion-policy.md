@@ -10,7 +10,7 @@ Promote raw memory to insight only when ALL of these are true:
 2. **Utility beyond session** — The information helps future work, not just the current conversation
 3. **Confidence passes threshold** — Default threshold: 0.85 (configurable via `AUTO_APPROVAL_THRESHOLD`)
 4. **Not a duplicate** — No existing canonical memory covers the same ground
-5. **Not better suited as a supersede** — If it contradicts an existing insight, use `memory_update` instead
+5. **Not better suited as a supersede** — If it contradicts an existing insight, use `allura-brain_memory_update` instead
 
 ## Promotion modes
 
@@ -35,9 +35,9 @@ Current mode: `soc2` (set in `PROMOTION_MODE` env var)
 ## Promotion flow
 
 ```
-memory_add (PG episodic)
+allura-brain_memory_add (PG episodic)
     ↓
-memory_promote (request)
+allura-brain_memory_promote (request)
     ↓
 Curator evaluates:
   - Score check (threshold)
@@ -50,7 +50,7 @@ Rejected → Stays in PG as raw trace
 
 ## Critical rules
 
-- Never promote without calling `memory_promote` — direct Neo4j writes bypass governance
+- Never promote without calling `allura-brain_memory_promote` — direct Neo4j writes bypass governance
 - Never auto-approve in production — `soc2` mode exists for a reason
 - If promotion is rejected, the raw trace still exists in PG — nothing is lost
-- Promoted memories carry their `notion_id` for bidirectional traceability
+- Promoted memories carry their `group_id` for tenant isolation

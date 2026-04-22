@@ -9,33 +9,33 @@ Before acting, load the smallest useful context window. Two scopes exist:
 
 Always fetch project-local first. Add global only when it improves reasoning for the current task.
 
-## Retrieval patterns
+## Retrieval patterns (use `allura-brain_memory_search`)
 
 ### Before writing
 ```
-memory_search({ query: "<topic>", group_id: "allura-system" })
+allura-brain_memory_search({ query: "<topic>", group_id: "allura-system" })
 → Check for duplicates, related context, superseded knowledge
 → Avoid inserting what already exists
 ```
 
 ### Before acting on a task
 ```
-memory_search({ query: "<task domain>", group_id: "allura-system" })
+allura-brain_memory_search({ query: "<task domain>", group_id: "allura-system" })
 → Load relevant decisions, prior outcomes, known blockers
 → Don't reinvent solutions the team already found
 ```
 
 ### When scope is broad
 ```
-memory_search({ query: "<topic>", group_id: "allura-system", limit: 10 })
+allura-brain_memory_search({ query: "<topic>", group_id: "allura-system", limit: 10 })
 → Load project context
-memory_search({ query: "<topic>", include_global: true })
+allura-brain_memory_search({ query: "<topic>", include_global: true, group_id: "allura-system" })
 → Add cross-project patterns if needed
 ```
 
 ### When troubleshooting
 ```
-memory_search({ query: "<error or symptom>", group_id: "allura-system" })
+allura-brain_memory_search({ query: "<error or symptom>", group_id: "allura-system" })
 → Find prior incidents, resolutions, diagnostics baselines
 ```
 

@@ -56,7 +56,7 @@ bun run snapshot:build    # build snapshot from docs
 # Brooks CLI
 bun run brooks:start / brooks:status / brooks:end
 
-# DB health — use MCP_DOCKER tools only, never docker exec (see .claude/rules/mcp-integration.md)
+# DB health — use MCP_DOCKER tools only, never docker exec (see .opencode/rules/mcp-integration.md)
 ```
 
 ## Session Start Protocol
@@ -142,7 +142,7 @@ Use `MCP_DOCKER` tools as the canonical MCP surface for database and graph opera
 
 Do not create net-new files in `docs/allura/` beyond the canonical six. Route reports, benchmarks, and snapshots to `docs/archive/` or Allura Brain.
 
-## Slash Commands (`.claude/commands/`)
+## Slash Commands (`.opencode/command/`)
 
 | Command                  | Purpose                                     |
 | ------------------------ | ------------------------------------------- |
@@ -169,8 +169,8 @@ Do not create net-new files in `docs/allura/` beyond the canonical six. Route re
 | **Knuth**     | Donald Knuth     | Schema design, query optimization       |
 | **Hightower** | Kelsey Hightower | CI/CD, infrastructure                   |
 
-Full routing rules: `.claude/rules/agent-routing.md`
+Full routing rules: `.opencode/rules/agent-routing.md`
 
 ## MCP Integration
 
-**DB operations via MCP_DOCKER tools only** — never `docker exec`. See `.claude/rules/mcp-integration.md`.
+**DB operations via MCP_DOCKER tools only** — never `docker exec`. See `.opencode/rules/mcp-integration.md`.
