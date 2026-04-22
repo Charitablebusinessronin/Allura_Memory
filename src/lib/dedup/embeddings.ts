@@ -286,7 +286,7 @@ class OpenAIEmbeddingGenerator implements EmbeddingGenerator {
  * Ollama embedding generator
  * 
  * Uses Ollama's OpenAI-compatible API for local embeddings.
- * Default model is qwen3-embedding:8b which produces 4096-dimensional vectors.
+ * Default model is qwen3-embedding:8b with Matryoshka dimension reduction to 1024d.
  */
 class OllamaEmbeddingGenerator implements EmbeddingGenerator {
   private baseUrl: string
@@ -300,7 +300,7 @@ class OllamaEmbeddingGenerator implements EmbeddingGenerator {
   } = {}) {
     this.baseUrl = config.baseUrl ?? process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434/v1'
     this.model = config.model ?? process.env.OLLAMA_EMBEDDING_MODEL ?? 'qwen3-embedding:8b'
-    this.dimensions = config.dimensions ?? 4096 // Qwen3-Embedding-8B default
+    this.dimensions = config.dimensions ?? 1024 // Qwen3-Embedding-8b MRL 1024d (HNSW-compatible)
   }
 
   async generate(text: string): Promise<EmbeddingVector> {
@@ -312,6 +312,7 @@ class OllamaEmbeddingGenerator implements EmbeddingGenerator {
       body: JSON.stringify({
         model: this.model,
         input: text,
+        dimensions: this.dimensions,
       }),
     })
 
@@ -333,6 +334,7 @@ class OllamaEmbeddingGenerator implements EmbeddingGenerator {
       body: JSON.stringify({
         model: this.model,
         input: texts,
+        dimensions: this.dimensions,
       }),
     })
 
@@ -629,7 +631,7 @@ export function createOpenAIEmbeddingManager(config: {
 /**
  * Create an embedding manager with Ollama generator (local, no API key required)
  * 
- * Default model: qwen3-embedding:8b (4096 dimensions)
+ * Default model: qwen3-embedding:8b (1024 dimensions via MRL)
  * Default base URL: http://localhost:11434/v1 (Ollama OpenAI-compatible endpoint)
  * 
  * Set OLLAMA_BASE_URL and OLLAMA_EMBEDDING_MODEL env vars to override defaults.

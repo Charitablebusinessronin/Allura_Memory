@@ -7,9 +7,10 @@ COPY tsconfig.json ./
 COPY src ./src
 COPY scripts ./scripts
 # Skill MCP servers — launched via docker exec for MCP_DOCKER
-COPY .opencode/skills/skill-neo4j-memory ./skills/skill-neo4j-memory
-COPY .opencode/skills/skill-cypher-query ./skills/skill-cypher-query
-COPY .opencode/skills/skill-database ./skills/skill-database
+# Skills are mounted at runtime, not baked into the image
+# The container only needs the core src/ for canonical MCP tools
+
+RUN mkdir -p /app/skills
 
 RUN bun install
 

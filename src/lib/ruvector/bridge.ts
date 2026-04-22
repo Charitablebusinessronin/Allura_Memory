@@ -13,7 +13,7 @@
  * - Uses existing getRuVectorPool() from connection.ts (no duplicate pool)
  * - Parameterized queries ONLY (no string interpolation)
  * - group_id validation: ^allura-[a-z0-9-]+$
- * - Embedding column type is ruvector(4096) in PG (qwen3-embedding:8b, 4096d)
+ * - Embedding column type is vector(1024) in PG (qwen3-embedding:8b, Matryoshka 1024d)
  * - Memory IDs are BIGSERIAL (stringified); feedback IDs are UUID v4
  * - Query vectors must be formatted as string literal '[0.1,0.2,...]'::vector
  *   (pg driver cannot send JS arrays to ruvector columns — parser error in vector.rs)

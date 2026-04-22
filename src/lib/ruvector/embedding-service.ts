@@ -1,8 +1,11 @@
 /**
  * RuVector Embedding Service
  *
- * Generates 4096-dim vectors via Ollama's /api/embeddings endpoint.
- * Uses qwen3-embedding:8b (4096d) by default.
+ * Generates 1024-dim vectors via Ollama's /v1/embeddings endpoint (OpenAI-compatible).
+ * Uses qwen3-embedding:8b with Matryoshka dimension reduction (dimensions: 1024).
+ *
+ * 1024d enables HNSW indexing in pgvector (2000d limit), with minimal quality loss
+ * compared to the full 4096d output (MRL preserves 95%+ quality).
  *
  * Environment variables:
  * - RUVECTOR_EMBEDDING_MODEL: model name (default: qwen3-embedding:8b)
@@ -20,7 +23,7 @@ if (typeof window !== "undefined") {
 
 // ── Configuration ────────────────────────────────────────────────────────────
 
-/** Default model — qwen3-embedding:8b produces 4096-dim vectors */
+/** Default model — qwen3-embedding:8b with MRL dimension reduction to 1024d */
 const DEFAULT_MODEL = "qwen3-embedding:8b";
 
 /** Default Ollama endpoint */
@@ -32,8 +35,8 @@ const REQUEST_TIMEOUT_MS = 30_000;
 /** Max concurrent embedding requests in batch */
 const BATCH_CONCURRENCY = 5;
 
-/** Embedding dimensions for qwen3-embedding:8b */
-const EMBEDDING_DIMENSIONS = 4096;
+/** Embedding dimensions — 1024d via Matryoshka (HNSW-compatible, < 2000d pgvector limit) */
+const EMBEDDING_DIMENSIONS = 1024;
 
 /**
  * Read model name from environment (falls back to default).
@@ -51,8 +54,9 @@ function getBaseUrl(): string {
 
 // ── Ollama Response Types ────────────────────────────────────────────────────
 
-interface OllamaEmbeddingResponse {
-  embedding: number[];
+/** OpenAI-compatible /v1/embeddings response shape */
+interface OpenAIEmbeddingResponse {
+  data: Array<{ embedding: number[] }>;
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -70,7 +74,7 @@ interface OllamaEmbeddingResponse {
 export async function generateEmbedding(text: string): Promise<number[] | null> {
   const baseUrl = getBaseUrl();
   const model = getModel();
-  const url = `${baseUrl}/api/embeddings`;
+  const url = `${baseUrl}/v1/embeddings`;
 
   try {
     const controller = new AbortController();
@@ -79,7 +83,7 @@ export async function generateEmbedding(text: string): Promise<number[] | null> 
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model, prompt: text }),
+      body: JSON.stringify({ model, input: text, dimensions: 1024 }),
       signal: controller.signal,
     });
 
@@ -93,16 +97,17 @@ export async function generateEmbedding(text: string): Promise<number[] | null> 
       return null;
     }
 
-    const data: OllamaEmbeddingResponse = await response.json();
+    const data: OpenAIEmbeddingResponse = await response.json();
 
-    if (!data.embedding || !Array.isArray(data.embedding) || data.embedding.length === 0) {
+    const embedding = data.data?.[0]?.embedding;
+    if (!embedding || !Array.isArray(embedding) || embedding.length === 0) {
       console.warn(
         `[RuVector Embedding] Invalid response: missing or empty embedding array`
       );
       return null;
     }
 
-    return data.embedding;
+    return embedding;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.warn(`[RuVector Embedding] Failed to generate embedding: ${message}`);
@@ -139,11 +144,11 @@ export async function generateEmbeddingBatch(texts: string[]): Promise<(number[]
 /**
  * Returns the expected embedding dimension count.
  *
- * This matches qwen3-embedding:8b's output (4096 dimensions).
+ * This matches the Matryoshka-reduced output (1024 dimensions).
  * Used by callers that need to know the vector size for DB column
  * types or validation.
  *
- * @returns 4096
+ * @returns 1024
  */
 export function getEmbeddingDimensions(): number {
   return EMBEDDING_DIMENSIONS;

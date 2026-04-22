@@ -14,10 +14,11 @@
 -- - qwen3-embedding:8b produces 4096-dimensional embeddings
 -- - group_id enforced to ^allura- via CHECK constraint
 --
--- ARCHITECTURE DECISION: Changed from bge-small-en-v1.5 (384d) to qwen3-embedding:8b (4096d).
+-- ARCHITECTURE DECISION: Changed from bge-small-en-v1.5 (384d) to qwen3-embedding:8b.
 -- Reason: bge-small-en-v1.5 not available in Ollama catalog. qwen3-embedding:8b is already
--- running locally, produces 4096d vectors, and is well-tested. The ruvector column was
--- updated to match. HNSW index creation is handled separately after pgvector >= 0.8.4.
+-- running locally. Uses Matryoshka Representation Learning (MRL) to produce 1024d embeddings
+-- from the 4096d model output, enabling HNSW indexing (pgvector has a 2000d HNSW limit).
+-- Quality retention at 1024/4096 ≈ 95%+ with cosine similarity.
 -- ============================================================================
 --
 -- KNOWN BUG (documented, not fixed here):
@@ -61,7 +62,7 @@ BEGIN
         content         TEXT        NOT NULL,
         memory_type     TEXT        NOT NULL DEFAULT 'episodic'
             CHECK (memory_type IN ('episodic', 'semantic', 'procedural')),
-        embedding       vector(4096),  -- qwen3-embedding:8b; NULL until embedding service populates
+        embedding       vector(1024),  -- qwen3-embedding:8b MRL 1024d; NULL until embedding service populates
         metadata        JSONB       NOT NULL DEFAULT '{}'::jsonb,
         trajectory_id   TEXT,       -- for SONA feedback correlation
         created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -82,12 +83,15 @@ BEGIN
     -- ============================================================================
     -- 2. HNSW index for fast ANN vector search
     -- ============================================================================
+    -- vector(1024) is under the pgvector HNSW 2000d limit, so we can create
+    -- the index directly. m=16 and ef_construction=64 are good defaults for
+    -- recall vs build speed. The partial index excludes soft-deleted rows.
+    -- ============================================================================
 
-
-
-
-
-
+    CREATE INDEX IF NOT EXISTS allura_mem_hnsw
+        ON allura_memories USING hnsw (embedding vector_cosine_ops)
+        WITH (m = 16, ef_construction = 64)
+        WHERE embedding IS NOT NULL AND deleted_at IS NULL;
 
 
     -- ============================================================================
@@ -156,16 +160,16 @@ BEGIN
 
     COMMENT ON TABLE allura_memories IS
         'Hybrid vector+BM25 memory store for Allura. '
-        'Embeddings use vector(4096) (qwen3-embedding:8b, 4096 dims). '
-        'When pgvector >= 0.8.4 is installed, a separate migration creates the HNSW ANN index via vector_cosine_ops. '
+        'Embeddings use vector(1024) (qwen3-embedding:8b, Matryoshka 1024d). '
+        'HNSW index created with vector_cosine_ops for fast ANN search. '
         'ruvector_hybrid_search() combines BM25 + ANN for fusion retrieval. '
         'group_id enforced to ^allura- via CHECK. '
         'SONA feedback loop uses trajectory_id for correlation.';
 
     COMMENT ON COLUMN allura_memories.embedding IS
-        'Vector embedding as vector(4096). qwen3-embedding:8b produces 4096-dim vectors. '
+        'Vector embedding as vector(1024). qwen3-embedding:8b with MRL dimension reduction to 1024d. '
         'NULL until embedding service populates it. '
-        'A post-upgrade migration creates the HNSW index with vector_cosine_ops once pgvector >= 0.8.4 is installed.';
+        'HNSW index (allura_mem_hnsw) created with vector_cosine_ops.';
 
     COMMENT ON COLUMN allura_memories.trajectory_id IS
         'Correlation ID for SONA feedback. Set during retrieval, '
