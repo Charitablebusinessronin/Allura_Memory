@@ -175,7 +175,7 @@ export async function getPendingRows(
  * that is then cast with `::vector` in the SQL.
  *
  * @param embedding - Array of numbers from the embedding model
- * @returns String representation like '[0.1,0.2,...,0.4096]'
+ * @returns String representation like '[0.1,0.2,...,0.1024]'
  */
 export function formatEmbeddingForUpdate(embedding: number[]): string {
   return `[${embedding.join(",")}]`

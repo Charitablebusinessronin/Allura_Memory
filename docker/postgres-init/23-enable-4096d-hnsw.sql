@@ -1,48 +1,27 @@
--- Migration: Restore 4096d HNSW index after pgvector upgrade to >= 0.8.4
+-- ============================================================================
+-- SUPERSeded by Migration 20: 1024d Matryoshka Embedding
+-- ============================================================================
 --
--- Why this exists:
--- - Migration 22 intentionally stopped at vector(4096) because pgvector 0.8.2
---   could not build HNSW/IVFFlat indexes above 2000 dimensions.
--- - Once the PostgreSQL image is upgraded to pgvector 0.8.4+ on PG16, the
---   allura_memories.embedding column can again use an HNSW index for 4096d
---   qwen3-embedding:8b vectors.
+-- This migration is NO LONGER NEEDED.
 --
--- Safety:
--- - This migration is idempotent.
--- - It no-ops when the vector extension is missing, the table is absent, or
---   the installed pgvector extension version is below 0.8.4.
+-- ORIGINAL PURPOSE (now obsolete):
+-- - Was intended to create an HNSW index on 4096d vectors after pgvector 0.8.4+
+-- - ASSUMED pgvector 0.8.4 would lift the 2000d HNSW limit — IT DOESN'T EXIST.
+--
+-- WHAT HAPPENED INSTEAD (AD-24):
+-- - pgvector 0.8.2 IS the latest stable (as of 2026-04-22)
+-- - HNSW_MAX_DIM is hardcoded to 2000 in pgvector's hnsw.h
+-- - IVFFlat has the same 2000d limit
+-- - No version of pgvector supports HNSW at 4096d
+--
+-- SOLUTION ADOPTED:
+-- - Migration 20: Switch to 1024d embeddings via MRL (Matryoshka Representation Learning)
+-- - qwen3-embedding:8b supports /v1/embeddings with dimensions=1024
+-- - 1024d < 2000d HNSW limit → index works perfectly
+-- - Quality retention at 1024/4096 ≈ 95%+ for cosine similarity
+--
+-- This file is preserved for historical reference only. DO NOT execute.
+-- ============================================================================
 
-DO $$
-DECLARE
-  vector_ext_version text;
-  version_parts int[];
-BEGIN
-  IF to_regclass('public.allura_memories') IS NULL THEN
-    RAISE NOTICE 'Skipping HNSW creation — allura_memories table does not exist';
-    RETURN;
-  END IF;
-
-  SELECT extversion INTO vector_ext_version
-  FROM pg_extension
-  WHERE extname = 'vector';
-
-  IF vector_ext_version IS NULL THEN
-    RAISE NOTICE 'Skipping HNSW creation — vector extension is not installed';
-    RETURN;
-  END IF;
-
-  version_parts := string_to_array(vector_ext_version, '.')::int[];
-
-  IF version_parts < ARRAY[0, 8, 4] THEN
-    RAISE NOTICE 'Skipping HNSW creation — pgvector version % is below 0.8.4', vector_ext_version;
-    RETURN;
-  END IF;
-
-  EXECUTE '
-    CREATE INDEX IF NOT EXISTS allura_mem_embedding_hnsw
-      ON allura_memories USING hnsw (embedding vector_cosine_ops)
-  ';
-
-  COMMENT ON INDEX allura_mem_embedding_hnsw IS
-    'HNSW ANN index for qwen3-embedding:8b vector(4096) retrieval. Requires pgvector >= 0.8.4.';
-END $$;
+-- NO-OP: This migration is superseded by 20-migrate-to-1024d.sql
+-- The HNSW index is now created on embedding_1024 (vector(1024)) directly.
