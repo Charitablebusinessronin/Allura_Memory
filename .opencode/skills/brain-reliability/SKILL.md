@@ -1,6 +1,6 @@
 ---
 name: brain-reliability
-description: Bootstrap, verify, recover, and keep Allura Brain reliable across computer boot and session start. Use when the machine has just restarted, Brain tools are not connected, Docker services may be down, or MCP/gateway health needs deterministic verification.
+description: Bootstrap, verify, recover, and keep Allura Brain reliable across computer boot and session start via MCP-packaged memory servers. Use when the machine has just restarted, Brain tools are not connected, MCP servers may be down, or memory system health needs deterministic verification.
 ---
 
 # Brain Reliability Skill
@@ -76,7 +76,16 @@ Without lingering, the service still starts automatically when you log in.
 
 | Symptom | Likely check |
 |---|---|
-| `allura-brain_*` says Not connected | Run `status`, then `recover` |
-| MCP container says healthy but Brain still unavailable | Check gateway `/ready` and MCP logs |
+| MCP memory tools not available | Run `status`, then `recover` |
+| MCP container says healthy but memory tools still unavailable | Check gateway `/ready` and MCP logs |
 | Service does not start on reboot | Confirm `systemctl --user` service is enabled and lingering is on |
 | Docker services never become ready | Inspect `docker compose logs` for postgres/neo4j/mcp/http-gateway |
+
+### Memory-specific recovery
+
+If `neo4j-memory`, `database-server`, or `neo4j-cypher` tools are unavailable:
+
+1. Check MCP server status: `docker compose ps`
+2. Verify credentials via `MCP_DOCKER_mcp-config-set`
+3. Re-add servers: `MCP_DOCKER_mcp-add --name neo4j-memory --activate`
+4. Run `recover` to restore gateway health

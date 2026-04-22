@@ -2,7 +2,7 @@
 # PRIMARY docker-compose.yml — Allura Brain (v2.1.0) — stability edition
 # =============================================================================
 # Changes in v2.1.0:
-#   - Pinned PostgreSQL to pgvector:0.7.0-pg16 (specific version, not :pg16)
+#   - PostgreSQL uses pgvector:pg16 temporarily because upstream does not publish 0.8.4-pg16
 #   - Pinned Neo4j to 5.26.0-community (specific minor version)
 #   - Added explicit volume declarations with external: true for pre-existing volumes
 #   - Added restart: unless-stopped to all services (already present, but documenting)
@@ -21,10 +21,10 @@
 
 services:
   # PostgreSQL 16 — Primary database (events, traces, pgvector embeddings)
-  # Version pin: pgvector:0.7.0-pg16 (PG16 with vector extension v0.7.0)
+  # Temporary image tag: pgvector:pg16. Verify extversion at runtime before HNSW migration.
   # This matches the existing volume's data version and prevents auto-upgrade to PG17
   postgres:
-    image: pgvector/pgvector:0.7.0-pg16
+    image: pgvector/pgvector:pg16
     container_name: knowledge-postgres
     restart: unless-stopped
     environment:

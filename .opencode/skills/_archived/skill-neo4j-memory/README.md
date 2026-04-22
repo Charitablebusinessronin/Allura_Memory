@@ -4,7 +4,16 @@ MCP Docker skill for Neo4j-backed Allura Brain memory operations — recall and 
 
 ## Overview
 
-This skill provides a focused interface for interacting with the Neo4j-backed semantic layer of **Allura Brain**. It is a single-responsibility skill container for Insight recall and listing operations; it is not a standalone agent and not the canonical memory authority by itself.
+This skill provides a focused interface for interacting with the Neo4j-backed semantic layer of **Allura**. It is the primary packaged MCP surface for approved-memory recall and listing operations; it is not a standalone agent and not the orchestrator.
+
+## Role in the Stack
+
+Use this first for normal memory recall.
+
+Escalation order:
+1. `skill-neo4j-memory`
+2. `skill-database` when raw evidence is needed
+3. `skill-cypher-query` only when targeted graph inspection is required
 
 ## Tools
 
@@ -19,8 +28,6 @@ Recall an approved Insight from Neo4j memory by ID or query.
 
 **Usage:**
 ```text
-Preferred path: use first-party allura-brain_* tools for canonical memory operations.
-
 If this skill is activated through MCP_DOCKER, call its exposed recall tool with:
 - insightId: adr_001
 or
@@ -103,19 +110,13 @@ bun test
 
 ## Integration
 
-This skill is designed to be used by the Team RAM orchestrator for parallel agents and subagents:
+This skill is designed to be used by the Team RAM orchestrator as the first memory hop:
 
 ```typescript
 // team-ram/orchestrator.ts
-const results = await Promise.allSettled([
-  subagent.call('skill-neo4j-memory', { 
-    query: 'recent architectural decisions' 
-  }),
-  subagent.call('skill-cypher-query', { 
-    cypher: 'MATCH (d:Decision) RETURN d LIMIT 10' 
-  }),
-]);
-const context = assembleContext(results);
+const context = await subagent.call('skill-neo4j-memory', {
+  query: 'recent architectural decisions'
+});
 ```
 
 ## Notes
@@ -123,4 +124,4 @@ const context = assembleContext(results);
 - **Read-only by policy** - This skill only reads from Neo4j
 - **Group-scoped** - All operations are scoped to an explicit `groupId`
 - **Append-only** - Insights are never modified, only versioned with `SUPERSEDES`
-- **Canonical memory surface** - Prefer first-party `allura-brain_*` tools for Allura Brain memory operations
+- **Primary recall surface** - Use this before trace SQL or raw Cypher

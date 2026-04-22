@@ -1,27 +1,31 @@
 {
   "schema_version": "1.0.0",
   "approved_by": "brooks-architect",
-  "last_updated": "2026-04-19T00:00:00Z",
+  "last_updated": "2026-04-22T00:00:00Z",
   "servers": {
-    "allura-brain": {
+    "neo4j-memory": {
       "status": "approved",
-      "approved_at": "2026-04-19T00:00:00Z",
+      "approved_at": "2026-04-22T00:00:00Z",
       "approved_by": "brooks-architect",
-      "tools": [
-        "memory_add",
-        "memory_search",
-        "memory_get",
-        "memory_list",
-        "memory_delete",
-        "memory_update",
-        "memory_promote",
-        "memory_export",
-        "memory_restore",
-        "memory_list_deleted"
-      ],
       "category": "database",
       "essential": true,
-      "rationale": "Primary Allura Brain MCP server — canonical memory interface for all agents. Provides query_traces (via memory_search on events), query_insights (via memory_search on Neo4j graph), and full CRUD for episodic + semantic memory. Brain = Postgres events + Neo4j graphs + pgvector embeddings."
+      "rationale": "Native Docker catalog server for semantic memory (Neo4j graph). SUPERSEDES versioned knowledge nodes. Replaces allura-brain's graph operations."
+    },
+    "database-server": {
+      "status": "approved",
+      "approved_at": "2026-04-22T00:00:00Z",
+      "approved_by": "brooks-architect",
+      "category": "database",
+      "essential": true,
+      "rationale": "Native Docker catalog server for episodic memory (PostgreSQL). Append-only event traces and vector embeddings. Replaces allura-brain's SQL operations."
+    },
+    "neo4j-cypher": {
+      "status": "approved",
+      "approved_at": "2026-04-22T00:00:00Z",
+      "approved_by": "brooks-architect",
+      "category": "database",
+      "essential": false,
+      "rationale": "Native Docker catalog server for ad-hoc Cypher queries. Debug and diagnostic use only; not required for normal memory operations."
     }
   },
   "pending": {},

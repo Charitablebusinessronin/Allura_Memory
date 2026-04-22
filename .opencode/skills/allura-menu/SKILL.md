@@ -1,7 +1,7 @@
 ---
 name: allura-menu
-description: "Interactive menu for Allura Memory surgical team. Quick prompts for common workflows."
-allowed-tools: ["Read", "Grep", "Bash", "mcp__MCP_DOCKER__*", "allura-brain_*"]
+description: "Interactive menu for Allura Brain surgical team. Quick prompts for common workflows."
+allowed-tools: ["Read", "Grep", "Bash", "mcp__MCP_DOCKER__*", "neo4j-memory_*", "database-server_*", "neo4j-cypher_*"]
 ---
 
 # Allura Menu — Quick Prompts
@@ -12,7 +12,7 @@ Interactive menu for common Allura Memory workflows.
 
 ```
 ╔═══════════════════════════════════════════════════════════════╗
-║                    ALLURA MEMORY MENU                        ║
+║                ALLURA BRAIN MENU                             ║
 ╠═══════════════════════════════════════════════════════════════╣
 ║  [1] 🚀 Start Session      — Load memory, verify infra       ║
 ║  [2] 📋 Create Task        — Generate structured task         ║
@@ -20,7 +20,7 @@ Interactive menu for common Allura Memory workflows.
 ║  [4] 📝 Quick Update        — Sync docs with memory            ║
 ║  [5] 🔍 Code Review        — Surgical team review             ║
 ║  [6] 📊 Dashboard           — View system status               ║
-║  [7] 🧠 Memory Query       — Search Allura Brain              ║
+║  [7] 🧠 Memory Query       — Search MCP-packaged servers      ║
 ║  [8] 🧠 Memory Ops         — Govern memory workflows          ║
 ║  [9] 📤 Promote            — HITL promotion workflow           ║
 ║  [A] 🏁 End Session        — Persist and archive              ║
@@ -81,7 +81,7 @@ Interactive menu for common Allura Memory workflows.
 
 **What it does:**
 
-- Stores updates to Allura Brain via `allura-brain_*` tools
+- Stores updates to Allura Brain via MCP-packaged memory servers (`neo4j-memory`, `database-server`)
 - Search-before-write discipline (Hydrate → Plan → Build → Debug → Reflect)
 - Syncs with canonical docs in `docs/allura/`
 - Logs changes to PostgreSQL events
@@ -126,8 +126,8 @@ Interactive menu for common Allura Memory workflows.
 
 **What it does:**
 
-- Searches Allura Brain
-- Returns relevant insights
+- Searches via MCP-packaged servers (`neo4j-memory`, then `database-server`)
+- Returns relevant insights and evidence
 - Links to related entities
 - Shows confidence scores
 
@@ -144,7 +144,7 @@ Interactive menu for common Allura Memory workflows.
 - Governs persistent memory workflows in Allura Brain
 - Distinguishes raw trace from curated insight
 - Applies promotion, supersede, deprecate, restore, and export discipline
-- Uses `allura-brain_*` tools first and `MCP_DOCKER` only when lower-level inspection is needed
+- Uses MCP-packaged memory servers in canonical order: `neo4j-memory` first, `database-server` second, `neo4j-cypher` last
 
 **Equivalent skill:** `allura-memory-skill`
 
@@ -195,21 +195,19 @@ Interactive menu for common Allura Memory workflows.
 
 ## Quick Prompts
 
-Type these directly in your IDE:
-
-| Prompt            | Action            |
-| ----------------- | ----------------- |
-| `start`           | Start session     |
-| `task <desc>`     | Create/manage task |
-| `party <task>`    | Launch party mode |
-| `update <target>` | Memory client sync |
-| `review`          | Code review       |
-| `dash`            | Dashboard         |
-| `query <term>`    | Memory query      |
-| `memory <task>`   | Memory operations |
-| `promote`         | HITL promotion    |
-| `debug <issue>`   | Systematic debug  |
-| `end <summary>`   | End session       |
+| Prompt            | Action                    |
+| ----------------- | ------------------------- |
+| `start`           | Start session             |
+| `task <desc>`     | Create/manage task        |
+| `party <task>`    | Launch party mode         |
+| `update <target>` | Memory client sync        |
+| `review`          | Code review               |
+| `dash`            | Dashboard                 |
+| `query <term>`    | Memory query (MCP)        |
+| `memory <task>`   | Memory Ops (Allura Brain) |
+| `promote`         | HITL promotion            |
+| `debug <issue>`   | Systematic debug          |
+| `end <summary>`   | End session               |
 
 ---
 
@@ -229,6 +227,7 @@ Type these directly in your IDE:
 | Fowler     | `@fowler-refactor-gate` | Martin Fowler     | Maintainability Gate        |
 | Knuth      | `@knuth-data`           | Donald Knuth      | Data Architect              |
 | Hightower  | `@hightower-devops`     | Kelsey Hightower  | DevOps + Infrastructure     |
+| **Operator** | `@operator-micro`       | (none)            | Subtask helper (low-risk)   |
 
 ---
 

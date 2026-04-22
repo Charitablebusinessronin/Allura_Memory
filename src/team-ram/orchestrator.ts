@@ -87,25 +87,22 @@ function dedupePlan(calls: SkillCall[]): SkillCall[] {
   return result
 }
 
+/**
+ * Select skills for Team RAM task execution with staged memory-first routing:
+ * 1. Always prefer skill-neo4j-memory first
+ * 2. Add skill-database only when evidence/traces/audit details are needed
+ * 3. Add skill-cypher-query only when targeted graph traversal/schema/explicit Cypher is needed
+ */
 export function selectSkills(task: TeamRamTask): SkillCall[] {
   const groupId = validateGroupId(task.groupId)
   const text = [task.goal, task.query, task.cypher, task.sql].filter(Boolean).join(" ")
   const calls: SkillCall[] = []
 
+  // STAGE 1: Memory-first routing — always add memory skill for context retrieval
   const wantsMemory =
     task.needs?.memory === true ||
     Boolean(task.query) ||
     hasAnyKeyword(text, ["memory", "insight", "adr", "context", "decision", "recall"])
-
-  const wantsGraph =
-    task.needs?.graph === true ||
-    Boolean(task.cypher) ||
-    hasAnyKeyword(text, ["cypher", "neo4j", "graph", "schema", "relationship", "node"])
-
-  const wantsTraces =
-    task.needs?.traces === true ||
-    Boolean(task.sql) ||
-    hasAnyKeyword(text, ["trace", "traces", "events", "postgres", "sql", "audit"])
 
   if (wantsMemory) {
     calls.push({
@@ -120,22 +117,11 @@ export function selectSkills(task: TeamRamTask): SkillCall[] {
     })
   }
 
-  if (wantsGraph) {
-    calls.push({
-      skillName: "skill-cypher-query",
-      toolName: task.cypher ? "execute_cypher" : "get_schema_info",
-      assignedAgent: assertKnownAgent(SKILL_AGENT_MAP["skill-cypher-query"]),
-      input: task.cypher
-        ? {
-            cypher: task.cypher,
-            parameters: { groupId },
-            groupId,
-          }
-        : {
-            groupId,
-          },
-    })
-  }
+  // STAGE 2: Database routing — only when evidence/traces/audit details are explicitly needed
+  const wantsTraces =
+    task.needs?.traces === true ||
+    Boolean(task.sql) ||
+    hasAnyKeyword(text, ["trace", "traces", "events", "postgres", "sql", "audit", "evidence", "log"])
 
   if (wantsTraces) {
     calls.push({
@@ -157,6 +143,30 @@ export function selectSkills(task: TeamRamTask): SkillCall[] {
     })
   }
 
+  // STAGE 3: Cypher routing — only when targeted graph traversal/schema/explicit Cypher is needed
+  const wantsGraph =
+    task.needs?.graph === true ||
+    Boolean(task.cypher) ||
+    hasAnyKeyword(text, ["cypher", "neo4j", "graph", "relationship", "node", "traverse"])
+
+  if (wantsGraph) {
+    calls.push({
+      skillName: "skill-cypher-query",
+      toolName: task.cypher ? "execute_cypher" : "get_schema_info",
+      assignedAgent: assertKnownAgent(SKILL_AGENT_MAP["skill-cypher-query"]),
+      input: task.cypher
+        ? {
+            cypher: task.cypher,
+            parameters: { groupId },
+            groupId,
+          }
+        : {
+            groupId,
+          },
+    })
+  }
+
+  // STAGE 4: Fallback — if no skills selected, default to memory retrieval
   if (calls.length === 0) {
     calls.push({
       skillName: "skill-neo4j-memory",
@@ -168,6 +178,14 @@ export function selectSkills(task: TeamRamTask): SkillCall[] {
         limit: task.limit ?? 10,
       },
     })
+  }
+
+  // STAGE 5: Ensure memory is always first when selected (staged memory-first routing)
+  // Move skill-neo4j-memory to front if it exists
+  const memoryIndex = calls.findIndex((call) => call.skillName === "skill-neo4j-memory")
+  if (memoryIndex > 0) {
+    const [memoryCall] = calls.splice(memoryIndex, 1)
+    calls.unshift(memoryCall)
   }
 
   return dedupePlan(calls)
@@ -235,6 +253,16 @@ export function assembleContext(results: SkillResult[]): OrchestrationContext {
   return context
 }
 
+/**
+ * True staged execution for Team RAM orchestrator.
+ * Skills execute in priority order with retries preserved per call:
+ * 1. skill-neo4j-memory (if selected) — always first for context
+ * 2. skill-database (if selected) — for evidence/traces
+ * 3. skill-cypher-query (if selected) — for graph traversal
+ *
+ * This replaces the old parallel Promise.all approach with sequential execution
+ * ensuring proper dependency ordering (memory before graph before traces).
+ */
 export async function orchestrateTeamRamTask(task: TeamRamTask, executor: SkillExecutor): Promise<OrchestrationResult> {
   const normalizedTask: TeamRamTask = {
     ...task,
@@ -243,9 +271,13 @@ export async function orchestrateTeamRamTask(task: TeamRamTask, executor: SkillE
   }
 
   const plan = selectSkills(normalizedTask)
-  const results = await Promise.all(
-    plan.map((call) => executeWithRetry(executor, call, normalizedTask.maxRetriesPerSkill ?? 1)),
-  )
+
+  // STAGED EXECUTION: Sequential with per-call retry logic
+  const results: SkillResult[] = []
+  for (const call of plan) {
+    const result = await executeWithRetry(executor, call, normalizedTask.maxRetriesPerSkill ?? 1)
+    results.push(result)
+  }
 
   return {
     task: normalizedTask,

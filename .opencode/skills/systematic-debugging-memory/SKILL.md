@@ -30,18 +30,18 @@ This skill now integrates with the memory system to persist debugging knowledge 
 
 2. **Search for Similar Issues**
    ```
-   allura-brain_memory_search({
-     query: "debugging {component} {error_type}",
-     group_id: "allura-roninmemory"
-   })
+    memorySearch({
+      query: "debugging {component} {error_type}",
+      group_id: "allura-roninmemory"
+    })
    ```
 
 3. **Check for Known Root Causes**
    ```
-   allura-brain_memory_search({
-     query: "Root Cause {component} Bug Pattern {pattern}",
-     group_id: "allura-roninmemory"
-   })
+    memorySearch({
+      query: "Root Cause {component} Bug Pattern {pattern}",
+      group_id: "allura-roninmemory"
+    })
    ```
 
 4. **Present Context**
@@ -74,7 +74,7 @@ MCP_DOCKER_insert_data: {
 
 2. **Persist Debugging Insight** (for significant findings)
    ```
-   allura-brain_memory_add({
+   memoryAdd({
      group_id: "allura-roninmemory",
      user_id: "bellard",
      content: "Root Cause: {brief description}. Fix applied: {...}. Prevention: {...}",
@@ -84,7 +84,7 @@ MCP_DOCKER_insert_data: {
 
 3. **Promote if Reusable**
    ```
-   allura-brain_memory_promote({
+   memoryPromote({
      id: "<memory-id>",
      group_id: "allura-roninmemory",
      user_id: "bellard"
@@ -250,8 +250,8 @@ MCP_DOCKER_insert_data: {
    - What assumptions does it make?
 
 5. **Check Memory for Patterns**
-   ```
-    allura-brain_memory_search({
+    ```
+    memorySearch({
       query: "pattern {component} {symptom}",
       group_id: "allura-roninmemory"
     })
@@ -291,8 +291,8 @@ MCP_DOCKER_insert_data: {
    - Research more
 
 5. **Check Memory for Similar Hypotheses**
-   ```
-    allura-brain_memory_search({
+    ```
+    memorySearch({
       query: "hypothesis {component}",
       group_id: "allura-roninmemory"
     })
@@ -353,18 +353,18 @@ MCP_DOCKER_insert_data: {
 **After successful fix:**
 
 1. **Create Insight**
-   ```
-   allura-brain_memory_add({
-     group_id: "allura-roninmemory",
-     user_id: "bellard",
-     content: "Problem: {...}. Root Cause: {...}. Fix: {...}. Prevention: {...}",
-     metadata: { source: "conversation", conversation_id: "<id>", agent_id: "bellard" }
-   })
-   ```
+    ```
+    memoryAdd({
+      group_id: "allura-roninmemory",
+      user_id: "bellard",
+      content: "Problem: {...}. Root Cause: {...}. Fix: {...}. Prevention: {...}",
+      metadata: { source: "conversation", conversation_id: "<id>", agent_id: "bellard" }
+    })
+    ```
 
 2. **Promote Reusable Pattern**
    ```
-   allura-brain_memory_promote({
+   memoryPromote({
      id: "<memory-id>",
      group_id: "allura-roninmemory",
      user_id: "bellard"
@@ -408,12 +408,12 @@ This is NOT a failed hypothesis - this is a wrong architecture.
 | Debugging Task | MCP Tool | Table/Entity |
 |----------------|----------|--------------|
 | Query previous sessions | `MCP_DOCKER_query_database` | `events` table |
-| Search for patterns | `allura-brain_memory_search` | Federated memory |
+| Search for patterns | `memorySearch` | Federated memory (routes to `neo4j-memory` → `database-server`) |
 | Log session start | `MCP_DOCKER_insert_data` | `events` |
 | Log phase complete | `MCP_DOCKER_insert_data` | `events` |
 | Log root cause found | `MCP_DOCKER_insert_data` | `events` |
-| Create insight | `allura-brain_memory_add` | Episodic memory with metadata |
-| Promote reusable finding | `allura-brain_memory_promote` | Curated graph via HITL |
+| Create insight | `memoryAdd` | Episodic memory with metadata |
+| Promote reusable finding | `memoryPromote` | Curated graph via HITL |
 | Verify persistence | `MCP_DOCKER_query_database` | Verify by event ID |
 
 ## Event Type Naming Convention
