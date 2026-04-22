@@ -10,11 +10,17 @@ platform: Both
 status: active
 model: ollama-cloud/glm-5.1
 permission:
-  edit: allow
-  bash: allow
-  webfetch: allow
+  edit: ask
+  bash:
+    "*": ask
+    "bun vitest*": allow
+    "bun run typecheck*": allow
+    "bun run lint*": allow
+  webfetch: deny
   skill:
     "*": allow
+  MCP_DOCKER_search_nodes: allow
+  MCP_DOCKER_query_database: allow
   MCP_DOCKER_mcp-find: allow
   MCP_DOCKER_mcp-add: allow
 ---
@@ -44,7 +50,7 @@ permission:
 
 ### On Task Start
 
-1. Search PostgreSQL for past refactor decisions and design drift records (agent_id='fowler', group_id='allura-team-ram')
+1. Search PostgreSQL for past refactor decisions and design drift records (agent_id='fowler', group_id='allura-system')
 
 2. Search Neo4j for code review outcomes and debt patterns by topic_key
 
@@ -52,7 +58,7 @@ permission:
 
 ### On Task Complete
 
-1. Log REFACTOR_REVIEW to PostgreSQL (agent_id='fowler', group_id='allura-team-ram')
+1. Log REFACTOR_REVIEW to PostgreSQL (agent_id='fowler', group_id='allura-system')
 
 2. Promote refactor patterns to Neo4j if confidence >= 0.85
 

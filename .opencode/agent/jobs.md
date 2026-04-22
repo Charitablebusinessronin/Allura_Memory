@@ -12,9 +12,12 @@ model: ollama-cloud/kimi-k2.5
 permission:
   skill:
     "*": allow
-  edit: allow
-  bash: allow
-  # MCP_DOCKER toolkit
+  edit: ask
+  bash:
+    "*": ask
+    "git status*": allow
+  MCP_DOCKER_search_nodes: allow
+  MCP_DOCKER_query_database: allow
   MCP_DOCKER_mcp-find: allow
   MCP_DOCKER_mcp-add: allow
   webfetch: allow
@@ -45,13 +48,13 @@ permission:
 
 ### On Task Start
 
-1. Search PostgreSQL for related past objectives and scope decisions (agent_id='jobs', group_id='allura-team-ram')
+1. Search PostgreSQL for related past objectives and scope decisions (agent_id='jobs', group_id='allura-system')
 
 2. Search Neo4j for related intent and scope history
 
 ### On Task Complete
 
-1. Log INTENT_SIGNED_OFF to PostgreSQL (agent_id='jobs', group_id='allura-team-ram')
+1. Log INTENT_SIGNED_OFF to PostgreSQL (agent_id='jobs', group_id='allura-system')
 
 2. Promote scope decisions to Neo4j if confidence >= 0.9
 

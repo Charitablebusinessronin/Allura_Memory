@@ -14,10 +14,13 @@ permission:
     "*": allow
   edit: allow
   bash: allow
-  # MCP_DOCKER toolkit
+  MCP_DOCKER_search_nodes: allow
+  MCP_DOCKER_query_database: allow
+  MCP_DOCKER_execute_sql: allow
+  MCP_DOCKER_insert_data: allow
+  MCP_DOCKER_create_entities: allow
   MCP_DOCKER_mcp-find: allow
   MCP_DOCKER_mcp-add: allow
-  MCP_DOCKER_mcp-exec: allow
   webfetch: allow
 ---
 
@@ -46,7 +49,7 @@ permission:
 
 ### On Task Start
 
-1. Search PostgreSQL for past implementation decisions (agent_id='woz', group_id='allura-team-ram')
+1. Search PostgreSQL for past implementation decisions (agent_id='woz', group_id='allura-system')
 
 2. Search Neo4j for relevant build patterns and past implementations
 
@@ -54,7 +57,7 @@ permission:
 
 ### On Task Complete
 
-1. Log BUILD_COMPLETE to PostgreSQL (agent_id='woz', group_id='allura-team-ram')
+1. Log BUILD_COMPLETE to PostgreSQL (agent_id='woz', group_id='allura-system')
 
 2. Create Neo4j entity if new pattern discovered (confidence >= 0.85)
 
