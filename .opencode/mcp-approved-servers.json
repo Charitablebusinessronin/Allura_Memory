@@ -1,16 +1,61 @@
 {
   "schema_version": "1.0.0",
   "approved_by": "brooks-architect",
-  "last_updated": "2026-04-11T00:00:00Z",
+  "last_updated": "2026-04-22T00:00:00Z",
+  "description": "Approved MCP servers for Team RAM harness. All agents use these through MCP_DOCKER toolkit or allura-brain tools.",
   "servers": {
-    "allura-memory": {
+    "allura-brain": {
       "status": "approved",
-      "approved_at": "2026-04-11T00:00:00Z",
+      "approved_at": "2026-04-22T00:00:00Z",
       "approved_by": "brooks-architect",
-      "tools": ["memory_add", "memory_search", "memory_get", "memory_list", "memory_delete"],
       "category": "database",
       "essential": true,
-      "rationale": "Core memory system for episodic and semantic storage. Required for all harness operations: event logging, session tracking, ADR storage, performance history, and memory promotion (SOC2 mode)."
+      "tools": [
+        "memory_add", "memory_search", "memory_get", "memory_list",
+        "memory_update", "memory_delete", "memory_promote",
+        "memory_export", "memory_restore"
+      ],
+      "rationale": "Core governed memory system. All agents must search before acting and write after completing."
+    },
+    "neo4j-memory": {
+      "status": "approved",
+      "approved_at": "2026-04-22T00:00:00Z",
+      "approved_by": "brooks-architect",
+      "category": "database",
+      "essential": true,
+      "rationale": "Semantic memory (Neo4j graph). Knowledge retrieval and relationship queries via MCP_DOCKER toolkit."
+    },
+    "neo4j-cypher": {
+      "status": "approved",
+      "approved_at": "2026-04-22T00:00:00Z",
+      "approved_by": "brooks-architect",
+      "category": "database",
+      "essential": false,
+      "rationale": "Ad-hoc Cypher queries. Debug and diagnostic use only."
+    },
+    "database-server": {
+      "status": "approved",
+      "approved_at": "2026-04-22T00:00:00Z",
+      "approved_by": "brooks-architect",
+      "category": "database",
+      "essential": true,
+      "rationale": "Episodic memory (PostgreSQL). Append-only event traces and vector embeddings via MCP_DOCKER toolkit."
+    },
+    "context7": {
+      "status": "approved",
+      "approved_at": "2026-04-22T00:00:00Z",
+      "approved_by": "brooks-architect",
+      "category": "reference",
+      "essential": false,
+      "rationale": "Library documentation lookup. Used by context7 skill."
+    },
+    "tavily": {
+      "status": "approved",
+      "approved_at": "2026-04-22T00:00:00Z",
+      "approved_by": "brooks-architect",
+      "category": "search",
+      "essential": false,
+      "rationale": "Web search and research. Used by multi-search skill."
     }
   },
   "pending": {},
