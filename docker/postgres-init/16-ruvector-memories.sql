@@ -16,8 +16,8 @@
 --
 -- ARCHITECTURE DECISION: Changed from bge-small-en-v1.5 (384d) to qwen3-embedding:8b (4096d).
 -- Reason: bge-small-en-v1.5 not available in Ollama catalog. qwen3-embedding:8b is already
--- running locally, produces 4096d vectors, and is well-tested. The ruvector column and
--- HNSW index have been updated to match. ALTER TABLE was applied to the running instance.
+-- running locally, produces 4096d vectors, and is well-tested. The ruvector column was
+-- updated to match. HNSW index creation is handled separately after pgvector >= 0.8.4.
 -- ============================================================================
 --
 -- KNOWN BUG (documented, not fixed here):
@@ -156,8 +156,8 @@ BEGIN
 
     COMMENT ON TABLE allura_memories IS
         'Hybrid vector+BM25 memory store for Allura. '
-        'Embeddings use vector(4096) (qwen3-embedding:8b, 4096 dims). ' 
-        'HNSW index enables fast ANN search via vector_cosine_ops. '
+        'Embeddings use vector(4096) (qwen3-embedding:8b, 4096 dims). '
+        'When pgvector >= 0.8.4 is installed, a separate migration creates the HNSW ANN index via vector_cosine_ops. '
         'ruvector_hybrid_search() combines BM25 + ANN for fusion retrieval. '
         'group_id enforced to ^allura- via CHECK. '
         'SONA feedback loop uses trajectory_id for correlation.';
@@ -165,7 +165,7 @@ BEGIN
     COMMENT ON COLUMN allura_memories.embedding IS
         'Vector embedding as vector(4096). qwen3-embedding:8b produces 4096-dim vectors. '
         'NULL until embedding service populates it. '
-        'HNSW index uses vector_cosine_ops for approximate nearest-neighbor search.';
+        'A post-upgrade migration creates the HNSW index with vector_cosine_ops once pgvector >= 0.8.4 is installed.';
 
     COMMENT ON COLUMN allura_memories.trajectory_id IS
         'Correlation ID for SONA feedback. Set during retrieval, '

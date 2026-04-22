@@ -4,7 +4,16 @@ MCP Docker skill for PostgreSQL operations over the raw trace layer of Allura Br
 
 ## Overview
 
-This skill provides a focused interface for interacting with PostgreSQL for raw trace operations in **Allura Brain**. It is a single-responsibility skill container with tenant isolation; it is not an agent and not the canonical memory authority by itself.
+This skill provides a focused interface for interacting with PostgreSQL for raw trace operations in **Allura**. It is the evidence layer for memory workflows: use it after memory recall when you need audit, provenance, or raw trace verification.
+
+## Role in the Stack
+
+Use this second, not first.
+
+Escalation order:
+1. `skill-neo4j-memory`
+2. `skill-database`
+3. `skill-cypher-query` only if graph inspection is still required
 
 ## Tools
 
@@ -141,23 +150,18 @@ bun test
 
 ## Integration
 
-This skill is designed to be used by the Team RAM orchestrator for parallel agents and subagents:
+This skill is designed to be used by the Team RAM orchestrator after memory recall when evidence is needed:
 
 ```typescript
 // team-ram/orchestrator.ts
-const results = await Promise.allSettled([
-  subagent.call('skill-neo4j-memory', { 
-    query: 'recent architectural decisions' 
-  }),
-  subagent.call('skill-cypher-query', { 
-    cypher: 'MATCH (d:Decision) RETURN d LIMIT 10' 
-  }),
-  subagent.call('skill-database', { 
-    query: 'SELECT * FROM events WHERE group_id = $1', 
-    parameters: ['allura-roninmemory']
-  }),
-]);
-const context = assembleContext(results);
+const memory = await subagent.call('skill-neo4j-memory', {
+  query: 'recent architectural decisions'
+});
+
+const evidence = await subagent.call('skill-database', {
+  query: 'SELECT * FROM events WHERE group_id = $1',
+  parameters: ['allura-roninmemory']
+});
 ```
 
 ## Notes
@@ -166,4 +170,4 @@ const context = assembleContext(results);
 - **Group-scoped** - All operations are scoped to an explicit `groupId`
 - **Parameterized queries** - All queries should use parameterized syntax to prevent injection
 - **Tenant isolation** - `groupId` is enforced on all operations
-- **Canonical memory surface** - Prefer first-party `allura-brain_*` tools for canonical Allura Brain memory operations; use this skill for governed lower-level trace access
+- **Evidence surface** - Use this for raw trace access after memory recall, not as the default memory interface

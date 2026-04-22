@@ -90,8 +90,8 @@ The hard isolation boundary. Every read and write MUST include a valid `group_id
 | B2  | All memory is isolated by tenant (`group_id`) at the schema level                            |
 | B3  | Every write produces an immutable audit record in PostgreSQL                                 |
 | B4  | Promoted knowledge is versioned and never mutated in Neo4j                                   |
-| B5  | The system is deployable via a single `docker compose up` command                            |
-| B6  | Agents connect via MCP (Model Context Protocol)                                              |
+| B5  | The system is deployable via a single `docker compose up` command for core infra and app services |
+| B6  | Agents connect via MCP (Model Context Protocol) through Team RAM-selected packaged MCP servers |
 | B7  | Operators choose between human-gated (SOC2) and auto-promotion modes                         |
 | B8  | Consumer memory viewer: no sidebar, search dominant, swipe to forget                         |
 | B9  | Every memory shows provenance: "from conversation" or "added manually"                       |
@@ -158,8 +158,8 @@ The hard isolation boundary. Every read and write MUST include a valid `group_id
 
 | #   | Requirement                                                                                 |
 | --- | ------------------------------------------------------------------------------------------- |
-| F20 | MCP server exposes all 5 memory tools over stdio transport                                  |
-| F21 | `docker compose up` starts Postgres, Neo4j, and MCP server                                  |
+| F20 | Skills route agent work to packaged MCP servers (`neo4j-memory`, `database-server`, optional `neo4j-cypher`) rather than a custom all-in-one MCP runtime |
+| F21 | `docker compose up` starts core infra and app services; packaged MCP servers are attached as focused external capabilities |
 | F22 | Memory viewer UI at `/memory` lists, searches, and deletes memories                         |
 | F23 | Curator dashboard deployed on Vercel; calls backend engine via `CURATOR_ENGINE_URL` env var |
 | F24 | Vercel Functions (`/api/curator/*`) call Docker engine in VPC/cloud via HTTPS               |
@@ -193,7 +193,11 @@ The hard isolation boundary. Every read and write MUST include a valid `group_id
 
 | Component                | Responsibility                                 | Notes                                             |
 | ------------------------ | ---------------------------------------------- | ------------------------------------------------- |
-| MCP Server               | Exposes 5 memory tools to AI agents            | `src/mcp/memory-server.ts`                        |
+| Team RAM Orchestrator    | Selects skills, sequences retrieval, and synthesizes results | Brooks-led orchestration layer                    |
+| Memory Skills            | Define behavior, guardrails, and escalation order | `.opencode/skills/allura-memory-skill/`, `.opencode/skills/memory-client/` |
+| `neo4j-memory` server    | Approved memory recall and listing             | Packaged MCP server; primary memory surface       |
+| `database-server`        | Raw trace, audit, and SQL evidence access      | Packaged MCP server; evidence layer               |
+| `neo4j-cypher` server    | Targeted graph inspection and Cypher fallback  | Packaged MCP server; use only when needed         |
 | Next.js API              | REST endpoints for dashboard + curator APIs    | `src/app/api/memory/`, `src/app/api/curator/`     |
 | Memory Engine            | Core read/write/score/route logic              | `src/lib/memory/`                                 |
 | Curator Scorer           | Computes confidence (60-100%) + reasoning      | `src/lib/curator/score.ts` (rule-based or Claude) |
@@ -220,32 +224,51 @@ graph TB
         C[Curator Dashboard]
     end
 
-    subgraph Protocol
-        D[MCP Server<br/>memory-server.ts]
-        E[Next.js API<br/>api/memory/]
-        F[Curator API<br/>api/curator/]
+    subgraph Orchestration
+        D[Brooks / Team RAM]
+        E[Memory Skills]
+    end
+
+    subgraph MCP_Servers[Packaged MCP Servers]
+        F[neo4j-memory]
+        G[database-server]
+        K[neo4j-cypher<br/>(fallback)]
+    end
+
+    subgraph API
+        L[Next.js API<br/>api/memory/]
+        M[Curator API<br/>api/curator/]
     end
 
     subgraph Core
-        G[Memory Engine]
-        H[Curator Scorer]
-        I[Dedup Engine]
-        J[Budget + Circuit Breaker]
+        N[Memory Engine]
+        O[Curator Scorer]
+        P[Dedup Engine]
+        Q[Budget + Circuit Breaker]
     end
 
     subgraph Storage
-        H[(PostgreSQL<br/>Episodic)]
-        I[(Neo4j<br/>Semantic)]
+        R[(PostgreSQL<br/>Episodic)]
+        S[(Neo4j<br/>Semantic)]
     end
 
-    A --> C
-    B --> D
-    C --> E
+    A --> D
     D --> E
     E --> F
     E --> G
-    E --> H
-    E --> I
+    E --> K
+    B --> L
+    C --> M
+    F --> S
+    G --> R
+    K --> S
+    L --> N
+    M --> N
+    N --> O
+    N --> P
+    N --> Q
+    N --> R
+    N --> S
 ```
 
 ---
@@ -547,8 +570,8 @@ Before any Neo4j write, search for an existing node with matching `content` + `g
 ## 10) Admin Workflow
 
 1. Copy `.env.example` to `.env` and set `POSTGRES_PASSWORD`, `NEO4J_PASSWORD`, `PROMOTION_MODE`
-2. Run `docker compose up -d` — starts Postgres, Neo4j, and MCP server
-3. Configure your MCP client to point at `src/mcp/memory-server.ts`
+2. Run `docker compose up -d` — starts core infra and app services such as Postgres, Neo4j, and the web/API layer
+3. Configure Team RAM skills to use packaged MCP servers such as `neo4j-memory` and `database-server`; add `neo4j-cypher` only for targeted graph inspection
 4. Set `group_id` to your tenant namespace (e.g. `allura-myproject`)
 5. Agents call `memory_add` / `memory_search` — memories flow automatically
 6. Open `/memory` in the dashboard to inspect and manage memories
@@ -564,7 +587,9 @@ Before any Neo4j write, search for an existing node with matching `content` + `g
 - [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md) — Governed memory pipeline design
 - [REQUIREMENTS-MATRIX.md](./REQUIREMENTS-MATRIX.md) — Competitive analysis and use case fit
 - [VALIDATION-GATE.md](../archive/allura/VALIDATION-GATE.md) — Acceptance checklist and benchmark matrix
-- `src/mcp/memory-server.ts` — MCP tool implementations
+- `.opencode/skills/allura-memory-skill/` — memory workflow behavior and guardrails
+- `.opencode/skills/memory-client/` — default search → work → log behavior
+- `.opencode/skills/mcp-docker-memory-system/` — packaged MCP server discovery and configuration guidance
 - `src/lib/memory/` — memory engine
 - `postgres-init/` — PostgreSQL schema SQL
 - [MCP Protocol](https://modelcontextprotocol.io)
@@ -584,17 +609,22 @@ Allura is the memory layer of a larger Personal AI Operating System:
              │ MCP Protocol
              ↓
 ┌──────────────────────────────────┐
-│ Allura MCP Server                │
-│ - memory_retrieve()              │
-│ - memory_write()                 │
-│ - memory_propose_insight()       │
+│ Brooks / Team RAM                │
+│ - select skills                  │
+│ - memory-first routing           │
+│ - synthesize results             │
 └────────────┬─────────────────────┘
-             │
-    ┌────────┴────────┐
-    ↓                 ↓
-PostgreSQL        Neo4j
-(Episodic)        (Semantic)
-Raw events        Approved facts
+             │ packaged MCP servers
+    ┌────────┼───────────────┐
+    ↓        ↓               ↓
+neo4j-memory database-server neo4j-cypher
+ (primary)     (evidence)      (fallback)
+    ↓             ↓               ↓
+    └────────┬────┴───────┬──────┘
+             ↓            ↓
+         PostgreSQL     Neo4j
+         (Episodic)     (Semantic)
+         Raw events     Approved facts
     ↓                 ↓
     └────────┬────────┘
              │
@@ -614,7 +644,7 @@ Paperclip UI    Memory Dashboard
 **Core Workflows:**
 
 - Agent Task → Automatic Logging → PostgreSQL
-- Claude Code Memory Commands → MCP retrieval → Merged results
+- Claude Code Memory Commands → Team RAM skill routing → Focused MCP server calls
 - Manual Insight Proposal → Pending queue → Neo4j (if approved)
 
 ---

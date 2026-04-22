@@ -44,6 +44,13 @@ This design governs five core responsibilities:
 4. **Immutable graph writes** — writes approved insights to Neo4j as immutable, versioned graph records
 5. **Controlled retrieval** — returns scoped, policy-controlled context to agents without allowing direct DB queries
 
+Agent-side inspection and recall flows use packaged MCP servers activated through `MCP_DOCKER`:
+- `neo4j-memory` first for approved-memory recall
+- `database-server` second for trace/audit evidence
+- `neo4j-cypher` only for read-only graph fallback
+
+Governed writes do **not** go through MCP inspection servers; they remain controlled by application endpoints and approval policy.
+
 This document is the consolidated design surface for the memory system. If the system later grows enough complexity, it can be split into `DESIGN-TRACE-INGESTION.md`, `DESIGN-CURATION.md`, `DESIGN-APPROVAL.md`, `DESIGN-RETRIEVAL.md`, and `DESIGN-KNOWLEDGE-GRAPH.md`, but until then this file is the authoritative implementation design.
 
 ---
@@ -434,6 +441,16 @@ Previously, 7 "Memory Framework" agents existed as a shadow hierarchy separate f
 ## Retrieval Layer
 
 Agents retrieve memory through a dedicated service boundary. They do **not** query PostgreSQL, Neo4j, or vector infrastructure directly.
+
+### Operational Access Path
+
+Agent-side memory inspection and recall use packaged MCP servers activated through `MCP_DOCKER`:
+
+- **`neo4j-memory`** — primary approved-memory recall surface
+- **`database-server`** — trace/audit evidence and SQL inspection  
+- **`neo4j-cypher`** — read-only graph fallback for targeted traversal (use only when needed)
+
+The supported agent-side operational path is packaged MCP activation through `MCP_DOCKER`. Governed writes do not go through MCP inspection servers; they remain controlled by application endpoints and approval policy.
 
 **Implementation path:**
 

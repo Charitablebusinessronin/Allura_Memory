@@ -1,15 +1,15 @@
 ---
 name: memory-client
-description: "Use Allura Brain for persistent memory across sessions. Triggers on: session start/end, debugging (search before guessing), planning (check prior work), implementation (find conventions and past solutions), or any time you need to remember or recall something. If you're about to guess — search first."
+description: "Use the Allura memory system for persistent memory across sessions. Triggers on: session start/end, debugging (search before guessing), planning (check prior work), implementation (find conventions and past solutions), or any time you need to remember or recall something. If you're about to guess — search first."
 ---
 
-# Allura Brain — Field Guide for Agents
+# Allura Memory — Field Guide for Agents
 
-You are stateless. Brain is your memory. Use it.
+You are stateless. The memory system is your durable context. Use it.
 
 ## The Loop
 
-Every interaction with Brain follows one pattern:
+Every interaction with memory follows one pattern:
 
 **Search → Work → Log**
 
@@ -17,7 +17,14 @@ Search before you guess. Log what matters. Skip the noise.
 
 ## Connection
 
-Brain is exposed via MCP tools. Use the canonical `allura-brain_*` tools first; fall back to governed `MCP_DOCKER` database/graph access only when you need lower-level inspection.
+Memory is accessed through Brooks / Team RAM routing plus packaged MCP servers.
+
+Default order:
+1. `neo4j-memory`
+2. `database-server` when evidence is needed
+3. `neo4j-cypher` only when targeted graph inspection is required
+
+Use `MCP_DOCKER` when you need to discover, configure, or activate these packaged servers.
 
 **group_id**: Always `allura-roninmemory`. Every read and write requires it. Pattern: `^allura-[a-z0-9-]+$`.
 
@@ -71,7 +78,7 @@ allura-brain_memory_search({ query: "ARCHITECTURE_DECISION", group_id: "allura-r
 
 Don't skip this. Your past self left breadcrumbs — follow them.
 
-If Brain is temporarily unavailable, continue with repo evidence instead of guessing, and log the gap once memory returns.
+If memory services are temporarily unavailable, continue with repo evidence instead of guessing, and log the gap once memory returns.
 
 ### 2. Plan (Starting Work)
 
@@ -175,7 +182,7 @@ Write what matters for next-you:
 allura-brain_memory_add({
   group_id: "allura-roninmemory",
   user_id: "brooks",
-  content: "Session 2026-04-20: Fixed MCP topology. Consolidated MCP config to opencode.json as single source of truth. Allura Brain remains the canonical memory path. Open: allura-web and allura-http-gateway still showing unhealthy — need restart."
+  content: "Session 2026-04-20: Fixed memory topology. Skills now route memory-first to packaged MCP servers. Open: verify runtime docs and activation flow remain consistent across the stack."
 })
 ```
 
@@ -195,7 +202,7 @@ These are non-negotiable. Violating them causes data corruption or CHECK constra
 
 | Symptom | Check |
 |---------|-------|
-| Tools not available | Is Allura Brain reachable and configured? |
+| Tools not available | Are the packaged MCP servers reachable and activated? |
 | Empty search results | Verify group_id is `allura-roninmemory`, not the old `roninclaw-*` |
 | Auth errors in Neo4j logs | Something is connecting without credentials — check for orphan containers |
 | memory_add fails | Check group_id pattern matches `^allura-[a-z0-9-]+$` |

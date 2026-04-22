@@ -5,12 +5,12 @@ description: Add memory logging and hydration to Superpowers skills. Use at sess
 
 # Superpowers Memory Integration
 
-Add persistent memory logging and hydration to Superpowers skills using PostgreSQL (raw events) and Neo4j (curated insights).
+Add persistent memory logging and hydration to Superpowers skills using MCP-packaged servers: `neo4j-memory` (insight), `database-server` (trace), `neo4j-cypher` (graph-specific) in that order.
 
 Canonical defaults for this repo:
 - `group_id`: `allura-roninmemory`
 - status values: `pending`, `completed`, `failed`, `cancelled`
-- prefer `allura-brain_*` tools for memory search and logging
+- prefer MCP-packaged memory servers: `neo4j-memory_*` → `database-server_*` → `neo4j-cypher_*`
 
 ## When to Use
 
@@ -43,7 +43,7 @@ Session End:
 
 ```typescript
 // At skill start
-await alluraBrain.memory_add({
+await memoryAdd({
   group_id: "allura-roninmemory",
   user_id: "brooks",
   content: "skill:brainstorming:start workflow=feature-123 topic=user request description",
@@ -51,7 +51,7 @@ await alluraBrain.memory_add({
 });
 
 // At skill end
-await alluraBrain.memory_add({
+await memoryAdd({
   group_id: "allura-roninmemory",
   user_id: "brooks",
   content: "skill:brainstorming:end workflow=feature-123 spec=docs/superpowers/specs/YYYY-MM-DD-feature.md",
@@ -62,7 +62,7 @@ await alluraBrain.memory_add({
 ### Create Insight
 
 ```typescript
-await alluraBrain.memory_add({
+await memoryAdd({
   group_id: "allura-roninmemory",
   user_id: "brooks",
   content: "Design Decision: [Topic]. What was decided and why.",
@@ -73,14 +73,14 @@ await alluraBrain.memory_add({
 ### Search Context
 
 ```typescript
-// Get recent events for this workflow
-const recentEvents = await alluraBrain.memory_search({
+// Get recent events for this workflow via MCP-packaged servers
+const recentEvents = await memorySearch({
   query: "skill brainstorming feature-123",
   group_id: "allura-roninmemory"
 });
 
 // Get related insights
-const insights = await alluraBrain.memory_search({
+const insights = await memorySearch({
   query: "brainstorming design decisions",
   group_id: "allura-roninmemory"
 });
@@ -187,26 +187,26 @@ At session end:
 
 ## MCP Tool Mapping
 
-| Action | MCP Tool |
-|--------|----------|
-| Log event / summary | `allura-brain_memory_add` |
-| Search events / insights | `allura-brain_memory_search` |
-| Deep SQL verification | `MCP_DOCKER_execute_sql` |
-| Deep graph verification | `MCP_DOCKER_read_neo4j_cypher` |
-| Request promotion | `allura-brain_memory_promote` |
+| Action | MCP Tool (packaged servers first) |
+|--------|-----------------------------------|
+| Log event / summary | `memoryAdd` (routes to `neo4j-memory` or `database-server`) |
+| Search events / insights | `memorySearch` (routes to `neo4j-memory` first, then `database-server`) |
+| Deep SQL verification | `MCP_DOCKER_execute_sql` (PostgreSQL via `database-server`) |
+| Deep graph verification | `MCP_DOCKER_read_neo4j_cypher` (Neo4j via `neo4j-cypher`) |
+| Request promotion | `memoryPromote` (routes through `neo4j-memory`) |
 
 ## Example: Complete Session Flow
 
 ```typescript
 // === SESSION START ===
-// 1. Hydrate context
-const previousWork = await alluraBrain.memory_search({
+// 1. Hydrate context via MCP-packaged servers
+const previousWork = await memorySearch({
   query: "feature-123 last-7-days",
   group_id: "allura-roninmemory"
 });
 
 // 2. Log session start
-await alluraBrain.memory_add({
+await memoryAdd({
   group_id: "allura-roninmemory",
   user_id: "brooks",
   content: "skill:brainstorming:start workflow=feature-123 previous_work_count=" + previousWork.length,
@@ -215,7 +215,7 @@ await alluraBrain.memory_add({
 
 // === DURING EXECUTION ===
 // Log checkpoint
-await alluraBrain.memory_add({
+await memoryAdd({
   group_id: "allura-roninmemory",
   user_id: "brooks",
   content: "decision:approach workflow=feature-123 chosen_approach=option-b reason=better testability",
@@ -224,7 +224,7 @@ await alluraBrain.memory_add({
 
 // === SESSION END ===
 // Log completion
-await alluraBrain.memory_add({
+await memoryAdd({
   group_id: "allura-roninmemory",
   user_id: "brooks",
   content: "skill:brainstorming:end workflow=feature-123 spec=docs/superpowers/specs/2024-01-15-feature-design.md",
@@ -232,14 +232,14 @@ await alluraBrain.memory_add({
 });
 
 // Create insight
-await alluraBrain.memory_add({
+await memoryAdd({
   group_id: "allura-roninmemory",
   user_id: "brooks",
   content: "Design: Feature 123 - Approach Selection. Chose option B for better testability.",
   metadata: { source: "conversation", conversation_id: "<id>", agent_id: "brooks" }
 });
 
-// Verify
-const verify = await alluraBrain.memory_search({ query: "feature-123", group_id: "allura-roninmemory" });
+// Verify via MCP-packaged server
+const verify = await memorySearch({ query: "feature-123", group_id: "allura-roninmemory" });
 console.log(`Logged ${verify.length} events for this workflow`);
 ```

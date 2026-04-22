@@ -12,7 +12,7 @@ tags:
   - dependencies
   - cli
   - memory
-allowed-tools: ["Read", "Write", "Grep", "Bash", "mcp__MCP_DOCKER__*", "allura-brain_*"]
+allowed-tools: ["Read", "Write", "Grep", "Bash", "mcp__MCP_DOCKER__*", "neo4j-memory_*", "database-server_*", "neo4j-cypher_*"]
 ---
 
 # Task Management Skill
@@ -342,29 +342,29 @@ bash .opencode/skills/task-management/router.sh validate my-feature
 
 ## Allura Brain Integration
 
-Task management is more effective when connected to persistent memory. Use `allura-brain_*` tools at three key points in the task lifecycle.
+Task management is more effective when connected to persistent memory. Use MCP-packaged memory servers (`neo4j-memory`, `database-server`, `neo4j-cypher`) at three key points in the task lifecycle.
 
 ### 1. Before Creating Tasks — Search for Prior Work
 
-Before breaking down a new feature, check if related work exists in Brain:
+Before breaking down a new feature, check if related work exists via MCP-packaged memory servers:
 
 ```javascript
 // Has this been attempted before?
-allura-brain_memory_search({
+const prior = await memorySearch({
   query: "<feature topic>",
   group_id: "allura-roninmemory",
   limit: 5
 })
 
 // Are there relevant architecture decisions?
-allura-brain_memory_search({
+const decisions = await memorySearch({
   query: "ARCHITECTURE_DECISION <feature topic>",
   group_id: "allura-roninmemory",
   limit: 5
 })
 
 // Any known blockers?
-allura-brain_memory_search({
+const blockers = await memorySearch({
   query: "BLOCKER <feature topic>",
   group_id: "allura-roninmemory",
   limit: 3
@@ -379,10 +379,10 @@ Use findings to:
 
 ### 2. After Creating Tasks — Log the Plan
 
-After TaskManager creates the task structure, log the plan to Brain:
+After TaskManager creates the task structure, log the plan via MCP-packaged servers:
 
 ```javascript
-allura-brain_memory_add({
+await memoryAdd({
   group_id: "allura-roninmemory",
   user_id: "brooks",
   content: "Task plan: <feature name>. <N> subtasks. Key deps: <critical path>. Risk: <top risk>. Related decisions: <ADR IDs if any>."
@@ -396,7 +396,7 @@ This creates a breadcrumb for future sessions to find the plan.
 When marking a task complete, also log the key decision or outcome:
 
 ```javascript
-allura-brain_memory_add({
+await memoryAdd({
   group_id: "allura-roninmemory",
   user_id: "<agent_id>",
   content: "Completed <feature>/<subtask>: <summary>. Decision: <what was decided and why>. Outcome: <what happened>."
@@ -406,7 +406,7 @@ allura-brain_memory_add({
 For significant completions (architecture decisions, schema changes, new patterns), also request promotion:
 
 ```javascript
-allura-brain_memory_promote({
+await memoryPromote({
   group_id: "allura-roninmemory",
   memory_id: "<id from add>",
   reason: "Reusable pattern: <why this matters across projects>"
@@ -415,11 +415,11 @@ allura-brain_memory_promote({
 
 ### 4. When Blocked — Search for Solutions
 
-If a task is blocked, search Brain before escalating:
+If a task is blocked, search via MCP-packaged servers before escalating:
 
 ```javascript
 // Has anyone hit this before?
-allura-brain_memory_search({
+const solutions = await memorySearch({
   query: "<blocker description>",
   group_id: "allura-roninmemory",
   limit: 5
@@ -429,7 +429,7 @@ allura-brain_memory_search({
 If a solution exists, unblock and continue. If not, log the blocker:
 
 ```javascript
-allura-brain_memory_add({
+await memoryAdd({
   group_id: "allura-roninmemory",
   user_id: "<agent_id>",
   content: "BLOCKER: <feature>/<subtask> — <description>. Impact: <what's blocked>. Attempted: <what was tried>."
@@ -438,10 +438,11 @@ allura-brain_memory_add({
 
 ### Brain Hygiene Rules
 
-- **Search before write** — never add to Brain without checking for duplicates first
+- **Search before write** — never add to memory without checking for duplicates first (via MCP-packaged servers)
 - **One log per significant event** — don't log every subtask status change; log decisions, completions, and blockers
-- **group_id always** — every Brain call must include `group_id: "allura-roninmemory"`
+- **group_id always** — every memory call must include `group_id: "allura-roninmemory"`
 - **Promotion requires HITL** — never promote without human approval (see `hitl-governance` skill)
+- Use MCP-packaged memory servers in order: `neo4j-memory` → `database-server` → `neo4j-cypher`
 
 ---
 

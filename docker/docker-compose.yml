@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16
+    image: pgvector/pgvector:pg16
     container_name: knowledge-postgres
     restart: unless-stopped
     deploy:
@@ -14,7 +14,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - alluramemory_postgres_data:/var/lib/postgresql/data
+      - memory_postgres_data:/var/lib/postgresql/data
       - ./postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
@@ -42,8 +42,8 @@ services:
       - "7474:7474"
       - "7687:7687"
     volumes:
-      - alluramemory_neo4j_data:/data
-      - alluramemory_neo4j_logs:/logs
+      - neo4j_data:/data
+      - neo4j_logs:/logs
       - ./neo4j-import:/import
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:7474"]
@@ -85,25 +85,20 @@ services:
       OLLAMA_CLOUD_URL: ${OLLAMA_CLOUD_URL:-https://ollama.com}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-qwen3-embedding:8b}
       RUVECTOR_EMBEDDING_MODEL: ${RUVECTOR_EMBEDDING_MODEL:-qwen3-embedding:8b}
+      RUVECTOR_EMBEDDING_BASE_URL: http://host.docker.internal:11434
+      EMBEDDING_BASE_URL: http://host.docker.internal:11434
+      DEFAULT_GROUP_ID: ${DEFAULT_GROUP_ID:-allura-system}
     healthcheck:
-      test: ["CMD", "pgrep", "-f", "legacy"]
+      test: ["CMD-SHELL", "test -f /app/package.json"]
       interval: 30s
       timeout: 10s
       start_period: 15s
       retries: 3
 
 volumes:
-  alluramemory_postgres_data:
-  alluramemory_neo4j_data:
-  alluramemory_neo4j_logs:
-  alluramemory_postgres_backup:
-    name: alluramemory_neo4j_data
+  memory_postgres_data:
+  neo4j_data:
   neo4j_logs:
-    external: true
-    name: alluramemory_neo4j_logs
-  ruvector_data:
-    external: true
-    name: alluramemory_ruvector_data
 
 networks:
   knowledge-network:

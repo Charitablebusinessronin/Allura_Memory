@@ -1,14 +1,29 @@
 ---
 name: allura-memory-skill
-description: Use when working with persistent memory in Allura Brain, especially when storing, retrieving, curating, promoting, superseding, deprecating, exporting, or troubleshooting memory behavior across PostgreSQL and Neo4j. Trigger this whenever the user asks to remember something, search prior memory, recover context, promote insights, inspect memory lineage, or debug the memory system.
-allowed-tools: ["Read", "Grep", "Bash", "allura-brain_*", "mcp__MCP_DOCKER__*"]
+description: Use when working with persistent memory in Allura Brain, especially when storing, retrieving, curating, promoting, superseding, deprecating, exporting, or troubleshooting memory behavior via native MCP_DOCKER servers. Trigger this whenever the user asks to remember something, search prior memory, recover context, promote insights, inspect memory lineage, or debug the memory system.
+allowed-tools: ["Read", "Grep", "Bash", "mcp__MCP_DOCKER__*"]
 ---
 
 # Allura Memory Skill
 
-This skill teaches an agent how to use **Allura Brain** correctly.
+This skill teaches an agent how to use the **Allura memory system** correctly via native MCP_DOCKER servers.
 
-It is for persistent memory workflows, not just one-off SQL or Cypher queries.
+## Two-Layer Architecture
+
+### Layer 1: Runtime Packaging (Native MCP_DOCKER Servers)
+
+Memory operations run via dynamically discovered, configured, and activated MCP servers:
+- `neo4j-memory` — approved insight recall via MCP-packaged server
+- `database-server` — raw trace lookup via PostgreSQL
+- `neo4j-cypher` — explicit graph inspection only when graph-specific work is needed
+
+### Layer 2: Behavior Contract (Skill)
+
+The skill enforces:
+- **group_id required** on every operation (format: `allura-*`)
+- **PostgreSQL traces append-only** — never UPDATE/DELETE on trace rows
+- **Neo4j versioning via SUPERSEDES** — never edit existing nodes in place
+- **MCP_DOCKER workflow** — discover → configure → activate before use
 
 ## Use This Skill When
 
@@ -22,12 +37,12 @@ It is for persistent memory workflows, not just one-off SQL or Cypher queries.
 
 ## Core Contract
 
-- **Allura Brain** is the canonical, governed memory surface for this repo.
-- Use first-party `allura-brain_*` tools first.
-- Use governed `MCP_DOCKER` access only when you need lower-level inspection, infrastructure bootstrapping, or database/graph diagnostics.
-- **group_id** is required on every operation. In this repo, default to `allura-roninmemory`.
+- **Brooks / Team RAM is the orchestrator** — they delegate to specialized agents and route memory first to MCP-packaged servers.
+- **Skills define behavior** — this skill teaches how to use MCP-packaged memory servers correctly.
+- **MCP_DOCKER servers come first** — discovery → configuration → activation.
+- **group_id is required** on every operation. In this repo, default to `allura-roninmemory`.
 - PostgreSQL traces are append-only.
-- Neo4j knowledge is versioned through lineage, never silently overwritten.
+- Neo4j knowledge evolves via `SUPERSEDES`, never silently overwritten.
 
 ## Memory Operating Model
 
@@ -47,7 +62,7 @@ Treat memory as layers:
    - Load the smallest useful context window.
    - Prefer project-local memory first, then broaden only if it helps.
 
-## Workflow
+## workflow
 
 ### 1. Identify intent
 
@@ -112,42 +127,49 @@ Capture:
 
 ### 8. Troubleshoot systematically
 
-- Check whether Allura Brain tools are available.
-- Check whether the underlying PostgreSQL and Neo4j systems are reachable.
-- Verify auth, database, transport, and tenant scope.
-- Verify duplicate detection, promotion policy, and versioning assumptions.
+- Check MCP server availability via `mcp__MCP_DOCKER__listTools`.
+- Verify environment variables against `NEO4J_*` and `POSTGRES_*` config.
+- Use `MCP_DOCKER_mcp-find` to discover servers before activation.
+- Run `MCP_DOCKER_mcp-config-set` with env-based configuration.
+- Activate servers with `MCP_DOCKER_mcp-add`.
+- Diagnose via native `mcp__MCP_DOCKER__*` tools only.
 
 ## Tool Selection
 
-### Canonical tools first
+### MCP_DOCKER Server Activation Sequence
 
-Use these first:
+Use this exact sequence:
 
-- `allura-brain_memory_search`
-- `allura-brain_memory_add`
-- `allura-brain_memory_get`
-- `allura-brain_memory_list`
-- `allura-brain_memory_update`
-- `allura-brain_memory_promote`
-- `allura-brain_memory_delete`
-- `allura-brain_memory_restore`
-- `allura-brain_memory_export`
-- `allura-brain_memory_list_deleted`
+1. **Discovery**
+   ```bash
+   MCP_DOCKER_mcp-find("neo4j-memory")
+   MCP_DOCKER_mcp-find("database-server")
+   MCP_DOCKER_mcp-find("neo4j-cypher")
+   ```
+2. **Configuration** — map env vars to config fields:
+   - `NEO4J_URL` → `url`
+   - `NEO4J_USERNAME` or `NEO4J_USER` → `username`
+   - `NEO4J_PASSWORD` → `password`
+   - `NEO4J_DATABASE` → `database` (value should be `neo4j` or explicit db name)
+   - `POSTGRES_HOST` → `host`
+   - `POSTGRES_PORT` → `port`
+   - `POSTGRES_DB` → `database`
+   - `POSTGRES_USER` → `username`
+   - `POSTGRES_PASSWORD` → `password`
+3. **Activation**
+   ```bash
+   MCP_DOCKER_mcp-add("neo4j-memory")
+   MCP_DOCKER_mcp-add("database-server")
+   MCP_DOCKER_mcp-add("neo4j-cypher")  # only if needed
+   ```
 
-### MCP_DOCKER only when needed
+### Canonical Server Order for This Repo
 
-Use `MCP_DOCKER` for:
+1. First: `neo4j-memory` — approved insight recall via MCP
+2. Second: `database-server` — raw evidence via PostgreSQL
+3. Last resort: `neo4j-cypher` — explicit graph inspection
 
-- infrastructure discovery/configuration
-- lower-level Neo4j inspection
-- lower-level PostgreSQL inspection
-- server/tool activation
-- memory-system diagnostics
-
-If you need this path, load the detailed guidance from:
-
-- `references/allura-troubleshooting.md`
-- `references/allura-dual-context-retrieval.md`
+Use `MCP_DOCKER_mcp-find` discovery before assuming servers are activated.
 
 ## Guardrails
 
@@ -156,18 +178,20 @@ If you need this path, load the detailed guidance from:
 - Do not promote memories without evidence or policy support.
 - Do not create duplicate insight nodes when a superseding relationship is more appropriate.
 - Do not return stale memory without checking timestamps, status, and lineage.
-- Do not use docs, comments, or local notes as memory authority when Allura Brain is available.
+- Do not start with explicit Cypher when `neo4j-memory` can answer via MCP-packaged server.
+- Do not use docs, comments, or local notes as memory authority when the memory system is available.
+- Do not assume local memory servers exist — discover and configure via `MCP_DOCKER` first.
 
 ## Recommended References
 
-- `references/allura-memory-model.md`
-- `references/allura-promotion-policy.md`
-- `references/allura-dual-context-retrieval.md`
-- `references/allura-troubleshooting.md`
+- `/docs/allura/BLUEPRINT.md` — canonical Allura memory specification
+- `/docs/allura/SOLUTION-ARCHITECTURE.md` — memory topology and integration points
+- `/docs/allura/DATA-DICTIONARY.md` — canonical field and enum definitions
+- `/docs/archive/allura/memory-system-tools.md` — tool integration details
 
 ## Suggested Scripts
 
-- `scripts/validate-env.sh` — quick environment/config validation
-- `scripts/smoke-test-memory.sh` — smoke test for memory readiness
+- `/scripts/validation/memory-stack-ready.sh` — stack health check
+- `/scripts/validation/memory-telemetry.sh` — telemetry verification
 
 Use those scripts when the task is operational, repetitive, or needs deterministic verification.

@@ -28,9 +28,9 @@ Allura is a **memory data plane** — it holds no business logic about what an a
 
 | Consumer Class | Interaction Mode | Notes |
 |---|---|---|
-| AI Agents (Claude, GPT, etc.) | MCP over stdio | Primary interface — all 5 memory tools |
+| AI Agents (Claude, GPT, etc.) | Brooks / Team RAM + skills | Skills enforce memory-first routing to packaged MCP servers |
 | Dashboard UI | Sync REST | Next.js server actions → `/api/memory/` routes |
-| DevOps / Admin | Docker Compose + env vars | Deployment and configuration |
+| DevOps / Admin | Docker Compose + MCP_DOCKER config | Deployment, configuration, and packaged MCP server activation |
 
 Allura does **not** orchestrate agents, run workflows, or make decisions. It stores and retrieves memory. Period.
 
@@ -49,139 +49,154 @@ graph TD
         B1[Memory Viewer UI<br/>/memory]
     end
 
-    subgraph Allura["Allura"]
-        C1[MCP Server<br/>memory-server.ts]
-        C2[Next.js API<br/>api/memory/]
-        C3[Memory Engine<br/>lib/memory/]
-        C4[(PostgreSQL 16<br/>Episodic)]
-        C5[(Neo4j 5.26<br/>Semantic)]
+    subgraph Orchestration["Brooks / Team RAM"]
+        C1[Brooks]
+        C2[Memory Skills]
     end
 
-    A1 -->|MCP stdio| C1
-    A2 -->|MCP stdio| C1
-    B1 -->|REST| C2
-    C1 --> C3
+    subgraph MCPServers["Packaged MCP Servers"]
+        C3[neo4j-memory]
+        C4[database-server]
+        C5[neo4j-cypher<br/>(fallback)]
+    end
+
+    subgraph Allura["Allura"]
+        C6[Next.js API<br/>api/memory/]
+        C7[Memory Engine<br/>lib/memory/]
+        C8[(PostgreSQL 16<br/>Episodic)]
+        C9[(Neo4j 5.26<br/>Semantic)]
+    end
+
+    A1 --> C1
+    A2 --> C1
+    C1 --> C2
     C2 --> C3
-    C3 --> C4
-    C3 --> C5
+    C2 --> C4
+    C2 --> C5
+    B1 -->|REST| C6
+    C6 --> C7
+    C7 --> C8
+    C7 --> C9
+    C3 --> C9
+    C4 --> C8
+    C5 --> C9
 ```
 
 ---
 
 ## 3. Logical Topologies
 
-### 3.1 Agent Memory Write (Fast Lane)
+### 3.1 Agent Memory Recall (Primary Path)
 
-An AI agent adds a memory during a conversation. Score is below promotion threshold. Memory lands in Postgres only.
-
-```mermaid
-sequenceDiagram
-    actor Agent
-    participant MCP as MCP Server
-    participant Engine as Memory Engine
-    participant PG as PostgreSQL
-
-    Agent->>MCP: memory_add(content, userId, groupId)
-    MCP->>Engine: route(content)
-    Engine->>Engine: validate group_id
-    Engine->>PG: INSERT INTO events (append-only)
-    Engine->>Engine: score = 0.61 < 0.85 threshold
-    PG-->>MCP: event_id
-    MCP-->>Agent: {id, stored: "episodic"}
-```
-
-**Key constraints:**
-- `group_id` CHECK enforced at Postgres level — invalid tenant rejected by schema (AD-06)
-- Postgres write is synchronous — agent receives confirmation only after commit
-- Score below threshold means no Neo4j write — no promotion queue entry
-
----
-
-### 3.2 Agent Memory Write (Governed Lane — Auto Mode)
-
-Score meets threshold and `PROMOTION_MODE=auto`. Memory promotes to Neo4j immediately.
+An AI agent needs prior context. Brooks routes to the memory skill, which queries `neo4j-memory` first.
 
 ```mermaid
 sequenceDiagram
     actor Agent
-    participant MCP as MCP Server
-    participant Engine as Memory Engine
-    participant PG as PostgreSQL
-    participant Dedup as Dedup Engine
+    participant Brooks as Brooks / Team RAM
+    participant Skill as Memory Skill
+    participant Memory as neo4j-memory
     participant N4J as Neo4j
 
-    Agent->>MCP: memory_add(content, userId, groupId)
-    MCP->>Engine: route(content)
-    Engine->>PG: INSERT INTO events
-    Engine->>Engine: score = 0.91 >= 0.85
-    Engine->>Dedup: check duplicate(content, groupId, userId)
-    Dedup->>N4J: MATCH existing node
-    N4J-->>Dedup: no match
-    Engine->>N4J: MERGE (m:Memory) SET properties
-    Engine->>PG: INSERT event — memory_promoted
-    MCP-->>Agent: {id, stored: "both"}
+    Agent->>Brooks: need context for task
+    Brooks->>Skill: memory-first routing
+    Skill->>Memory: recall approved insights
+    Memory->>N4J: MATCH current Insight nodes
+    N4J-->>Memory: ranked approved knowledge
+    Memory-->>Brooks: current scoped context
+    Brooks-->>Agent: approved memory context
 ```
 
 **Key constraints:**
-- Dedup check MUST precede any Neo4j write (RK-01)
-- Neo4j failure is non-fatal — falls back to episodic-only result
-- One Neo4j write per `memory_add` call maximum (AD-04)
+- `neo4j-memory` is the default first hop for reusable context
+- Retrieval remains tenant-scoped via `group_id`
+- No raw Cypher is needed when approved memory recall is sufficient
 
 ---
 
-### 3.3 Agent Memory Write (Governed Lane — SOC2 Mode)
+### 3.2 Evidence Escalation (Trace Verification)
 
-Score meets threshold but `PROMOTION_MODE=soc2`. No autonomous Neo4j write.
+If the agent needs provenance, audit detail, or incident evidence, Brooks adds `database-server` after memory recall.
 
 ```mermaid
 sequenceDiagram
     actor Agent
-    participant MCP as MCP Server
-    participant Engine as Memory Engine
+    participant Brooks as Brooks / Team RAM
+    participant Memory as neo4j-memory
+    participant DB as database-server
     participant PG as PostgreSQL
 
-    Agent->>MCP: memory_add(content, userId, groupId)
-    MCP->>Engine: route(content)
-    Engine->>PG: INSERT INTO events (memory_add)
-    Engine->>Engine: score = 0.91 >= 0.85 — soc2 mode
-    Engine->>PG: INSERT INTO proposals (status: pending)
-    MCP-->>Agent: {id, stored: "episodic", pending_review: true}
+    Agent->>Brooks: explain why / show evidence
+    Brooks->>Memory: recall approved insight
+    Brooks->>DB: query traces for same tenant/window
+    DB->>PG: SELECT append-only events
+    PG-->>DB: raw evidence rows
+    Memory-->>Brooks: approved context
+    DB-->>Brooks: trace evidence
+    Brooks-->>Agent: merged context + provenance
 ```
 
 **Key constraints:**
-- No Neo4j write may occur without explicit human approval (AD-04)
-- Proposal state machine: `pending → approved | rejected`
-- Approved proposals trigger a Neo4j write identical to the auto-mode path
+- `database-server` is for evidence and trace validation, not as the default memory interface
+- PostgreSQL remains append-only and tenant-scoped
+- Raw evidence may refine or contradict approved memory, but does not silently mutate it
 
 ---
 
-### 3.4 Agent Memory Search (Federated)
+### 3.3 Graph Escalation (Cypher Fallback)
+
+If approved memory recall is insufficient and targeted graph traversal is required, Brooks adds `neo4j-cypher` as a read-only fallback.
 
 ```mermaid
 sequenceDiagram
     actor Agent
-    participant MCP as MCP Server
+    participant Brooks as Brooks / Team RAM
+    participant Memory as neo4j-memory
+    participant Cypher as neo4j-cypher
+    participant N4J as Neo4j
+
+    Agent->>Brooks: inspect lineage / relationships / schema
+    Brooks->>Memory: try approved memory recall first
+    Brooks->>Cypher: execute read-only scoped query
+    Cypher->>N4J: MATCH / SHOW / traversal query
+    N4J-->>Cypher: shaped graph results
+    Cypher-->>Brooks: lineage or schema detail
+    Brooks-->>Agent: memory context + graph detail
+```
+
+**Key constraints:**
+- `neo4j-cypher` is never the first-choice memory interface
+- Cypher queries are read-only and must remain tenant-scoped unless schema inspection is explicit
+- Hand-written Cypher is reserved for targeted inspection, not normal memory recall
+
+---
+
+### 3.4 Governed Memory Write Path
+
+```mermaid
+sequenceDiagram
+    actor Agent
+    participant API as Next.js API / controlled endpoint
     participant Engine as Memory Engine
     participant PG as PostgreSQL
     participant N4J as Neo4j
 
-    Agent->>MCP: memory_search(query, userId, groupId)
-    MCP->>Engine: search(query)
-    par Federated Search
-        Engine->>PG: full-text ILIKE search on events.metadata
-        Engine->>N4J: MATCH Memory nodes WHERE content CONTAINS query
+    Agent->>API: memory_add / governed write request
+    API->>Engine: validate scope and content
+    Engine->>PG: INSERT append-only event
+    Engine->>Engine: score content and check policy
+    alt approved / auto path
+        Engine->>N4J: create immutable insight node
+    else gated path
+        Engine->>PG: INSERT proposal pending review
     end
-    PG-->>Engine: episodic results
-    N4J-->>Engine: semantic results
-    Engine->>Engine: merge — semantic wins on content conflict
-    Engine->>Engine: sort by score DESC, created_at DESC
-    MCP-->>Agent: [{id, content, score, source}]
+    API-->>Agent: write accepted with status metadata
 ```
 
 **Key constraints:**
-- Both stores searched in parallel — latency bounded by slower of the two
-- `group_id` + `user_id` scoping applied to both queries (RK-02)
-- Semantic results take precedence when content matches across both stores
+- Agents do not write through packaged MCP inspection servers
+- Controlled service endpoints remain the only write path for governed memory changes
+- Neo4j writes preserve immutable lineage and approval policy
 
 ---
 
@@ -219,10 +234,10 @@ sequenceDiagram
 
 | Interface | Direction | Channel | Payload / Contract | Risk / Decision |
 |---|---|---|---|---|
-| AI Agent | Inbound | MCP stdio | `memory_add`, `memory_search`, `memory_get`, `memory_list`, `memory_delete` | AD-03 |
+| AI Agent via Brooks / Team RAM | Inbound | Skills + packaged MCP servers | `neo4j-memory` first, `database-server` for evidence, `neo4j-cypher` only when needed | AD-03, AD-23 |
 | Dashboard UI | Inbound | REST HTTP | JSON — memory records | AD-05 |
 | PostgreSQL 16 | Outbound | TCP (pg driver) | SQL — append-only INSERTs + SELECTs | AD-01, RK-02 |
-| Neo4j 5.26 | Outbound | Bolt (neo4j driver) | Cypher — MERGE + MATCH | AD-02, RK-01 |
+| Neo4j 5.26 | Outbound | Bolt (neo4j driver) | Approved memory recall + read-only Cypher fallback + governed writes | AD-02, RK-01, AD-23 |
 
 ---
 
@@ -230,10 +245,10 @@ sequenceDiagram
 
 | Section | Risks and Decisions Addressed |
 |---|---|
-| §3.1 Fast Lane Write | AD-01 (Postgres for episodic), AD-06 (group_id CHECK) |
-| §3.2 Auto-Mode Promotion | AD-02 (Neo4j for semantic), AD-04 (promotion mode), RK-01 (dedup) |
-| §3.3 SOC2-Mode Promotion | AD-04 (HITL gate), RK-03 (low-quality promotion) |
-| §3.4 Federated Search | RK-02 (tenant isolation in queries) |
+| §3.1 Primary Memory Recall | AD-23 (skills-first packaged MCP), AD-19 (controlled retrieval intent) |
+| §3.2 Evidence Escalation | AD-01 (Postgres for episodic), RK-02 (tenant isolation in queries) |
+| §3.3 Graph Escalation | AD-02 (Neo4j for semantic), AD-23 (read-only graph fallback) |
+| §3.4 Governed Memory Write Path | AD-04 (promotion mode), RK-01 (dedup), RK-03 (low-quality promotion) |
 | §3.5 Dashboard Viewer | AD-05 (5-tool surface) |
 
 ---
@@ -256,7 +271,9 @@ sequenceDiagram
 - [BLUEPRINT.md](./BLUEPRINT.md) — Core data model, API surface, execution rules
 - [DATA-DICTIONARY.md](./DATA-DICTIONARY.md) — Field-level definitions
 - [RISKS-AND-DECISIONS.md](./RISKS-AND-DECISIONS.md) — AD-## and RK-## entries
-- `src/mcp/memory-server.ts` — MCP implementation
+- `.opencode/skills/allura-memory-skill/` — memory workflow rules
+- `.opencode/skills/memory-client/` — default retrieval behavior
+- `.opencode/skills/mcp-docker-memory-system/` — packaged MCP server discovery/configuration guidance
 - `src/lib/memory/` — Memory engine
 - `src/lib/dedup/` — Deduplication logic
 
@@ -266,99 +283,69 @@ sequenceDiagram
 
 ### 8.1 Deployment Scenarios
 
-#### Scenario 1: Local Development (Stdio)
+#### Scenario 1: Local Development (Packaged MCP Servers)
 
 ```bash
 # Terminal 1: API server
 bun run api
 
-# Terminal 2: Claude Code
-claude mcp add --transport stdio bun run src/mcp/allura-server.ts
-
-# Terminal 3: OpenClaw
-openclaw gateway restart
-# (loads allura plugin from config)
+# Attach packaged MCP servers through MCP_DOCKER as needed:
+# - neo4j-memory
+# - database-server
+# - neo4j-cypher (only if needed)
 ```
 
-#### Scenario 2: Remote Deployment (HTTP + OAuth)
+#### Scenario 2: Skills + External MCP Server Activation
 
 ```bash
-# Cloud: Allura MCP Server
-bun run api --port 3100 --auth-enabled
-
-# Claude Code config
-{
-  "mcpServers": {
-    "allura": {
-      "command": "node",
-      "args": ["allura-mcp-client.js"],
-      "env": {
-        "ALLURA_MCP_URL": "https://allura-mcp.example.com",
-        "ALLURA_API_KEY": "..."
-      }
-    }
-  }
-}
+Use `MCP_DOCKER_mcp-find`, `MCP_DOCKER_mcp-config-set`, and `MCP_DOCKER_mcp-add`
+to activate the packaged server set required for the current task.
 ```
 
-#### Scenario 3: Containerized (Docker)
+#### Scenario 3: Containerized Core Stack
 
 ```yaml
 # docker-compose.yml
 services:
-  allura-mcp:
+  web:
     build: .
-    command: bun run api
-    ports:
-      - "3100:3100"
+    command: bun run start
     environment:
-      - DATABASE_URL=...
+      - POSTGRES_DB=...
       - NEO4J_URI=...
-      - AUTH_ENABLED=true
-
-  claude-code:
-    # Your development container
-    environment:
-      - ALLURA_MCP_URL=http://allura-mcp:3100/mcp
 ```
 
-### 8.2 Plugin Wrappers
+### 8.2 Runtime Layers
 
-**One MCP Server. Three Optional Wrappers.**
+**Brooks orchestrates. Skills decide. Packaged MCP servers execute.**
 
 ```
-Allura MCP Server (src/mcp/allura-server.ts)
-├─ Transport: stdio (local) + HTTP (remote)
-├─ Tools: memory_retrieve, memory_write, memory_propose_insight
-└─ Auth: JWT + API key validation
+Brooks / Team RAM
+├─ memory-client
+├─ allura-memory-skill
+└─ mcp-docker-memory-system
     ↓
-    ├─ Claude Code Plugin (~50 lines)
-    │   └─ Registers MCP server in .mcp.json
-    │
-    ├─ OpenCode Plugin (~80 lines)
-    │   └─ Auto-registers in opencode.json
-    │   └─ NPM: npm install @allura/opencode-plugin
-    │
-    └─ OpenClaw Plugin (~100 lines)
-        └─ Gateway plugin entry point
+    ├─ neo4j-memory      (primary approved-memory recall)
+    ├─ database-server   (trace and audit evidence)
+    └─ neo4j-cypher      (read-only fallback)
 ```
 
 ### 8.3 Implementation Phases
 
 | Phase | Component | Status |
 |-------|-----------|--------|
-| 1 | MCP Server (Core) — Base server with stdio transport | Ready |
-| 2 | HTTP Wrapper — Express wrapper for remote deployment | Ready |
-| 3 | OpenCode Plugin — Auto-register MCP server | Future |
-| 4 | Claude Code Plugin — Marketplace integration | Future |
-| 5 | OpenClaw Plugin — Gateway integration | Future |
+| 1 | Skills-first runtime contract | Ready |
+| 2 | Packaged `neo4j-memory` + `database-server` integration | Ready |
+| 3 | Read-only `neo4j-cypher` fallback | Ready |
+| 4 | Brooks staged routing (memory first, evidence second, Cypher last) | Planned |
+| 5 | Legacy custom MCP removal from runtime docs and config | Planned |
 
 ### 8.4 Success Metrics
 
-- ✓ MCP server handles 100+ concurrent queries
-- ✓ Plugin installs in <30 seconds
-- ✓ Auth (JWT/OAuth) works end-to-end
-- ✓ All three tools can retrieve, write, and propose insights
+- ✓ Skills route normal recall to `neo4j-memory` first
+- ✓ `database-server` is used for evidence, not default recall
+- ✓ `neo4j-cypher` is reserved for read-only graph fallback
+- ✓ Core stack remains deployable independently of a custom monolithic MCP runtime
 
 ---
 

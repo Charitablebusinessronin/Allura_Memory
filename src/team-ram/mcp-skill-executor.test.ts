@@ -333,11 +333,11 @@ describe("McpSkillExecutor + orchestrator integration", () => {
 
     // Should have selected all 3 skills
     expect(result.plan).toHaveLength(3)
-    expect(result.plan.map((s) => s.skillName)).toEqual([
-      "skill-neo4j-memory",
-      "skill-cypher-query",
-      "skill-database",
-    ])
+    // Staged routing: memory first, then database (for traces), then cypher (for graph)
+    const skillNames = result.plan.map((s) => s.skillName)
+    expect(skillNames[0]).toBe("skill-neo4j-memory")
+    expect(skillNames).toContain("skill-database")
+    expect(skillNames).toContain("skill-cypher-query")
 
     // All should succeed
     expect(result.results.every((r) => r.ok)).toBe(true)

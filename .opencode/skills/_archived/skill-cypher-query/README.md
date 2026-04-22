@@ -4,7 +4,16 @@ MCP Docker skill for raw Cypher query execution with result shaping against the 
 
 ## Overview
 
-This skill provides a focused interface for executing Cypher queries against Neo4j. It is a single-responsibility skill container with proper result shaping; it is not an agent and not the canonical memory authority.
+This skill provides a focused interface for executing Cypher queries against Neo4j. It is the expert fallback surface for targeted graph inspection; it is not an agent, not the orchestrator, and not the default memory interface.
+
+## Role in the Stack
+
+Use this last.
+
+Escalation order:
+1. `skill-neo4j-memory`
+2. `skill-database` if evidence is needed
+3. `skill-cypher-query` only when targeted graph traversal, schema inspection, or explicit Cypher is required
 
 ## Tools
 
@@ -19,6 +28,8 @@ Execute a read-only Cypher query against Neo4j and return shaped results.
 
 **Usage:**
 ```text
+Use only after memory recall is insufficient.
+
 Example inputs for the exposed execute_cypher tool:
 - cypher: MATCH (d:Decision) RETURN d LIMIT 10
 
@@ -94,19 +105,18 @@ bun test
 
 ## Integration
 
-This skill is designed to be used by the Team RAM orchestrator for parallel agents and subagents:
+This skill is designed to be used by the Team RAM orchestrator only as a fallback after memory-first routing:
 
 ```typescript
 // team-ram/orchestrator.ts
-const results = await Promise.allSettled([
-  subagent.call('skill-neo4j-memory', { 
-    query: 'recent architectural decisions' 
-  }),
-  subagent.call('skill-cypher-query', { 
-    cypher: 'MATCH (d:Decision) RETURN d LIMIT 10' 
-  }),
-]);
-const context = assembleContext(results);
+const context = await subagent.call('skill-neo4j-memory', {
+  query: 'recent architectural decisions'
+});
+
+const graphDetail = await subagent.call('skill-cypher-query', {
+  cypher: 'MATCH (d:Decision) WHERE d.group_id = $groupId RETURN d LIMIT 10',
+  parameters: { groupId: 'allura-roninmemory' }
+});
 ```
 
 ## Notes
@@ -115,4 +125,4 @@ const context = assembleContext(results);
 - **Parameterized queries** - All queries should use parameterized syntax to prevent injection
 - **Result shaping** - Results are automatically shaped for consistent consumption
 - **Group-scoped** - All operations are scoped to an explicit `groupId`
-- **Canonical memory surface** - Prefer first-party `allura-brain_*` tools for canonical Allura Brain memory operations; use this skill for governed lower-level graph access
+- **Fallback-only surface** - Use this for read-only graph inspection after memory recall and, if needed, trace evidence lookup
