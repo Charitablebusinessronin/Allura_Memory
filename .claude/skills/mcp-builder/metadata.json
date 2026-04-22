@@ -1,0 +1,14 @@
+{
+  "id": "mcp-builder",
+  "name": "MCP Builder",
+  "description": "Build MCP servers for agent integration",
+  "agents": [
+    "all"
+  ],
+  "platforms": [
+    "claude",
+    "opencode"
+  ],
+  "tier": 1,
+  "installed": "2026-04-08T21:24:52.312Z"
+}

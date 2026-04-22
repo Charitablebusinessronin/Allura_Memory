@@ -1,0 +1,1 @@
+../.opencode/config/MODEL_REGISTRY.md
