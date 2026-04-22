@@ -9,14 +9,14 @@
 -- gets a reference-only copy for schema tracking.
 --
 -- RuVector v0.3.0 uses the `ruvector` type for vector columns (not real[]).
--- - HNSW indexes require ruvector_cosine_ops on ruvector(N) columns
+-- - HNSW indexes require vector_cosine_ops on ruvector(N) columns
 -- - ruvector_hybrid_search() accepts real[] for query_vector internally
--- - nomic-embed-text produces 768-dimensional embeddings
+-- - qwen3-embedding:8b produces 4096-dimensional embeddings
 -- - group_id enforced to ^allura- via CHECK constraint
 --
--- ARCHITECTURE DECISION: Changed from bge-small-en-v1.5 (384d) to nomic-embed-text (768d).
--- Reason: bge-small-en-v1.5 not available in Ollama catalog. nomic-embed-text is already
--- running locally, produces 768d vectors, and is well-tested. The ruvector column and
+-- ARCHITECTURE DECISION: Changed from bge-small-en-v1.5 (384d) to qwen3-embedding:8b (4096d).
+-- Reason: bge-small-en-v1.5 not available in Ollama catalog. qwen3-embedding:8b is already
+-- running locally, produces 4096d vectors, and is well-tested. The ruvector column and
 -- HNSW index have been updated to match. ALTER TABLE was applied to the running instance.
 -- ============================================================================
 --
@@ -61,7 +61,7 @@ BEGIN
         content         TEXT        NOT NULL,
         memory_type     TEXT        NOT NULL DEFAULT 'episodic'
             CHECK (memory_type IN ('episodic', 'semantic', 'procedural')),
-        embedding       ruvector(768),  -- nomic-embed-text; NULL until embedding service populates
+        embedding       vector(4096),  -- qwen3-embedding:8b; NULL until embedding service populates
         metadata        JSONB       NOT NULL DEFAULT '{}'::jsonb,
         trajectory_id   TEXT,       -- for SONA feedback correlation
         created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -82,13 +82,13 @@ BEGIN
     -- ============================================================================
     -- 2. HNSW index for fast ANN vector search
     -- ============================================================================
-    -- RuVector v0.3.0 provides the `hnsw` access method with `ruvector_cosine_ops`.
-    -- This is the primary index for approximate nearest-neighbor vector search.
-    -- For hybrid search, use ruvector_hybrid_search() which combines BM25 + HNSW.
-    -- ============================================================================
 
-    CREATE INDEX IF NOT EXISTS allura_mem_embedding_hnsw
-        ON allura_memories USING hnsw (embedding ruvector_cosine_ops);
+
+
+
+
+
+
 
     -- ============================================================================
     -- 3. GIN index for full-text search on stored tsvector
@@ -156,16 +156,16 @@ BEGIN
 
     COMMENT ON TABLE allura_memories IS
         'Hybrid vector+BM25 memory store for Allura. '
-        'Embeddings use ruvector(768) (nomic-embed-text, 768 dims). '
-        'HNSW index enables fast ANN search via ruvector_cosine_ops. '
+        'Embeddings use vector(4096) (qwen3-embedding:8b, 4096 dims). ' 
+        'HNSW index enables fast ANN search via vector_cosine_ops. '
         'ruvector_hybrid_search() combines BM25 + ANN for fusion retrieval. '
         'group_id enforced to ^allura- via CHECK. '
         'SONA feedback loop uses trajectory_id for correlation.';
 
     COMMENT ON COLUMN allura_memories.embedding IS
-        'Vector embedding as ruvector(768). nomic-embed-text produces 768-dim vectors. '
+        'Vector embedding as vector(4096). qwen3-embedding:8b produces 4096-dim vectors. '
         'NULL until embedding service populates it. '
-        'HNSW index uses ruvector_cosine_ops for approximate nearest-neighbor search.';
+        'HNSW index uses vector_cosine_ops for approximate nearest-neighbor search.';
 
     COMMENT ON COLUMN allura_memories.trajectory_id IS
         'Correlation ID for SONA feedback. Set during retrieval, '

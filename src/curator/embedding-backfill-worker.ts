@@ -13,7 +13,7 @@
  *
  * Follows the pattern of `notion-sync-worker.ts`. The worker is a standalone
  * Bun script that connects to RuVector PG (port 5433) via `getRuVectorPool()`
- * and calls Ollama's nomic-embed-text model via `generateEmbeddingBatch()`.
+ * and calls Ollama's qwen3-embedding:8b model via `generateEmbeddingBatch()`.
  *
  * Failed embeddings use DLQ-like behavior: rows are simply left as NULL,
  * so they'll be picked up again on the next poll cycle. No separate DLQ table
@@ -175,7 +175,7 @@ export async function getPendingRows(
  * that is then cast with `::vector` in the SQL.
  *
  * @param embedding - Array of numbers from the embedding model
- * @returns String representation like '[0.1,0.2,...,0.768]'
+ * @returns String representation like '[0.1,0.2,...,0.4096]'
  */
 export function formatEmbeddingForUpdate(embedding: number[]): string {
   return `[${embedding.join(",")}]`
