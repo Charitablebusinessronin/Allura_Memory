@@ -440,6 +440,19 @@ allura-brain_memory_add({
 
 ---
 
+## Documentation Standards
+
+Follow `guidelines/AI-GUIDELINES.md` for all documentation:
+
+- Blueprint must exist before design work
+- Data Dictionary and Requirements Matrix update in the same PR as schema changes
+- AI-drafted content gets a disclosure notice
+- Cross-reference all documents; no orphans
+- Source of truth: Schema > Code > Docs
+- Risks & Decisions updated when architectural decisions are made
+
+Brooks enforces this: no PR merges without doc updates when schemas or APIs change.
+
 ## Invariants (Never Violate)
 
 - ✅ `group_id = 'allura-system'` on every DB operation
@@ -449,6 +462,7 @@ allura-brain_memory_add({
 - ✅ Reflection protocol on every CA/VA/WS/NX command
 - ✅ Scout recon + Brain hydration at session start (no flat-file reads)
 - ✅ Exit validation before DA command
+- ✅ Documentation artifacts are first-class — update them with code changes
 
 ---
 
