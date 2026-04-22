@@ -111,7 +111,7 @@ export function getConfig(): AlluraMemoryConfig {
     
     // Embedding Provider
     embeddingProvider: (process.env.EMBEDDING_PROVIDER as 'ollama' | 'openai' | 'voyage') || 'ollama',
-    embeddingModel: process.env.EMBEDDING_MODEL || 'nomic-embed-text',
+    embeddingModel: process.env.EMBEDDING_MODEL || 'qwen3-embedding:8b',
     embeddingBaseUrl: process.env.EMBEDDING_BASE_URL || 'http://localhost:11434',
     
     // LLM Provider
@@ -229,7 +229,7 @@ DEFAULT_GROUP_ID=allura-default
 
 # Embedding Provider (ollama, openai, voyage)
 EMBEDDING_PROVIDER=ollama
-EMBEDDING_MODEL=nomic-embed-text
+EMBEDDING_MODEL=qwen3-embedding:8b
 EMBEDDING_BASE_URL=http://localhost:11434
 
 # For OpenAI embeddings:

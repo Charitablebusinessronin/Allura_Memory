@@ -1,11 +1,11 @@
 /**
  * RuVector Embedding Service
  *
- * Generates 768-dim vectors via Ollama's /api/embeddings endpoint.
- * Uses nomic-embed-text (768d) by default.
+ * Generates 4096-dim vectors via Ollama's /api/embeddings endpoint.
+ * Uses qwen3-embedding:8b (4096d) by default.
  *
  * Environment variables:
- * - RUVECTOR_EMBEDDING_MODEL: model name (default: nomic-embed-text)
+ * - RUVECTOR_EMBEDDING_MODEL: model name (default: qwen3-embedding:8b)
  * - RUVECTOR_EMBEDDING_BASE_URL: Ollama URL (default: http://localhost:11434)
  *
  * Graceful degradation: if Ollama is unreachable or returns an error,
@@ -20,8 +20,8 @@ if (typeof window !== "undefined") {
 
 // ── Configuration ────────────────────────────────────────────────────────────
 
-/** Default model — nomic-embed-text produces 768-dim vectors */
-const DEFAULT_MODEL = "nomic-embed-text";
+/** Default model — qwen3-embedding:8b produces 4096-dim vectors */
+const DEFAULT_MODEL = "qwen3-embedding:8b";
 
 /** Default Ollama endpoint */
 const DEFAULT_BASE_URL = "http://localhost:11434";
@@ -32,8 +32,8 @@ const REQUEST_TIMEOUT_MS = 30_000;
 /** Max concurrent embedding requests in batch */
 const BATCH_CONCURRENCY = 5;
 
-/** Embedding dimensions for nomic-embed-text */
-const EMBEDDING_DIMENSIONS = 768;
+/** Embedding dimensions for qwen3-embedding:8b */
+const EMBEDDING_DIMENSIONS = 4096;
 
 /**
  * Read model name from environment (falls back to default).
@@ -139,11 +139,11 @@ export async function generateEmbeddingBatch(texts: string[]): Promise<(number[]
 /**
  * Returns the expected embedding dimension count.
  *
- * This matches nomic-embed-text's output (768 dimensions).
+ * This matches qwen3-embedding:8b's output (4096 dimensions).
  * Used by callers that need to know the vector size for DB column
  * types or validation.
  *
- * @returns 768
+ * @returns 4096
  */
 export function getEmbeddingDimensions(): number {
   return EMBEDDING_DIMENSIONS;

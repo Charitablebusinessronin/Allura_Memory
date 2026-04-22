@@ -96,7 +96,7 @@ export function writeUserConfig(config: UserMemoryConfig): void {
 
   // Embedding Provider (ollama, openai, voyage)
   "embeddingProvider": "${config.embeddingProvider || 'ollama'}",
-  "embeddingModel": "${config.embeddingModel || 'nomic-embed-text'}",
+  "embeddingModel": "${config.embeddingModel || 'qwen3-embedding:8b'}",
   "embeddingBaseUrl": "${config.embeddingBaseUrl || 'http://localhost:11434'}",
 
   // LLM Provider for auto-capture (ollama, openai, anthropic)
@@ -143,7 +143,7 @@ export function ensureUserConfig(): void {
   const defaultConfig: UserMemoryConfig = {
     defaultGroupId: 'allura-default',
     embeddingProvider: 'ollama',
-    embeddingModel: 'nomic-embed-text',
+    embeddingModel: 'qwen3-embedding:8b',
     embeddingBaseUrl: 'http://localhost:11434',
     opencodeProvider: 'ollama',
     opencodeModel: 'qwen3:8b',
