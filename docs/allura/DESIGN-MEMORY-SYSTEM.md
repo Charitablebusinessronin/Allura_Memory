@@ -387,17 +387,47 @@ Neo4j stores only approved, versioned insight records. These insight nodes are i
 
 | Relationship | Pattern | When used |
 |-------------|---------|-----------|
-| `VERSION_OF` | `(i)-[:VERSION_OF]->(h:InsightHead)` | Every insight version links to its head node |
 | `SUPERSEDES` | `(v2)-[:SUPERSEDES]->(v1)` | New version replaces old; v1 status → `superseded` |
-| `DEPRECATED` | Set via `deprecateInsight()` | Insight no longer valid but retained for history |
+| `DEPRECATED` | Set via `deprecateMemory()` | Memory no longer valid but retained for history |
 | `REVERTED` | `(v3)-[:REVERTED]->(v1)` | Revert to earlier version; creates new node copying v1 content |
 
 **Key invariants:**
 
 - No service may update an active graph insight node in place
 - Any "edit" must result in: new proposal → new approval → new immutable node
-- `InsightHead` tracks the current version pointer; updated atomically on version change
+- `Memory` nodes track the current version pointer; updated atomically on version change
 - Full version history is queryable via `getInsightHistory()`
+
+---
+
+## Graph Topology: Agents, Teams, and Projects
+
+The Neo4j knowledge graph contains four node types: **Memory**, **Agent**, **Team**, and **Project**. Memory nodes hold the knowledge content; Agent, Team, and Project nodes provide **structural context** that makes knowledge retrievable by ownership, project scope, and organizational path.
+
+### Why Structural Context Nodes?
+
+A graph without structure is just a list. Agent, Team, and Project nodes enable traversal queries that flat metadata properties cannot support:
+
+- "What does this agent know?" → traverse `AUTHORED_BY` from Agent to Memory
+- "What knowledge relates to this project?" → traverse `RELATES_TO` from Project to Memory
+- "Who should I escalate to?" → traverse `ESCALATES_TO` from Agent to Agent
+- "What does the Durham team produce?" → traverse `MEMBER_OF` → `CONTRIBUTES_TO`
+
+### Seeded Data
+
+The structural context layer is seeded via `scripts/neo4j-seed-agents.cypher` (idempotent MERGE):
+
+- **19 Agent nodes** (10 RAM + 6 Durham + 3 Governance/Ship)
+- **2 Team nodes** (RAM, Durham)
+- **3 Project nodes** (Allura Memory, Agent OS, Creative Studio)
+- **35 Memory nodes** from Notion (approved knowledge)
+- **133 relationships** total (AUTHORED_BY, RELATES_TO, CONTRIBUTES_TO, MEMBER_OF, DELEGATES_TO, ESCALATES_TO, HANDS_OFF_TO, PROPOSES_TO, APPROVES_PROMOTION)
+
+Bidirectional traceability is maintained via Notion's Neo4j ID field and Neo4j's `notion_id` property on Memory nodes.
+
+### Eliminating the Shadow Org Chart
+
+Previously, 7 "Memory Framework" agents existed as a shadow hierarchy separate from the actual agent team. Phase 6 eliminated this in favor of the existing surgical team pattern (RAM + Durham), with governance agents (Curator, Auditor) connected via `PROPOSES_TO` and `APPROVES_PROMOTION` relationships.
 
 ---
 
@@ -411,9 +441,11 @@ Agents retrieve memory through a dedicated service boundary. They do **not** que
 2. `retrieval-layer.ts` validates `group_id` and agent permissions
 3. For structured queries: `listInsights()` or `searchInsights()` from Neo4j
 4. For semantic/dual-context queries: `getDualContextSemanticMemory()` from Neo4j
-5. For trace-augmented queries: `queryTraces()` from PostgreSQL (optional, policy-gated)
-6. Results are merged, scoped, and returned with provenance metadata
-7. Every retrieval call is logged as an audit event
+5. For agent-context queries: traverse `AUTHORED_BY` from Agent to Memory nodes
+6. For project-scoped queries: traverse `RELATES_TO` from Project to Memory nodes
+7. For trace-augmented queries: `queryTraces()` from PostgreSQL (optional, policy-gated)
+8. Results are merged, scoped, and returned with provenance metadata
+9. Every retrieval call is logged as an audit event
 
 **Retrieval modes:**
 

@@ -123,6 +123,33 @@ export async function POST(request: NextRequest) {
             proposal_id: proposal_id,
           },
         })
+
+        // Phase 3 sync contract: wire AUTHORED_BY → Agent and RELATES_TO → Project
+        // relationships to anchor the promoted knowledge in the structural context layer.
+        // Best-effort: failure does not block the approval.
+        // TODO: After Insight→Memory label migration, use graphAdapter.createMemory
+        // instead of createInsight so we get :Memory nodes directly.
+        try {
+          const { getNeo4jDriver } = require("@/lib/neo4j/connection")
+          const { Neo4jGraphAdapter } = require("@/lib/graph-adapter/neo4j-adapter")
+          const driver = getNeo4jDriver()
+          const adapter = new Neo4jGraphAdapter(driver)
+          const linkResult = await adapter.linkMemoryContext({
+            memory_id: memoryId as any,
+            group_id: validatedGroupId as any,
+            agent_id: proposal.created_by ?? curator_id ?? null,
+            project_id: null, // Project not available at approval time — TODO: add to proposal
+          })
+          if (linkResult.authored_by || linkResult.relates_to) {
+            console.info(
+              `[sync-contract] curator-approve: linked memory=${memoryId} ` +
+              `authored_by=${linkResult.authored_by} relates_to=${linkResult.relates_to}`
+            )
+          }
+          await adapter.close()
+        } catch (linkErr) {
+          console.warn(`[sync-contract] linkMemoryContext failed in curator-approve:`, linkErr)
+        }
       } catch (err) {
         if (err instanceof InsightConflictError) {
           return NextResponse.json({ error: "Insight already promoted" }, { status: 409 })

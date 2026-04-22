@@ -17,7 +17,28 @@ dist
 
 # Development
 .claude
-.opencode
+.opencode/skills/*/node_modules
+.opencode/skills/*/__tests__
+.opencode/skills/*/build.ts
+.opencode/skills/task-management
+.opencode/skills/skill-creator
+.opencode/skills/brain-reliability
+.opencode/skills/bun-security
+.opencode/skills/code-review
+.opencode/skills/github
+.opencode/skills/hitl-governance
+.opencode/skills/mcp-builder
+.opencode/skills/mcp-docker
+.opencode/skills/mcp-docker-memory-system
+.opencode/skills/memory-client
+.opencode/skills/multi-search
+.opencode/skills/next-best-practices
+.opencode/skills/party-mode
+.opencode/skills/postgres-best-practices
+.opencode/skills/readme-memory
+.opencode/skills/superpowers-memory
+.opencode/skills/systematic-debugging-memory
+.opencode/skills/trailofbits-audit
 _bmad-output
 memory-bank
 docs

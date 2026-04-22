@@ -479,6 +479,23 @@ export class RuVectorGraphAdapter implements IGraphAdapter {
     }
   }
 
+  async linkMemoryContext(params: {
+    memory_id: MemoryId
+    group_id: GroupId
+    agent_id: string | null
+    project_id: string | null
+  }): Promise<{ authored_by: boolean; relates_to: boolean }> {
+    // Phase 3: RuVector adapter doesn't yet have structural context tables.
+    // When graph_memories gains agent_id/project_id columns and a
+    // graph_relationships table is created, this will wire them.
+    // For now, return false — the Neo4j adapter handles the active path.
+    console.warn(
+      `[sync-contract] linkMemoryContext called on ruvector adapter (no-op). ` +
+      `memory_id=${params.memory_id} agent_id=${params.agent_id} project_id=${params.project_id}`
+    )
+    return { authored_by: false, relates_to: false }
+  }
+
   // ── Lifecycle ──────────────────────────────────────────────────────────
 
   async isHealthy(): Promise<boolean> {

@@ -58,7 +58,6 @@ import {
   recordToolCall,
   withCircuitBreaker,
 } from "./canonical-tools/budget-circuit"
-import { checkDuplicate } from "./canonical-tools/duplicate-check"
 
 // ── External imports ──────────────────────────────────────────────────────
 import type {
@@ -284,6 +283,27 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
             created_at: createdAt,
           })
         )
+
+        // Phase 3 sync contract: wire AUTHORED_BY and RELATES_TO relationships
+        // to anchor the new Memory in the structural context layer.
+        // Best-effort: failure here does not block promotion.
+        try {
+          const linkResult = await graphAdapter.linkMemoryContext({
+            memory_id: memoryId,
+            group_id: groupId,
+            agent_id: request.metadata?.agent_id ?? request.scope?.agent_id ?? null,
+            project_id: request.scope?.project_id ?? null,
+          })
+          if (linkResult.authored_by || linkResult.relates_to) {
+            console.info(
+              `[sync-contract] memory_add: linked memory=${memoryId} ` +
+              `authored_by=${linkResult.authored_by} relates_to=${linkResult.relates_to}`
+            )
+          }
+        } catch (linkErr) {
+          // Best-effort — don't fail the promotion over relationship wiring
+          console.warn(`[sync-contract] linkMemoryContext failed in memory_add:`, linkErr)
+        }
 
         // Log promotion event — circuit-breaker wrapped
         await withCircuitBreaker("postgres", groupId, "memory_add:log_promotion", async () =>

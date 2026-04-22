@@ -21,7 +21,7 @@ export { AlluraClient } from "./client.js";
 // ── Memory Operations ────────────────────────────────────────────────────────
 
 export { MemoryOperations } from "./memory.js";
-export type { TransportMode, RequestFn } from "./memory.js";
+export type { RequestFn } from "./memory.js";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

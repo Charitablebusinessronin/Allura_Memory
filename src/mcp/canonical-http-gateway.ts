@@ -1,13 +1,12 @@
 /**
  * Canonical HTTP Gateway for Allura Memory MCP
  *
- * Exposes the canonical 5-operation memory interface via two transports:
- * 1. MCP Streamable HTTP (primary) — /mcp endpoint, native MCP protocol
- * 2. Legacy JSON-RPC (backward-compatible) — /tools, /tools/call, /health
+ * Exposes the canonical 5-operation memory interface via MCP Streamable HTTP:
+ * - Primary transport: /mcp endpoint (native MCP protocol via MCP SDK)
  *
- * The MCP Streamable HTTP transport enables direct integration with:
+ * This is the single integration path for all MCP-compatible clients:
  * - OpenAI Agents SDK (`hostedMcpTool()` / `MCPServerStreamableHttp`)
- * - Any MCP-compatible client that speaks the Streamable HTTP protocol
+ * - Any MCP client speaking the Streamable HTTP protocol
  *
  * No REST bridge. No OpenAPI schema. The MCP protocol handles discovery.
  *
@@ -137,7 +136,9 @@ const mcpServer = new Server(
   }
 );
 
-// List tools handler — same schemas as the STDIO server
+// ── MCP Tool Handlers (Streamable HTTP) ──────────────────────────────────────
+
+// List tools handler
 mcpServer.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
@@ -230,7 +231,7 @@ mcpServer.setRequestHandler(ListToolsRequestSchema, async () => {
   };
 });
 
-// Tool execution handler — delegates to canonical tools
+// Tool execution handler
 mcpServer.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
@@ -286,99 +287,6 @@ initSentry();
 
 markMcpInitialized();
 ensureMetricsInitialized();
-
-// ── Legacy JSON-RPC Tool Handlers ────────────────────────────────────────────
-
-// Tool handlers (legacy JSON-RPC)
-const toolHandlers: Record<string, (args: unknown) => Promise<unknown>> = {
-  memory_add: async (args) => memory_add(args as MemoryAddRequest),
-  memory_search: async (args) => memory_search(args as MemorySearchRequest),
-  memory_get: async (args) => memory_get(args as MemoryGetRequest),
-  memory_list: async (args) => memory_list(args as MemoryListRequest),
-  memory_delete: async (args) => memory_delete(args as MemoryDeleteRequest),
-};
-
-// Tool schemas for legacy discovery
-const toolSchemas = [
-  {
-    name: "memory_add",
-    description:
-      "Add a memory. Content is scored and either promoted immediately (auto mode) or queued for approval (soc2 mode).",
-    inputSchema: {
-      type: "object",
-      properties: {
-        group_id: { type: "string", pattern: "^allura-[a-z0-9-]+$", description: "Tenant namespace (required)" },
-        user_id: { type: "string", description: "User identifier (required)" },
-        content: { type: "string", description: "Memory content text (required)" },
-        metadata: {
-          type: "object",
-          properties: {
-            source: { type: "string", enum: ["conversation", "manual"] },
-            conversation_id: { type: "string" },
-            agent_id: { type: "string" },
-          },
-        },
-        threshold: { type: "number", minimum: 0, maximum: 1, description: "Override promotion threshold (default: 0.85)" },
-      },
-      required: ["group_id", "user_id", "content"],
-    },
-  },
-  {
-    name: "memory_search",
-    description: "Search memories across episodic (PostgreSQL) and semantic (Neo4j) stores.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        query: { type: "string", description: "Search query (required)" },
-        group_id: { type: "string", pattern: "^allura-[a-z0-9-]+$", description: "Tenant namespace (required)" },
-        user_id: { type: "string", description: "User identifier (optional)" },
-        limit: { type: "number", default: 10 },
-      },
-      required: ["query", "group_id"],
-    },
-  },
-  {
-    name: "memory_get",
-    description: "Retrieve a single memory by ID.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        id: { type: "string", format: "uuid", description: "Memory ID (required)" },
-        group_id: { type: "string", pattern: "^allura-[a-z0-9-]+$", description: "Tenant namespace (required)" },
-      },
-      required: ["id", "group_id"],
-    },
-  },
-  {
-    name: "memory_list",
-    description: "List all memories for a user within a tenant.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        group_id: { type: "string", pattern: "^allura-[a-z0-9-]+$", description: "Tenant namespace (required)" },
-        user_id: { type: "string", description: "User identifier (required)" },
-        limit: { type: "number", default: 50 },
-        offset: { type: "number", default: 0 },
-      },
-      required: ["group_id", "user_id"],
-    },
-  },
-  {
-    name: "memory_delete",
-    description: "Soft-delete a memory (marks as deprecated, does not remove).",
-    inputSchema: {
-      type: "object",
-      properties: {
-        id: { type: "string", format: "uuid", description: "Memory ID (required)" },
-        group_id: { type: "string", pattern: "^allura-[a-z0-9-]+$", description: "Tenant namespace (required)" },
-        user_id: { type: "string", description: "User identifier (required)" },
-      },
-      required: ["id", "group_id", "user_id"],
-    },
-  },
-];
-
-// ── HTTP Server ───────────────────────────────────────────────────────────────
 
 const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
   const url = parse(req.url || "/", true);
@@ -436,100 +344,76 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     return;
   }
 
-  // ── Legacy JSON-RPC endpoints (backward-compatible) ───────────────────────
+  // ── Health endpoint (advertising only streamable-http transport) ───────────
   const requestOrigin = req.headers["origin"];
-  try {
-    // Parse request body for POST requests
-    let body: Record<string, unknown> = {};
-    if (req.method === "POST") {
-      const chunks: Buffer[] = [];
-      for await (const chunk of req) {
-        chunks.push(chunk);
-      }
-      const data = Buffer.concat(chunks).toString();
-      body = data ? JSON.parse(data) : {};
-    }
-
-    if (url.pathname === "/tools" && req.method === "GET") {
-      // List tools (legacy)
-      res.writeHead(200, { ...corsHeaders(requestOrigin), "Content-Type": "application/json" });
-      res.end(JSON.stringify({ tools: toolSchemas }));
-    } else if (url.pathname === "/tools/call" && req.method === "POST") {
-      // Call tool (legacy)
-      const { name, arguments: args } = body as { name: string; arguments?: unknown };
-
-      if (!name || !toolHandlers[name]) {
-        res.writeHead(404, { ...corsHeaders(requestOrigin), "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: `Unknown tool: ${name}` }));
-        return;
-      }
-
-      const result = await toolHandlers[name](args || {});
-      res.writeHead(200, { ...corsHeaders(requestOrigin), "Content-Type": "application/json" });
-      res.end(JSON.stringify(result));
-    } else if (url.pathname === "/health" || url.pathname === "/api/health") {
-      // Health check
-      res.writeHead(200, { ...corsHeaders(requestOrigin), "Content-Type": "application/json" });
-      res.end(
-        JSON.stringify({
-          status: "healthy",
-          mode: "http",
-          interface: "mcp-http",
-          transports: ["streamable-http", "legacy-json-rpc"],
-          mcp_endpoint: "/mcp",
-          port: PORT,
-          port_source: HTTP_PORT.source,
-          auth_enabled: !!AUTH_TOKEN,
-          cors_mode: getCorsConfig().isDevelopment ? "development" : "production",
-          warnings: HTTP_PORT.warnings,
-          timestamp: new Date().toISOString(),
-        })
-      );
-    } else if (url.pathname === "/ready" || url.pathname === "/api/ready") {
-      // Readiness probe — checks PostgreSQL, Neo4j, MCP initialization
-      const result = await checkReadiness();
-      const statusCode = result.ready ? 200 : 503;
-      res.writeHead(statusCode, { ...corsHeaders(requestOrigin), "Content-Type": "application/json" });
-      res.end(JSON.stringify(result));
-    } else if (url.pathname === "/live" || url.pathname === "/api/live") {
-      // Liveness probe — simple process heartbeat
-      const uptime = process.uptime();
-      res.writeHead(200, { ...corsHeaders(requestOrigin), "Content-Type": "application/json" });
-      res.end(JSON.stringify({ alive: true, uptime, timestamp: new Date().toISOString() }));
-    } else if (url.pathname === "/metrics" || url.pathname === "/api/metrics") {
-      // Prometheus metrics — requires auth (same as MCP endpoint)
-      if (!validateBearerAuth(req)) {
-        res.writeHead(401, {
-          ...corsHeaders(req.headers["origin"]),
-          "Content-Type": "text/plain",
-          "WWW-Authenticate": 'Bearer realm="Allura Memory Metrics"',
-        });
-        res.end("Unauthorized\n");
-        transaction.finish();
-        return;
-      }
-      const metricsText = collectMetrics();
-      res.writeHead(200, {
-        ...corsHeaders(req.headers["origin"]),
-        "Content-Type": "text/plain; version=0.0.4; charset=utf-8",
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-      });
-      res.end(metricsText);
-    } else {
-      res.writeHead(404, { ...corsHeaders(requestOrigin), "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "Not found" }));
-    }
-  } catch (error) {
-    console.error("Error handling legacy request:", error);
-    captureException(error, extractRequestContext(req));
-    res.writeHead(500, { ...corsHeaders(requestOrigin), "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Internal server error" }));
-  } finally {
-    // Record HTTP request metrics
-    const durationSeconds = (Date.now() - requestStartTime) / 1000;
-    recordHttpRequest(req.method ?? "GET", url.pathname ?? "/", durationSeconds);
+  if (url.pathname === "/health" || url.pathname === "/api/health") {
+    // Health check
+    res.writeHead(200, { ...corsHeaders(requestOrigin), "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        status: "healthy",
+        mode: "http",
+        interface: "mcp-http",
+        transports: ["streamable-http"],
+        mcp_endpoint: "/mcp",
+        port: PORT,
+        port_source: HTTP_PORT.source,
+        auth_enabled: !!AUTH_TOKEN,
+        cors_mode: getCorsConfig().isDevelopment ? "development" : "production",
+        warnings: HTTP_PORT.warnings,
+        timestamp: new Date().toISOString(),
+      })
+    );
     transaction.finish();
+    return;
   }
+
+  // ── Readiness probe — checks PostgreSQL, Neo4j, MCP initialization ────────
+  if (url.pathname === "/ready" || url.pathname === "/api/ready") {
+    const result = await checkReadiness();
+    const statusCode = result.ready ? 200 : 503;
+    res.writeHead(statusCode, { ...corsHeaders(requestOrigin), "Content-Type": "application/json" });
+    res.end(JSON.stringify(result));
+    transaction.finish();
+    return;
+  }
+
+  // ── Liveness probe — simple process heartbeat ─────────────────────────────
+  if (url.pathname === "/live" || url.pathname === "/api/live") {
+    const uptime = process.uptime();
+    res.writeHead(200, { ...corsHeaders(requestOrigin), "Content-Type": "application/json" });
+    res.end(JSON.stringify({ alive: true, uptime, timestamp: new Date().toISOString() }));
+    transaction.finish();
+    return;
+  }
+
+  // ── Prometheus metrics — requires auth (same as MCP endpoint) ─────────────
+  if (url.pathname === "/metrics" || url.pathname === "/api/metrics") {
+    if (!validateBearerAuth(req)) {
+      res.writeHead(401, {
+        ...corsHeaders(req.headers["origin"]),
+        "Content-Type": "text/plain",
+        "WWW-Authenticate": 'Bearer realm="Allura Memory Metrics"',
+      });
+      res.end("Unauthorized\n");
+      transaction.finish();
+      return;
+    }
+    const metricsText = collectMetrics();
+    res.writeHead(200, {
+      ...corsHeaders(req.headers["origin"]),
+      "Content-Type": "text/plain; version=0.0.4; charset=utf-8",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+    });
+    res.end(metricsText);
+    transaction.finish();
+    return;
+  }
+
+  // ── 404 for unknown routes ────────────────────────────────────────────────
+  res.writeHead(404, { ...corsHeaders(requestOrigin), "Content-Type": "application/json" });
+  res.end(JSON.stringify({ error: "Not found" }));
+  transaction.finish();
 });
 
 server.listen(PORT, () => {
@@ -541,7 +425,6 @@ server.listen(PORT, () => {
   console.log("");
   console.log("Transports:");
   console.log("  MCP Streamable HTTP:  POST/GET/DELETE /mcp  (primary — OpenAI Agents SDK compatible)");
-  console.log("  Legacy JSON-RPC:       GET /tools, POST /tools/call  (backward-compatible)");
   console.log("  Health:                GET /health");
   console.log("  Readiness:            GET /ready  (checks PostgreSQL, Neo4j, MCP)");
   console.log("  Liveness:             GET /live   (process heartbeat)");

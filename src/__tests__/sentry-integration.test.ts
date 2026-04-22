@@ -294,8 +294,8 @@ describe("extractRequestContext", () => {
     expect(context.extra?.["group_id"]).toBe("allura-test");
   });
 
-  it("should extract group_id from URL with path segment", () => {
-    const req = createMockRequest("GET", "/tools/call?group_id=allura-my-group");
+  it("should extract group_id from URL with MCP path segment", () => {
+    const req = createMockRequest("GET", "/mcp?group_id=allura-my-group");
     const context = extractRequestContext(req);
 
     expect(context.tags?.["group_id"]).toBe("allura-my-group");

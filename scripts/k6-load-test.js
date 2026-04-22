@@ -84,20 +84,24 @@ export default function () {
   const userId = `k6-user-${__VU}`;
 
   // ── Scenario 1: memory_add (most critical — Phase 9 benchmark) ────────────
-  // Uses legacy /tools/call endpoint (plain JSON-RPC, k6-compatible)
 
   const addPayload = JSON.stringify({
-    name: "memory_add",
-    arguments: {
-      group_id: groupId,
-      user_id: userId,
-      content: generateContent(),
-      tier: "emerging",
+    jsonrpc: "2.0",
+    id: `${__VU}-add-${Date.now()}`,
+    method: "tools/call",
+    params: {
+      name: "memory_add",
+      arguments: {
+        group_id: groupId,
+        user_id: userId,
+        content: generateContent(),
+        tier: "emerging",
+      },
     },
   });
 
   const addStart = Date.now();
-  const addRes = http.post(`${BASE_URL}/tools/call`, addPayload, { headers });
+  const addRes = http.post(`${BASE_URL}/mcp`, addPayload, { headers });
   const addDuration = Date.now() - addStart;
 
   addLatency.add(addDuration);
@@ -107,7 +111,10 @@ export default function () {
     "memory_add has result": (r) => {
       try {
         const body = JSON.parse(r.body);
-        return body.id !== undefined || body.stored !== undefined;
+        const text = body?.result?.content?.[0]?.text;
+        if (!text) return false;
+        const parsed = JSON.parse(text);
+        return parsed.id !== undefined || parsed.stored !== undefined;
       } catch {
         return false;
       }
@@ -121,15 +128,20 @@ export default function () {
   // ── Scenario 2: memory_search ─────────────────────────────────────────────
 
   const searchPayload = JSON.stringify({
-    name: "memory_search",
-    arguments: {
-      group_id: groupId,
-      query: "TypeScript preferences",
+    jsonrpc: "2.0",
+    id: `${__VU}-search-${Date.now()}`,
+    method: "tools/call",
+    params: {
+      name: "memory_search",
+      arguments: {
+        group_id: groupId,
+        query: "TypeScript preferences",
+      },
     },
   });
 
   const searchStart = Date.now();
-  const searchRes = http.post(`${BASE_URL}/tools/call`, searchPayload, { headers });
+  const searchRes = http.post(`${BASE_URL}/mcp`, searchPayload, { headers });
   const searchDuration = Date.now() - searchStart;
 
   searchLatency.add(searchDuration);
@@ -145,16 +157,21 @@ export default function () {
   // ── Scenario 3: memory_list ───────────────────────────────────────────────
 
   const listPayload = JSON.stringify({
-    name: "memory_list",
-    arguments: {
-      group_id: groupId,
-      user_id: userId,
-      limit: 10,
+    jsonrpc: "2.0",
+    id: `${__VU}-list-${Date.now()}`,
+    method: "tools/call",
+    params: {
+      name: "memory_list",
+      arguments: {
+        group_id: groupId,
+        user_id: userId,
+        limit: 10,
+      },
     },
   });
 
   const listStart = Date.now();
-  const listRes = http.post(`${BASE_URL}/tools/call`, listPayload, { headers });
+  const listRes = http.post(`${BASE_URL}/mcp`, listPayload, { headers });
   const listDuration = Date.now() - listStart;
 
   listLatency.add(listDuration);

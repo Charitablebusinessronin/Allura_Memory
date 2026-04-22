@@ -123,10 +123,10 @@ If any threshold is violated, k6 exits with a non-zero code, failing CI pipeline
 | `/api/live` | GET | Liveness probe | Every iteration |
 | `/api/ready` | GET | Readiness probe | Every 5th iteration |
 | `/api/metrics` | GET | Prometheus metrics | Every 10th iteration |
-| `/tools/call` (memory_add) | POST | Add memory | Every iteration |
-| `/tools/call` (memory_search) | POST | Search memories | Every iteration |
-| `/tools/call` (memory_get) | POST | Get memory by ID | Every iteration |
-| `/tools/call` (memory_list) | POST | List memories | Every iteration |
+| `/mcp` (memory_add tools/call) | POST | Add memory | Every iteration |
+| `/mcp` (memory_search tools/call) | POST | Search memories | Every iteration |
+| `/mcp` (memory_get tools/call) | POST | Get memory by ID | Every iteration |
+| `/mcp` (memory_list tools/call) | POST | List memories | Every iteration |
 | `/mcp` (initialize) | POST | MCP session init | Every 3rd iteration |
 | `/mcp` (tools/call) | POST | MCP tool call | Every 3rd iteration |
 | `/api/curator/proposals` | GET | List proposals | Every 10th iteration |
@@ -258,7 +258,7 @@ Add to your CI pipeline:
 │             │     │                                      │
 │  Tests:     │     │  Endpoints:                          │
 │  • health   │     │  POST /mcp        (MCP Streamable)   │
-│  • memory_*│     │  POST /tools/call (Legacy JSON-RPC)  │
+│  • memory_*│     │  POST /mcp        (tools/call)        │
 │  • metrics  │     │  GET  /health      (Health check)   │
 │  • curator  │     │  GET  /api/ready   (Readiness)      │
 │             │     │  GET  /api/live    (Liveness)        │

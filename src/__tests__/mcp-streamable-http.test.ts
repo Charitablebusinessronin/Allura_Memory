@@ -236,24 +236,14 @@ describeIf("MCP Streamable HTTP Transport", () => {
   });
 });
 
-describeIf("Legacy JSON-RPC Backward Compatibility", () => {
-  it("should still serve /tools endpoint", async () => {
-    const response = await fetch(`${GATEWAY_URL}/tools`);
-    expect(response.status).toBe(200);
-
-    const data = await response.json();
-    expect(data.tools).toBeDefined();
-    expect(data.tools.length).toBe(5);
-  });
-
-  it("should still serve /health endpoint with transport info", async () => {
+describeIf("MCP Streamable HTTP transport info", () => {
+  it("should serve /health endpoint with streamable-http transport info", async () => {
     const response = await fetch(`${GATEWAY_URL}/health`);
     expect(response.status).toBe(200);
 
     const data = await response.json();
     expect(data.status).toBe("healthy");
-    expect(data.transports).toContain("streamable-http");
-    expect(data.transports).toContain("legacy-json-rpc");
+    expect(data.transports).toEqual(["streamable-http"]);
     expect(data.mcp_endpoint).toBe("/mcp");
   });
 });

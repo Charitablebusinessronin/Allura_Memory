@@ -152,32 +152,34 @@ describe("MemoryOperations", () => {
       ).rejects.toThrow(ValidationError);
     });
 
-    it("should include metadata in the request", async () => {
-      mockFetch = createMockFetch(MOCK_ADD_RESPONSE);
-      client = new AlluraClient({
-        baseUrl: "http://localhost:3201",
-        authToken: "test-token",
-        fetch: mockFetch,
-        retries: 1,
-      });
-
-      await client.memory.add({
-        group_id: "allura-test",
-        user_id: "user-123",
-        content: "Test memory",
-        metadata: {
-          source: "conversation",
-          conversation_id: "conv-456",
-          agent_id: "agent-789",
-        },
-      });
-
-      // Verify the request body includes metadata
-      const callArgs = mockFetch.mock.calls[0];
-      const body = JSON.parse(callArgs[1]?.body as string);
-      expect(body.arguments.metadata).toBeDefined();
-      expect(body.arguments.metadata.source).toBe("conversation");
+  it("should include metadata in the request", async () => {
+    mockFetch = createMockFetch(MOCK_ADD_RESPONSE);
+    client = new AlluraClient({
+      baseUrl: "http://localhost:3201",
+      authToken: "test-token",
+      fetch: mockFetch,
+      retries: 1,
     });
+
+    await client.memory.add({
+      group_id: "allura-test",
+      user_id: "user-123",
+      content: "Test memory",
+      metadata: {
+        source: "conversation",
+        conversation_id: "conv-456",
+        agent_id: "agent-789",
+      },
+    });
+
+    // Verify the request body includes metadata in MCP tool-call arguments
+    const callArgs = mockFetch.mock.calls[0];
+    const body = JSON.parse(callArgs[1]?.body as string);
+    expect(body.method).toBe("tools/call");
+    expect(body.params.name).toBe("memory_add");
+    expect(body.params.arguments.metadata).toBeDefined();
+    expect(body.params.arguments.metadata.source).toBe("conversation");
+  });
   });
 
   describe("memory.search", () => {
