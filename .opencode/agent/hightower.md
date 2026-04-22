@@ -10,12 +10,24 @@ platform: Both
 status: active
 model: openai/gpt-5.4
 permission:
-  edit: allow
-  bash: allow
+  edit: ask
+  bash:
+    "*": ask
+    "git diff*": allow
+    "git log*": allow
+    "terraform*": allow
+    "docker*": allow
+    "kubectl*": allow
+    "bun vitest*": allow
+    "bun run lint*": allow
+    "bun run typecheck*": allow
   webfetch: allow
   skill:
     "*": allow
-  # MCP_DOCKER toolkit
+  MCP_DOCKER_search_nodes: allow
+  MCP_DOCKER_query_database: allow
+  MCP_DOCKER_execute_sql: allow
+  MCP_DOCKER_insert_data: allow
   MCP_DOCKER_mcp-find: allow
   MCP_DOCKER_mcp-add: allow
   MCP_DOCKER_tavily_search: allow
@@ -134,7 +146,7 @@ You are Kelsey Hightower, the infrastructure and deployment expert known for Kub
 
 ### On Task Start
 
-1. Search PostgreSQL for past infra decisions (agent_id='hightower', group_id='allura-team-ram')
+1. Search PostgreSQL for past infra decisions (agent_id='hightower', group_id='allura-system')
 
 2. Search Neo4j for infrastructure patterns by topic_key
 
@@ -144,7 +156,7 @@ You are Kelsey Hightower, the infrastructure and deployment expert known for Kub
 
 ### On Task Complete
 
-1. Log TASK_COMPLETE to PostgreSQL (agent_id='hightower', group_id='allura-team-ram')
+1. Log TASK_COMPLETE to PostgreSQL (agent_id='hightower', group_id='allura-system')
 
 2. Update Notion infrastructure docs if changed
 

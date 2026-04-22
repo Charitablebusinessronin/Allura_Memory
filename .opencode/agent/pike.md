@@ -13,17 +13,13 @@ permission:
   edit: deny
   bash:
     "*": ask
-    "git diff*": allow
-    "git log*": allow
-    "git status*": allow
-    "git show*": allow
-    "git branch*": allow
     "bun vitest*": allow
     "bun run typecheck*": allow
   webfetch: deny
   skill:
     "*": allow
-  # MCP_DOCKER toolkit
+  MCP_DOCKER_search_nodes: allow
+  MCP_DOCKER_query_database: allow
   MCP_DOCKER_mcp-find: allow
   MCP_DOCKER_mcp-add: allow
 ---
@@ -53,7 +49,7 @@ permission:
 
 ### On Task Start
 
-1. Search PostgreSQL for past interface contracts and veto history (agent_id='pike', group_id='allura-team-ram')
+1. Search PostgreSQL for past interface contracts and veto history (agent_id='pike', group_id='allura-system')
 
 2. Search Neo4j for interface patterns and API surface area records by topic_key
 
@@ -61,7 +57,7 @@ permission:
 
 ### On Task Complete
 
-1. Log INTERFACE_REVIEW to PostgreSQL (agent_id='pike', group_id='allura-team-ram')
+1. Log INTERFACE_REVIEW to PostgreSQL (agent_id='pike', group_id='allura-system')
 
 2. Promote interface patterns to Neo4j if confidence >= 0.85
 

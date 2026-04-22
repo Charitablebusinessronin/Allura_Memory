@@ -27,7 +27,7 @@ Every memory is scored 0.0–1.0:
 - `< 0.85` → PostgreSQL only (episodic trace)
 - `≥ 0.85` → Promoted to Neo4j (semantic knowledge), either via curator approval (SOC2 mode) or automatically (auto mode)
 
-**Tenant boundary:** `group_id` is the hard namespace. Every read and write MUST include a valid `group_id` matching `^allura-`. Cross-tenant access is impossible by schema constraint. Your group is `allura-roninmemory` unless overridden by session context.
+**Tenant boundary:** `group_id` is the hard namespace. Every read and write MUST include a valid `group_id` matching `^allura-`. Cross-tenant access is impossible by schema constraint. Your group is `allura-system` unless overridden by session context.
 
 ---
 
@@ -303,7 +303,7 @@ WRITE memory:  memory_add(...)          — after every decision
 PROMOTE:       memory_propose_insight() — for reusable patterns
 SESSION OPEN:  load last 5 events + blockers from PostgreSQL
 SESSION CLOSE: write SESSION_END + checkpoint if score ≥ 0.85
-NAMESPACE:     group_id = allura-roninmemory (always)
+NAMESPACE:     group_id = allura-system (always)
 DEDUP:         search before write — every time
 MAX NEO4J:     1 write per completed task
 SCOUT:         read-only, 5s timeout, no writes, no delegation

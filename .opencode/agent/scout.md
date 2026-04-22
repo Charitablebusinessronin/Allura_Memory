@@ -8,8 +8,7 @@ type: utility
 scope: harness
 platform: Both
 status: active
-model: openai/gpt-5.4-mini
-fallback_model: ollama-cloud/nemotron-3-super
+model: ollama-cloud/nemotron-3-super
 permission:
   edit: deny
   bash:
@@ -17,8 +16,6 @@ permission:
     "git diff*": allow
     "git log*": allow
     "git status*": allow
-    "git show*": allow
-    "git branch*": allow
     "grep *": allow
     "find *": allow
     "ls *": allow
@@ -26,7 +23,8 @@ permission:
   webfetch: allow
   skill:
     "*": allow
-  # MCP_DOCKER toolkit
+  MCP_DOCKER_search_nodes: allow
+  MCP_DOCKER_query_database: allow
   MCP_DOCKER_mcp-find: allow
   MCP_DOCKER_mcp-add: allow
   MCP_DOCKER_mcp-config-set: allow
@@ -53,29 +51,26 @@ permission:
 
 ---
 
-## Memory Protocol — FAST PATH (Brain-First, No Flat-File Fallback)
+## Memory Protocol
 
-> **Principle:** Scout must produce a report in under 30 seconds, but for Allura work it
-> must prefer Allura Brain over local flat files. If Brain is available, hydrate from it
-> first. If Brain is unavailable, say so plainly rather than pretending local files are an
-> equivalent substitute.
+### On Task Start
 
-### On Task Start — Essential Only (≤2 tool calls)
+1. Use MCP_DOCKER_search_nodes to find relevant entities in the knowledge graph
 
-1. **IF** Allura Brain tools are already active or warm:
-   - Run ONE PostgreSQL query for recent Brooks events / blockers
-   - Run ONE Neo4j search for recent architectural insights only when the consuming task is architecture-sensitive
-2. **IF** Allura Brain tools are NOT active:
-   - Do NOT cold-activate Brain during startup recon
-   - Report `Brain hydration unavailable` explicitly and continue the fast path
-3. **NEVER** substitute local `memory-bank/*` files for Allura Brain truth on Allura tasks
-4. **NEVER** wait for Notion at startup — Notion search is deferred to consuming agents
-5. **NEVER** claim Brain hydration succeeded unless database or graph queries actually ran
+2. Use MCP_DOCKER_query_database for recent decisions and events (group_id='allura-system')
+
+3. Use MCP_DOCKER_mcp-find + mcp-add if memory server not yet active
+
+4. Load memory-client skill (`skill({ name: "memory-client" })`) for canonical interface reference
+
+5. Include memory findings in Scout Report under "## Memory Context"
 
 ### On Task Complete
 
-1. Log TASK_COMPLETE to PostgreSQL (agent_id='scout', group_id='allura-team-ram') — **only if pool is warm**
+1. Log TASK_COMPLETE to PostgreSQL (agent_id='scout', group_id='allura-system')
+
 2. No Neo4j writes — Scout is read-only
+
 3. Memory context is included in Scout Report for consuming agents
 
 ---
@@ -120,35 +115,33 @@ You are the Scout, a fast reconnaissance agent that discovers file paths, patter
 
 ---
 
-## Workflow — FAST PATH (Brain-First for Allura, Repo-First for Code Paths)
+## Workflow
 
-> **Invariant:** For Allura startup and memory questions, Brain comes first. For pure code
-> recon, local repo tools remain the fast path.
-
-### Stage 1: Scan Repository (LOCAL ONLY — 0 external calls)
+### Stage 1: Scan Repository
 
 - List directory structure
 - Identify key files (configs, entry points, tests)
 - Find patterns (naming conventions, file organization)
 
-### Stage 2: Discover Paths (LOCAL ONLY — 0 external calls)
+### Stage 2: Search Memories
+
+- Use MCP_DOCKER_search_nodes to find relevant entities in the knowledge graph
+- Use MCP_DOCKER_query_database to find recent decisions and events
+- Use MCP_DOCKER_mcp-find + mcp-add if memory server not yet active
+- Include memory findings in Scout Report under "## Memory Context"
+
+### Stage 3: Discover Paths
 
 - Locate configuration files
 - Find entry points (main, index, app)
 - Identify test locations
 - Discover documentation
 
-### Stage 3: Identify Risks (LOCAL ONLY — 0 external calls)
+### Stage 4: Identify Risks
 
 - Flag missing files
 - Note contradictory patterns
 - Report potential issues
-
-### Stage 4: Memory Context (REQUIRED for Allura startup, optional otherwise)
-
-- **Allura startup / architecture tasks:** hydrate from Brain first
-- **Pure repo discovery tasks:** Brain lookup may be skipped if not needed
-- **NEVER**: invent context from stale local memory-bank files
 
 ### Stage 5: Produce Scout Report
 
@@ -156,10 +149,9 @@ You are the Scout, a fast reconnaissance agent that discovers file paths, patter
 # Scout Report
 
 ## Memory Context
-- Status: hydrated | unavailable | skipped (not needed for this recon)
-- Recent events: {0-3 events} or "unavailable — Brain query did not run"
-- Graph insights: {0-3 insights} or "not queried"
-- Notion docs: "deferred — consuming agent should search"
+- Graph entities: {relevant nodes}
+- Recent decisions: {key events from last 7 days}
+- Notion docs: {relevant pages}
 
 ## Key Paths
 - Config: {path}
