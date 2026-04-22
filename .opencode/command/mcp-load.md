@@ -11,8 +11,9 @@ Load an approved MCP server and activate its tools.
 ## Examples
 
 ```
- /mcp-load tavily                # Load Tavily web search + crawl
- /mcp-load exa                   # Load neural web search (if approved)
+/mcp-load allura-memory         # Load local Allura memory engine
+/mcp-load tavily                # Load Tavily web search + crawl
+/mcp-load postgresql            # Load PostgreSQL client (if approved)
 ```
 
 ## How It Works

@@ -30,18 +30,16 @@ This skill now integrates with the memory system to persist debugging knowledge 
 
 2. **Search for Similar Issues**
    ```
-    memorySearch({
-      query: "debugging {component} {error_type}",
-      group_id: "allura-roninmemory"
-    })
+   MCP_DOCKER_search_memories: {
+     query: "debugging {component} {error_type}"
+   }
    ```
 
 3. **Check for Known Root Causes**
    ```
-    memorySearch({
-      query: "Root Cause {component} Bug Pattern {pattern}",
-      group_id: "allura-roninmemory"
-    })
+   MCP_DOCKER_find_memories_by_name: {
+     names: ["Root Cause: {component}", "Bug Pattern: {pattern}"]
+   }
    ```
 
 4. **Present Context**
@@ -55,7 +53,7 @@ This skill now integrates with the memory system to persist debugging knowledge 
 MCP_DOCKER_insert_data: {
   table_name: "events",
   columns: "group_id, event_type, agent_id, workflow_id, status, metadata",
-  values: "'allura-roninmemory', 'debug:phase1_complete', 'agent', 'debug-session', 'pending', '{\"phase\": 1, \"findings\": [...]}'"
+  values: "'group', 'debug:phase1_complete', 'agent', 'debug-session', 'in_progress', '{\"phase\": 1, \"findings\": [...]}'"
 }
 ```
 
@@ -72,23 +70,26 @@ MCP_DOCKER_insert_data: {
    }
    ```
 
-2. **Persist Debugging Insight** (for significant findings)
+2. **Create Insight** (for significant findings)
    ```
-   memoryAdd({
-     group_id: "allura-roninmemory",
-     user_id: "bellard",
-     content: "Root Cause: {brief description}. Fix applied: {...}. Prevention: {...}",
-     metadata: { source: "conversation", conversation_id: "<id>", agent_id: "bellard" }
-   })
+   MCP_DOCKER_create_entities: {
+     entities: [{
+       name: "Root Cause: {brief description}",
+       entityType: "RootCause",
+       observations: ["Detailed description...", "Fix applied...", "Prevention..."]
+     }]
+   }
    ```
 
-3. **Promote if Reusable**
+3. **Link to Events**
    ```
-   memoryPromote({
-     id: "<memory-id>",
-     group_id: "allura-roninmemory",
-     user_id: "bellard"
-   })
+   MCP_DOCKER_create_relations: {
+     relations: [{
+       from: "Root Cause: {...}",
+       to: "Event: {...}",
+       relationType: "DERIVED_FROM"
+     }]
+   }
    ```
 
 ## The Iron Law
@@ -142,7 +143,7 @@ You MUST complete each phase before proceeding to the next.
 3. **Update Status**
    ```
    Log event: debug:session_start
-   Status: pending
+   Status: in_progress
    Metadata: { issue_type, component, previous_attempts_count }
    ```
 
@@ -250,11 +251,10 @@ MCP_DOCKER_insert_data: {
    - What assumptions does it make?
 
 5. **Check Memory for Patterns**
-    ```
-    memorySearch({
-      query: "pattern {component} {symptom}",
-      group_id: "allura-roninmemory"
-    })
+   ```
+   MCP_DOCKER_search_memories: {
+     query: "pattern {component} {symptom}"
+   }
    ```
 
 **Log checkpoint:**
@@ -291,11 +291,10 @@ MCP_DOCKER_insert_data: {
    - Research more
 
 5. **Check Memory for Similar Hypotheses**
-    ```
-    memorySearch({
-      query: "hypothesis {component}",
-      group_id: "allura-roninmemory"
-    })
+   ```
+   MCP_DOCKER_search_memories: {
+     query: "hypothesis {component}"
+   }
    ```
 
 **Log checkpoint:**
@@ -353,22 +352,30 @@ MCP_DOCKER_insert_data: {
 **After successful fix:**
 
 1. **Create Insight**
-    ```
-    memoryAdd({
-      group_id: "allura-roninmemory",
-      user_id: "bellard",
-      content: "Problem: {...}. Root Cause: {...}. Fix: {...}. Prevention: {...}",
-      metadata: { source: "conversation", conversation_id: "<id>", agent_id: "bellard" }
-    })
-    ```
-
-2. **Promote Reusable Pattern**
    ```
-   memoryPromote({
-     id: "<memory-id>",
-     group_id: "allura-roninmemory",
-     user_id: "bellard"
-   })
+   MCP_DOCKER_create_entities: {
+     entities: [{
+       name: "Root Cause: {brief}",
+       entityType: "RootCause",
+       observations: [
+         "Problem: {...}",
+         "Root Cause: {...}",
+         "Fix: {...}",
+         "Prevention: {...}"
+       ]
+     }]
+   }
+   ```
+
+2. **Link to Session**
+   ```
+   MCP_DOCKER_create_relations: {
+     relations: [{
+       from: "Root Cause: {...}",
+       to: "Event: {...}",
+       relationType: "DERIVED_FROM"
+     }]
+   }
    ```
 
 3. **Log Session Complete**
@@ -408,12 +415,12 @@ This is NOT a failed hypothesis - this is a wrong architecture.
 | Debugging Task | MCP Tool | Table/Entity |
 |----------------|----------|--------------|
 | Query previous sessions | `MCP_DOCKER_query_database` | `events` table |
-| Search for patterns | `memorySearch` | Federated memory (routes to `neo4j-memory` → `database-server`) |
+| Search for patterns | `MCP_DOCKER_search_memories` | Neo4j |
 | Log session start | `MCP_DOCKER_insert_data` | `events` |
 | Log phase complete | `MCP_DOCKER_insert_data` | `events` |
 | Log root cause found | `MCP_DOCKER_insert_data` | `events` |
-| Create insight | `memoryAdd` | Episodic memory with metadata |
-| Promote reusable finding | `memoryPromote` | Curated graph via HITL |
+| Create insight | `MCP_DOCKER_create_entities` | Neo4j `RootCause` |
+| Link to events | `MCP_DOCKER_create_relations` | Neo4j relations |
 | Verify persistence | `MCP_DOCKER_query_database` | Verify by event ID |
 
 ## Event Type Naming Convention
@@ -505,7 +512,7 @@ These techniques are part of systematic debugging and available in this director
 **Related skills:**
 - **superpowers:test-driven-development** - For creating failing test case (Phase 4, Step 1)
 - **superpowers:verification-before-completion** - Verify fix worked before claiming success
-- **memory-client** - For querying and logging to memory system
+- **roninmemory:memory-client** - For querying and logging to memory system
 
 ## Real-World Impact
 

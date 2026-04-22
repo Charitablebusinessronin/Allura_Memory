@@ -8,17 +8,7 @@ globs: ["src/mcp/**", ".claude/**"]
 ## THE RULE
 **NEVER `docker exec` for DB operations. ALWAYS use `mcp__MCP_DOCKER__*` tools.**
 
-## Native Memory Stack
-
-Use native MCP_DOCKER memory servers for database and graph access:
-
-| Server | Use | Required config |
-|------|-----|------------------|
-| `neo4j-memory` | Primary memory/graph server | `url`, `username`, `database`, secret `password` |
-| `database-server` | PostgreSQL / SQL access | `database_url` |
-| `neo4j-cypher` | Fallback direct Cypher access | `url`, `username`, `database`, secret `password` |
-
-## Boot Sequence (mcp-find → mcp-config-set → mcp-add)
+## Tool Discovery (mcp-find → mcp-add)
 
 The Docker MCP Toolkit is a gateway to 300+ signed, containerized MCP servers.
 
@@ -27,21 +17,13 @@ The Docker MCP Toolkit is a gateway to 300+ signed, containerized MCP servers.
 mcp__MCP_DOCKER__mcp-find("keyword")
 → returns: name, description, required_secrets
 
-# 2. Configure it
-mcp__MCP_DOCKER__mcp-config-set("server-name")
-
-# 3. Add it — tools surface immediately
+# 2. Add it — tools surface immediately
 mcp__MCP_DOCKER__mcp-add("server-name")
 → new tools appear as mcp__MCP_DOCKER__<tool_name>
 
-# Preferred order: neo4j-memory → database-server → neo4j-cypher
+# No required_secrets → add immediately
+# Has required_secrets → env vars must be set first
 ```
-
-## Connectivity
-
-- If the MCP server runs in Docker and needs to reach services on the host, prefer `host.docker.internal`.
-- Use `localhost` only when the target is reachable from the same network namespace as the MCP server.
-- This matters most for `neo4j-memory`, `database-server`, and `neo4j-cypher` connection URLs.
 
 ## Active Tool Stack
 
@@ -70,17 +52,20 @@ mcp__MCP_DOCKER__mcp-add("server-name")
 | `mcp__MCP_DOCKER__resolve-library-id` | Library → Context7 ID |
 | `mcp__MCP_DOCKER__get-library-docs` | Fetch live docs |
 
-### Native Memory Servers
+### Allura Brain (Database)
 | Tool | Use |
 |------|-----|
-| `neo4j-memory` tools | Primary memory retrieval and graph operations |
-| `database-server` tools | PostgreSQL reads/writes and SQL operations |
-| `neo4j-cypher` tools | Direct Cypher reads/writes when needed |
+| `mcp__MCP_DOCKER__query_database` | NL SQL reads |
+| `mcp__MCP_DOCKER__execute_sql` | Raw SQL reads |
+| `mcp__MCP_DOCKER__insert_data` | Append events only |
+| `mcp__MCP_DOCKER__read_neo4j_cypher` | Neo4j reads |
+| `mcp__MCP_DOCKER__write_neo4j_cypher` | Neo4j writes (SUPERSEDES) |
 
-## Server Policy
-- MCP_DOCKER native memory servers are the canonical memory surface for this repo.
-- Default stack: `neo4j-memory` first, `database-server` second, `neo4j-cypher` only when direct Cypher is required.
-- Configure servers before activation; keep secrets out of files and plain text.
+## Allura Memory MCP Server (src/mcp/memory-server.ts)
+- Transport: stdio
+- `group_id` auto-loaded from session context
+- Rate limits: 100 queries/min, 50 writes/min
+- Tools: `memory_retrieve`, `memory_write`, `memory_propose_insight`
 
 ## Settings
-Use approved Docker-backed MCP servers only; prefer on-demand activation through MCP Docker Toolkit.
+`.claude/settings.json` — allura-memory runs as local bun process; exa/tavily/hyperbrowser/context7 run via MCP Docker Toolkit (preferred over separate Docker containers).

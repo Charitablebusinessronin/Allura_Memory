@@ -1,31 +1,16 @@
 {
   "schema_version": "1.0.0",
   "approved_by": "brooks-architect",
-  "last_updated": "2026-04-22T00:00:00Z",
+  "last_updated": "2026-04-11T00:00:00Z",
   "servers": {
-    "neo4j-memory": {
+    "allura-memory": {
       "status": "approved",
-      "approved_at": "2026-04-22T00:00:00Z",
+      "approved_at": "2026-04-11T00:00:00Z",
       "approved_by": "brooks-architect",
+      "tools": ["memory_add", "memory_search", "memory_get", "memory_list", "memory_delete"],
       "category": "database",
       "essential": true,
-      "rationale": "Native Docker catalog server for semantic memory (Neo4j graph). SUPERSEDES versioned knowledge nodes. Replaces allura-brain's graph operations."
-    },
-    "database-server": {
-      "status": "approved",
-      "approved_at": "2026-04-22T00:00:00Z",
-      "approved_by": "brooks-architect",
-      "category": "database",
-      "essential": true,
-      "rationale": "Native Docker catalog server for episodic memory (PostgreSQL). Append-only event traces and vector embeddings. Replaces allura-brain's SQL operations."
-    },
-    "neo4j-cypher": {
-      "status": "approved",
-      "approved_at": "2026-04-22T00:00:00Z",
-      "approved_by": "brooks-architect",
-      "category": "database",
-      "essential": false,
-      "rationale": "Native Docker catalog server for ad-hoc Cypher queries. Debug and diagnostic use only; not required for normal memory operations."
+      "rationale": "Core memory system for episodic and semantic storage. Required for all harness operations: event logging, session tracking, ADR storage, performance history, and memory promotion (SOC2 mode)."
     }
   },
   "pending": {},

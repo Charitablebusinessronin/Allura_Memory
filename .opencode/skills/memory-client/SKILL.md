@@ -1,209 +1,142 @@
 ---
 name: memory-client
-description: "Use the Allura memory system for persistent memory across sessions. Triggers on: session start/end, debugging (search before guessing), planning (check prior work), implementation (find conventions and past solutions), or any time you need to remember or recall something. If you're about to guess — search first."
+description: "Allura-specific skill. Connect to Allura Brain memory system for AI agent persistence. Use when storing memories, searching knowledge, logging events, or working with the 4-layer memory architecture. Requires MCP_DOCKER tools and Allura Brain infrastructure."
 ---
 
-# Allura Memory — Field Guide for Agents
+# Memory Client
 
-You are stateless. The memory system is your durable context. Use it.
+> **This skill is Allura-specific.** It requires MCP_DOCKER tools and Allura Brain infrastructure (PostgreSQL + Neo4j). If you are not using Allura Brain, this skill does not apply.
 
-## The Loop
+## Connect
 
-Every interaction with memory follows one pattern:
+### MCP Server
 
-**Search → Work → Log**
-
-Search before you guess. Log what matters. Skip the noise.
-
-## Connection
-
-Memory is accessed through Brooks / Team RAM routing plus packaged MCP servers.
-
-Default order:
-1. `neo4j-memory`
-2. `database-server` when evidence is needed
-3. `neo4j-cypher` only when targeted graph inspection is required
-
-Use `MCP_DOCKER` when you need to discover, configure, or activate these packaged servers.
-
-**group_id**: Always `allura-roninmemory`. Every read and write requires it. Pattern: `^allura-[a-z0-9-]+$`.
-
-If the task is a full memory workflow rather than a simple search/log cycle, also load `allura-memory-skill`.
-
-Use `allura-memory-skill` when you need:
-- raw trace vs curated insight discipline
-- promotion/supersede/deprecate/restore/export guidance
-- dual-context retrieval rules
-- deeper troubleshooting of memory behavior
-
-## Tools
-
-| Tool | When to use |
-|------|-------------|
-| `allura-brain_memory_search` | Before guessing. Before proposing. Before debugging. Always search first. |
-| `allura-brain_memory_add` | After decisions. After fixing bugs. After discovering patterns. |
-| `allura-brain_memory_get` | When you have a specific event ID to look up. |
-| `allura-brain_memory_list` | When you need recent activity for a user/agent. |
-| `allura-brain_memory_update` | Append-only versioned update to an existing memory. Never mutates. |
-| `allura-brain_memory_delete` | Soft-delete only. Marks as deprecated, doesn't remove. |
-| `allura-brain_memory_promote` | Request curator promotion to knowledge graph. Requires HITL approval. |
-| `allura-brain_memory_restore` | Undo a soft-delete within the recovery window. |
-| `allura-brain_memory_export` | Export memories for backup or migration. |
-| `allura-brain_memory_list_deleted` | Find soft-deleted memories within recovery window. |
-
-## Related Skills
-
-- `allura-memory-skill` — full memory workflow governance for Allura Brain
-- `mcp-docker-memory-system` — infrastructure/bootstrap and lower-level MCP_DOCKER memory-system setup
-
-Use this skill for the default **Search → Work → Log** loop.
-Use `allura-memory-skill` when the memory task itself is the main job.
-
-## Five Modes
-
-### 1. Hydrate (Session Start)
-
-Before doing anything, find out what you already know.
-
-```javascript
-// What happened recently?
-allura-brain_memory_search({ query: "session reflection", group_id: "allura-roninmemory", limit: 5 })
-
-// What's blocking?
-allura-brain_memory_search({ query: "BLOCKER", group_id: "allura-roninmemory", limit: 5 })
-
-// What decisions are live?
-allura-brain_memory_search({ query: "ARCHITECTURE_DECISION", group_id: "allura-roninmemory", limit: 5 })
+```json
+{
+  "mcpServers": {
+    "memory": {
+      "command": "npx",
+      "args": ["tsx", "src/mcp/memory-server.ts"]
+    }
+  }
+}
 ```
 
-Don't skip this. Your past self left breadcrumbs — follow them.
+### Environment
 
-If memory services are temporarily unavailable, continue with repo evidence instead of guessing, and log the gap once memory returns.
-
-### 2. Plan (Starting Work)
-
-Before breaking down a task, check if it's been planned before.
-
-```javascript
-// Has this been attempted?
-allura-brain_memory_search({ query: "memory() wrapper implementation", group_id: "allura-roninmemory" })
-
-// What similar work has been done?
-allura-brain_memory_search({ query: "TraceMiddleware integration", group_id: "allura-roninmemory" })
+```bash
+POSTGRES_PASSWORD=your_password
+NEO4J_PASSWORD=your_password
+NEO4J_URI=bolt://localhost:7687
 ```
 
-After planning, write the plan down:
+## MCP Tools
+
+### Search
+
+| Tool | Purpose | Required |
+|------|---------|----------|
+| search_insights | Query knowledge graph | query, group_id |
+| search_events | Search raw traces | query, group_id |
+| get_event | Get by ID | event_id |
+| get_entity | Get by key | topic_key, group_id |
+| search_knowledge_base | Search Notion | query |
+| search_decisions | Search ADRs | query, group_id |
+
+### Create
+
+| Tool | Purpose | Required |
+|------|---------|----------|
+| create_insight | Store insight | topic_key, content, group_id |
+| log_event | Log to PostgreSQL | group_id, event_type, agent_id |
+| create_entity | Create graph node | type, topic_key, content, group_id |
+| create_relation | Link nodes | from_topic_key, to_topic_key, relation_type, group_id |
+| create_knowledge_item | HITL item | title, content, tags |
+
+### Context
+
+| Tool | Purpose | Required |
+|------|---------|----------|
+| get_agent_context | Session context | group_id, agent_id |
+
+## Signatures
 
 ```javascript
-allura-brain_memory_add({
-  group_id: "allura-roninmemory",
-  user_id: "brooks",
-  content: "Plan: Implement memory() wrapper. Steps: 1) Define type signature 2) Wire to coordinator 3) Add trace middleware hook. Depends on: Story 1.1 (complete). Risk: coordinator circular dependency."
+// Search
+search_insights({ query, group_id, limit?, min_confidence? })
+search_events({ query, group_id, limit?, offset? })
+
+// Store
+create_insight({ topic_key, content, group_id, confidence?, tags?, source_event_id? })
+log_event({ group_id, event_type, agent_id, metadata?, status?, workflow_id? })
+create_relation({ from_topic_key, to_topic_key, relation_type, group_id, properties? })
+
+// Context
+get_agent_context({ group_id, agent_id, include_events?, include_insights? })
+```
+
+## Key Concepts
+
+| Concept | Description |
+|---------|-------------|
+| group_id | Multi-tenant ID. Required for all ops. Ex: "faith-meats", "global" |
+| topic_key | Hierarchical: "group.category.name". Ex: "project.auth.jwt" |
+| confidence | Quality 0-1. Filter with min_confidence |
+| versioning | Immutable insights. Use SUPERSEDES for updates |
+
+## Examples
+
+### Session
+
+```javascript
+// Start
+log_event({ group_id: "session_001", event_type: "session_start", agent_id: "claude" })
+
+// Store
+create_insight({
+  topic_key: "session.auth.jwt",
+  content: "Use JWT for stateless auth",
+  group_id: "session_001",
+  confidence: 0.9
+})
+
+// End
+log_event({ group_id: "session_001", event_type: "session_complete", status: "completed" })
+```
+
+### Search
+
+```javascript
+// Find pattern
+results = search_insights({ query: "error handling", group_id: "project", min_confidence: 0.8 })
+
+// Get context
+context = get_agent_context({ group_id: "session_001", agent_id: "claude" })
+```
+
+### Link
+
+```javascript
+create_relation({
+  from_topic_key: "project.patterns.auth",
+  to_topic_key: "project.patterns.validation",
+  relation_type: "DEPENDS_ON",
+  group_id: "project"
 })
 ```
 
-### 3. Build (Doing the Work)
+## Architecture
 
-Before writing code, search for conventions and past solutions.
-
-```javascript
-// How was this done before?
-allura-brain_memory_search({ query: "postgres connection pooling pattern", group_id: "allura-roninmemory" })
-
-// Any gotchas?
-allura-brain_memory_search({ query: "Zod validation boundary convention", group_id: "allura-roninmemory" })
 ```
-
-After making a decision, log it — especially the "why":
-
-```javascript
-allura-brain_memory_add({
-  group_id: "allura-roninmemory",
-  user_id: "woz",
-  content: "Decision: Use polling not queue for embedding backfill. Why: Simpler, sufficient for current scale (~50K events). Revisit if event volume exceeds 500K. Batch size: 10, model: nomic-embed-text."
-})
+Agent → ADR → Governance → Discovery → Control → Neo4j ← PostgreSQL
+                          (HITL)      (ADAS)
 ```
-
-**What's worth logging during build:**
-- Decisions and their rationale (most valuable)
-- Patterns discovered ("this module assumes X")
-- Gotchas ("must handle NULL content rows")
-- Convention choices ("validate at boundary only")
-
-**What's noise:**
-- "Started working on X" (your git log says this)
-- "Read file Y" (ephemeral)
-- Play-by-play of steps taken (too granular)
-
-### 4. Debug (Something Breaks)
-
-**Search before investigating.** This is the highest-value habit.
-
-```javascript
-// Have we seen this error before?
-allura-brain_memory_search({ query: "connection pool exhausted", group_id: "allura-roninmemory" })
-
-// Has this component failed before?
-allura-brain_memory_search({ query: "neo4j authentication failure", group_id: "allura-roninmemory" })
-```
-
-After finding the root cause, log the full chain:
-
-```javascript
-allura-brain_memory_add({
-  group_id: "allura-roninmemory",
-  user_id: "bellard",
-  content: "Bug: Neo4j showing unhealthy, repeated 'missing key credentials' errors. Symptom: MCP tools failing to connect. Root cause: Docker MCP Toolkit had allura-brain enabled, spawning orphan containers from old GHCR image without proper env vars. Fix: docker mcp server disable allura-brain, kill orphans. Prevention: Don't add allura-brain to Toolkit — it runs locally."
-})
-```
-
-**The debug log format that compounds:**
-- Symptom (what you saw)
-- Root cause (what was actually wrong)
-- Fix (what you did)
-- Prevention (how to avoid it next time)
-
-If the same error shows up 3+ times, promote it:
-
-```javascript
-allura-brain_memory_promote({
-  id: "<memory-id>",
-  group_id: "allura-roninmemory"
-})
-```
-
-This queues it for curator approval to enter the knowledge graph.
-
-### 5. Reflect (Session End)
-
-Write what matters for next-you:
-
-```javascript
-allura-brain_memory_add({
-  group_id: "allura-roninmemory",
-  user_id: "brooks",
-  content: "Session 2026-04-20: Fixed memory topology. Skills now route memory-first to packaged MCP servers. Open: verify runtime docs and activation flow remain consistent across the stack."
-})
-```
-
-**Good reflections answer:** What changed? What's still open? What should next-me check first?
-
-## Invariants
-
-These are non-negotiable. Violating them causes data corruption or CHECK constraint failures.
-
-- **group_id on every call** — always `allura-roninmemory` for this project
-- **Postgres is append-only** — never update or delete trace rows
-- **Neo4j uses SUPERSEDES** — create new version nodes, never edit existing ones
-- **Promotion requires HITL** — agents cannot self-promote; goes through curator pipeline
-- **user_id** — use the agent persona name (brooks, woz, bellard, etc.)
 
 ## Troubleshooting
 
-| Symptom | Check |
-|---------|-------|
-| Tools not available | Are the packaged MCP servers reachable and activated? |
-| Empty search results | Verify group_id is `allura-roninmemory`, not the old `roninclaw-*` |
-| Auth errors in Neo4j logs | Something is connecting without credentials — check for orphan containers |
-| memory_add fails | Check group_id pattern matches `^allura-[a-z0-9-]+$` |
-| Promotion stuck | Normal — requires human approval via `curator:approve` |
+| Issue | Solution |
+|-------|----------|
+| No PostgreSQL | Check POSTGRES_PASSWORD, container running |
+| No Neo4j | Check NEO4J_PASSWORD, bolt://localhost:7687 |
+| Empty results | Verify group_id, lower min_confidence |
+| Insight hidden | Check Notion for HITL approval |

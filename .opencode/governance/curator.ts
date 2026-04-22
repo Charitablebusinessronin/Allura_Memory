@@ -1,22 +1,11 @@
 /**
- * Curator Governance — OpenCode Harness Integration
- *
- * This module provides the governance interface for the OpenCode harness.
- * The actual curator implementation lives in src/curator/index.ts.
- *
- * For HITL promotion:
- * - CLI: `bun run curator:run` (score and queue proposals)
- * - CLI: `bun run curator:approve` (approve pending proposals)
- * - API: POST /api/curator/approve (approve/reject a proposal)
- * - API: GET /api/curator/proposals (list pending proposals)
- *
- * For MCP_DOCKER-based operations:
- * - Use MCP_DOCKER__execute_sql to query canonical_proposals
- * - Use MCP_DOCKER__insert_data to log governance events
- * - Use MCP_DOCKER__write_neo4j_cypher for insight promotion
- *
- * See docs/allura/DESIGN-MEMORY-SYSTEM.md §Insight Curation and Approval
+ * Curator Governance - Manages promotion workflow for high-value insights
+ * 
+ * This module handles the human-in-the-loop approval process
+ * for promoting insights from episodic (PostgreSQL) to semantic (Neo4j) memory.
  */
+
+import { memory_add } from 'mcp:allura-memory';
 
 interface PromotionProposal {
   insight: string;
@@ -27,31 +16,67 @@ interface PromotionProposal {
 }
 
 /**
- * Propose a promotion — delegates to the real curator pipeline.
- * Use `bun run curator:run` or POST /api/curator/proposals instead.
+ * Propose an insight for promotion to Neo4j
+ * 
+ * If confidence ≥ 0.85 and PROMOTION_MODE = 'auto': promoted immediately
+ * If confidence < 0.85 or PROMOTION_MODE = 'soc2': queued for curator approval
  */
 export async function proposePromotion(params: PromotionProposal): Promise<void> {
-  const { insight, confidence, agentId } = params;
-  console.info(
-    `[Curator] Promotion proposal from ${agentId}: "${insight.substring(0, 50)}..." (confidence: ${confidence}). Use CLI or API for actual promotion.`,
-  );
+  const { insight, rationale, confidence, agentId, group_id = 'allura-system' } = params;
+  
+  try {
+    await memory_add({
+      group_id: group_id,
+      user_id: agentId,
+      content: insight,
+      metadata: {
+        source: 'agent',
+        event_type: 'PROMOTION_PROPOSED',
+        rationale: rationale,
+        confidence: confidence,
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+    console.log(`[Curator] Proposed promotion: ${insight.substring(0, 50)}... (confidence: ${confidence})`);
+  } catch (error) {
+    console.error('[Curator] Failed to propose promotion:', error);
+  }
 }
 
 /**
- * Approve a promotion — delegates to POST /api/curator/approve.
- * Use `bun run curator:approve` or the API endpoint instead.
+ * Approve a promotion proposal (curator action)
+ * 
+ * This creates a memory_promoted event and triggers Neo4j write
  */
 export async function approvePromotion(params: {
   proposalId: string;
   curatorId: string;
   group_id?: string;
 }): Promise<void> {
-  const { proposalId, curatorId } = params;
-  console.info(`[Curator] Approval requested by ${curatorId} for ${proposalId}. Use CLI or API for actual approval.`);
+  const { proposalId, curatorId, group_id = 'allura-system' } = params;
+  
+  try {
+    await memory_add({
+      group_id: group_id,
+      user_id: curatorId,
+      content: `Approved promotion: ${proposalId}`,
+      metadata: {
+        source: 'curator',
+        event_type: 'PROMOTION_APPROVED',
+        proposal_id: proposalId,
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+    console.log(`[Curator] Approved promotion ${proposalId}`);
+  } catch (error) {
+    console.error('[Curator] Failed to approve promotion:', error);
+  }
 }
 
 /**
- * Reject a promotion — delegates to POST /api/curator/approve with decision=reject.
+ * Reject a promotion proposal (curator action)
  */
 export async function rejectPromotion(params: {
   proposalId: string;
@@ -59,6 +84,24 @@ export async function rejectPromotion(params: {
   reason: string;
   group_id?: string;
 }): Promise<void> {
-  const { proposalId, curatorId, reason } = params;
-  console.info(`[Curator] Rejection requested by ${curatorId} for ${proposalId}: ${reason}. Use API for actual rejection.`);
+  const { proposalId, curatorId, reason, group_id = 'allura-system' } = params;
+  
+  try {
+    await memory_add({
+      group_id: group_id,
+      user_id: curatorId,
+      content: `Rejected promotion: ${proposalId}`,
+      metadata: {
+        source: 'curator',
+        event_type: 'PROMOTION_REJECTED',
+        proposal_id: proposalId,
+        rejection_reason: reason,
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+    console.log(`[Curator] Rejected promotion ${proposalId}: ${reason}`);
+  } catch (error) {
+    console.error('[Curator] Failed to reject promotion:', error);
+  }
 }
