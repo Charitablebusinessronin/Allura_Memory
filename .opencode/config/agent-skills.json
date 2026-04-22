@@ -53,42 +53,6 @@
       "memory-client",
       "context7",
       "multi-search"
-    ],
-    "norvig-reasoner": [
-      "mcp-docker",
-      "memory-client",
-      "context7"
-    ],
-    "hassabis-context": [
-      "mcp-docker",
-      "memory-client"
-    ],
-    "karpathy-knowledge": [
-      "mcp-docker",
-      "memory-client",
-      "context7"
-    ],
-    "jim-simons-memory": [
-      "mcp-docker",
-      "memory-client",
-      "postgres-best-practices"
-    ],
-    "fei-fei-li-vision": [
-      "mcp-docker",
-      "memory-client"
-    ],
-    "sutskever-strategy": [
-      "mcp-docker",
-      "memory-client"
-    ],
-    "torvalds-critique": [
-      "mcp-docker",
-      "memory-client",
-      "code-review"
-    ],
-    "operator": [
-      "mcp-docker",
-      "memory-client"
     ]
   }
 }

@@ -1,40 +1,58 @@
 /**
- * Task Complete Hook — Allura Brain Write-Back
- *
- * Logs task completion events to PostgreSQL via MCP_DOCKER tools.
- * Agents should use MCP_DOCKER__insert_data for event logging and
- * MCP_DOCKER__write_neo4j_cypher for architectural decisions.
- *
- * Neo4j promotion criteria (ALL three must be true):
- * 1. Decision is reusable across ≥2 projects
- * 2. Decision was validated — not just proposed
- * 3. No duplicate exists in Neo4j
+ * Task Complete Hook - Logs agent task completion to Allura Memory
+ * 
+ * This hook is called when an agent completes a task.
+ * It logs the task result to Allura for audit trail and potential promotion.
  */
+
+import { memory_add } from 'mcp:allura-memory';
 
 export interface TaskCompleteParams {
   agentId: string;
   task: string;
-  result: unknown;
+  result: any;
   group_id?: string;
   confidence?: number;
 }
 
 /**
- * Task complete — structural entry point for the OpenCode harness.
- * Agents should log their own events via MCP_DOCKER__insert_data
- * following the write-back contracts in _bootstrap.md.
+ * Called when an agent completes a task
+ * Logs task completion to Allura Memory
  */
 export async function onTaskComplete(params: TaskCompleteParams): Promise<void> {
-  const { agentId, task, confidence } = params;
-  console.info(
-    `[Task Hook] Task complete for ${agentId}: ${task} (confidence: ${confidence ?? "N/A"}). Agent should log via MCP_DOCKER__insert_data per write-back contracts.`,
-  );
+  const { 
+    agentId, 
+    task, 
+    result, 
+    group_id = 'allura-system',
+    confidence = 0.75
+  } = params;
+  
+  try {
+    await memory_add({
+      group_id: group_id,
+      user_id: agentId,
+      content: `Task completed: ${task}`,
+      metadata: {
+        source: 'agent-hook',
+        event_type: 'TASK_COMPLETE',
+        agent_id: agentId,
+        result: result,
+        confidence: confidence,
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+    console.log(`[Task Hook] Logged task completion for ${agentId}: ${task}`);
+  } catch (error) {
+    console.error('[Task Hook] Failed to log task completion:', error);
+    // Don't throw - task completion should succeed even if logging fails
+  }
 }
 
 /**
- * ADR creation — structural entry point for the OpenCode harness.
- * Agents should log ADRs via MCP_DOCKER__insert_data (PostgreSQL event)
- * and MCP_DOCKER__write_neo4j_cypher (Decision node) per _bootstrap.md.
+ * ADR Created Hook - Logs architectural decisions to Allura
+ * High-confidence decisions (≥0.85) are candidates for promotion to Neo4j
  */
 export async function onADRCreated(params: {
   agentId: string;
@@ -43,8 +61,25 @@ export async function onADRCreated(params: {
   rationale: string;
   group_id?: string;
 }): Promise<void> {
-  const { agentId, decisionId, title } = params;
-  console.info(
-    `[ADR Hook] ADR created by ${agentId}: ${decisionId} (${title}). Agent should log via MCP_DOCKER tools per write-back contracts.`,
-  );
+  const { agentId, decisionId, title, rationale, group_id = 'allura-system' } = params;
+  
+  try {
+    await memory_add({
+      group_id: group_id,
+      user_id: agentId,
+      content: `ADR: ${title}`,
+      metadata: {
+        source: 'architect',
+        event_type: 'ADR_CREATED',
+        decision_id: decisionId,
+        rationale: rationale,
+        confidence: 0.90,  // ADRs are high-confidence by default
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+    console.log(`[ADR Hook] Logged ADR ${decisionId}: ${title}`);
+  } catch (error) {
+    console.error('[ADR Hook] Failed to log ADR:', error);
+  }
 }

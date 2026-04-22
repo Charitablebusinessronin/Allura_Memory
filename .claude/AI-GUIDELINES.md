@@ -1,1 +1,0 @@
-../.opencode/rules/AI-GUIDELINES.md
