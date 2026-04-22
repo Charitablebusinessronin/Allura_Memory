@@ -490,6 +490,12 @@ function createAuthHeader(token) {
 }
 
 // src/client.ts
+function createRequestId() {
+  if (typeof globalThis.crypto !== "undefined" && typeof globalThis.crypto.randomUUID === "function") {
+    return globalThis.crypto.randomUUID();
+  }
+  return `allura-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
 var AlluraClient = class {
   // Configuration
   baseUrl;
@@ -597,10 +603,8 @@ var AlluraClient = class {
   /**
    * Make a request to the Allura Memory server.
    *
-   * Uses the legacy JSON-RPC transport (POST /tools/call) by default.
-   * The MCP Streamable HTTP transport (POST /mcp) is available but requires
-   * the MCP SDK on the client side, so legacy mode is the default for
-   * maximum compatibility.
+   * Sends an MCP JSON-RPC `tools/call` request to the canonical `/mcp`
+   * endpoint and unwraps the tool result payload.
    *
    * @internal
    */
@@ -610,11 +614,16 @@ var AlluraClient = class {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.timeout);
       try {
-        const url = `${this.baseUrl}/tools/call`;
+        const url = `${this.baseUrl}/mcp`;
         const headers = buildHeaders(this.authToken);
         const body = JSON.stringify({
-          name: method,
-          arguments: params
+          jsonrpc: "2.0",
+          method: "tools/call",
+          params: {
+            name: method,
+            arguments: params
+          },
+          id: createRequestId()
         });
         const response = await fetchFn(url, {
           method: "POST",
@@ -627,7 +636,8 @@ var AlluraClient = class {
           throw createErrorFromResponse(response.status, responseBody2);
         }
         const responseBody = await this.parseResponseBody(response);
-        const validated = responseSchema.parse(responseBody);
+        const toolResult = this.unwrapToolResult(responseBody);
+        const validated = responseSchema.parse(toolResult);
         return validated;
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
@@ -647,6 +657,37 @@ var AlluraClient = class {
         clearTimeout(timeoutId);
       }
     }, this.retries);
+  }
+  unwrapToolResult(responseBody) {
+    const rpc = responseBody;
+    if (rpc.error) {
+      throw new AlluraError(rpc.error.message ?? "MCP request failed", "MCP_ERROR", 500, rpc.error);
+    }
+    const result = rpc.result;
+    if (!result) {
+      return responseBody;
+    }
+    if (result.isError) {
+      const text2 = result.content?.[0]?.text;
+      if (text2) {
+        try {
+          const parsed = JSON.parse(text2);
+          throw new AlluraError(parsed.error ?? text2, "MCP_TOOL_ERROR", 500, parsed);
+        } catch {
+          throw new AlluraError(text2, "MCP_TOOL_ERROR", 500, text2);
+        }
+      }
+      throw new AlluraError("MCP tool request failed", "MCP_TOOL_ERROR", 500);
+    }
+    const text = result.content?.find((item) => item.type === "text")?.text;
+    if (!text) {
+      return result;
+    }
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text;
+    }
   }
   /**
    * Parse the response body as JSON.

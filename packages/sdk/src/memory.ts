@@ -7,7 +7,7 @@
  * Each operation:
  * 1. Validates group_id (ARCH-001 tenant isolation)
  * 2. Validates request parameters with Zod
- * 3. Sends request via HTTP (MCP Streamable HTTP or legacy JSON-RPC)
+ * 3. Sends request via MCP Streamable HTTP (POST /mcp)
  * 4. Validates response with Zod
  * 5. Returns typed response
  */
@@ -33,14 +33,6 @@ import {
 } from "./types.js";
 import { validateGroupId } from "./utils.js";
 import { ValidationError } from "./errors.js";
-
-/**
- * Transport mode for memory operations.
- *
- * - `mcp`: Uses MCP Streamable HTTP protocol (POST /mcp)
- * - `legacy`: Uses legacy JSON-RPC protocol (POST /tools/call)
- */
-export type TransportMode = "mcp" | "legacy";
 
 /**
  * Internal request function type — injected by AlluraClient.

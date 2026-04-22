@@ -1,7 +1,7 @@
 {
   "name": "@allura/sdk",
   "version": "0.2.0",
-  "description": "TypeScript SDK for Allura Memory — dual-transport client for MCP Streamable HTTP and legacy JSON-RPC",
+  "description": "TypeScript SDK for Allura Memory — MCP Streamable HTTP client",
   "keywords": [
     "allura",
     "memory",

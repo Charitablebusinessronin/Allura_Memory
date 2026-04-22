@@ -375,6 +375,27 @@ export interface IGraphAdapter {
     group_id: GroupId
   }): Promise<Map<string, GraphMemoryNode>>
 
+  /**
+   * Link a newly promoted Memory to its authoring Agent and Project.
+   * Uses MERGE for idempotency — safe to call multiple times.
+   * Silently skips if Agent or Project node doesn't exist in the graph.
+   * Used by: memory_add (auto-promotion), Curator pipeline (manual promotion)
+   *
+   * Phase 3 Sync Contract: Every promoted Memory MUST be anchored to the
+   * structural context layer (Agent, Project) so retrieval traversals work.
+   *
+   * @param memory_id - The Memory node ID to link
+   * @param group_id - Tenant isolation key
+   * @param agent_id - Agent node ID (e.g., 'agent-brooks'). Null = skip AUTHORED_BY.
+   * @param project_id - Project node ID (e.g., 'proj-allura-memory'). Null = skip RELATES_TO.
+   */
+  linkMemoryContext(params: {
+    memory_id: MemoryId
+    group_id: GroupId
+    agent_id: string | null
+    project_id: string | null
+  }): Promise<{ authored_by: boolean; relates_to: boolean }>
+
   // ── Lifecycle ────────────────────────────────────────────────────────────
 
   /**

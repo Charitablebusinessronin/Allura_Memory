@@ -682,18 +682,11 @@ declare const HealthResponseSchema: z.ZodObject<{
  * Each operation:
  * 1. Validates group_id (ARCH-001 tenant isolation)
  * 2. Validates request parameters with Zod
- * 3. Sends request via HTTP (MCP Streamable HTTP or legacy JSON-RPC)
+ * 3. Sends request via MCP Streamable HTTP (POST /mcp)
  * 4. Validates response with Zod
  * 5. Returns typed response
  */
 
-/**
- * Transport mode for memory operations.
- *
- * - `mcp`: Uses MCP Streamable HTTP protocol (POST /mcp)
- * - `legacy`: Uses legacy JSON-RPC protocol (POST /tools/call)
- */
-type TransportMode = "mcp" | "legacy";
 /**
  * Internal request function type — injected by AlluraClient.
  */
@@ -766,7 +759,7 @@ declare class MemoryOperations {
  * @allura/sdk — AlluraClient
  *
  * Main client class for interacting with Allura Memory.
- * Supports both MCP Streamable HTTP and legacy JSON-RPC transports.
+ * Uses MCP Streamable HTTP transport via the canonical /mcp endpoint.
  *
  * Usage:
  * ```typescript
@@ -832,14 +825,13 @@ declare class AlluraClient {
     /**
      * Make a request to the Allura Memory server.
      *
-     * Uses the legacy JSON-RPC transport (POST /tools/call) by default.
-     * The MCP Streamable HTTP transport (POST /mcp) is available but requires
-     * the MCP SDK on the client side, so legacy mode is the default for
-     * maximum compatibility.
+     * Sends an MCP JSON-RPC `tools/call` request to the canonical `/mcp`
+     * endpoint and unwraps the tool result payload.
      *
      * @internal
      */
     private makeRequest;
+    private unwrapToolResult;
     /**
      * Parse the response body as JSON.
      * Handles empty responses and non-JSON content types gracefully.
@@ -1024,4 +1016,4 @@ declare function buildHeaders(authToken?: string, contentType?: string): Record<
  */
 declare function normalizeBaseUrl(url: string): string;
 
-export { AlluraClient, type AlluraClientConfig, AlluraError, AuthenticationError, type ConfidenceScore, ConfidenceScoreSchema, ConnectionError, DEFAULT_RETRIES, DEFAULT_TIMEOUT, type GroupId, GroupIdSchema, type HealthResponse, HealthResponseSchema, type MemoryAddParams, type MemoryAddResponse, MemoryAddResponseSchema, type MemoryContent, type MemoryDeleteParams, type MemoryDeleteResponse, MemoryDeleteResponseSchema, type MemoryGetParams, type MemoryGetResponse, MemoryGetResponseSchema, type MemoryId, MemoryIdSchema, type MemoryListParams, type MemoryListResponse, MemoryListResponseSchema, MemoryOperations, type MemoryProvenance, type MemoryResponseMeta, type MemorySearchParams, type MemorySearchResponse, MemorySearchResponseSchema, type MemorySearchResult, type MemorySortOrder, type MemoryStatus, NotFoundError, type PromotionMode, RateLimitError, type RequestFn, RetryExhaustedError, ServerError, type StorageLocation, type TransportMode, type UserId, ValidationError, buildHeaders, calculateBackoff, createAuthHeader, createErrorFromResponse, isRetryable, normalizeBaseUrl, requireAuthToken, resolveAuthToken, validateGroupId, withRetry };
+export { AlluraClient, type AlluraClientConfig, AlluraError, AuthenticationError, type ConfidenceScore, ConfidenceScoreSchema, ConnectionError, DEFAULT_RETRIES, DEFAULT_TIMEOUT, type GroupId, GroupIdSchema, type HealthResponse, HealthResponseSchema, type MemoryAddParams, type MemoryAddResponse, MemoryAddResponseSchema, type MemoryContent, type MemoryDeleteParams, type MemoryDeleteResponse, MemoryDeleteResponseSchema, type MemoryGetParams, type MemoryGetResponse, MemoryGetResponseSchema, type MemoryId, MemoryIdSchema, type MemoryListParams, type MemoryListResponse, MemoryListResponseSchema, MemoryOperations, type MemoryProvenance, type MemoryResponseMeta, type MemorySearchParams, type MemorySearchResponse, MemorySearchResponseSchema, type MemorySearchResult, type MemorySortOrder, type MemoryStatus, NotFoundError, type PromotionMode, RateLimitError, type RequestFn, RetryExhaustedError, ServerError, type StorageLocation, type UserId, ValidationError, buildHeaders, calculateBackoff, createAuthHeader, createErrorFromResponse, isRetryable, normalizeBaseUrl, requireAuthToken, resolveAuthToken, validateGroupId, withRetry };

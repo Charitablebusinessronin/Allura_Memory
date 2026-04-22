@@ -95,18 +95,18 @@ describe("AlluraClient", () => {
   });
 
   describe("connection management", () => {
-    it("should connect successfully when server is healthy", async () => {
-      const mockFetch = createMockFetch({
-        status: "healthy",
-        mode: "http",
-        interface: "mcp-http",
-        transports: ["streamable-http", "legacy-json-rpc"],
-        mcp_endpoint: "/mcp",
-        port: 3201,
-        port_source: "default",
-        auth_enabled: false,
-        timestamp: new Date().toISOString(),
-      });
+  it("should connect successfully when server is healthy", async () => {
+    const mockFetch = createMockFetch({
+      status: "healthy",
+      mode: "http",
+      interface: "mcp-http",
+      transports: ["streamable-http"],
+      mcp_endpoint: "/mcp",
+      port: 3201,
+      port_source: "default",
+      auth_enabled: false,
+      timestamp: new Date().toISOString(),
+    });
 
       const client = new AlluraClient({
         baseUrl: "http://localhost:3201",
@@ -130,18 +130,18 @@ describe("AlluraClient", () => {
       expect(client.isConnected).toBe(false);
     });
 
-    it("should disconnect cleanly", async () => {
-      const mockFetch = createMockFetch({
-        status: "healthy",
-        mode: "http",
-        interface: "mcp-http",
-        transports: ["streamable-http", "legacy-json-rpc"],
-        mcp_endpoint: "/mcp",
-        port: 3201,
-        port_source: "default",
-        auth_enabled: false,
-        timestamp: new Date().toISOString(),
-      });
+  it("should disconnect cleanly", async () => {
+    const mockFetch = createMockFetch({
+      status: "healthy",
+      mode: "http",
+      interface: "mcp-http",
+      transports: ["streamable-http"],
+      mcp_endpoint: "/mcp",
+      port: 3201,
+      port_source: "default",
+      auth_enabled: false,
+      timestamp: new Date().toISOString(),
+    });
 
       const client = new AlluraClient({
         baseUrl: "http://localhost:3201",
@@ -157,18 +157,18 @@ describe("AlluraClient", () => {
   });
 
   describe("health check", () => {
-    it("should return health response on successful check", async () => {
-      const healthResponse = {
-        status: "healthy",
-        mode: "http",
-        interface: "mcp-http",
-        transports: ["streamable-http", "legacy-json-rpc"],
-        mcp_endpoint: "/mcp",
-        port: 3201,
-        port_source: "default",
-        auth_enabled: false,
-        timestamp: new Date().toISOString(),
-      };
+  it("should return health response on successful check", async () => {
+    const healthResponse = {
+      status: "healthy",
+      mode: "http",
+      interface: "mcp-http",
+      transports: ["streamable-http"],
+      mcp_endpoint: "/mcp",
+      port: 3201,
+      port_source: "default",
+      auth_enabled: false,
+      timestamp: new Date().toISOString(),
+    };
 
       const mockFetch = createMockFetch(healthResponse);
       const client = new AlluraClient({
@@ -196,18 +196,18 @@ describe("AlluraClient", () => {
   });
 
   describe("auth token propagation", () => {
-    it("should include Bearer token in requests when provided", async () => {
-      const mockFetch = createMockFetch({
-        status: "healthy",
-        mode: "http",
-        interface: "mcp-http",
-        transports: ["streamable-http", "legacy-json-rpc"],
-        mcp_endpoint: "/mcp",
-        port: 3201,
-        port_source: "default",
-        auth_enabled: true,
-        timestamp: new Date().toISOString(),
-      });
+  it("should include Bearer token in requests when provided", async () => {
+    const mockFetch = createMockFetch({
+      status: "healthy",
+      mode: "http",
+      interface: "mcp-http",
+      transports: ["streamable-http"],
+      mcp_endpoint: "/mcp",
+      port: 3201,
+      port_source: "default",
+      auth_enabled: true,
+      timestamp: new Date().toISOString(),
+    });
 
       const client = new AlluraClient({
         baseUrl: "http://localhost:3201",
@@ -224,18 +224,18 @@ describe("AlluraClient", () => {
       expect(headers["Authorization"]).toBe("Bearer my-secret-token");
     });
 
-    it("should not include Authorization header when no token is provided", async () => {
-      const mockFetch = createMockFetch({
-        status: "healthy",
-        mode: "http",
-        interface: "mcp-http",
-        transports: ["streamable-http", "legacy-json-rpc"],
-        mcp_endpoint: "/mcp",
-        port: 3201,
-        port_source: "default",
-        auth_enabled: false,
-        timestamp: new Date().toISOString(),
-      });
+  it("should not include Authorization header when no token is provided", async () => {
+    const mockFetch = createMockFetch({
+      status: "healthy",
+      mode: "http",
+      interface: "mcp-http",
+      transports: ["streamable-http"],
+      mcp_endpoint: "/mcp",
+      port: 3201,
+      port_source: "default",
+      auth_enabled: false,
+      timestamp: new Date().toISOString(),
+    });
 
       const client = new AlluraClient({
         baseUrl: "http://localhost:3201",
@@ -354,38 +354,38 @@ describe("AlluraClient", () => {
   });
 
   describe("retry logic", () => {
-    it("should retry on 429 and succeed on second attempt", async () => {
-      let callCount = 0;
-      const mockFetch = vi.fn().mockImplementation(async () => {
-        callCount++;
-        if (callCount === 1) {
-          return {
-            ok: false,
-            status: 429,
-            headers: new Headers({ "content-type": "application/json" }),
-            json: () => Promise.resolve({ error: "Rate limit exceeded" }),
-            text: () => Promise.resolve(JSON.stringify({ error: "Rate limit exceeded" })),
-          };
-        }
+  it("should retry on 429 and succeed on second attempt", async () => {
+    let callCount = 0;
+    const mockFetch = vi.fn().mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) {
         return {
-          ok: true,
-          status: 200,
+          ok: false,
+          status: 429,
           headers: new Headers({ "content-type": "application/json" }),
-          json: () =>
-            Promise.resolve({
-              status: "healthy",
-              mode: "http",
-              interface: "mcp-http",
-              transports: ["streamable-http", "legacy-json-rpc"],
-              mcp_endpoint: "/mcp",
-              port: 3201,
-              port_source: "default",
-              auth_enabled: false,
-              timestamp: new Date().toISOString(),
-            }),
-          text: () => Promise.resolve(""),
+          json: () => Promise.resolve({ error: "Rate limit exceeded" }),
+          text: () => Promise.resolve(JSON.stringify({ error: "Rate limit exceeded" })),
         };
-      });
+      }
+      return {
+        ok: true,
+        status: 200,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: () =>
+          Promise.resolve({
+            status: "healthy",
+            mode: "http",
+            interface: "mcp-http",
+            transports: ["streamable-http"],
+            mcp_endpoint: "/mcp",
+            port: 3201,
+            port_source: "default",
+            auth_enabled: false,
+            timestamp: new Date().toISOString(),
+          }),
+        text: () => Promise.resolve(""),
+      };
+    });
 
       const client = new AlluraClient({
         baseUrl: "http://localhost:3201",
@@ -399,38 +399,38 @@ describe("AlluraClient", () => {
       expect(mockFetch).toHaveBeenCalledTimes(2);
     });
 
-    it("should retry on 500 and succeed on second attempt", async () => {
-      let callCount = 0;
-      const mockFetch = vi.fn().mockImplementation(async () => {
-        callCount++;
-        if (callCount === 1) {
-          return {
-            ok: false,
-            status: 500,
-            headers: new Headers({ "content-type": "application/json" }),
-            json: () => Promise.resolve({ error: "Internal server error" }),
-            text: () => Promise.resolve(JSON.stringify({ error: "Internal server error" })),
-          };
-        }
+  it("should retry on 500 and succeed on second attempt", async () => {
+    let callCount = 0;
+    const mockFetch = vi.fn().mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) {
         return {
-          ok: true,
-          status: 200,
+          ok: false,
+          status: 500,
           headers: new Headers({ "content-type": "application/json" }),
-          json: () =>
-            Promise.resolve({
-              status: "healthy",
-              mode: "http",
-              interface: "mcp-http",
-              transports: ["streamable-http", "legacy-json-rpc"],
-              mcp_endpoint: "/mcp",
-              port: 3201,
-              port_source: "default",
-              auth_enabled: false,
-              timestamp: new Date().toISOString(),
-            }),
-          text: () => Promise.resolve(""),
+          json: () => Promise.resolve({ error: "Internal server error" }),
+          text: () => Promise.resolve(JSON.stringify({ error: "Internal server error" })),
         };
-      });
+      }
+      return {
+        ok: true,
+        status: 200,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: () =>
+          Promise.resolve({
+            status: "healthy",
+            mode: "http",
+            interface: "mcp-http",
+            transports: ["streamable-http"],
+            mcp_endpoint: "/mcp",
+            port: 3201,
+            port_source: "default",
+            auth_enabled: false,
+            timestamp: new Date().toISOString(),
+          }),
+        text: () => Promise.resolve(""),
+      };
+    });
 
       const client = new AlluraClient({
         baseUrl: "http://localhost:3201",

@@ -76,7 +76,7 @@ Intent-based routing, not model-based. The agent says what kind of work; the har
 
 ## Routing Rules
 
-### Essential Routing (Team RAM)
+### Essential Routing (Team RAM + OMO Specialists)
 
 | Event | Route To | Why |
 |-------|----------|-----|
@@ -90,6 +90,14 @@ Intent-based routing, not model-based. The agent says what kind of work; the har
 | Performance concern | Bellard / Carmack | Measurement-first |
 | Data/schema work | Knuth | Schema correctness before speed |
 | Infrastructure/CI/CD | Hightower | If it can't be deployed in one command, it's not done |
+| Reasoning / logic | Norvig | Decompose before solving |
+| Big picture / cross-cutting | Hassabis | See the whole board |
+| AI/ML knowledge | Karpathy | First principles AI expertise |
+| Memory / patterns | Jim Simons | Signal from noise |
+| Vision / images | Fei-Fei Li Vision | Multimodal analysis |
+| Strategy / alignment | Sutskever | Long-term safety |
+| Critique / validation | Torvalds | Brutal correctness gate |
+| Micro-tasks | Operator | Follow instructions precisely |
 
 ### GitHub Integration
 
@@ -103,9 +111,12 @@ Intent-based routing, not model-based. The agent says what kind of work; the har
 
 ## Communication Overhead
 
-With 10 agents, we have $\frac{10 \times 9}{2} = 45$ communication paths.
+With 18 agents, we have $\frac{18 \times 17}{2} = 153$ communication paths.
 
-The category system reduces this further:
+The category system and routing hierarchy reduces this:
+- Brooks delegates (not all agents talk to each other)
+- Intent-based routing (visual-engineering, deep, quick, ultrabrain, ux-design)
+- Background agents run in parallel
 - Intent-based routing (visual-engineering, deep, quick, ultrabrain, ux-design)
 - Background agents run in parallel
 - Tool restrictions prevent overreach (Pike can't write, only consult)
@@ -117,7 +128,15 @@ The category system reduces this further:
 | Agent | Denied Tools | Why |
 |-------|--------------|-----|
 | Pike | write, edit, task | Read-only consultation |
+| Norvig | write, edit, task | Reasoning-only, Woz implements |
+| Hassabis | write, edit, task | Advisory-only |
+| Karpathy | write, edit, task | Knowledge-only |
+| Torvalds | write, edit, task | Critique-only, veto power |
+| Sutskever | write, edit, task | Strategy-only |
+| Jim Simons | write, edit, task | Retrieval-only |
+| Fei-Fei Li Vision | write, edit, task | Vision analysis only |
 | Scout | write, edit, task | Search only |
+| Operator | edit (governance/config) | No independent decisions |
 | Hightower | direct production SSH, manual env changes | Infrastructure as code only |
 
 ## Model Fallback Policy
@@ -138,6 +157,14 @@ The category system reduces this further:
 | Fowler | `ollama-cloud/glm-5.1` | — |
 | Knuth | `ollama-cloud/glm-5.1` | — |
 | Pike | `openai/gpt-5.4-mini` | — |
+| Norvig | `ollama-cloud/glm-5.1` | `ollama-cloud/glm-5.1` |
+| Hassabis | `ollama-cloud/glm-5.1` | `ollama-cloud/glm-5.1` |
+| Karpathy | `ollama-cloud/glm-5.1` | `ollama-cloud/glm-5.1` |
+| Jim Simons | `ollama-cloud/glm-5.1` | `ollama-cloud/glm-5.1` |
+| Fei-Fei Li Vision | `openai/gpt-5.4-mini` | `openai/gpt-5.4-mini` |
+| Sutskever | `ollama-cloud/glm-5.1` | `ollama-cloud/glm-5.1` |
+| Torvalds | `openai/gpt-5.4-mini` | `openai/gpt-5.4-mini` |
+| Operator | `openai/gpt-5.4-mini` | `openai/gpt-5.4-mini` |
 
 **Global default** (in `opencode.json`): `openai/gpt-5.4`
 
@@ -155,13 +182,13 @@ routing:
   - if: agent == jobs
     use: ollama-cloud/kimi-k2.5
 
-  - if: agent in [scout, pike]
+  - if: agent in [scout, pike, torvalds, fei-fei-li-vision, operator]
     use: openai/gpt-5.4-mini
 
   - if: agent in [woz, carmack]
     use: ollama-cloud/qwen3-coder-next
 
-  - if: agent in [bellard, fowler, knuth]
+  - if: agent in [bellard, fowler, knuth, norvig, hassabis, karpathy, jim-simons, sutskever]
     use: ollama-cloud/glm-5.1
 
   # Recovery only uses frontmatter-declared fallbacks
@@ -182,24 +209,32 @@ One architect (Brooks) owns the vision. Conceptual integrity breaks the moment t
 Essential complexity (understanding user intent, designing architecture) cannot be removed. Accidental complexity (model selection, context management) is what the harness solves.
 
 ### 3. Second-System Effect
-Resist adding every feature that was "cut from the first version." 10 agents is enough. Don't add more.
+Resist adding every feature that was "cut from the first version." 18 agents is enough. Don't add more.
 
 ### 4. Communication Overhead
-n(n-1)/2 paths. With 10 agents, 45 paths. Category routing reduces this. Keep it lean.
+n(n-1)/2 paths. With 18 agents, 153 paths. Category routing + Brooks delegation reduces this. Keep it lean.
 
 ### 5. The Surgical Team
 - One architect (Brooks)
+- One reasoner (Norvig)
+- One context holder (Hassabis)
 - One intent gate (Jobs)
 - One implementer (Woz)
-- One consultant (Pike)
-- One researcher (Scout)
+- One interface consultant (Pike)
+- One recon (Scout)
 - One planner (Fowler)
 - One diagnostics (Bellard)
 - One optimizer (Carmack)
 - One data architect (Knuth)
 - One devops (Hightower)
+- One knowledge oracle (Karpathy)
+- One memory specialist (Jim Simons)
+- One vision specialist (Fei-Fei Li Vision)
+- One strategist (Sutskever)
+- One critic (Torvalds)
+- One operator (Operator)
 
-**Total: 10 people.** Not a committee. A surgical team.
+**Total: 18 people.** Not a committee. A surgical team with specialist consultants.
 
 ## GitHub Integration
 

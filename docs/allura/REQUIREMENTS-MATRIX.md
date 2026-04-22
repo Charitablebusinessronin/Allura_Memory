@@ -197,7 +197,7 @@ This section traces the governed memory pipeline requirements from business goal
 
 | ID | Business Requirement | Functional Requirements | Use Cases |
 |----|----------------------|------------------------|-----------|
-| B1 | Agents must persist all task activity as append-only raw traces so execution history is auditable and recoverable. | [F1](#f1), [F2](#f2), [F3](#f3) | MEM-UC1, MEM-UC2 |
+| B1 | Agents must persist all task activity as append-only raw traces so execution history is auditable and recoverable. | [F1](#f1), [F2](#f2), [F3](#f3), [F16](#f16) | MEM-UC1, MEM-UC2, MEM-UC9 |
 | B2 | A curator process must turn raw traces into proposed insights with explicit evidence and confidence, without promoting them directly to active knowledge. | [F4](#f4), [F5](#f5) | MEM-UC3 |
 | B3 | No insight may become active knowledge until it is approved by a human or policy-controlled approval flow, and that approval must be auditable. | [F6](#f6), [F7](#f7) | MEM-UC4 |
 | B4 | Approved insights must be stored in Neo4j as immutable, versioned knowledge records with relationships such as `SUPERSEDES`, `DEPRECATED`, and `REVERTED`. | [F8](#f8), [F9](#f9) | MEM-UC5 |
@@ -250,12 +250,13 @@ This section traces the governed memory pipeline requirements from business goal
 | <a name="f12"></a>F12 | All knowledge-system reads and writes must pass through controlled endpoints that enforce project-level access. | `requireRole()` · `validateGroupId()` · RBAC middleware · [SOLUTION-ARCHITECTURE.md](./SOLUTION-ARCHITECTURE.md) |
 | <a name="f13"></a>F13 | The system must enforce agent permissions and audit all access to trace and knowledge resources. | Auth middleware · audit event logging · [BLUEPRINT.md](./BLUEPRINT.md#9-logging--audit) |
 
-#### End-to-End Validation (F14–F15)
+#### End-to-End Validation (F14–F16)
 
 | ID | Requirement | Satisfied by |
 |----|-------------|--------------|
 | <a name="f14"></a>F14 | A second agent must be able to retrieve approved knowledge as context and use it in a later task correctly. | Retrieval endpoint · validation gate scenario MEM-UC8 · [VALIDATION-GATE.md](../archive/allura/VALIDATION-GATE.md) |
 | <a name="f15"></a>F15 | The full lifecycle from trace capture to knowledge reuse must be traceable, auditable, and reversible. | Evidence chain: trace → proposal → approval → Neo4j → retrieval · [VALIDATION-GATE.md](../archive/allura/VALIDATION-GATE.md) · [RISKS-AND-DECISIONS.md](./RISKS-AND-DECISIONS.md) |
+| <a name="f16"></a>F16 | The graph must include Agent, Team, and Project structural context nodes with relationships enabling traversal queries by ownership, project scope, and delegation path. | `scripts/neo4j-seed-agents.cypher` · [BLUEPRINT.md](./BLUEPRINT.md#5-data-model) · [DATA-DICTIONARY.md](./DATA-DICTIONARY.md#neo4j-agent) |
 
 ### Section 3: Use Case Index
 
@@ -269,6 +270,7 @@ This section traces the governed memory pipeline requirements from business goal
 | MEM-UC6 | Retrieval | Retrieve approved knowledge for an agent | F10, F11 |
 | MEM-UC7 | Access Control | Enforce access and audit on all reads/writes | F12, F13 |
 | MEM-UC8 | E2E Validation | Reuse approved knowledge in a later agent run | F14, F15 |
+| MEM-UC9 | Graph Context | Agent context retrieval (traverse from Agent through AUTHORED_BY to Memory) | F16 |
 
 ---
 

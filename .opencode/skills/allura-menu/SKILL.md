@@ -21,8 +21,9 @@ Interactive menu for common Allura Memory workflows.
 ║  [5] 🔍 Code Review        — Surgical team review             ║
 ║  [6] 📊 Dashboard           — View system status               ║
 ║  [7] 🧠 Memory Query       — Search Allura Brain              ║
-║  [8] 📤 Promote            — HITL promotion workflow           ║
-║  [9] 🏁 End Session        — Persist and archive              ║
+║  [8] 🧠 Memory Ops         — Govern memory workflows          ║
+║  [9] 📤 Promote            — HITL promotion workflow           ║
+║  [A] 🏁 End Session        — Persist and archive              ║
 ║  [0] ❓ Help               — Show this menu                    ║
 ╚═══════════════════════════════════════════════════════════════╝
 ```
@@ -134,7 +135,22 @@ Interactive menu for common Allura Memory workflows.
 
 ---
 
-### [8] 📤 Promote
+### [8] 🧠 Memory Ops
+
+**Trigger:** `allura-memory-skill`
+
+**What it does:**
+
+- Governs persistent memory workflows in Allura Brain
+- Distinguishes raw trace from curated insight
+- Applies promotion, supersede, deprecate, restore, and export discipline
+- Uses `allura-brain_*` tools first and `MCP_DOCKER` only when lower-level inspection is needed
+
+**Equivalent skill:** `allura-memory-skill`
+
+---
+
+### [9] 📤 Promote
 
 **Trigger:** `hitl-governance`
 
@@ -149,9 +165,7 @@ Interactive menu for common Allura Memory workflows.
 
 ---
 
-## Menu Options
-
-### [9] 🏁 End Session
+### [A] 🏁 End Session
 
 **Trigger:** `end-session`
 
@@ -192,6 +206,7 @@ Type these directly in your IDE:
 | `review`          | Code review       |
 | `dash`            | Dashboard         |
 | `query <term>`    | Memory query      |
+| `memory <task>`   | Memory operations |
 | `promote`         | HITL promotion    |
 | `debug <issue>`   | Systematic debug  |
 | `end <summary>`   | End session       |

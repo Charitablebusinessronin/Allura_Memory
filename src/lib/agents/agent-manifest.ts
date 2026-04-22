@@ -1,115 +1,43 @@
 /**
- * Agent Manifest — Single source of truth for all Allura agents.
+ * Agent Manifest — Single source of truth for the live Team RAM surface.
  *
- * This module unifies three previously conflicting taxonomies:
- *   1. `.opencode/agent/` persona definitions (8 agents)
- *   2. `scripts/agents/` executable scripts (3 scripts)
- *   3. `.claude/rules/agent-routing.md` routing rules (8 different personas)
+ * This module consolidates:
+ *   1. `.opencode/agent/` persona definitions (18 agents)
+ *   2. `scripts/agents/` executable scripts for the CI-routed subset
+ *   3. `.opencode/rules/agent-routing.md` routing and model policy
  *
- * The canonical set uses the persona names from `.opencode/agent/` as the
- * source of truth, supplemented by script-only agents (carmack, knuth) that
- * already have executable scripts at `scripts/agents/`.
- *
- * CI routing replaces the static bash `case` statement in
- * `.github/workflows/agent-hooks.yml` with a data-driven lookup via
- * `dynamic-router.ts`.
+ * The canonical IDs are the Team RAM persona IDs used across the repo.
+ * CI metadata is layered on top for the smaller subset of agents that run on
+ * GitHub events.
  *
  * @module agent-manifest
  */
 
-// ── Types ────────────────────────────────────────────────────────────────
+export type AgentCategory = "primary" | "core" | "code" | "support" | "utility";
 
-/** Category distinguishes the agent's scope within the surgical team. */
-export type AgentCategory =
-  | "primary"
-  | "core"
-  | "code"
-  | "development"
-  | "system-builder";
-
-/** GitHub event types that can trigger agent scripts. */
 export type CiEventName = "pull_request" | "push" | "issues";
 
-/**
- * How the agent gets its inference. Only relevant for agents that invoke
- * external tools (ralph). Static-analysis agents don't need a backend.
- *
- * "opencode" — agent uses the OpenCode CLI (which manages its own model).
- * "local-ollama" — self-hosted Ollama (future; not available yet).
- * "none" — no model backend needed (static analysis, filesystem ops).
- */
-export type ModelBackend = "opencode" | "local-ollama" | "none";
-
-/** A single CI route: which event + action triggers which agent. */
 export interface CiRoute {
-  /** GitHub webhook event name. */
   event: CiEventName;
-  /**
-   * GitHub webhook action filter.
-   * For pull_request: "opened", "synchronize", "reopened"
-   * For issues: "opened", "edited"
-   * For push: "*" (any push to watched branches)
-   */
   action: string;
 }
 
-/** Full entry for a single agent in the manifest. */
 export interface AgentManifestEntry {
-  /** Unique agent identifier matching `.opencode/agent/` persona key. */
   id: string;
-  /** Full persona name (e.g. "Frederick Brooks", "Edsger Dijkstra"). */
   persona: string;
-  /** One-line role description (e.g. "Chief Architect", "Code Review"). */
   role: string;
-  /** Surgical team category. */
   category: AgentCategory;
-  /**
-   * Path to the agent's executable script, relative to project root.
-   * Only agents that participate in CI have a script.
-   */
   scriptPath?: string;
-  /**
-   * CI event routes that should be dispatched to this agent.
-   * Empty array means the agent is invoked interactively (not via CI).
-   */
   ciRoutes: CiRoute[];
-  /** Brief description of what the agent does. */
   description: string;
-  /**
-   * Model backend for agents that invoke external AI tools.
-   * "opencode" = agent uses the OpenCode CLI (manages its own model auth).
-   * "local-ollama" = self-hosted Ollama (not currently available).
-   * "none"         = no model needed (static analysis agents).
-   *
-   * NOTE: GitHub Models ("github-models") is NOT used in this stack.
-   * Ralph runs through OpenCode, not the GitHub Models API.
-   */
-  modelBackend?: ModelBackend;
-  /**
-   * Primary model identifier (e.g., 'ollama-cloud/qwen3-coder-next').
-   * Used for graph inserts and routing decisions.
-   */
   primaryModel?: string;
-  /**
-   * Fallback model identifier (e.g., 'ollama-cloud/glm-5.1').
-   * Used when primary model is unavailable. Persisted in graph for
-   * routing resilience.
-   */
   fallbackModel?: string;
-  /**
-   * Authentication method for model backend.
-   * "OPENCODE_CONFIG" = OpenCode manages auth internally via opencode.json.
-   */
-  auth?: string;
 }
 
-// ── Manifest Data ────────────────────────────────────────────────────────
-
 const manifestEntries: Array<AgentManifestEntry> = [
-  // ── Primary ──────────────────────────────────────────────────────────
   {
     id: "brooks",
-    persona: "Frederick Brooks",
+    persona: "Frederick P. Brooks Jr.",
     role: "Chief Architect",
     category: "primary",
     scriptPath: "scripts/agents/brooks-triage.ts",
@@ -118,7 +46,6 @@ const manifestEntries: Array<AgentManifestEntry> = [
       { event: "issues", action: "edited" },
     ],
     primaryModel: "openai/gpt-5.4",
-    fallbackModel: "ollama-cloud/kimi-k2.5",
     description:
       "Architectural integrity owner. Final sign-off on architecture and routing policy. Routes issue events for triage.",
   },
@@ -129,12 +56,9 @@ const manifestEntries: Array<AgentManifestEntry> = [
     category: "primary",
     ciRoutes: [],
     primaryModel: "ollama-cloud/kimi-k2.5",
-    fallbackModel: "openai/gpt-5.4",
     description:
       "Converts requests into crisp objectives, constraints, and acceptance criteria. No execution until intent is signed off.",
   },
-
-  // ── Core Subagents ────────────────────────────────────────────────────
   {
     id: "pike",
     persona: "Rob Pike",
@@ -147,9 +71,8 @@ const manifestEntries: Array<AgentManifestEntry> = [
       { event: "pull_request", action: "reopened" },
     ],
     primaryModel: "openai/gpt-5.4-mini",
-    fallbackModel: "ollama-cloud/kimi-k2.5",
     description:
-      "Reviews surface area, concurrency hazards, and API ergonomics. Detects breaking changes, naming violations, undocumented params. Routes pull_request events alongside carmack.",
+      "Reviews surface area, concurrency hazards, and API ergonomics. Detects breaking changes and interface drift.",
   },
   {
     id: "fowler",
@@ -157,13 +80,10 @@ const manifestEntries: Array<AgentManifestEntry> = [
     role: "Refactor Gate",
     category: "core",
     scriptPath: "scripts/agents/fowler-refactor-gate.ts",
-    ciRoutes: [
-      { event: "push", action: "*" },
-    ],
+    ciRoutes: [{ event: "push", action: "*" }],
     primaryModel: "ollama-cloud/glm-5.1",
-    fallbackModel: "ollama-cloud/qwen3-coder-next",
     description:
-      "Ensures changes are incremental, reversible, and don't add debt. Static analysis: complexity, duplication, debt scan, gate verdict. Routes push events for refactor review.",
+      "Ensures changes are incremental, reversible, and do not add debt. Routes push events for refactor review.",
   },
   {
     id: "scout",
@@ -171,13 +91,21 @@ const manifestEntries: Array<AgentManifestEntry> = [
     role: "Recon",
     category: "core",
     ciRoutes: [],
-    primaryModel: "ollama-cloud/nemotron-3-super",
-    fallbackModel: "openai/gpt-5.4-mini",
+    primaryModel: "openai/gpt-5.4-mini",
+    fallbackModel: "ollama-cloud/nemotron-3-super",
     description:
       "Fast recon and discovery agent. Scans repos, finds paths, patterns, and configs. Produces Scout Report so nobody guesses.",
   },
-
-  // ── Code Subagents ───────────────────────────────────────────────────
+  {
+    id: "hightower",
+    persona: "Kelsey Hightower",
+    role: "DevOps Specialist",
+    category: "core",
+    ciRoutes: [],
+    primaryModel: "openai/gpt-5.4",
+    description:
+      "CI/CD, infrastructure, deployment, and observability. If it cannot be deployed in one command, it is not done.",
+  },
   {
     id: "woz",
     persona: "Steve Wozniak",
@@ -185,7 +113,6 @@ const manifestEntries: Array<AgentManifestEntry> = [
     category: "code",
     ciRoutes: [],
     primaryModel: "ollama-cloud/qwen3-coder-next",
-    fallbackModel: "ollama-cloud/glm-5.1",
     description:
       "Primary builder. Implements the Brooks plan with minimal ceremony. Ships working code, tests, and clean diffs.",
   },
@@ -196,9 +123,8 @@ const manifestEntries: Array<AgentManifestEntry> = [
     category: "code",
     ciRoutes: [],
     primaryModel: "ollama-cloud/glm-5.1",
-    fallbackModel: "ollama-cloud/qwen3-coder-next",
     description:
-      "Performance + deep diagnostics specialist. Measurement-first approach. Only invoked when speed, correctness under constraints, or low-level weirdness matters.",
+      "Performance and deep diagnostics specialist. Measurement-first when low-level weirdness appears.",
   },
   {
     id: "carmack",
@@ -207,73 +133,127 @@ const manifestEntries: Array<AgentManifestEntry> = [
     category: "code",
     ciRoutes: [],
     primaryModel: "ollama-cloud/qwen3-coder-next",
-    fallbackModel: "ollama-cloud/glm-5.1",
     description:
-      "Performance specialist. Optimization, API design, latency. Low-level correctness under constraints.",
-  },
-  {
-    id: "hightower",
-    persona: "Kelsey Hightower",
-    role: "DevOps Specialist",
-    category: "core",
-    ciRoutes: [],
-    primaryModel: "openai/gpt-5.4",
-    fallbackModel: "ollama-cloud/kimi-k2.5",
-    description:
-      "CI/CD, infrastructure, deployment, observability. If it can't be deployed in one command, it's not done.",
+      "Performance specialist for optimization, API design, and latency reduction under hard constraints.",
   },
   {
     id: "knuth",
     persona: "Donald Knuth",
-    role: "Deep Analysis",
+    role: "Data Architect",
     category: "code",
     scriptPath: "scripts/agents/knuth-analyze.ts",
-    ciRoutes: [
-      { event: "push", action: "*" },
-    ],
+    ciRoutes: [{ event: "push", action: "*" }],
     primaryModel: "ollama-cloud/glm-5.1",
+    description:
+      "Data architect and schema specialist. Owns query optimization, migration correctness, and analytical rigor.",
+  },
+  {
+    id: "norvig",
+    persona: "Peter Norvig",
+    role: "Reasoner",
+    category: "support",
+    ciRoutes: [],
+    primaryModel: "ollama-cloud/glm-5.1",
+    fallbackModel: "ollama-cloud/glm-5.1",
+    description:
+      "Reasoning, planning, and deep logic. Decomposes complex problems and validates argument structures before execution.",
+  },
+  {
+    id: "hassabis",
+    persona: "Demis Hassabis",
+    role: "Context Holder",
+    category: "support",
+    ciRoutes: [],
+    primaryModel: "ollama-cloud/glm-5.1",
+    fallbackModel: "ollama-cloud/glm-5.1",
+    description:
+      "Context holder and big-picture strategist. Maintains the full system mental model and identifies cross-cutting concerns.",
+  },
+  {
+    id: "karpathy",
+    persona: "Andrej Karpathy",
+    role: "Knowledge Oracle",
+    category: "support",
+    ciRoutes: [],
+    primaryModel: "ollama-cloud/glm-5.1",
+    fallbackModel: "ollama-cloud/glm-5.1",
+    description:
+      "Knowledge and ML/AI expertise. Answers technical questions about AI systems and neural architecture patterns.",
+  },
+  {
+    id: "jim-simons",
+    persona: "Jim Simons",
+    role: "Memory Specialist",
+    category: "support",
+    ciRoutes: [],
+    primaryModel: "ollama-cloud/glm-5.1",
+    fallbackModel: "ollama-cloud/glm-5.1",
+    description:
+      "Memory retrieval and data pattern discovery specialist. Finds signal in episodic and semantic history.",
+  },
+  {
+    id: "fei-fei-li-vision",
+    persona: "Fei-Fei Li",
+    role: "Vision Specialist",
+    category: "support",
+    ciRoutes: [],
+    primaryModel: "openai/gpt-5.4-mini",
     fallbackModel: "openai/gpt-5.4-mini",
     description:
-      "Deep analysis specialist. Literate programming, algorithmic complexity, and complexity analysis. Routes push events for analysis.",
+      "Vision and multimodal analysis specialist. Processes images, diagrams, screenshots, and visual evidence.",
+  },
+  {
+    id: "sutskever",
+    persona: "Ilya Sutskever",
+    role: "Strategy Specialist",
+    category: "support",
+    ciRoutes: [],
+    primaryModel: "ollama-cloud/glm-5.1",
+    fallbackModel: "ollama-cloud/glm-5.1",
+    description:
+      "Strategy and alignment specialist. Thinks about safety, long-term consequences, and system evolution.",
+  },
+  {
+    id: "torvalds",
+    persona: "Linus Torvalds",
+    role: "Critique Gate",
+    category: "support",
+    ciRoutes: [],
+    primaryModel: "openai/gpt-5.4-mini",
+    fallbackModel: "openai/gpt-5.4-mini",
+    description:
+      "Critique and validation specialist. Brutal correctness enforcement with zero tolerance for hand-waving.",
+  },
+  {
+    id: "operator",
+    persona: "Operator",
+    role: "Subtask Helper",
+    category: "utility",
+    ciRoutes: [],
+    primaryModel: "openai/gpt-5.4-mini",
+    fallbackModel: "openai/gpt-5.4-mini",
+    description:
+      "Utility helper for precisely delegated micro-tasks. No independent decision-making.",
   },
 ];
 
-/**
- * Immutable map from agent ID to its manifest entry.
- * This is the single source of truth for all agent definitions.
- *
- * To add a new agent:
- *   1. Add an entry to `manifestEntries` above
- *   2. Create a persona file in `.opencode/agent/` (if interactive)
- *   3. Create a script in `scripts/agents/` (if CI-routed)
- *   4. Run `bun run typecheck` to verify
- */
 export const AGENT_MANIFEST: ReadonlyMap<string, AgentManifestEntry> =
   new Map(manifestEntries.map((entry) => [entry.id, entry]));
 
-// ── Convenience Lookups ──────────────────────────────────────────────────
-
-/** All agent IDs in the manifest. */
 export const AGENT_IDS: ReadonlyArray<string> = Array.from(AGENT_MANIFEST.keys());
 
-/** Agents that have executable scripts (participate in CI). */
 export const CI_AGENTS: ReadonlyArray<AgentManifestEntry> = manifestEntries.filter(
   (entry) => entry.scriptPath !== undefined
 );
 
-/** Agents grouped by category. */
 export const AGENTS_BY_CATEGORY: ReadonlyMap<AgentCategory, ReadonlyArray<AgentManifestEntry>> =
   new Map(
-    (["primary", "core", "code", "development", "system-builder"] as const).map((cat) => [
-      cat,
-      manifestEntries.filter((entry) => entry.category === cat),
+    (["primary", "core", "code", "support", "utility"] as const).map((category) => [
+      category,
+      manifestEntries.filter((entry) => entry.category === category),
     ])
   );
 
-/**
- * Look up an agent by ID. Throws if not found.
- * Use this when you need a guaranteed agent reference.
- */
 export function getAgentById(id: string): AgentManifestEntry {
   const entry = AGENT_MANIFEST.get(id);
   if (!entry) {
@@ -282,10 +262,6 @@ export function getAgentById(id: string): AgentManifestEntry {
   return entry;
 }
 
-/**
- * Look up agents by CI event. Returns all agents whose ciRoutes
- * match the given event and action. Supports wildcard action "*".
- */
 export function getAgentsForEvent(
   event: CiEventName,
   action: string

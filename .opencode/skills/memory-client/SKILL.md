@@ -21,6 +21,14 @@ Brain is exposed via MCP tools. Use the canonical `allura-brain_*` tools first; 
 
 **group_id**: Always `allura-roninmemory`. Every read and write requires it. Pattern: `^allura-[a-z0-9-]+$`.
 
+If the task is a full memory workflow rather than a simple search/log cycle, also load `allura-memory-skill`.
+
+Use `allura-memory-skill` when you need:
+- raw trace vs curated insight discipline
+- promotion/supersede/deprecate/restore/export guidance
+- dual-context retrieval rules
+- deeper troubleshooting of memory behavior
+
 ## Tools
 
 | Tool | When to use |
@@ -35,6 +43,14 @@ Brain is exposed via MCP tools. Use the canonical `allura-brain_*` tools first; 
 | `allura-brain_memory_restore` | Undo a soft-delete within the recovery window. |
 | `allura-brain_memory_export` | Export memories for backup or migration. |
 | `allura-brain_memory_list_deleted` | Find soft-deleted memories within recovery window. |
+
+## Related Skills
+
+- `allura-memory-skill` — full memory workflow governance for Allura Brain
+- `mcp-docker-memory-system` — infrastructure/bootstrap and lower-level MCP_DOCKER memory-system setup
+
+Use this skill for the default **Search → Work → Log** loop.
+Use `allura-memory-skill` when the memory task itself is the main job.
 
 ## Five Modes
 

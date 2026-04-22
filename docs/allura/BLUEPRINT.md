@@ -311,15 +311,56 @@ erDiagram
 
     NEO4J_MEMORY {
         string id
+        string name
         string group_id
-        string user_id
+        string category
+        string type
+        float confidence
+        list tags
         string content
+        string source
+        string notion_id
+        string status
         float score
         boolean deprecated
         datetime created_at
     }
 
+    NEO4J_AGENT {
+        string id
+        string name
+        string persona
+        string team
+        string category
+        string type
+        string scope
+        string platform
+        string status
+        string group_id
+    }
+
+    NEO4J_TEAM {
+        string id
+        string name
+        string group_id
+        string icon
+    }
+
+    NEO4J_PROJECT {
+        string id
+        string name
+        string group_id
+        string status
+    }
+
     NEO4J_MEMORY ||--o{ NEO4J_MEMORY : "SUPERSEDES"
+    NEO4J_MEMORY }o--|| NEO4J_AGENT : "AUTHORED_BY"
+    NEO4J_MEMORY }o--o{ NEO4J_PROJECT : "RELATES_TO"
+    NEO4J_AGENT }o--|| NEO4J_TEAM : "MEMBER_OF"
+    NEO4J_AGENT }o--o{ NEO4J_PROJECT : "CONTRIBUTES_TO"
+    NEO4J_AGENT }o--o{ NEO4J_AGENT : "DELEGATES_TO"
+    NEO4J_AGENT }o--o{ NEO4J_AGENT : "ESCALATES_TO"
+    NEO4J_AGENT }o--o{ NEO4J_AGENT : "HANDS_OFF_TO"
 ```
 
 ---
@@ -355,23 +396,78 @@ The primary append-only log. Every memory operation produces a row here. No UPDA
 
 ### `Memory` Node — Neo4j (Semantic Memory)
 
-Promoted, curated knowledge. Immutable after creation. Versioning via SUPERSEDES.
+Promoted, curated knowledge. Immutable after creation. Versioned via SUPERSEDES. See [DATA-DICTIONARY.md](./DATA-DICTIONARY.md#neo4j-memory) for full property details.
 
 | Property     | Type          | Required | Description                                    |
 | ------------ | ------------- | -------- | ---------------------------------------------- |
 | `id`         | string (UUID) | Yes      | Unique identifier                              |
+| `name`       | string        | Yes      | Short descriptive title                        |
 | `group_id`   | string        | Yes      | Tenant namespace. Must match `^allura-`        |
-| `user_id`    | string        | Yes      | Memory owner                                   |
+| `category`   | string        | Yes      | Memory classification                          |
+| `type`       | string        | Yes      | Memory type (procedural, declarative, etc.)     |
 | `content`    | string        | Yes      | The memory content                             |
+| `source`     | string        | Yes      | Origin (notion, curator, manual, conversation) |
+| `notion_id`  | string        | No       | Notion page ID for bidirectional traceability  |
 | `score`      | float         | Yes      | Confidence score (0–1)                         |
 | `deprecated` | boolean       | Yes      | True when a newer version supersedes this node |
 | `created_at` | datetime      | Yes      | Creation timestamp                             |
+
+### `Agent` Node — Neo4j (Structural Context)
+
+Represents an AI agent in the team. Seeded via `scripts/neo4j-seed-agents.cypher`. See [DATA-DICTIONARY.md](./DATA-DICTIONARY.md#neo4j-agent) for full property details.
+
+| Property     | Type          | Required | Description                                    |
+| ------------ | ------------- | -------- | ---------------------------------------------- |
+| `id`         | string        | Yes      | Unique agent identifier                        |
+| `name`       | string        | Yes      | Human-readable agent name                      |
+| `persona`    | string        | Yes      | Agent persona description                       |
+| `team`       | string        | Yes      | Team name                                       |
+| `category`   | string        | Yes      | Agent classification (ram, durham, governance, ship) |
+| `type`       | string        | Yes      | Agent type (executor, reviewer, curator, orchestrator, specialist, creative) |
+| `scope`      | string        | Yes      | Operational scope (project, team, global)      |
+| `platform`   | string        | Yes      | Platform (openclaw, claude, cursor, opencode)   |
+| `status`     | string        | Yes      | Lifecycle status (active, inactive, retired)   |
+| `group_id`   | string        | Yes      | Tenant namespace                                |
+| `description`| string        | No       | Extended description of the agent's role        |
+
+### `Team` Node — Neo4j (Structural Context)
+
+Represents a team of agents. See [DATA-DICTIONARY.md](./DATA-DICTIONARY.md#neo4j-team) for full property details.
+
+| Property     | Type          | Required | Description                                    |
+| ------------ | ------------- | -------- | ---------------------------------------------- |
+| `id`         | string        | Yes      | Unique team identifier                         |
+| `name`       | string        | Yes      | Human-readable team name                       |
+| `group_id`   | string        | Yes      | Tenant namespace                                |
+| `icon`       | string        | No       | Emoji or icon identifier                        |
+| `description`| string        | No       | Team description and purpose                    |
+
+### `Project` Node — Neo4j (Structural Context)
+
+Represents a project that agents contribute to and memories relate to. See [DATA-DICTIONARY.md](./DATA-DICTIONARY.md#neo4j-project) for full property details.
+
+| Property     | Type          | Required | Description                                    |
+| ------------ | ------------- | -------- | ---------------------------------------------- |
+| `id`         | string        | Yes      | Unique project identifier                       |
+| `name`       | string        | Yes      | Human-readable project name                    |
+| `group_id`   | string        | Yes      | Tenant namespace                                |
+| `status`     | string        | Yes      | Project status (active, planned, complete, on-hold) |
+| `description`| string        | No       | Project description and scope                   |
 
 **Relationships**
 
 | Relationship | Pattern                    | Description                                     |
 | ------------ | -------------------------- | ----------------------------------------------- |
 | `SUPERSEDES` | `(v2)-[:SUPERSEDES]->(v1)` | v1 is marked `deprecated: true`. Never edit v1. |
+| `AUTHORED_BY` | `(m:Memory)-[:AUTHORED_BY]->(a:Agent)` | Memory was authored by Agent. |
+| `RELATES_TO` | `(m:Memory)-[:RELATES_TO]->(p:Project)` | Memory relates to Project. |
+| `MEMBER_OF` | `(a:Agent)-[:MEMBER_OF]->(t:Team)` | Agent is a member of Team. |
+| `CONTRIBUTES_TO` | `(a:Agent)-[:CONTRIBUTES_TO]->(p:Project)` | Agent contributes to Project. |
+| `DELEGATES_TO` | `(a:Agent)-[:DELEGATES_TO]->(b:Agent)` | Chain of command delegation. |
+| `ESCALATES_TO` | `(a:Agent)-[:ESCALATES_TO]->(b:Agent)` | Escalation path. |
+| `HANDS_OFF_TO` | `(a:Agent)-[:HANDS_OFF_TO]->(b:Agent)` | Creative flow handoff (Durham). |
+| `PROPOSES_TO` | `(a:Agent)-[:PROPOSES_TO]->(b:Agent)` | Curator proposes to Auditor. |
+| `APPROVES_PROMOTION` | `(a:Agent)-[:APPROVES_PROMOTION]->(b:Agent)` | Auditor approves promotion. |
 
 ---
 

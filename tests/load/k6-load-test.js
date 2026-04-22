@@ -251,19 +251,24 @@ function mcpInitialized(session) {
   return response;
 }
 
-// ── Legacy JSON-RPC Helpers ───────────────────────────────────────────────────
+// ── MCP Tool Call Helpers ──────────────────────────────────────────────────────
 
 /**
- * Call a tool via the legacy JSON-RPC endpoint.
+ * Call a tool via the MCP Streamable HTTP endpoint.
  */
-function legacyToolCall(toolName, args) {
+function mcpToolCall(toolName, args) {
   var payload = {
-    name: toolName,
-    arguments: args
+    jsonrpc: "2.0",
+    id: __VU + "-" + __ITER + "-" + toolName,
+    method: "tools/call",
+    params: {
+      name: toolName,
+      arguments: args
+    }
   };
 
   return http.post(
-    BASE_URL + "/tools/call",
+    BASE_URL + "/mcp",
     JSON.stringify(payload),
     { headers: getHeaders() }
   );
@@ -373,7 +378,7 @@ function testMetrics() {
 }
 
 /**
- * Test memory_add via legacy JSON-RPC — the Phase 9 benchmark target.
+ * Test memory_add via MCP Streamable HTTP — the Phase 9 benchmark target.
  * Records custom metric: memory_add_duration.
  */
 function testMemoryAdd(vuId, iter) {
@@ -391,7 +396,7 @@ function testMemoryAdd(vuId, iter) {
   };
 
   var startTime = Date.now();
-  var response = legacyToolCall("memory_add", args);
+  var response = mcpToolCall("memory_add", args);
   var duration = Date.now() - startTime;
 
   memoryAddDuration.add(duration);
@@ -442,7 +447,7 @@ function testMemoryAdd(vuId, iter) {
 }
 
 /**
- * Test memory_search via legacy JSON-RPC.
+ * Test memory_search via MCP Streamable HTTP.
  * Records custom metric: memory_search_duration.
  */
 function testMemorySearch(vuId, iter) {
@@ -456,7 +461,7 @@ function testMemorySearch(vuId, iter) {
   };
 
   var startTime = Date.now();
-  var response = legacyToolCall("memory_search", args);
+  var response = mcpToolCall("memory_search", args);
   var duration = Date.now() - startTime;
 
   memorySearchDuration.add(duration);
@@ -481,7 +486,7 @@ function testMemorySearch(vuId, iter) {
 }
 
 /**
- * Test memory_get via legacy JSON-RPC.
+ * Test memory_get via MCP Streamable HTTP.
  * Records custom metric: memory_get_duration.
  */
 function testMemoryGet(memoryId) {
@@ -493,7 +498,7 @@ function testMemoryGet(memoryId) {
   };
 
   var startTime = Date.now();
-  var response = legacyToolCall("memory_get", args);
+  var response = mcpToolCall("memory_get", args);
   var duration = Date.now() - startTime;
 
   memoryGetDuration.add(duration);
@@ -510,7 +515,7 @@ function testMemoryGet(memoryId) {
 }
 
 /**
- * Test memory_list via legacy JSON-RPC.
+ * Test memory_list via MCP Streamable HTTP.
  * Records custom metric: memory_list_duration.
  */
 function testMemoryList(vuId) {
@@ -523,7 +528,7 @@ function testMemoryList(vuId) {
   };
 
   var startTime = Date.now();
-  var response = legacyToolCall("memory_list", args);
+  var response = mcpToolCall("memory_list", args);
   var duration = Date.now() - startTime;
 
   memoryListDuration.add(duration);

@@ -518,6 +518,71 @@ export class Neo4jGraphAdapter implements IGraphAdapter {
     }
   }
 
+  async linkMemoryContext(params: {
+    memory_id: MemoryId
+    group_id: GroupId
+    agent_id: string | null
+    project_id: string | null
+  }): Promise<{ authored_by: boolean; relates_to: boolean }> {
+    // Skip if nothing to link
+    if (!params.agent_id && !params.project_id) {
+      return { authored_by: false, relates_to: false }
+    }
+
+    const session = this.driver.session()
+    try {
+      let authoredBy = false
+      let relatesTo = false
+
+      // Wire AUTHORED_BY → Agent (best-effort, skips if Agent not found)
+      if (params.agent_id) {
+        const result = await session.run(
+          `MATCH (m) WHERE m.id = $memoryId AND m.group_id = $groupId AND (m:Memory OR m:Insight)
+           OPTIONAL MATCH (a:Agent {id: $agentId, group_id: $groupId})
+           FOREACH (x IN CASE WHEN a IS NOT NULL THEN [1] ELSE [] END |
+             MERGE (m)-[:AUTHORED_BY]->(a)
+           )
+           RETURN a IS NOT NULL AS linked`,
+          {
+            memoryId: params.memory_id,
+            groupId: params.group_id,
+            agentId: params.agent_id,
+          }
+        )
+        authoredBy = result.records[0]?.get('linked') ?? false
+      }
+
+      // Wire RELATES_TO → Project (best-effort, skips if Project not found)
+      if (params.project_id) {
+        const result = await session.run(
+          `MATCH (m) WHERE m.id = $memoryId AND m.group_id = $groupId AND (m:Memory OR m:Insight)
+           OPTIONAL MATCH (p:Project {id: $projectId, group_id: $groupId})
+           FOREACH (x IN CASE WHEN p IS NOT NULL THEN [1] ELSE [] END |
+             MERGE (m)-[:RELATES_TO]->(p)
+           )
+           RETURN p IS NOT NULL AS linked`,
+          {
+            memoryId: params.memory_id,
+            groupId: params.group_id,
+            projectId: params.project_id,
+          }
+        )
+        relatesTo = result.records[0]?.get('linked') ?? false
+      }
+
+      return { authored_by: authoredBy, relates_to: relatesTo }
+    } catch (error) {
+      // Log but don't throw — relationship wiring is best-effort, not blocking
+      console.warn(
+        `[sync-contract] linkMemoryContext failed for memory=${params.memory_id}:`,
+        error instanceof Error ? error.message : error
+      )
+      return { authored_by: false, relates_to: false }
+    } finally {
+      await session.close()
+    }
+  }
+
   // ── Lifecycle ──────────────────────────────────────────────────────────
 
   async isHealthy(): Promise<boolean> {

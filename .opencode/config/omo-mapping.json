@@ -1,0 +1,136 @@
+{
+  "$schema": "omo-mapping-v1",
+  "description": "OMO (oh-my-openagent) → Allura Brain Team RAM mapping. This is the translation layer between the OMO framework's built-in agent roles and this project's team naming. The OMO framework provides the base capability model; the names and routing below are project-scoped.",
+  "version": 1,
+
+  "core": {
+    "sisyphus": {
+      "omo_role": "orchestrator",
+      "maps_to": "brooks",
+      "agent_file": ".opencode/agent/brooks.md",
+      "mode": "primary",
+      "priority": "core"
+    },
+    "hephaestus": {
+      "omo_role": "builder",
+      "maps_to": "woz",
+      "agent_file": ".opencode/agent/woz.md",
+      "mode": "subagent",
+      "priority": "core"
+    },
+    "prometheus": {
+      "omo_role": "reasoner",
+      "maps_to": "norvig",
+      "agent_file": ".opencode/agent/norvig.md",
+      "mode": "subagent",
+      "priority": "core",
+      "status": "new"
+    },
+    "atlas": {
+      "omo_role": "context_holder",
+      "maps_to": "hassabis",
+      "agent_file": ".opencode/agent/hassabis.md",
+      "mode": "subagent",
+      "priority": "core",
+      "status": "new"
+    }
+  },
+
+  "specialists": {
+    "oracle": {
+      "omo_role": "knowledge",
+      "maps_to": "karpathy",
+      "agent_file": ".opencode/agent/karpathy.md",
+      "mode": "subagent",
+      "priority": "support",
+      "status": "new"
+    },
+    "librarian": {
+      "omo_role": "retrieval",
+      "maps_to": "jim-simons",
+      "agent_file": ".opencode/agent/jim-simons.md",
+      "mode": "subagent",
+      "priority": "support",
+      "status": "new"
+    },
+    "explore": {
+      "omo_role": "search",
+      "maps_to": "scout",
+      "agent_file": ".opencode/agent/scout.md",
+      "mode": "subagent",
+      "priority": "support"
+    },
+    "multimodal-looker": {
+      "omo_role": "vision",
+      "maps_to": "fei-fei-li-vision",
+      "agent_file": ".opencode/agent/fei-fei-li-vision.md",
+      "mode": "subagent",
+      "priority": "support",
+      "status": "new"
+    },
+    "metis": {
+      "omo_role": "strategy",
+      "maps_to": "sutskever",
+      "agent_file": ".opencode/agent/sutskever.md",
+      "mode": "subagent",
+      "priority": "support",
+      "status": "new"
+    },
+    "momus": {
+      "omo_role": "critique",
+      "maps_to": "torvalds",
+      "agent_file": ".opencode/agent/torvalds.md",
+      "mode": "subagent",
+      "priority": "support",
+      "status": "new"
+    },
+    "sisyphus-junior": {
+      "omo_role": "helper",
+      "maps_to": "operator",
+      "agent_file": ".opencode/agent/operator.md",
+      "mode": "subagent",
+      "priority": "support",
+      "status": "new"
+    }
+  },
+
+  "existing_team_ram": {
+    "brooks": { "omo_equivalent": "sisyphus", "role": "architect + orchestrator" },
+    "jobs": { "omo_equivalent": null, "role": "intent gate", "note": "No OMO equivalent — unique to Allura Brain" },
+    "woz": { "omo_equivalent": "hephaestus", "role": "primary builder" },
+    "pike": { "omo_equivalent": null, "role": "interface gate", "note": "No OMO equivalent — unique to Allura Brain" },
+    "bellard": { "omo_equivalent": null, "role": "diagnostics + perf", "note": "No OMO equivalent — unique to Allura Brain" },
+    "fowler": { "omo_equivalent": null, "role": "refactor gate", "note": "No OMO equivalent — unique to Allura Brain" },
+    "carmack": { "omo_equivalent": null, "role": "performance specialist", "note": "No OMO equivalent — unique to Allura Brain" },
+    "knuth": { "omo_equivalent": null, "role": "data architect", "note": "No OMO equivalent — unique to Allura Brain" },
+    "hightower": { "omo_equivalent": null, "role": "devops specialist", "note": "No OMO equivalent — unique to Allura Brain" },
+    "scout": { "omo_equivalent": "explore", "role": "recon + discovery" },
+    "norvig": { "omo_equivalent": "prometheus", "role": "reasoning + planning" },
+    "hassabis": { "omo_equivalent": "atlas", "role": "context + big picture" },
+    "karpathy": { "omo_equivalent": "oracle", "role": "knowledge + AI expertise" },
+    "jim-simons": { "omo_equivalent": "librarian", "role": "memory + data patterns" },
+    "fei-fei-li-vision": { "omo_equivalent": "multimodal-looker", "role": "vision + multimodal" },
+    "sutskever": { "omo_equivalent": "metis", "role": "strategy + alignment" },
+    "torvalds": { "omo_equivalent": "momus", "role": "critique + validation" },
+    "operator": { "omo_equivalent": "sisyphus-junior", "role": "subtask helper" }
+  },
+
+  "routing_rules": {
+    "brooks": ["decides who to call", "task planning", "architecture", "delegation"],
+    "norvig": ["reasoning", "planning", "logic", "deep analysis"],
+    "hassabis": ["context holding", "big picture", "strategic context"],
+    "woz": ["executes", "implements", "ships working code"],
+    "torvalds": ["validates before finalize", "brutal correctness", "critique"],
+    "jim-simons": ["logs", "learns", "memory retrieval", "data patterns"],
+    "karpathy": ["knowledge answers", "ML/AI expertise"],
+    "fei-fei-li-vision": ["vision", "images", "multimodal"],
+    "pike": ["interfaces", "surface area", "simplicity"],
+    "bellard": ["diagnostics", "measurement", "low-level performance"],
+    "fowler": ["refactoring", "maintainability", "incremental change"],
+    "carmack": ["optimization", "latency", "real-time performance"],
+    "knuth": ["schema", "queries", "data architecture"],
+    "hightower": ["deployment", "ci/cd", "infrastructure"],
+    "sutskever": ["strategy", "wisdom", "long-term thinking"],
+    "operator": ["helper", "subtask", "delegated work"]
+  }
+}
