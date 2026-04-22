@@ -53,7 +53,7 @@ permission:
 
 2. Search Neo4j for interface patterns and API surface area records by topic_key
 
-3. Load memory-client skill (`skill({ name: "memory-client" })`) for canonical interface reference
+3. Load allura-memory-skill (`skill({ name: "allura-memory-skill" })`) for canonical interface reference
 
 ### On Task Complete
 

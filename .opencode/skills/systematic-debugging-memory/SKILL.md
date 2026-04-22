@@ -13,47 +13,56 @@ Random fixes waste time and create new bugs. Quick patches mask underlying issue
 
 **Violating the letter of this process is violating the spirit of debugging.**
 
-## Memory Integration (NEW)
+## Memory Integration (Updated)
 
-This skill now integrates with the memory system to persist debugging knowledge across sessions.
+This skill integrates with Allura Brain's governed memory system to persist debugging knowledge across sessions.
+
+**Use this skill when:** You need memory-aware debugging instructions with current tool names.
+
+**Canonical reference:** Use the `allura-memory-skill` contract for all memory operations.
 
 ### At Session Start (Phase 0)
 
 **BEFORE starting Phase 1, hydrate context from memory:**
 
 1. **Query Previous Debugging Sessions**
-   ```
-   MCP_DOCKER_query_database: {
-     query: "SELECT * FROM events WHERE group_id = :group AND event_type LIKE 'debug:%' ORDER BY created_at DESC LIMIT 10"
-   }
-   ```
+     ```
+     allura-brain_memory_search: {
+       query: "debug {component} {error_type}",
+       group_id: "allura-system",
+       limit: 10
+     }
+     ```
 
 2. **Search for Similar Issues**
-   ```
-   MCP_DOCKER_search_memories: {
-     query: "debugging {component} {error_type}"
-   }
-   ```
+     ```
+     allura-brain_memory_search: {
+       query: "debugging {component} {error_type}",
+       group_id: "allura-system"
+     }
+     ```
 
 3. **Check for Known Root Causes**
-   ```
-   MCP_DOCKER_find_memories_by_name: {
-     names: ["Root Cause: {component}", "Bug Pattern: {pattern}"]
-   }
-   ```
+     ```
+     allura-brain_memory_search: {
+       query: "Root Cause: {component} Bug Pattern: {pattern}",
+       group_id: "allura-system"
+     }
+     ```
 
 4. **Present Context**
-   > "Found N previous debugging sessions for similar issues. M known root causes identified. Key insights: [list]"
+    > "Found N previous debugging sessions for similar issues. M known root causes identified. Key insights: [list]"
 
 ### During Investigation
 
-**Log key findings at each phase:**
+**Log key findings at each phase using allura-brain_memory_add:**
 
 ```
-MCP_DOCKER_insert_data: {
-  table_name: "events",
-  columns: "group_id, event_type, agent_id, workflow_id, status, metadata",
-  values: "'group', 'debug:phase1_complete', 'agent', 'debug-session', 'in_progress', '{\"phase\": 1, \"findings\": [...]}'"
+allura-brain_memory_add: {
+  group_id: "allura-system",
+  user_id: "debug-agent",
+  content: "Phase 1 complete - evidence gathered",
+  metadata: { phase: 1, findings: [...] }
 }
 ```
 
@@ -62,35 +71,31 @@ MCP_DOCKER_insert_data: {
 **After completing Phase 4:**
 
 1. **Log Root Cause** (if found)
-   ```
-   MCP_DOCKER_insert_data: {
-     table_name: "events",
-     columns: "group_id, event_type, agent_id, workflow_id, status, metadata",
-     values: "'group', 'debug:root_cause_found', 'agent', 'debug-session', 'completed', '{\"root_cause\": \"...\", \"fix\": \"...\"}'"
+    ```
+    allura-brain_memory_add: {
+     group_id: "allura-system",
+     user_id: "debug-agent",
+     content: "Root cause found: {description}",
+     metadata: { root_cause: "...", fix: "..." }
    }
    ```
 
 2. **Create Insight** (for significant findings)
-   ```
-   MCP_DOCKER_create_entities: {
-     entities: [{
-       name: "Root Cause: {brief description}",
-       entityType: "RootCause",
+    ```
+    allura-brain_memory_add: {
+     group_id: "allura-system",
+     user_id: "debug-agent",
+     content: "Root Cause: {brief description}",
+     metadata: {
+       category: "RootCause",
        observations: ["Detailed description...", "Fix applied...", "Prevention..."]
-     }]
+     }
    }
    ```
 
-3. **Link to Events**
-   ```
-   MCP_DOCKER_create_relations: {
-     relations: [{
-       from: "Root Cause: {...}",
-       to: "Event: {...}",
-       relationType: "DERIVED_FROM"
-     }]
-   }
-   ```
+3. **Link to Events** (via metadata reference)
+    - Include `related_event_ids` in allura-brain_memory_add metadata referencing previous session events
+    - Use `allura-brain_memory_search` with event_id filter to link
 
 ## The Iron Law
 
@@ -221,9 +226,11 @@ You MUST complete each phase before proceeding to the next.
 
 **Log checkpoint:**
 ```
-MCP_DOCKER_insert_data: {
-  event_type: 'debug:phase1_complete',
-  metadata: { evidence_gathered, initial_hypotheses }
+allura-brain_memory_add: {
+  group_id: "allura-system",
+  user_id: "debug-agent",
+  content: "Phase 1 complete - evidence gathered",
+  metadata: { evidence_gathered: "...", initial_hypotheses: "..." }
 }
 ```
 
@@ -251,17 +258,20 @@ MCP_DOCKER_insert_data: {
    - What assumptions does it make?
 
 5. **Check Memory for Patterns**
-   ```
-   MCP_DOCKER_search_memories: {
-     query: "pattern {component} {symptom}"
-   }
-   ```
+    ```
+    allura-brain_memory_search: {
+      query: "pattern {component} {symptom}",
+      group_id: "allura-system"
+    }
+    ```
 
 **Log checkpoint:**
 ```
-MCP_DOCKER_insert_data: {
-  event_type: 'debug:phase2_complete',
-  metadata: { patterns_identified, differences_found }
+allura-brain_memory_add: {
+  group_id: "allura-system",
+  user_id: "debug-agent",
+  content: "Phase 2 complete - patterns identified",
+  metadata: { patterns_identified: "...", differences_found: "..." }
 }
 ```
 
@@ -291,17 +301,20 @@ MCP_DOCKER_insert_data: {
    - Research more
 
 5. **Check Memory for Similar Hypotheses**
-   ```
-   MCP_DOCKER_search_memories: {
-     query: "hypothesis {component}"
-   }
-   ```
+    ```
+    allura-brain_memory_search: {
+      query: "hypothesis {component}",
+      group_id: "allura-system"
+    }
+    ```
 
 **Log checkpoint:**
 ```
-MCP_DOCKER_insert_data: {
-  event_type: 'debug:phase3_complete',
-  metadata: { hypothesis, test_result, confirmed_or_rejected }
+allura-brain_memory_add: {
+  group_id: "allura-system",
+  user_id: "debug-agent",
+  content: "Phase 3 complete - hypothesis tested",
+  metadata: { hypothesis: "...", test_result: "...", confirmed_or_rejected: "..." }
 }
 ```
 
@@ -328,69 +341,67 @@ MCP_DOCKER_insert_data: {
    - Issue actually resolved?
 
 4. **Log Fix**
-   ```
-   MCP_DOCKER_insert_data: {
-     event_type: 'debug:fix_implemented',
-     metadata: { 
-       root_cause: "...",
-       fix: "...",
-       files_modified: [...],
-       test_verified: true/false
-     }
-   }
-   ```
+    ```
+    allura-brain_memory_add: {
+      group_id: "allura-system",
+      user_id: "debug-agent",
+      content: "Fix implemented - Root cause: {desc}",
+      metadata: { 
+        root_cause: "...",
+        fix: "...",
+        files_modified: [...],
+        test_verified: true/false
+      }
+    }
+    ```
 
 5. **If Fix Doesn't Work**
-   - STOP
-   - Count: How many fixes have you tried?
-   - If < 3: Return to Phase 1, re-analyze with new information
-   - **If ≥ 3: STOP and question the architecture (step 5 below)**
-   - DON'T attempt Fix #4 without architectural discussion
+    - STOP
+    - Count: How many fixes have you tried?
+    - If < 3: Return to Phase 1, re-analyze with new information
+    - **If ≥ 3: STOP and question the architecture (step 5 below)**
+    - DON'T attempt Fix #4 without architectural discussion
 
-### Phase 5: Persistence (NEW)
+### Phase 5: Persistence (Updated)
 
 **After successful fix:**
 
 1. **Create Insight**
-   ```
-   MCP_DOCKER_create_entities: {
-     entities: [{
-       name: "Root Cause: {brief}",
-       entityType: "RootCause",
-       observations: [
-         "Problem: {...}",
-         "Root Cause: {...}",
-         "Fix: {...}",
-         "Prevention: {...}"
-       ]
-     }]
-   }
-   ```
+    ```
+    allura-brain_memory_add: {
+      group_id: "allura-system",
+      user_id: "debug-agent",
+      content: "Root Cause: {brief}",
+      metadata: {
+        category: "RootCause",
+        observations: [
+          "Problem: {...}",
+          "Root Cause: {...}",
+          "Fix: {...}",
+          "Prevention: {...}"
+        ]
+      }
+    }
+    ```
 
-2. **Link to Session**
-   ```
-   MCP_DOCKER_create_relations: {
-     relations: [{
-       from: "Root Cause: {...}",
-       to: "Event: {...}",
-       relationType: "DERIVED_FROM"
-     }]
-   }
-   ```
+2. **Link to Events** (via metadata reference)
+    - Include `related_event_ids` in allura-brain_memory_add metadata referencing previous session events
+    - Use `allura-brain_memory_search` with event_id filter to link
 
 3. **Log Session Complete**
-   ```
-   MCP_DOCKER_insert_data: {
-     event_type: 'debug:session_complete',
-     status: 'completed',
-     metadata: { 
-       duration_minutes,
-       phases_completed,
-       root_cause_found,
-       insight_created
-     }
-   }
-   ```
+    ```
+    allura-brain_memory_add: {
+      group_id: "allura-system",
+      user_id: "debug-agent",
+      content: "Session complete - Debugging finished",
+      metadata: { 
+        duration_minutes: "...",
+        phases_completed: "...",
+        root_cause_found: "...",
+        insight_created: "..."
+      }
+    }
+    ```
 
 ### Phase 4.5: Architecture Questioning
 
@@ -412,16 +423,16 @@ This is NOT a failed hypothesis - this is a wrong architecture.
 
 ## MCP Tool Mapping for Debugging
 
-| Debugging Task | MCP Tool | Table/Entity |
+| Debugging Task | MCP Tool | Memory Layer |
 |----------------|----------|--------------|
-| Query previous sessions | `MCP_DOCKER_query_database` | `events` table |
-| Search for patterns | `MCP_DOCKER_search_memories` | Neo4j |
-| Log session start | `MCP_DOCKER_insert_data` | `events` |
-| Log phase complete | `MCP_DOCKER_insert_data` | `events` |
-| Log root cause found | `MCP_DOCKER_insert_data` | `events` |
-| Create insight | `MCP_DOCKER_create_entities` | Neo4j `RootCause` |
-| Link to events | `MCP_DOCKER_create_relations` | Neo4j relations |
-| Verify persistence | `MCP_DOCKER_query_database` | Verify by event ID |
+| Query previous sessions | `allura-brain_memory_search` | Both (PostgreSQL + Neo4j) |
+| Search for patterns | `allura-brain_memory_search` | Both |
+| Log session start | `allura-brain_memory_add` | Episodic (PG) |
+| Log phase complete | `allura-brain_memory_add` | Episodic (PG) |
+| Log root cause found | `allura-brain_memory_add` | Episodic (PG) |
+| Create insight | `allura-brain_memory_add` + `allura-brain_memory_promote` | Episodic → Semantic |
+| Link to events | `metadata` reference | Episodic |
+| Verify persistence | `allura-brain_memory_search` | Both |
 
 ## Event Type Naming Convention
 
@@ -512,7 +523,7 @@ These techniques are part of systematic debugging and available in this director
 **Related skills:**
 - **superpowers:test-driven-development** - For creating failing test case (Phase 4, Step 1)
 - **superpowers:verification-before-completion** - Verify fix worked before claiming success
-- **roninmemory:memory-client** - For querying and logging to memory system
+- **allura-memory-skill** - For querying and logging to memory system
 
 ## Real-World Impact
 

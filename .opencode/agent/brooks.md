@@ -62,7 +62,7 @@ permission:
 
 2. Search Neo4j for relevant insights by topic_key (architecture, contracts, ADRs)
 
-3. Load memory-client skill (`skill({ name: "memory-client" })`) for canonical interface reference
+3. Load allura-memory-skill (`skill({ name: "allura-memory-skill" })`) for canonical interface reference
 
 4. If Notion context is relevant, search Notion for project docs
 

@@ -61,7 +61,7 @@ permission:
 
 3. Use MCP_DOCKER_mcp-find + mcp-add if memory server not yet active
 
-4. Load memory-client skill (`skill({ name: "memory-client" })`) for canonical interface reference
+4. Load allura-memory-skill (`skill({ name: "allura-memory-skill" })`) for canonical interface reference
 
 5. Include memory findings in Scout Report under "## Memory Context"
 

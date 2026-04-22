@@ -3,54 +3,54 @@
   "skills": {
     "brooks-architect": [
       "mcp-docker",
-      "memory-client",
+      "allura-memory-skill",
       "skill-creator",
       "code-review",
       "context7"
     ],
     "knuth-data-architect": [
       "mcp-docker",
-      "memory-client",
+      "allura-memory-skill",
       "postgres-best-practices",
       "next-best-practices"
     ],
     "woz-builder": [
       "mcp-docker",
-      "memory-client",
+      "allura-memory-skill",
       "code-review"
     ],
     "jobs-intent-gate": [
       "mcp-docker",
-      "memory-client",
+      "allura-memory-skill",
       "postgres-best-practices"
     ],
     "hightower-devops": [
       "mcp-docker",
-      "memory-client",
+      "allura-memory-skill",
       "next-best-practices"
     ],
     "carmack-performance": [
       "mcp-docker",
-      "memory-client"
+      "allura-memory-skill"
     ],
     "bellard-diagnostics-perf": [
       "mcp-docker",
-      "memory-client",
+      "allura-memory-skill",
       "next-best-practices"
     ],
     "fowler-refactor-gate": [
       "mcp-docker",
-      "memory-client",
+      "allura-memory-skill",
       "code-review"
     ],
     "pike-interface-review": [
       "mcp-docker",
-      "memory-client",
+      "allura-memory-skill",
       "code-review"
     ],
     "scout-recon": [
       "mcp-docker",
-      "memory-client",
+      "allura-memory-skill",
       "context7",
       "multi-search"
     ]

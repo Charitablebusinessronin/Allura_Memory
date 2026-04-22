@@ -34,39 +34,46 @@ Session End:
 
 ## Memory Logging Commands
 
-### Log Event
+### Log Event (Store Memory)
 
 ```typescript
 // At skill start
-await logEvent({
-  group_id: "roninmemory",
-  event_type: "skill:brainstorming:start",
-  agent_id: "roninmemory-agent",
-  workflow_id: "feature-123",
-  status: "pending",
-  metadata: { topic: "user request description" }
+await allura-brain_memory_add({
+  group_id: "allura-system",
+  user_id: "roninmemory-agent",
+  content: "Skill brainstorming started for feature-123",
+  metadata: { source: "session", workflow_id: "feature-123" }
 });
 
 // At skill end
-await logEvent({
-  group_id: "roninmemory",
-  event_type: "skill:brainstorming:end",
-  agent_id: "roninmemory-agent",
-  workflow_id: "feature-123",
-  status: "completed",
-  metadata: { spec_path: "docs/superpowers/specs/YYYY-MM-DD-feature.md" }
+await allura-brain_memory_add({
+  group_id: "allura-system",
+  user_id: "roninmemory-agent",
+  content: "Skill brainstorming completed with spec: docs/superpowers/specs/YYYY-MM-DD-feature.md",
+  metadata: { source: "session", workflow_id: "feature-123" }
 });
 ```
 
-### Create Insight
+### Create Insight (Promote to Canonical)
 
 ```typescript
-await createInsight({
-  title: "Design Decision: [Topic]",
-  content: "What was decided and why",
-  category: "Architecture", // or "Bugfix", "Refactor", "Performance"
-  tags: ["superpowers", "brainstorming", "design"],
-  sourceEventIds: [123, 124] // Link to events
+await allura-brain_memory_add({
+  group_id: "allura-system",
+  user_id: "roninmemory-agent",
+  content: "Design Decision: [Topic]",
+  metadata: {
+    source: "manual",
+    tags: ["superpowers", "brainstorming", "design"],
+    category: "Architecture"
+  }
+});
+
+// If this meets policy, promote to canonical:
+await allura-brain_memory_promote({
+  id: "<memory-id>",
+  group_id: "allura-system",
+  user_id: "roninmemory-agent",
+  rationale: "Valid design decision with consensus"
 });
 ```
 
@@ -74,19 +81,22 @@ await createInsight({
 
 ```typescript
 // Get recent events for this workflow
-const recentEvents = await searchEvents({
-  query: "roninmemory brainstorming feature-123"
+const recentEvents = await allura-brain_memory_search({
+  query: "feature-123",
+  group_id: "allura-system"
 });
 
-// Get related insights
-const insights = await searchInsights({
-  query: "brainstorming design decisions"
+// Get related insights (canonical)
+const insights = await allura-brain_memory_search({
+  query: "design decisions",
+  group_id: "allura-system",
+  min_score: 0.85
 });
 ```
 
 ## Event Type Naming
 
-Use consistent prefixes:
+Use consistent prefixes with `allura-brain_memory_add` metadata:
 
 - `skill:<name>:start` - Skill invocation start
 - `skill:<name>:checkpoint` - Milestone within skill
@@ -96,15 +106,27 @@ Use consistent prefixes:
 - `insight:created` - New insight created
 - `outcome:<result>` - Final outcome logged
 
+Store these as `content` in `allura-brain_memory_add`, with `event_type` in metadata.
+
 ## Status Values
 
-PostgreSQL events table constraint requires:
+PostgreSQL events table constraint requires status metadata values:
 - `pending` - Work in progress
 - `completed` - Successfully finished
 - `failed` - Error or failure
 - `cancelled` - Aborted
 
 **Important**: `in_progress` is NOT valid - use `pending` instead.
+
+For `allura-brain_memory_add`, include status in metadata:
+```typescript
+await allura-brain_memory_add({
+  group_id: "allura-system",
+  user_id: "roninmemory-agent",
+  content: "Status: pending",
+  metadata: { status: "pending" }
+});
+```
 
 ## Skill-Specific Patterns
 
@@ -187,67 +209,83 @@ At session end:
 
 | Action | MCP Tool |
 |--------|----------|
-| Log event | `MCP_DOCKER_insert_data` on `events` table |
-| Create insight | `MCP_DOCKER_create_entities` in Neo4j |
-| Link to events | `MCP_DOCKER_create_relations` |
-| Search events | `MCP_DOCKER_query_database` with SQL |
-| Search insights | `MCP_DOCKER_search_memories` |
-| Verify write | `MCP_DOCKER_query_database` by event ID |
+| Store memory (session events, decisions) | `allura-brain_memory_add` |
+| Search memories | `allura-brain_memory_search` |
+| Get single memory | `allura-brain_memory_get` |
+| List memories | `allura-brain_memory_list` |
+| Update memory | `allura-brain_memory_update` |
+| Delete memory | `allura-brain_memory_delete` |
+| Promote raw trace to insight | `allura-brain_memory_promote` |
+| Export memories | `allura-brain_memory_export` |
 
 ## Example: Complete Session Flow
 
 ```typescript
 // === SESSION START ===
-// 1. Hydrate context
-const previousWork = await searchEvents({
-  query: "roninmemory feature-123 last-7-days"
+// 1. Hydrate context from previous sessions
+const previousWork = await allura-brain_memory_search({
+  query: "feature-123 last-7-days",
+  group_id: "allura-system"
 });
 
 // 2. Log session start
-const startEvent = await logEvent({
-  group_id: "roninmemory",
-  event_type: "skill:brainstorming:start",
-  agent_id: "roninmemory-agent",
-  workflow_id: "feature-123",
-  status: "pending",
-  metadata: { previous_work_count: previousWork.length }
+await allura-brain_memory_add({
+  group_id: "allura-system",
+  user_id: "roninmemory-agent",
+  content: "Skill brainstorming started for feature-123",
+  metadata: {
+    source: "session",
+    workflow_id: "feature-123",
+    status: "pending",
+    previous_work_count: previousWork.length
+  }
 });
 
 // === DURING EXECUTION ===
 // Log checkpoint
-await logEvent({
-  group_id: "roninmemory",
-  event_type: "decision:approach",
-  agent_id: "roninmemory-agent",
-  workflow_id: "feature-123",
-  status: "completed",
-  metadata: { chosen_approach: "option-b", reason: "better testability" }
+await allura-brain_memory_add({
+  group_id: "allura-system",
+  user_id: "roninmemory-agent",
+  content: "Decision: selected option B",
+  metadata: {
+    source: "session",
+    workflow_id: "feature-123",
+    status: "completed",
+    decision: "chosen_approach: option-b",
+    reason: "better testability"
+  }
 });
 
 // === SESSION END ===
 // Log completion
-await logEvent({
-  group_id: "roninmemory",
-  event_type: "skill:brainstorming:end",
-  agent_id: "roninmemory-agent",
-  workflow_id: "feature-123",
-  status: "completed",
-  metadata: { 
-    spec_path: "docs/superpowers/specs/2024-01-15-feature-design.md",
-    start_event_id: startEvent.eventId
+await allura-brain_memory_add({
+  group_id: "allura-system",
+  user_id: "roninmemory-agent",
+  content: "Skill brainstorming completed",
+  metadata: {
+    source: "session",
+    workflow_id: "feature-123",
+    status: "completed",
+    spec_path: "docs/superpowers/specs/2024-01-15-feature-design.md"
   }
 });
 
-// Create insight
-await createInsight({
-  title: "Design: Feature 123 - Approach Selection",
-  content: "Chose option B for better testability...",
-  category: "Architecture",
-  tags: ["superpowers", "brainstorming", "design"],
-  group_id: "roninmemory"
+// Create insight (promote if policy approves)
+await allura-brain_memory_add({
+  group_id: "allura-system",
+  user_id: "roninmemory-agent",
+  content: "Design: Feature 123 - Approach Selection",
+  metadata: {
+    source: "manual",
+    category: "Architecture",
+    tags: ["superpowers", "brainstorming", "design"]
+  }
 });
 
 // Verify
-const verify = await searchEvents({ query: "feature-123" });
-console.log(`Logged ${verify.length} events for this workflow`);
+const verify = await allura-brain_memory_search({ 
+  query: "feature-123",
+  group_id: "allura-system" 
+});
+console.log(`Logged ${verify.length} memories for this workflow`);
 ```
