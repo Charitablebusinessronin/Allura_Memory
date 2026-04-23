@@ -120,6 +120,7 @@ services:
       neo4j:
         condition: service_healthy
     environment:
+      PORT: "3100"
       NODE_ENV: production
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
@@ -143,7 +144,7 @@ services:
     networks:
       - knowledge-network
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3100/api/health/live >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://0.0.0.0:3100/api/health/live >/dev/null || exit 1"]
       interval: 20s
       timeout: 5s
       retries: 10

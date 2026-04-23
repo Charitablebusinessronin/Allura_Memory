@@ -27,6 +27,6 @@ COPY --from=builder /app/public ./public
 
 EXPOSE 3100
 HEALTHCHECK --interval=20s --timeout=5s --retries=10 \
-  CMD wget -qO- http://localhost:3100/api/health/live >/dev/null || exit 1
+  CMD wget -qO- http://0.0.0.0:3100/api/health/live >/dev/null || exit 1
 
 CMD ["bun", "run", "start"]

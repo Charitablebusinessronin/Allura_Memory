@@ -58,7 +58,7 @@ async function checkPostgreSQL(): Promise<ComponentHealth> {
       host: process.env.POSTGRES_HOST || "localhost",
       port: parseInt(process.env.POSTGRES_PORT || "5432", 10),
       database: process.env.POSTGRES_DB || "memory",
-      user: process.env.POSTGRES_USER || "ronin4life",
+      user: process.env.POSTGRES_USER || "allura",
       password: process.env.POSTGRES_PASSWORD,
       connectionTimeoutMillis: 5000,
       max: 1,

@@ -1,132 +1,98 @@
-![Allura Memory Logo](./alllura%20logo%20final/allura_logo_final.png)
+<p align="center">
+  <img src="public/readme/logo-v2.png" alt="Allura Memory" width="120" />
+</p>
 
-# Allura Memory
+<h1 align="center">Allura Memory</h1>
 
-## Memory That Shows Its Work
+<p align="center">
+  <strong>Memory That Shows Its Work</strong><br/>
+  A self-hosted, governed AI memory system with traceable capture, human-in-the-loop curation, and dual-layer storage.
+</p>
 
-Allura Memory is a self-hosted AI memory system for teams that want memory they can inspect, review, and manage.
-
-It is built around a simple promise: memory should be **traceable**, **structured**, and **governed** — and the experience of using it should feel considered rather than opaque.
-
-> Allura is designed for teams that care about visibility, control, and auditability today — and for organizations that may aspire to stricter regulatory or enterprise standards in the future. It does **not** claim current SOC 2 certification, banking approval, or any unverified compliance status.
-
----
-
-## Brand Direction
-
-For AI builders and technical teams who want memory they can inspect and manage, **Allura is AI memory that draws you in and shows its work** — magnetically inspectable, gracefully structured, and governed by clear operational boundaries.
-
-- **Inspectable** — you can trace what was recorded and why it matters
-- **Structured** — memory is organized, not merely accumulated
-- **Governed** — review and operator judgment remain central
-- **Inviting** — the system is designed to reward a closer look
+<p align="center">
+  <a href="#quick-start">Quick Start</a> · <a href="#architecture">Architecture</a> · <a href="#features">Features</a> · <a href="#deployment">Deployment</a> · <a href="docs/allura/BLUEPRINT.md">Blueprint</a>
+</p>
 
 ---
 
-## Visual Direction
+<p align="center">
+  <img src="public/readme/readme-hero.png" alt="Allura Memory Dashboard" width="720" />
+</p>
 
-Allura’s v2 direction is warmer, softer, and more magnetic than a typical infrastructure product while still grounded in clarity and control.
+## Why Allura?
 
-**Design Principles:**
-- **Warmth over cold utility** — softer palettes, rounded corners, breathing room
-- **Magnetic clarity** — information hierarchy that draws the eye without shouting
-- **Considered restraint** — every element earns its place; no decorative excess
-- **Grounded sophistication** — professional without being sterile; inviting without being casual
+AI agents forget. Sessions end, context evaporates, and your team's hard-won knowledge disappears into the void.
 
-This is not "magic AI." It is a more legible memory system with a more considered interface.
+Allura gives your agents **persistent, inspectable memory** — not a black box that silently decides what matters. Every memory is captured, scored, and routed through a clear pipeline where human judgment stays in the loop.
 
----
-
-## What Allura Brain Means
-
-Inside the project, “**Allura Brain**” refers to the memory architecture itself:
-
-### Episodic Layer — PostgreSQL
-
-- append-only event history
-- high-volume trace capture
-- audit trail by design
-- raw activity stays reconstructable
-
-### Semantic Layer — Neo4j
-
-- curated knowledge
-- version history via `SUPERSEDES`
-- promotion gate before durable knowledge writes
-- lower-volume, higher-confidence memory
-
-### Core Principle
-
-Every memory starts in the episodic layer. Promoted knowledge moves into the semantic layer **after review**, not before.
-
-This keeps Allura grounded in inspectability rather than black-box automation.
-
-### Architecture Overview
-
-![Allura Brain Architecture v2.0](./alllura%20logo%20final/allura_architecture_advanced.png)
-
-**Episodic Layer (PostgreSQL)** → Append-only event history, high-volume traces, audit trail by design  
-**Semantic Layer (Neo4j)** → Curated knowledge, versioned via SUPERSEDES, promotion-gated writes  
-**Vector Layer (RuVector)** → 768d embeddings for semantic search, hybrid ANN + BM25 ranking
+**Allura is for teams that want:**
+- 🔍 **Inspectability** — trace what was recorded, when, and why it was promoted
+- 🏛️ **Governance** — approval gates between raw capture and long-term knowledge
+- 🔒 **Self-hosting** — your data, your infrastructure, your rules
+- 🧩 **MCP-native** — plug into Claude, Cursor, OpenCode, or any MCP-compatible agent
 
 ---
 
-## Core Features
+## Architecture
 
-- **Dual-layer memory architecture** — PostgreSQL for append-only traces, Neo4j for curated knowledge
-- **Append-only audit trail** — memory events remain reconstructable over time
-- **Human-in-the-loop promotion** — review can sit between capture and long-term knowledge
-- **Multi-tenant boundaries** — `group_id`-based isolation is built into the model
-- **Self-hosted deployment** — run it on your own infrastructure
-- **MCP-native integration** — connect agents and tools through Model Context Protocol
-- **Plugin Harness** — explicit MCP discovery, approval, and routing flow
-- **Event logging** — operations are written to PostgreSQL as part of the append-only system trail
-- **Portable data posture** — designed to reduce dependence on closed memory silos
+<p align="center">
+  <img src="public/readme/readme-allura-brain.png" alt="Allura Brain Architecture" width="720" />
+</p>
+
+Allura uses a **dual-layer memory architecture** — two purpose-built stores, each doing what it does best:
+
+| Layer | Store | Role | Write Pattern |
+|-------|-------|------|---------------|
+| **Episodic** | PostgreSQL | Raw event capture, audit trail, high-volume traces | Append-only |
+| **Semantic** | Neo4j | Curated knowledge, versioned relationships, promotion-gated | Review → Promote |
+
+**The rule:** Every memory starts in PostgreSQL. Knowledge moves to Neo4j only after scoring and (optionally) curator review. History is never overwritten — superseded nodes are deprecated, not deleted.
+
+### Memory Flow
+
+<p align="center">
+  <img src="public/readme/readme-memory-flow.png" alt="Memory Flow" width="640" />
+</p>
+
+```
+Agent writes memory
+  ↓
+PostgreSQL stores append-only event (episodic layer)
+  ↓
+Content is scored (0–1 confidence)
+  ↓
+┌─ score < threshold → stays episodic (retrievable, not promoted)
+└─ score ≥ threshold → enters review queue
+      ↓
+  Curator approves or rejects
+      ↓
+  Approved → promoted to Neo4j (semantic layer)
+  Rejected → stays episodic with audit record
+```
+
+### Vector Search
+
+Allura embeds every memory at write time using **Qwen3 Matryoshka embeddings** (1024d) via Ollama. Queries use **hybrid ANN + BM25 ranking** through pgvector HNSW indexes for semantic retrieval across both stores.
 
 ---
 
-## What We Claim — And What We Don’t
+## Features
 
-### We do claim
+<p align="center">
+  <img src="public/readme/infographic.png" alt="Feature Overview" width="640" />
+</p>
 
-- Allura is designed around inspectability, structure, and governance
-- It uses a dual-layer memory model
-- It supports append-only event logging
-- It can be self-hosted
-- It uses a curator / approval pattern for promoted knowledge flows
-
-### We do **not** claim
-
-- current SOC 2 certification
-- banking-grade approval
-- zero hallucinations
-- flawless accuracy
-- autonomous truth without review
-- benchmark superiority unless specifically verified
-
-Where the product is directional or still evolving, the project should be described as:
-
-- **designed to**
-- **built to support**
-- **positioned to help**
-- **intended for teams that need**
-
----
-
-## Directional Positioning vs mem0
-
-Allura is being developed as a more governed, more inspectable alternative in the AI memory space.
-
-Directional differentiation today:
-
-| Dimension | Allura Direction | mem0 Reference Frame |
-| --------- | ---------------- | -------------------- |
-| Memory posture | inspectable + governed | autonomous memory emphasis |
-| Review model | approval-friendly | more automation-oriented |
-| Auditability | append-only system trail | less central to positioning |
-| Deployment | self-hosted path | commonly seen as managed/SaaS reference |
-
-This is **positioning**, not an absolute superiority claim.
+| Feature | Description |
+|---------|-------------|
+| **Dual-layer storage** | PostgreSQL (episodic) + Neo4j (semantic) with clear promotion boundary |
+| **Append-only audit trail** | Every write is an immutable event — reconstruct any point in time |
+| **Human-in-the-loop curation** | Score-gated review queue before knowledge promotion |
+| **Multi-tenant isolation** | `group_id`-based boundaries at the schema level |
+| **MCP protocol native** | Stdio + Streamable HTTP gateway for any MCP-compatible agent |
+| **Vector search** | RuVector (episodic) + Neo4j (semantic) via hybrid ANN + BM25 ranking |
+| **Plugin harness** | MCP server discovery, approval, and routing |
+| **Self-hostable** | Docker Compose or Kubernetes — auth dependency: Clerk |
+| **Versioned knowledge** | `SUPERSEDES` relationships in Neo4j — old facts are deprecated, not erased |
 
 ---
 
@@ -134,299 +100,232 @@ This is **positioning**, not an absolute superiority claim.
 
 ### Prerequisites
 
-- Docker + Docker Compose
-- Bun 1.0+
+- **Docker** + Docker Compose
+- **Bun** 1.0+
+- **Ollama** (for local embeddings — pull `qwen3-embedding:8b`)
 
-### 1. Setup
+### 1. Clone & Configure
 
 ```bash
-git clone https://github.com/yourorg/allura.git
-cd allura
+git clone https://github.com/Charitablebusinessronin/Allura_Memory.git
+cd Allura_Memory
 bun install
 
 cp .env.example .env
+# Edit .env with your database credentials and JWT secret
+```
+
+### 2. Start Infrastructure
+
+```bash
 docker compose up -d
 ```
 
-### 2. Connect Your Agent
+This brings up PostgreSQL, Neo4j, and the Allura Brain HTTP gateway.
 
-Configure MCP client (Claude Desktop, Cursor, OpenCode, etc.):
+### 3. Verify
 
+The MCP HTTP gateway runs on port **3201** by default. Check availability:
+
+```bash
+# MCP Streamable HTTP endpoint (primary integration path)
+curl -X POST http://localhost:3201/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"tools/list","id":1}'
+
+# Health check (MCP HTTP gateway)
+curl http://localhost:3201/health
+# → { "status": "healthy", "interface": "mcp-http", "transports": ["streamable-http"], ... }
+
+# Liveness check (process heartbeat)  
+curl http://localhost:3201/live
+# → { "alive": true, "uptime": 123.45, "timestamp": "2026-04-20..." }
+
+# Readiness check (PostgreSQL, Neo4j, MCP initialized)
+curl http://localhost:3201/ready
+# → { "ready": true, ... }
+```
+
+### 4. Connect Your Agent
+
+Add to your MCP client config (Claude Desktop, Cursor, etc.):
+
+**Stdio:**
 ```json
 {
   "mcpServers": {
     "allura": {
       "command": "bun",
-      "args": ["run", "src/mcp/memory-server.ts"]
+      "args": ["src/mcp/memory-server-canonical.ts"]
     }
   }
 }
 ```
 
-### 3. Memory Tools
-
-```typescript
-memory_add("Sabir prefers dark mode", "sabir", {
-  source: "conversation",
-  confidence: 0.92
-})
-
-memory_search("dark mode preferences", "sabir")
-memory_get("mem_7f9e2c3a1b5d")
-memory_list("sabir")
-memory_delete("mem_7f9e2c3a1b5d")
+**HTTP Gateway:**
+```json
+{
+  "mcpServers": {
+    "allura": {
+      "url": "http://localhost:3201/mcp"
+    }
+  }
+}
 ```
 
-### 4. Open the Interfaces
+### 5. Use the Tools
 
-- Memory viewer: `http://localhost:3000/memory`
-- Admin / curator: `http://localhost:3000/admin`
+All memory operations require `group_id` and `user_id` for multi-tenant isolation.
+
+```typescript
+// Store a memory
+memory_add({
+  group_id: "allura-myteam",
+  user_id: "alice",
+  content: "Alice prefers dark mode for all UIs",
+  metadata: {
+    source: "conversation"
+  },
+  threshold: 0.85
+})
+
+// Search memories
+memory_search({
+  query: "dark mode preferences",
+  group_id: "allura-myteam",
+  user_id: "alice"
+})
+
+// Retrieve a specific memory
+memory_get({
+  id: "mem_7f9e2c3a1b5d",
+  group_id: "allura-myteam"
+})
+
+// List all memories for a user
+memory_list({
+  group_id: "allura-myteam",
+  user_id: "alice"
+})
+
+// Delete (soft — recoverable within 30 days)
+memory_delete({
+  id: "mem_7f9e2c3a1b5d",
+  group_id: "allura-myteam",
+  user_id: "alice"
+})
+```
 
 ---
 
 ## Configuration
 
-Edit `.env` before `docker compose up`:
+All configuration lives in `.env`:
 
 ```bash
-# Core
-DATABASE_URL=postgresql://allura:password@localhost:5432/allura
+# ── Core (all required in production) ───────────
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=allura
+POSTGRES_USER=allura
+POSTGRES_PASSWORD=<required — no default>
 NEO4J_URI=neo4j://localhost:7687
-NEO4J_AUTH=neo4j:password
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=<required — no default>
 
-# Governance
-PROMOTION_MODE=soc2
-AUTO_APPROVAL_THRESHOLD=0.85
+# ── Governance ────────────────────────
+PROMOTION_MODE=soc2          # "soc2" (review-gated) or "auto" (auto-promote)
+AUTO_APPROVAL_THRESHOLD=0.85 # minimum score for promotion eligibility
 
-# Security
+# ── Security ──────────────────────────
 JWT_SECRET=$(openssl rand -base64 32)
 ENCRYPTION_KEY=$(openssl rand -hex 32)
+
+# ── Embeddings ────────────────────────
+EMBEDDING_BASE_URL=http://localhost:11434  # Ollama
+EMBEDDING_MODEL=qwen3-embedding:8b
 ```
-
-### Important note on `PROMOTION_MODE=soc2`
-
-In this codebase, `soc2` is an **internal workflow label** for a stricter review path.
-
-It means:
-
-- higher-confidence items are queued for review
-- promotion is gated more conservatively
-- the flow is aimed at audit-conscious environments
-
-It does **not** mean the project is currently SOC 2 certified.
 
 ### Promotion Modes
 
-| Mode | Behavior | Typical Use |
-| ---- | -------- | ----------- |
-| `soc2` | score ≥ threshold queues for curator review | stricter review workflow |
-| `auto` | score ≥ threshold promotes automatically | lower-risk or experimental environments |
+| Mode | Behavior | Best For |
+|------|----------|----------|
+| `soc2` | Score ≥ threshold → curator review queue | Production, audit-conscious teams |
+| `auto` | Score ≥ threshold → automatic promotion | Development, experimentation |
+
+> **Note:** `soc2` is an internal workflow label for a stricter review path. It does **not** imply current SOC 2 certification.
 
 ---
 
-## How It Works
+## Screenshots
 
-### Memory Flow
-
-1. An agent writes a memory event
-2. The event is stored in PostgreSQL
-3. High-confidence items can enter a review queue
-4. Approved knowledge is promoted into Neo4j
-5. Future queries benefit from the promoted semantic layer
-
-### Example
-
-```text
-Agent writes memory
-  ↓
-PostgreSQL stores append-only event
-  ↓
-Score + promotion mode evaluated
-  ↓
-Curator reviews if required
-  ↓
-Approved knowledge promoted to Neo4j
-```
-
-This keeps the system explainable. The goal is not to hide memory work — it is to show it.
+<p align="center">
+  <img src="docs/screenshots/01-memory-page-desktop.png" alt="Memory Page — Desktop" width="360" />
+  <img src="docs/screenshots/02-memory-page-mobile.png" alt="Memory Page — Mobile" width="180" />
+  <img src="docs/screenshots/03-audit-page-desktop.png" alt="Audit Page — Desktop" width="360" />
+</p>
 
 ---
 
-## Plugin Harness
+## Brand & Visual Direction
 
-The Plugin Harness orchestrates MCP servers and skill delegation with **explicit approval**.
+<p align="center">
+  <img src="public/readme/readme-brand-system.png" alt="Brand System" width="640" />
+</p>
 
-### Principles
+Allura's visual language is **warm, magnetic, and clear** — designed to reward a closer look.
 
-- no auto-loading
-- no silent discovery
-- explicit approval before activation
-- append-only event logging
-- specialist routing over generic execution
+- **Warmth over cold utility** — softer palettes, rounded corners, breathing room
+- **Magnetic clarity** — information hierarchy that draws the eye without shouting
+- **Considered restraint** — every element earns its place
+- **Grounded sophistication** — professional without being sterile
 
-### Typical Commands
-
-```bash
-/mcp-discover database
-/mcp-approve postgresql-mcp
-/mcp-load postgresql-mcp
-/skill-propose code-review
-/skill-load code-review --executor pike-interface-review
-```
-
-See:
-
-- `.opencode/PLUGIN-ARCHITECTURE.md`
-- `.opencode/HARNESS-TO-CLAUDE-CODE.md`
-- `.opencode/HARNESS-QUICKSTART.md`
+This isn't "magic AI." It's a more legible memory system with a more considered interface.
 
 ---
 
-## Use Cases
+## Deployment
 
-### 1. Developer Session Memory
-
-When sessions end, useful working context often disappears. Allura helps preserve structured memory that can be reviewed and reused later.
-
-### 2. Internal Team Knowledge Flows
-
-Teams running agents across projects need clearer boundaries, provenance, and continuity across sessions and operators.
-
-### 3. Audit-Conscious Workflows
-
-Organizations that care about traceability today — and may aspire to stricter enterprise or regulated operating standards in the future — can use Allura's review-oriented model as a more conservative memory workflow.
-
----
-
-## Deployment Options
-
-### Local Dev
+### Docker Compose (recommended for most teams)
 
 ```bash
 docker compose up -d
-curl http://localhost:3000/api/health
+curl http://localhost:3100/api/health/live
 ```
 
-### Docker Compose
+### Pull from GHCR
 
-Suitable for individuals and small teams running self-hosted infrastructure.
+> **Note:** GHCR images are published from CI but not yet verified for standalone pull-deploy. Use `docker compose up -d` from source for the recommended path.
+
+```bash
+# Available but not yet verified for standalone deployment
+docker pull ghcr.io/charitablebusinessronin/allura_memory:latest
+```
 
 ### Kubernetes
 
-Available for teams that want to operationalize the stack in a more managed environment.
-
-See: `.github/DEPLOYMENT.md`
+For teams running production infrastructure — see [`.github/DEPLOYMENT.md`](.github/DEPLOYMENT.md).
 
 ---
 
-## Architecture
+## API Reference
 
-### PostgreSQL (Episodic)
+Full API documentation lives in [`.github/API-REFERENCE.md`](.github/API-REFERENCE.md).
 
-Raw execution logs and append-only events.
+### Core Tools
 
-### Neo4j (Semantic)
-
-Curated knowledge with version history via `SUPERSEDES`.
-
-### Key Rule
-
-> Every memory starts in PostgreSQL. Higher-confidence facts may move to Neo4j after review. History is preserved.
-
-See: `.github/ARCHITECTURE.md`
-
----
-
-## Dependencies
-
-### Runtime
-
-| Package | Purpose |
-|---------|---------|
-| `@modelcontextprotocol/sdk` | MCP protocol implementation |
-| `@clerk/nextjs` | Authentication |
-| `neo4j-driver` | Neo4j graph database client |
-| `pg` | PostgreSQL client |
-| `next` | React framework |
-| `react` / `react-dom` | UI library |
-| `zod` | Schema validation |
-| `zustand` | State management |
-| `tailwindcss` | Styling |
-| `lucide-react` | Icons |
-| `recharts` | Data visualization |
-| `dockerode` | Docker integration |
-| `@openai/agents` | OpenAI agents SDK |
-
-### Dev
-
-| Package | Purpose |
-|---------|---------|
-| `typescript` | Type checking |
-| `vitest` | Testing |
-| `eslint` / `prettier` | Linting and formatting |
-| `@types/*` | Type definitions |
-| `cross-env` | Environment variables |
-| `dotenv` | Environment config |
-
-### Infrastructure
-
-- Docker + Docker Compose
-- PostgreSQL 16
-- Neo4j 5.26
-
----
-
-## Scripts
-
-| Command | Description |
-|---------|-------------|
-| `bun run dev` | Start Next.js dev server with Turbo |
-| `bun run build` | Build for production |
-| `bun run start` | Start production server |
-| `bun run typecheck` | Run TypeScript type check |
-| `bun run lint` | Run linting (alias for typecheck) |
-| `bun run format` | Format code with Prettier |
-| `bun test` | Run unit tests |
-| `bun run test:watch` | Run tests in watch mode |
-| `bun run test:e2e` | Run E2E integration tests |
-| `bun run test:all` | Run typecheck + lint + unit + e2e + MCP browser tests |
-| `bun run mcp` | Start canonical MCP server (stdio) |
-| `bun run mcp:dev` | Start MCP server in watch mode |
-| `bun run mcp:http` | Start MCP HTTP gateway |
-| `bun run curator:run` | Run curator scoring and queue |
-| `bun run curator:approve` | Approve pending proposals |
-| `bun run curator:reject` | Reject pending proposals |
-| `bun run curator:watchdog` | Start curator watchdog |
-| `bun run session:start` | Start a Brooks session |
-| `bun run session:bootstrap` | Full session hydrate cycle |
-| `bun run brooks:start` | Start Brooks CLI session |
-| `bun run brooks:status` | Check Brooks session status |
-| `bun run brooks:end` | End Brooks session |
-| `bun run backfill:embeddings` | One-shot embedding backfill |
-| `bun run benchmark` | Run performance benchmark |
-
----
-
-## Testing
-
-```bash
-# Unit tests
-bun test
-
-# E2E / integration
-bun run test:e2e
-
-# Type check
-bun run typecheck
-
-# Lint
-bun run lint
-```
-
-Harness-specific references:
-
-- `.opencode/HARNESS-TEST-COMMAND.txt`
-- `.opencode/harness/test-e2e.ts`
+| Tool | Description |
+|------|-------------|
+| `memory_add` | Store a new memory (episodic → score → promote/queue) |
+| `memory_search` | Hybrid semantic + fulltext search across both stores |
+| `memory_get` | Retrieve a single memory by ID |
+| `memory_list` | List all memories for a user within a tenant |
+| `memory_update` | Append-only versioned update (creates SUPERSEDES chain) |
+| `memory_delete` | Soft-delete with 30-day recovery window |
+| `memory_restore` | Recover a soft-deleted memory |
+| `memory_promote` | Request curator promotion for an episodic memory |
+| `memory_export` | Export memories filtered by group and canonical status |
+| `memory_list_deleted` | List soft-deleted memories within recovery window |
 
 ---
 
@@ -434,57 +333,86 @@ Harness-specific references:
 
 ```bash
 bun install
-bun run build
-bun run typecheck
-bun run format
+bun run dev          # Start Next.js dev server (Turbo)
+bun run build        # Production build
+bun run typecheck    # TypeScript check
+bun test             # Unit tests
+bun run test:e2e     # Integration tests
+bun run test:all     # Full suite (typecheck + lint + unit + e2e + MCP)
 ```
 
-Contributions welcome:
+### Key Scripts
 
-- bug fixes
-- feature work
-- docs improvements
-- performance optimization
-
-See `CLAUDE.md` for conventions.
+| Command | Description |
+|---------|-------------|
+| `bun run mcp` | Start canonical MCP server (stdio) |
+| `bun run mcp:http` | Start MCP HTTP gateway |
+| `bun run curator:run` | Run curator scoring and queue |
+| `bun run curator:approve` | Approve pending proposals |
+| `bun run curator:reject` | Reject pending proposals |
+| `bun run backfill:embeddings` | One-shot embedding backfill |
+| `bun run benchmark` | Performance benchmark |
 
 ---
 
-## Learn More
+## Documentation
 
-### Core Docs
+| Document | Description |
+|----------|-------------|
+| [`docs/allura/BLUEPRINT.md`](docs/allura/BLUEPRINT.md) | Core design reference and requirements |
+| [`.github/ARCHITECTURE.md`](.github/ARCHITECTURE.md) | System architecture and data flow |
+| [`.github/API-REFERENCE.md`](.github/API-REFERENCE.md) | Full API surface documentation |
+| [`.github/DEPLOYMENT.md`](.github/DEPLOYMENT.md) | Deployment guides (Docker, K8s) |
+| [`docs/allura/DESIGN.md`](docs/allura/DESIGN.md) | UI/UX design decisions |
+| [`docs/allura/DATA-DICTIONARY.md`](docs/allura/DATA-DICTIONARY.md) | Schema and field reference |
 
-- `.github/ARCHITECTURE.md`
-- `.github/API-REFERENCE.md`
-- `.github/DEPLOYMENT.md`
-- `docs/allura/BLUEPRINT.md`
-- `docs/allura/WIREFRAMES.md`
+---
 
-### Harness Docs
+## Tech Stack
 
-- `.opencode/PLUGIN-ARCHITECTURE.md`
-- `.opencode/HARNESS-LOGGING-INTEGRATION.md`
-- `.opencode/HARNESS-TO-CLAUDE-CODE.md`
-- `.opencode/HARNESS-QUICKSTART.md`
+| Layer | Technology |
+|-------|-----------|
+| Runtime | Next.js + Bun + TypeScript |
+| Episodic Store | PostgreSQL 16 + pgvector |
+| Semantic Store | Neo4j 5.26 |
+| Embeddings | Qwen3 Matryoshka 1024d (Ollama) |
+| Auth | Clerk (external SaaS — required for dashboard; optional for MCP-only) |
+| Containerization | Docker + Docker Compose |
+| Protocol | Model Context Protocol (MCP) |
 
-### Internal Memory System Context
+---
 
-- `.claude/README.md`
+## What We Claim — And What We Don't
+
+**We do claim:**
+- Dual-layer memory with traceable capture and promotion
+- Append-only audit trail by design
+- Human-in-the-loop curation as a first-class feature
+- Self-hosted deployment on your infrastructure
+- MCP-native integration
+
+**We do not claim:**
+- Current SOC 2 certification or banking-grade approval
+- Zero hallucinations or flawless accuracy
+- Autonomous truth without review
+- Benchmark superiority unless specifically verified
+
+Where the product is directional, we describe it as **designed to**, **built to support**, or **positioned to help** — never as a verified claim.
 
 ---
 
 ## Design Principles
 
-Allura follows a Brooksian approach:
+Allura follows a Brooksian approach to system design:
 
-1. **Conceptual integrity**
-2. **Explicit approval**
-3. **Surgical team specialization**
-4. **Separation of concerns**
-5. **Append-only audit**
-6. **No silver bullet**
+1. **Conceptual integrity** — one coherent vision, not a patchwork of best practices
+2. **Explicit approval** — no silent automation around what becomes knowledge
+3. **Surgical team specialization** — each component does one thing well
+4. **Separation of concerns** — episodic and semantic are architecturally distinct
+5. **Append-only audit** — history is preserved, never overwritten
+6. **No silver bullet** — essential complexity can't be wished away
 
-**Governance posture:** Allura governs. Runtimes execute. Curators promote.
+> **Allura governs. Runtimes execute. Curators promote.**
 
 ---
 
@@ -494,4 +422,4 @@ MIT
 
 ---
 
-Built by [ronin704](https://github.com/ronin704). Allura is presented as a self-hosted, governance-oriented memory system with a warmer, more magnetic product direction — without making unverified compliance or banking claims.
+Built by [ronin704](https://github.com/ronin704). Allura is a self-hosted, governance-oriented memory system — presented honestly, without unverified compliance claims.

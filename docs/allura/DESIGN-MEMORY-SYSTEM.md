@@ -87,7 +87,7 @@ This document is the consolidated design surface for the memory system. If the s
 
 ```json
 {
-  "group_id": "allura-roninmemory",
+  "group_id": "allura-system",
   "agent_id": "agent_executor",
   "event_type": "tool_call",
   "status": "completed",
@@ -127,7 +127,7 @@ This document is the consolidated design surface for the memory system. If the s
 
 ```json
 {
-  "group_id": "allura-roninmemory",
+  "group_id": "allura-system",
   "content": "Postgres image must remain pinned to pg16 to match persisted volume data.",
   "score": 0.93,
   "reasoning": "Volume data was created with PG16; auto-upgrade causes incompatibility.",
@@ -192,7 +192,7 @@ This document is the consolidated design surface for the memory system. If the s
 ```json
 {
   "proposal_id": "a1b2c3d4-...",
-  "group_id": "allura-roninmemory",
+  "group_id": "allura-system",
   "decision": "approve",
   "curator_id": "human_reviewer",
   "rationale": "Validated against runtime evidence and compose config."
@@ -231,7 +231,7 @@ This document is the consolidated design surface for the memory system. If the s
 ```json
 {
   "insight_id": "m5n6o7p8-...",
-  "group_id": "allura-roninmemory",
+  "group_id": "allura-system",
   "content": "Postgres image must remain pinned to pgvector:0.7.0-pg16 (specific version, not just pg16).",
   "confidence": 0.95
 }
@@ -260,7 +260,7 @@ This document is the consolidated design surface for the memory system. If the s
 
 ```json
 {
-  "group_id": "allura-roninmemory",
+  "group_id": "allura-system",
   "agent_id": "agent_executor_2",
   "query": "What image tag should postgres use?",
   "mode": "hybrid",
@@ -588,6 +588,20 @@ The supported agent-side operational path is packaged MCP activation through `MC
 
 **Postcondition:** The system demonstrates end-to-end memory reuse with traceable provenance.
 **Requirements:** F14, F15
+
+---
+
+### MEM-UC9: Agent context retrieval (traverse from Agent through AUTHORED_BY to Memory)
+
+**Actor:** Any agent or caller
+**Precondition:** Agent, Team, and Project structural context nodes exist in Neo4j with appropriate relationship edges.
+**Steps:**
+1. The caller queries the graph for an agent node (e.g., `Brooks`).
+2. The query traverses `AUTHORED_BY` or `MEMBER_OF` relationships to reach associated Memory and Project nodes.
+3. The result returns contextual knowledge scoped by ownership and project.
+
+**Postcondition:** Agent queries return structurally scoped knowledge, not just flat text matches.
+**Requirements:** F16
 
 ---
 

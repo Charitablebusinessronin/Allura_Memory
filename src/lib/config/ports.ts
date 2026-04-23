@@ -129,7 +129,7 @@ export function getServiceUrls(ports?: Partial<PortConfig>): {
     paperclip: `http://localhost:${config.paperclip}`,
     openclaw: `http://localhost:${config.openclaw}`,
     mcp_http: `http://localhost:${config.mcp_http}`,
-    postgres: `postgresql://${process.env.POSTGRES_USER || "ronin4life"}:${process.env.POSTGRES_PASSWORD || "password"}@localhost:${config.postgres}/${process.env.POSTGRES_DB || "memory"}`,
+    postgres: `postgresql://${process.env.POSTGRES_USER || "allura"}:${process.env.POSTGRES_PASSWORD || "password"}@localhost:${config.postgres}/${process.env.POSTGRES_DB || "memory"}`,
     neo4j_http: `http://localhost:${config.neo4j_http}`,
     neo4j_bolt: `bolt://localhost:${config.neo4j_bolt}`,
     dozzle: `http://localhost:${config.dozzle}`,
