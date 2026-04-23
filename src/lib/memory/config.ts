@@ -88,7 +88,7 @@ export function getConfig(): AlluraMemoryConfig {
   }
   
   // Build connection URL if not provided
-  const postgresUser = process.env.POSTGRES_USER || 'ronin4life';
+  const postgresUser = process.env.POSTGRES_USER || 'allura';
   const postgresDb = process.env.POSTGRES_DB || 'memory';
   const postgresPort = parseInt(process.env.POSTGRES_PORT || '5432', 10);
   
@@ -216,7 +216,7 @@ export function writeDefaultEnvFile(): void {
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_DB=memory
-POSTGRES_USER=ronin4life
+POSTGRES_USER=allura
 POSTGRES_PASSWORD=your-password-here
 
 # Neo4j (Promoted Insights)

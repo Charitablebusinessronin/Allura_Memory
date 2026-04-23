@@ -78,7 +78,7 @@
 | RK-13 | Curator re-scores already-promoted traces      | Medium | AD-20: Events marked as `status = 'promoted'` after proposal creation. Curator query excludes promoted events. | Mitigated |
 | RK-14 | E2E validation gap — pipeline not proven       | High | VALIDATION-GATE.md defines 12 acceptance checks with hard gates. E2E validation script (`scripts/e2e-validation-gate.ts`) runs all checks. | Active |
 | RK-15 | Approve route connection leak                  | Medium | Route creates its own `Pool` instead of using `getPool()` singleton. Fix: replace with shared pool from `src/lib/postgres/connection.ts`. | Active |
-| RK-06 | Graph-Notion sync drift | Medium | Agent roster and project definitions maintained in Notion may drift from Neo4j seed data if not synced. Currently manual. | 🔴 Open |
+| RK-16 | Graph-Notion sync drift | Medium | Agent roster and project definitions maintained in Notion may drift from Neo4j seed data if not synced. Currently manual. | 🔴 Open |
 
 ---
 

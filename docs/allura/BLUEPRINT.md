@@ -658,7 +658,8 @@ This section defines the single authority map between Notion templates/policy an
 1. **Policy and templates are upstream in Notion.**
 2. **Implementation canon is downstream in `docs/allura/` (exactly six files).**
 3. **Agents do not auto-write repo content back to Notion template pages.**
-4. **Residue** (reports, deliverables, ADR standalones, validation snapshots, benchmarks, prompts) goes to `docs/archive/allura/` or Allura Brain.
+4. **Canonical-now alignment:** PostgreSQL remains the append-only episodic evidence store, and Neo4j remains the canonical semantic knowledge graph. RuVector-derived capabilities may be adopted selectively for retrieval quality, witness receipts, and observability — but they do **not** replace canonical stores until a formal migration benchmark is approved.
+5. **Residue** (reports, deliverables, ADR standalones, validation snapshots, benchmarks, prompts) goes to `docs/archive/allura/` or Allura Brain.
 
 ### Authority Map
 

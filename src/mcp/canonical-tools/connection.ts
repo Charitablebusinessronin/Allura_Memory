@@ -19,21 +19,29 @@ let neo4jDriver: Driver | null = null
 
 export async function getConnections(): Promise<{ pg: Pool; neo4j: Driver }> {
   if (!pgPool) {
+    const pgPassword = process.env.POSTGRES_PASSWORD
+    if (!pgPassword) {
+      throw new Error("POSTGRES_PASSWORD environment variable is required")
+    }
     pgPool = new Pool({
       host: process.env.POSTGRES_HOST || "localhost",
       port: parseInt(process.env.POSTGRES_PORT || "5432"),
       database: process.env.POSTGRES_DB || "memory",
-      user: process.env.POSTGRES_USER || "ronin4life",
-      password: process.env.POSTGRES_PASSWORD,
+      user: process.env.POSTGRES_USER || "allura",
+      password: pgPassword,
       connectionTimeoutMillis: 10000,
       max: 10,
     })
   }
 
   if (!neo4jDriver) {
+    const password = process.env.NEO4J_PASSWORD;
+    if (!password) {
+      throw new Error("NEO4J_PASSWORD environment variable is required");
+    }
     neo4jDriver = neo4j.driver(
       process.env.NEO4J_URI || "bolt://localhost:7687",
-      neo4j.auth.basic(process.env.NEO4J_USER || "neo4j", process.env.NEO4J_PASSWORD || "password"),
+      neo4j.auth.basic(process.env.NEO4J_USER || "neo4j", password),
       { maxConnectionPoolSize: 50 }
     )
   }
