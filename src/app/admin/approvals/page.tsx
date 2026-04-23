@@ -1,6 +1,6 @@
 import { ActionButtons } from "./actions";
 
-const GROUP_ID = process.env.ALLURA_GROUP_ID ?? "allura-roninmemory";
+const GROUP_ID = process.env.ALLURA_GROUP_ID ?? "allura-system";
 
 interface Proposal {
   id: string;

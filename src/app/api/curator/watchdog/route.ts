@@ -18,7 +18,7 @@ import { getPool } from "@/lib/postgres/connection";
 import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
 import { requireRole, forbiddenResponse, unauthorizedResponse } from "@/lib/auth/api-auth";
 
-const DEFAULT_GROUP_ID = process.env.ALLURA_GROUP_ID ?? "allura-roninmemory";
+const DEFAULT_GROUP_ID = process.env.ALLURA_GROUP_ID ?? "allura-system";
 const DEFAULT_THRESHOLD = parseFloat(process.env.CURATOR_SCORE_THRESHOLD ?? "0.7");
 
 export async function POST(req: NextRequest): Promise<NextResponse> {

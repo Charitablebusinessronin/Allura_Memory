@@ -71,7 +71,7 @@ async function collectSnapshot(groupId: string): Promise<SnapshotPayload> {
 
 export async function GET(request: Request): Promise<Response> {
   const { searchParams } = new URL(request.url)
-  const groupId = searchParams.get("group_id") || "allura-roninmemory"
+  const groupId = searchParams.get("group_id") || "allura-system"
 
   const stream = new ReadableStream({
     async start(controller) {

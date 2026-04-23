@@ -487,7 +487,7 @@ if (isMainModule) {
 
     // Process DLQ retries
     console.log("[NotionSyncWorker] Processing DLQ retries...")
-    const dlqStats = await getDlqStats(getPool(), "allura-roninmemory")
+    const dlqStats = await getDlqStats(getPool(), "allura-system")
     console.log(`[NotionSyncWorker] DLQ stats: ${JSON.stringify(dlqStats)}`)
 
     if (dlqStats.pending_retry > 0) {

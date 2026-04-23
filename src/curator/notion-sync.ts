@@ -27,7 +27,7 @@
  *   Proposed At  — date
  *   Notion Synced — checkbox
  *
- * Usage: bun src/curator/notion-sync.ts [--group-id allura-roninmemory]
+ * Usage: bun src/curator/notion-sync.ts [--group-id allura-system]
  */
 
 import { getPool, closePool } from "../lib/postgres/connection";
@@ -190,7 +190,7 @@ export async function markSynced(proposalId: string, notionPageId: string): Prom
  * import { mcp__claude_ai_Notion__notion_create_pages } from "...mcp...";
  *
  * await syncToNotion({
- *   groupId: "allura-roninmemory",
+ *   groupId: "allura-system",
  *   notionDbId: process.env.NOTION_CURATOR_DB_ID,
  *   notionCreatePage: async (params) => {
  *     const result = await mcp__claude_ai_Notion__notion_create_pages({
@@ -336,7 +336,7 @@ if (isMainModule) {
     return idx >= 0 && args[idx + 1] ? args[idx + 1] : defaultValue;
   }
 
-  const GROUP_ID = getArg("group-id", "allura-roninmemory");
+  const GROUP_ID = getArg("group-id", "allura-system");
 
   // Validate group_id format
   if (!/^allura-[a-z0-9-]+$/.test(GROUP_ID)) {

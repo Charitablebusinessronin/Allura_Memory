@@ -67,7 +67,7 @@ async function runCurator() {
     // Step 4: Create promotion proposals in PostgreSQL canonical_proposals
     // and mark source events as promoted to prevent re-scoring (AD-20)
     for (const event of highConfidence) {
-      const eventGroupId = event.group_id || 'allura-roninmemory';
+      const eventGroupId = event.group_id || 'allura-system';
       await pgPool.query(
         `INSERT INTO canonical_proposals (id, group_id, content, score, reasoning, tier, status, trace_ref, created_at)
          VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 'pending', $6, NOW())
