@@ -1,6 +1,6 @@
 {
   "name": "allura-memory",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "cross-env FORCE_COLOR=1 next dev --turbo -p ${PAPERCLIP_PORT:-3100}",
