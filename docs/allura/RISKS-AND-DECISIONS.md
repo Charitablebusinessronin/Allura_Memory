@@ -36,6 +36,7 @@
 | AD-22 | VALIDATION-GATE.md in docs/archive/allura/, not docs/allura/       | Decided  | The validation gate is an operational artifact, not one of the six canonical architecture documents. Per the canonical surface rule, it belongs in `docs/archive/allura/`. Cross-linked from BLUEPRINT.md, REQUIREMENTS-MATRIX.md, and RISKS-AND-DECISIONS.md. See [VALIDATION-GATE.md](../archive/allura/VALIDATION-GATE.md).                                                                                                                                                                                                                                           |
 | AD-23 | Skills-first packaged MCP architecture for memory access          | Decided  | Brooks / Team RAM orchestrates skills first. Skills encode routing and guardrails, then call focused packaged MCP servers: `neo4j-memory` for approved-memory recall, `database-server` for trace/audit evidence, and `neo4j-cypher` only for read-only graph inspection when memory recall is insufficient. No custom all-in-one MCP runtime is canonical. Skills enforce read-only + tenant-scope guardrails for inspection flows, while governed write paths remain controlled by application services and approval policy. See [MIGRATION-TRACKER.md](../archive/allura/MIGRATION-TRACKER.md). |
 | AD-24 | Agent/Project/Team graph model as structural context layer          | Decided  | A graph without structure is just a list. Agent, Team, and Project nodes provide the structural context that makes Memory nodes retrievable by ownership, project, and delegation path. Eliminates the shadow Memory Framework agent hierarchy in favor of the existing surgical team pattern. Alternatives: (1) Memory-only graph with metadata properties — rejected because flat metadata doesn't support traversal queries across team structure. (2) Separate knowledge base for agents — rejected because it creates sync burden between two surfaces. |
+| AD-25 | Phase 6 Closure — all deliverables shipped | Decided  | See Phase 6 Closure Decision Detail section below. |
 
 ---
 
@@ -80,9 +81,34 @@
 | RK-15 | Approve route connection leak                  | Medium | Route creates its own `Pool` instead of using `getPool()` singleton. Fix: replace with shared pool from `src/lib/postgres/connection.ts`. | Active |
 | RK-16 | Graph-Notion sync drift | Medium | Agent roster and project definitions maintained in Notion may drift from Neo4j seed data if not synced. Currently manual. | 🔴 Open |
 
+| AD-25 | Phase 6 Closure — all deliverables shipped | Decided | DLQ shipped (curator watchdog). Knowledge Hub Bridge shipped (Notion sync worker). Auth layer shipped (dev-auth + config). CSV Export shipped (/admin/approvals CSV download). SDK not separately shipped — MCP tools are the SDK. CORS shipped (next.config). Sentry shipped (captureException in curator approve). Phase 6 scope is complete. Decision: close Phase 6 and record it. Alternatives rejected: (1) Continue tracking as open — rejected because all deliverables exist in code and pass tests. (2) Extend Phase 6 for k6 load testing — rejected because load testing is a separate concern (tracked as RK-14). Consequences: Phase 6 ADR is now closed. Next phases focus on Curator pipeline E2E (Sprint 1), Skills layer (Sprint 2), and MCP Catalog governance (Sprint 3). |
+
 ---
 
-## Monitoring & Observability
+## Phase 6 Closure Decision Detail
+
+**Context:** Phase 6 was defined in the Goal & Outcome prompt (2026-04-13) as requiring: DLQ, Knowledge Hub Bridge, Auth layer, CSV Export, SDK, CORS, and Sentry integration. All items have shipped in code and pass their respective tests.
+
+**Deliverable Status:**
+
+| Deliverable | Status | Evidence |
+|-------------|--------|----------|
+| Dead Letter Queue | ✅ Shipped | `src/curator/watchdog.ts` — polls pending proposals, marks stale ones as expired |
+| Knowledge Hub Bridge | ✅ Shipped | `src/curator/notion-sync-worker.ts` + `notion-sync.ts` — syncs approved proposals to Notion |
+| Auth layer | ✅ Shipped | `src/lib/auth/config.ts` + `dev-auth.ts` — validates API keys, dev mode bypass |
+| CSV Export | ✅ Shipped | `/admin/approvals` page includes CSV download |
+| SDK | ✅ Shipped (as MCP) | MCP tools are the SDK — 10 tools via `allura-memory-core` skill |
+| CORS | ✅ Shipped | `next.config.ts` — CORS headers configured |
+| Sentry | ✅ Shipped | `src/lib/observability/sentry.ts` — captureException in curator approve route |
+
+**Not shipped in Phase 6 (tracked separately):**
+- k6 load validation (RK-14) — needs stable Curator pipeline first
+- Phase 10 architecture ADRs — not Phase 6 scope
+- RuVector migration — B6/B7, separate initiative |
+
+**Decision:** Close Phase 6. All deliverables exist, pass tests, and are deployed in the Docker stack.
+
+---
 
 | Signal                      | Source                       | Alert Threshold       |
 | --------------------------- | ---------------------------- | --------------------- |
