@@ -57,6 +57,7 @@
     "registry:drift": "bun run scripts/drift-detection.ts",
     "ports:check": "bun scripts/check-ports.ts",
     "ports:generate": "bun -e \"console.log(require('./src/lib/config/ports').generateEnvEntries(true))\"",
+    "curator:process-pending": "bun run src/scripts/process-pending-proposals.ts",
     "backfill:embeddings": "bun run src/curator/embedding-backfill-worker.ts --once",
     "backfill:embeddings:watch": "bun run src/curator/embedding-backfill-worker.ts --interval 30000",
     "validate:e2e": "bun run scripts/e2e-validation-gate.ts",
