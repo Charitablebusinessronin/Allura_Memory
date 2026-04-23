@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { RotateCcw, Clock } from "lucide-react"
 import Link from "next/link"
+import { DEFAULT_GROUP_ID } from "@/lib/defaults/scope"
 import type { DeletedMemory } from "@/hooks/use-memory-list"
 
 interface DeletedMemoryCardProps {
@@ -72,7 +73,7 @@ export function DeletedMemoryCard({ memory, onRestore, isRestoring, formatRelati
             {isRestoring ? "Restoring…" : "Restore"}
           </Button>
           <Button asChild variant="ghost" size="sm" className="text-[--durham-muted-text]">
-            <Link href={`/memory/${memory.id}?group_id=allura-roninmemory`}>View</Link>
+            <Link href={`/memory/${memory.id}?group_id=${encodeURIComponent(DEFAULT_GROUP_ID)}`}>View</Link>
           </Button>
         </div>
       </CardContent>

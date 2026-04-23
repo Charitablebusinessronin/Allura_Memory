@@ -20,7 +20,7 @@ import { hasPermission } from "./roles";
  *
  * Returns a synthetic user based on environment variables:
  * - ALLURA_DEV_AUTH_ROLE (default: "admin")
- * - ALLURA_DEV_AUTH_GROUP_ID (default: "allura-roninmemory")
+ * - ALLURA_DEV_AUTH_GROUP_ID (default: "allura-system")
  * - ALLURA_DEV_AUTH_USER_ID (default: "dev-user-allura")
  * - ALLURA_DEV_AUTH_EMAIL (default: "dev@allura.local")
  *

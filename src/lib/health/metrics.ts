@@ -75,7 +75,7 @@ function collectCircuitBreakerMetrics(): void {
     const breakerNames = ["memory_add", "memory_search", "memory_get", "memory_list", "memory_delete"];
 
     for (const name of breakerNames) {
-      for (const groupId of ["allura-roninmemory"]) {
+      for (const groupId of ["allura-system"]) {
         const breaker = manager.getBreaker(name, groupId);
         if (breaker) {
           const state = breaker.getState();

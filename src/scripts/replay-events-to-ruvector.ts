@@ -11,7 +11,7 @@
  * Usage:
  *   bun run src/scripts/replay-events-to-ruvector.ts --once
  *   bun run src/scripts/replay-events-to-ruvector.ts --batch-size 100 --interval 1000
- *   bun run src/scripts/replay-events-to-ruvector.ts --group-id allura-roninmemory
+ *   bun run src/scripts/replay-events-to-ruvector.ts --group-id allura-system
  */
 
 import { getRuVectorPool, closeRuVectorPool } from "../lib/ruvector/connection"
@@ -86,7 +86,7 @@ async function replay(config: ReplayConfig): Promise<{ processed: number; embedd
   let failed = 0
 
   try {
-    const lastId = await getCheckpoint(pgPool, config.groupId || 'allura-roninmemory')
+    const lastId = await getCheckpoint(pgPool, config.groupId || 'allura-system')
 
     const whereClauses = [
       "event_type = 'memory_add'",
@@ -171,7 +171,7 @@ async function replay(config: ReplayConfig): Promise<{ processed: number; embedd
 
       // Save checkpoint every batch
       if (processed % config.batchSize === 0) {
-        await saveCheckpoint(pgPool, config.groupId || 'allura-roninmemory', row.id, processed)
+        await saveCheckpoint(pgPool, config.groupId || 'allura-system', row.id, processed)
         console.log(`[Replay] Checkpoint saved at event_id=${row.id} (processed: ${processed})`)
       }
     }
@@ -179,7 +179,7 @@ async function replay(config: ReplayConfig): Promise<{ processed: number; embedd
     // Final checkpoint
     if (result.rows.length > 0) {
       const lastProcessedId = result.rows[result.rows.length - 1].id
-      await saveCheckpoint(pgPool, config.groupId || 'allura-roninmemory', lastProcessedId, processed)
+      await saveCheckpoint(pgPool, config.groupId || 'allura-system', lastProcessedId, processed)
       console.log(`[Replay] Final checkpoint at event_id=${lastProcessedId}`)
     }
   } finally {

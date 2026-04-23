@@ -136,7 +136,7 @@ export async function traceOrchestrationEnd(
  *
  * Usage:
  * ```typescript
- * const tracedOrchestrate = createTracedOrchestrator({ groupId: "allura-roninmemory" })
+ * const tracedOrchestrate = createTracedOrchestrator({ groupId: "allura-system" })
  * const result = await tracedOrchestrate(task, executor)
  * ```
  */

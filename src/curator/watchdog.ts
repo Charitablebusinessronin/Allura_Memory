@@ -8,7 +8,7 @@
  * Brooks principle: The architecture is the curator queue;
  * the watchdog is merely the implementation that feeds it.
  *
- * Usage: bun src/curator/watchdog.ts [--interval 60] [--group-id allura-roninmemory]
+ * Usage: bun src/curator/watchdog.ts [--interval 60] [--group-id allura-system]
  */
 
 import { getPool, closePool } from "../lib/postgres/connection";
@@ -103,7 +103,7 @@ if (isMainModule) {
   }
 
   const INTERVAL_MS = parseInt(getArg("interval", "60"), 10) * 1000;
-  const GROUP_ID = getArg("group-id", "allura-roninmemory");
+  const GROUP_ID = getArg("group-id", "allura-system");
   const SCORE_THRESHOLD = parseFloat(getArg("threshold", "0.7"));
 
   // Validate group_id format

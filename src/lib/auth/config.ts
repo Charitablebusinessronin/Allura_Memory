@@ -38,7 +38,7 @@ export const authEnvSchema = z.object({
     .default("admin"),
 
   /** Default group_id for dev auth users. */
-  ALLURA_DEV_AUTH_GROUP_ID: z.string().default("allura-roninmemory"),
+  ALLURA_DEV_AUTH_GROUP_ID: z.string().default("allura-system"),
 
   /** Default user ID for dev auth users. */
   ALLURA_DEV_AUTH_USER_ID: z.string().default("dev-user-allura"),
