@@ -71,7 +71,7 @@ describe("Allura Memory Configuration", () => {
       
       // Embedding defaults
       expect(config.embeddingProvider).toBe("ollama");
-      expect(config.embeddingModel).toBe("nomic-embed-text");
+      expect(config.embeddingModel).toBe("qwen3-embedding:8b");
       expect(config.embeddingBaseUrl).toBe("http://localhost:11434");
     });
 
@@ -348,7 +348,7 @@ describe("Allura Memory Configuration", () => {
       const config = getConfig();
       
       expect(config.embeddingProvider).toBe("ollama");
-      expect(config.embeddingModel).toBe("nomic-embed-text");
+      expect(config.embeddingModel).toBe("qwen3-embedding:8b");
       expect(config.embeddingBaseUrl).toBe("http://localhost:11434");
     });
 
