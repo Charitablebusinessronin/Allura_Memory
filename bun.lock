@@ -76,7 +76,7 @@
         "eslint-plugin-import": "^2.32.0",
         "eslint-plugin-tailwindcss": "^3.18.2",
         "glob": "^13.0.6",
-        "postcss-import": "^16.1.1",
+        "postcss-import": "16.1.1",
         "prettier": "^3.8.1",
         "prettier-plugin-tailwindcss": "^0.7.2",
         "typescript": "^5.9.2",
