@@ -94,8 +94,8 @@ Every specialist must call `memory_add` after completing with:
 
 ---
 
-## Phase 3: pgvector Upgrade + HNSW Restoration (Ship This Week)
-> Brute force search on 238 rows is fine. On 10,000 rows it's not.
+## Phase 3: pgvector HNSW Restoration ✅ COMPLETE (2026-04-22)
+> Accepted 1024d via Matryoshka dimension reduction as production standard. ~5% cosine similarity trade-off approved. HNSW index operational at 1024d. pgvector 0.8.2 confirmed as latest — no 0.8.4 exists.
 
 ### 3.1 Upgrade pgvector to 0.8.4+
 - Current: pgvector 0.8.2 (2000d HNSW limit)
