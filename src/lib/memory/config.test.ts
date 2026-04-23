@@ -60,7 +60,7 @@ describe("Allura Memory Configuration", () => {
       // PostgreSQL defaults
       expect(config.postgresPort).toBe(5432);
       expect(config.postgresDb).toBe("memory");
-      expect(config.postgresUser).toBe("ronin4life");
+      expect(config.postgresUser).toBe("allura");
       expect(config.postgresPoolMax).toBe(10);
       
       // Neo4j defaults
@@ -326,7 +326,7 @@ describe("Allura Memory Configuration", () => {
       // Documented defaults
       expect(config.postgresPort).toBe(5432);
       expect(config.postgresDb).toBe("memory");
-      expect(config.postgresUser).toBe("ronin4life");
+      expect(config.postgresUser).toBe("allura");
       expect(config.postgresPoolMax).toBe(10);
     });
 
