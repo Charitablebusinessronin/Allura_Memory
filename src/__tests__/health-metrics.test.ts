@@ -2,12 +2,13 @@
  * @vitest-environment node
  */
 import { describe, it, expect, beforeAll, afterAll } from "vitest"
+import { NextRequest } from "next/server"
 import { GET } from "@/app/api/health/metrics/route"
 
 describe("Health Metrics Endpoint", () => {
   describe("Response structure", () => {
     it("returns a well-formed MetricsResponse object", async () => {
-      const response = await GET(new Request("http://localhost:4748/api/health/metrics"))
+      const response = await GET(new NextRequest("http://localhost:4748/api/health/metrics"))
       const body = await response.json()
 
       // Must have top-level keys
@@ -19,7 +20,7 @@ describe("Health Metrics Endpoint", () => {
     })
 
     it("returns queue metrics with correct structure", async () => {
-      const response = await GET(new Request("http://localhost:4748/api/health/metrics"))
+      const response = await GET(new NextRequest("http://localhost:4748/api/health/metrics"))
       const body = await response.json()
 
       expect(body.queue).toHaveProperty("pending_count")
@@ -32,7 +33,7 @@ describe("Health Metrics Endpoint", () => {
     })
 
     it("returns recall metrics", async () => {
-      const response = await GET(new Request("http://localhost:4748/api/health/metrics"))
+      const response = await GET(new NextRequest("http://localhost:4748/api/health/metrics"))
       const body = await response.json()
 
       expect(body.recall).toHaveProperty("search_available")
@@ -40,7 +41,7 @@ describe("Health Metrics Endpoint", () => {
     })
 
     it("returns storage metrics for both postgres and neo4j", async () => {
-      const response = await GET(new Request("http://localhost:4748/api/health/metrics"))
+      const response = await GET(new NextRequest("http://localhost:4748/api/health/metrics"))
       const body = await response.json()
 
       expect(body.storage.postgres).toHaveProperty("status")
@@ -52,7 +53,7 @@ describe("Health Metrics Endpoint", () => {
     })
 
     it("returns degraded counters", async () => {
-      const response = await GET(new Request("http://localhost:4748/api/health/metrics"))
+      const response = await GET(new NextRequest("http://localhost:4748/api/health/metrics"))
       const body = await response.json()
 
       expect(body.degraded).toHaveProperty("neo4j_unavailable")

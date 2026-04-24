@@ -63,7 +63,7 @@ export interface PatternDetectionResult {
 
 // ── Pattern Detectors ──────────────────────────────────────────────────────
 
-interface RawEvent {
+export interface RawEvent {
   id: number
   event_type: string
   agent_id: string
