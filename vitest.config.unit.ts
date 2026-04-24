@@ -65,6 +65,7 @@ export default defineConfig({
       // Curator workers
       "src/curator/embedding-backfill-worker.test.ts",
       "src/curator/notion-sync.test.ts",
+      "src/curator/approve-cli.test.ts",
     ],
     exclude: [
       // ── Integration tests (mocked DB/services) — use test:integration ──

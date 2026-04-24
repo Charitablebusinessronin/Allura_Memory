@@ -18,7 +18,7 @@
  *   - proposal_approved event appended (no UPDATE on existing rows)
  *   - Idempotent: re-running on approved proposals is a no-op
  *
- * Reference: docs/allura/BLUEPRINT.md (Requirements F11-F12, B18-B19)
+ * Reference: docs/allura/BLUEPRINT.md (Requirements F6, F12, B18-B19)
  */
 
 import { Pool } from "pg"
