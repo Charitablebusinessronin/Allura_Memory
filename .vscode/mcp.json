@@ -6,7 +6,7 @@
     },
     "exa": {
       "type": "remote",
-      "url": "https://mcp.exa.ai/mcp?exaApiKey=44a9fc3d-0334-4822-97a4-5c2a53f4c270"
+      "url": "https://mcp.exa.ai/mcp?exaApiKey=${EXA_API_KEY}"
     },
     "browserOS": {
       "type": "stdio",
