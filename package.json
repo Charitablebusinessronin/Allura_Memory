@@ -62,7 +62,9 @@
     "backfill:embeddings:watch": "bun run src/curator/embedding-backfill-worker.ts --interval 30000",
     "validate:e2e": "bun run scripts/e2e-validation-gate.ts",
     "validate:e2e:skip-neo4j": "bun run scripts/e2e-validation-gate.ts --skip-neo4j",
-    "load-test": "bash tests/load/run-load-test.sh"
+    "load-test": "bash tests/load/run-load-test.sh",
+    "test:curator": "vitest run src/__tests__/auto-curator.test.ts src/__tests__/auto-curator-hardening.test.ts",
+    "test:unit": "vitest run --exclude \"**/e2e*\" --exclude \"**/ruvector/embedding-service.test.ts\""
   },
   "repository": {
     "type": "git",
