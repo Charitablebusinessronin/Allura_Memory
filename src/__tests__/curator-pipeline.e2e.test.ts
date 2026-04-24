@@ -22,6 +22,7 @@ import {
   createInsightVersion,
   InsightConflictError,
 } from "../lib/neo4j/queries/insert-insight";
+import { autoPromoteProposal, isAutoPromoteEnabled } from "../lib/curator/auto-promote";
 
 // Load environment variables from .env file
 config();
@@ -325,6 +326,91 @@ describe.skipIf(!shouldRunE2E)("Curator Pipeline E2E", () => {
         [proposal.id]
       );
       expect(approved.rows[0].status).toBe("approved");
+    },
+    E2E_TIMEOUT
+  );
+
+  // ── Test 6: Auto-promote ───────────────────────────────────────────────────
+
+  it(
+    "autoPromoteProposal — promotes eligible proposal to Neo4j without HITL",
+    async () => {
+      const savedMode = process.env.PROMOTION_MODE;
+      process.env.PROMOTION_MODE = "auto";
+      process.env.AUTO_APPROVAL_THRESHOLD = "0.5";
+
+      expect(isAutoPromoteEnabled()).toBe(true);
+
+      // Seed a pending proposal with a high score
+      const proposalId = randomUUID();
+      await pgPool.query(
+        `INSERT INTO canonical_proposals (id, group_id, content, score, reasoning, tier, status, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, 'pending', NOW())`,
+        [
+          proposalId,
+          GROUP_ID,
+          `Auto-promote test — I always prefer explicit return types [auto:${RUN_ID}]`,
+          "0.88",
+          "High specificity",
+          "mainstream",
+        ]
+      );
+
+      const result = await autoPromoteProposal(proposalId, GROUP_ID, "auto-promote-test");
+      expect(result).not.toBeNull();
+      expect(result!.memory_id).toBeDefined();
+      expect(result!.decided_at).toBeDefined();
+
+      // Verify proposal updated in PG
+      const row = await pgPool.query(
+        "SELECT status, decided_by FROM canonical_proposals WHERE id = $1",
+        [proposalId]
+      );
+      expect(row.rows[0].status).toBe("approved");
+      expect(row.rows[0].decided_by).toBe("auto-promote-test");
+
+      // Verify InsightHead in Neo4j
+      const session = neo4jDriver.session();
+      try {
+        const neo4jResult = await session.run(
+          "MATCH (h:InsightHead {insight_id: $id, group_id: $groupId}) RETURN h",
+          { id: result!.memory_id, groupId: GROUP_ID }
+        );
+        expect(neo4jResult.records.length).toBe(1);
+      } finally {
+        await session.close();
+      }
+
+      process.env.PROMOTION_MODE = savedMode;
+    },
+    E2E_TIMEOUT
+  );
+
+  // ── Test 7: Reject path ────────────────────────────────────────────────────
+
+  it(
+    "reject path — sets status=rejected in PG",
+    async () => {
+      const rejectId = randomUUID();
+      await pgPool.query(
+        `INSERT INTO canonical_proposals (id, group_id, content, score, reasoning, tier, status, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, 'pending', NOW())`,
+        [rejectId, GROUP_ID, `Maybe consider this approach [rej:${RUN_ID}]`, "0.52", "Vague", "emerging"]
+      );
+
+      await pgPool.query(
+        `UPDATE canonical_proposals
+         SET status = 'rejected', decided_at = NOW(), decided_by = 'test-curator', rationale = 'Too vague'
+         WHERE id = $1`,
+        [rejectId]
+      );
+
+      const row = await pgPool.query(
+        "SELECT status, rationale FROM canonical_proposals WHERE id = $1",
+        [rejectId]
+      );
+      expect(row.rows[0].status).toBe("rejected");
+      expect(row.rows[0].rationale).toBe("Too vague");
     },
     E2E_TIMEOUT
   );
