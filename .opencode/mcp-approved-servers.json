@@ -58,6 +58,42 @@
       "rationale": "Web search and research. Used by multi-search skill."
     }
   },
+  "allura-graph-debug": {
+    "status": "approved",
+    "approved_at": "2026-04-23T00:00:00Z",
+    "approved_by": "hightower-spec",
+    "category": "diagnostics",
+    "essential": false,
+    "tools": ["MCP_DOCKER__find_memories_by_name", "MCP_DOCKER__search_memories", "MCP_DOCKER__read_graph"],
+    "rationale": "Read-only graph debugging. No writes permitted."
+  },
+  "allura-propose-promotion": {
+    "status": "approved",
+    "approved_at": "2026-04-23T00:00:00Z",
+    "approved_by": "hightower-spec",
+    "category": "governance",
+    "essential": true,
+    "tools": ["allura-brain__memory_promote", "allura-brain__memory_search", "allura-brain__memory_get"],
+    "rationale": "Propose memories for canonical promotion. Does not approve — that requires allura-approve-promotion."
+  },
+  "allura-approve-promotion": {
+    "status": "approved",
+    "approved_at": "2026-04-23T00:00:00Z",
+    "approved_by": "hightower-spec",
+    "category": "governance",
+    "essential": true,
+    "tools": ["allura-brain__memory_promote", "allura-brain__memory_search", "allura-brain__memory_get"],
+    "rationale": "HITL curator approval for canonical promotion. curator_id must identify a human."
+  },
+  "allura-health-observability": {
+    "status": "approved",
+    "approved_at": "2026-04-23T00:00:00Z",
+    "approved_by": "hightower-spec",
+    "category": "observability",
+    "essential": true,
+    "tools": ["allura-brain__memory_search", "MCP_DOCKER__execute_sql", "MCP_DOCKER__search_memories"],
+    "rationale": "System health and queue observability. Read-only diagnostics."
+  },
   "pending": {},
   "denied": {}
 }
