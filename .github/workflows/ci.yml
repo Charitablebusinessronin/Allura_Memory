@@ -6,17 +6,122 @@ on:
   pull_request:
     branches: [main, master, new-main]
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
+# ── Test Lane Architecture ──────────────────────────────────────────────────
+# Every district gets its own alarm.
+#
+# Lanes:
+#   typecheck   — TypeScript compilation check
+#   lint        — ESLint + style check
+#   test:unit   — Pure logic, NO database, NO Ollama, NO Notion
+#   test:curator — Auto-Curator and proposal pipeline only
+#   test:integration — Mocked services and contract tests (DB env provided)
+#   test:e2e    — Live stack tests (PostgreSQL + Neo4j services)
+#   build       — Next.js production build + MCP server build
+#   test:mcp    — MCP browser/static checks
+#
+# Unit tests MUST NOT receive database environment variables.
+# Integration tests get mocked DB env vars.
+# E2E tests get live PostgreSQL + Neo4j service containers.
 
+jobs:
+  # ── Typecheck ─────────────────────────────────────────────────────────────
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: bun install
+      - name: Type check
+        run: bun run typecheck
+
+  # ── Lint ──────────────────────────────────────────────────────────────────
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: bun install
+      - name: Lint
+        run: bun run lint
+
+  # ── Unit Tests ────────────────────────────────────────────────────────────
+  # Pure logic only. NO database. NO Ollama. NO Notion. NO MCP browser.
+  # NO database env vars — unit tests must not touch external services.
+  test-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: bun install
+      - name: Run unit tests
+        run: bun run test:unit
+
+  # ── Curator Tests ─────────────────────────────────────────────────────────
+  # Auto-Curator and proposal pipeline only.
+  # NO database env vars — curator tests are pure unit tests.
+  test-curator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: bun install
+      - name: Run curator tests
+        run: bun run test:curator
+
+  # ── Integration Tests ─────────────────────────────────────────────────────
+  # Mocked services and contract tests.
+  # Database env vars provided for mocked connection tests (vi.mock handles them).
+  test-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: bun install
+      - name: Run integration tests
+        run: bun run test:integration
+        env:
+          DATABASE_URL: postgresql://allura:allura@localhost:5432/memory
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: memory
+          POSTGRES_USER: allura
+          POSTGRES_PASSWORD: allura
+          NEO4J_URI: bolt://localhost:7687
+          NEO4J_USER: neo4j
+          NEO4J_PASSWORD: password
+
+  # ── E2E Tests ─────────────────────────────────────────────────────────────
+  # Live stack tests. Requires PostgreSQL + Neo4j service containers.
+  # Gated behind RUN_E2E_TESTS=true.
+  test-e2e:
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: allura
           POSTGRES_DB: memory
-          POSTGRES_USER: postgres
+          POSTGRES_USER: allura
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -36,78 +141,55 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
-
       - name: Install dependencies
         run: bun install
-
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
-
       - name: Wait for PostgreSQL
         run: |
-          until pg_isready -h localhost -U postgres; do
+          until pg_isready -h localhost -U allura; do
             echo "Waiting for postgres..."
             sleep 1
           done
-
       - name: Run database migrations
         env:
-          PGPASSWORD: postgres
+          PGPASSWORD: allura
         run: |
           set -e
           for f in $(ls -1v docker/postgres-init/*.sql); do
             echo "▶ Applying $f..."
-            psql -h localhost -U postgres -d memory -f "$f"
+            psql -h localhost -U allura -d memory -f "$f"
           done
-
-      - name: Run type check
-        run: bun run typecheck
-
-      - name: Run linter
-        run: bun run lint
-
-      - name: Run unit tests
-        run: bun run test
-        continue-on-error: true
+      - name: Run E2E tests
+        run: bun run test:e2e
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/memory
+          RUN_E2E_TESTS: "true"
+          DATABASE_URL: postgresql://allura:allura@localhost:5432/memory
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
           POSTGRES_DB: memory
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: allura
+          POSTGRES_PASSWORD: allura
           NEO4J_URI: bolt://localhost:7687
           NEO4J_USER: neo4j
           NEO4J_PASSWORD: password
 
-      - name: Upload coverage
-        uses: codecov/codecov-action@v3
-        if: github.event_name == 'push'
-        with:
-          files: ./coverage/lcov.info
-          fail_ci_if_error: false
-
+  # ── Build ─────────────────────────────────────────────────────────────────
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
-
       - name: Install dependencies
         run: bun install
-
       - name: Build
         run: bun run build
-
       - name: Check MCP server builds
         run: bun build src/mcp/memory-server-canonical.ts --outdir dist/mcp --target node
