@@ -89,7 +89,7 @@ Allura embeds every memory at write time using **Qwen3 Matryoshka embeddings** (
 | **Human-in-the-loop curation** | Score-gated review queue before knowledge promotion |
 | **Multi-tenant isolation** | `group_id`-based boundaries at the schema level |
 | **MCP protocol native** | Stdio + Streamable HTTP gateway for any MCP-compatible agent |
-| **Vector search** | RuVector (episodic) + Neo4j (semantic) via hybrid ANN + BM25 ranking |
+| **Vector search** | pgvector HNSW (episodic) + Neo4j (semantic) via hybrid ANN + BM25 ranking |
 | **Plugin harness** | MCP server discovery, approval, and routing |
 | **Self-hostable** | Docker Compose or Kubernetes — auth dependency: Clerk |
 | **Versioned knowledge** | `SUPERSEDES` relationships in Neo4j — old facts are deprecated, not erased |

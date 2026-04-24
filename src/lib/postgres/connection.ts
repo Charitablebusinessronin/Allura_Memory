@@ -54,7 +54,7 @@ export function getConnectionConfig(): ConnectionConfig {
     host: env.POSTGRES_HOST || "localhost",
     port: parseInt(env.POSTGRES_PORT || "5432", 10),
     database: env.POSTGRES_DB || "memory",
-    user: env.POSTGRES_USER || "allura",
+    user: env.POSTGRES_USER || "ronin4life",
     password,
     connectionTimeoutMillis: DEFAULT_POOL_CONFIG.connectionTimeoutMillis,
     idleTimeoutMillis: DEFAULT_POOL_CONFIG.idleTimeoutMillis,
