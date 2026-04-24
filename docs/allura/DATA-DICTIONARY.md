@@ -55,6 +55,13 @@ The primary and only append-only log. Every memory operation — add, search, ge
 | `proposal_created` | A canonical proposal was created for HITL review |
 | `proposal_approved` | A proposal was approved and promoted to Neo4j |
 | `notion_sync_pending` | A proposal is queued for Notion page creation |
+| `debug:root_cause_found` | Phase 1 complete — root cause identified with evidence (POL-006) |
+| `debug:hypothesis_tested` | Phase 3 — a single hypothesis was minimally tested |
+| `debug:fix_implemented` | Phase 4 — fix shipped after root cause confirmed (requires prior `debug:root_cause_found`) |
+| `neo4j_unavailable` | Neo4j backend was unreachable — system degraded gracefully |
+| `tool_approved` | MCP tool was approved through catalog governance |
+| `tool_denied` | MCP tool was denied through catalog governance |
+| `request_trace` | HTTP request traced by TraceMiddleware (Story 1.2) |
 | `session_start` | Agent session began |
 | `health_check` | System health check performed |
 
