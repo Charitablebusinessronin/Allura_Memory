@@ -14,6 +14,7 @@ if (typeof window !== "undefined") {
   throw new Error("Auto-curator can only be used server-side")
 }
 
+import { createHash } from "crypto"
 import { getPool } from "@/lib/postgres/connection"
 import { validateGroupId } from "@/lib/validation/group-id"
 import { curatorScore, type CuratorScore, type PromotionTier } from "@/lib/curator/score"
@@ -102,7 +103,7 @@ export function detectFailurePatterns(events: RawEvent[]): CandidateInsight[] {
 
     const [agentId, errorType, groupId] = key.split("|")
     candidates.push({
-      id: `candidate-failure-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      id: createHash('shake256', { outputLength: 8 }).update(`failure-${agentId}-${errorType}-${groupId}`).digest('hex'),
       group_id: groupId,
       type: "failure",
       content: `Agent ${agentId} encountered repeated failures: ${errorType} (${group.events.length} occurrences)`,
@@ -153,7 +154,7 @@ export function detectWinPatterns(events: RawEvent[]): CandidateInsight[] {
     const eventTypeLabel = eventType.replace(/_/g, " ")
 
     candidates.push({
-      id: `candidate-win-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      id: createHash('shake256', { outputLength: 8 }).update(`win-${eventType}-${groupId}-${group.length}`).digest('hex'),
       group_id: groupId,
       type: "pattern",
       content: `Successful ${eventTypeLabel} pattern: ${group.length} occurrences in analysis window`,
@@ -196,7 +197,7 @@ export function detectApprovalPatterns(events: RawEvent[]): CandidateInsight[] {
   // High approval rate pattern
   if (approvalRate >= 0.9 && total >= 5) {
     candidates.push({
-      id: `candidate-approval-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      id: createHash('shake256', { outputLength: 8 }).update(`approval-${approvalEvents[0].group_id}-${approved}-${rejected}`).digest('hex'),
       group_id: approvalEvents[0].group_id,
       type: "optimization",
       content: `Curator approval rate is ${Math.round(approvalRate * 100)}% (${approved}/${total}). Consider increasing AUTO_APPROVAL_THRESHOLD.`,
@@ -215,7 +216,7 @@ export function detectApprovalPatterns(events: RawEvent[]): CandidateInsight[] {
   // High rejection rate pattern
   if (approvalRate <= 0.3 && total >= 5) {
     candidates.push({
-      id: `candidate-rejection-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      id: createHash('shake256', { outputLength: 8 }).update(`rejection-${approvalEvents[0].group_id}-${rejected}-${approved}`).digest('hex'),
       group_id: approvalEvents[0].group_id,
       type: "decision",
       content: `Curator rejection rate is ${Math.round((1 - approvalRate) * 100)}% (${rejected}/${total}). Scoring threshold or content quality may need adjustment.`,
@@ -252,7 +253,7 @@ export function detectToolRiskPatterns(events: RawEvent[]): CandidateInsight[] {
 
   return [
     {
-      id: `candidate-tool-risk-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      id: createHash('shake256', { outputLength: 8 }).update(`tool-risk-${toolEvents[0].group_id}-${approved}-${denied}`).digest('hex'),
       group_id: toolEvents[0].group_id,
       type: "decision",
       content: `MCP catalog governance: ${approved} tools approved, ${denied} denied in analysis window. Tool adoption rate: ${approved > 0 ? Math.round((approved / (approved + denied)) * 100) : 0}%.`,
@@ -430,6 +431,11 @@ export async function autoCurate(
   filteredCandidates.sort((a, b) => b.confidence - a.confidence)
   const topCandidates = filteredCandidates.slice(0, maxCandidates)
 
+  // Validate all candidates before returning (safety guardrail)
+  for (const candidate of topCandidates) {
+    validateCandidate(candidate)
+  }
+
   return {
     candidates: topCandidates,
     patterns_detected: allCandidates.length,
@@ -445,6 +451,7 @@ export async function autoCurate(
  * High-impact candidates ALWAYS require HITL.
  */
 export async function submitCandidate(candidate: CandidateInsight): Promise<{ proposal_id: string; status: string; requires_approval: boolean }> {
+  validateCandidate(candidate)
   const pg = getPool()
   const validatedGroupId = validateGroupId(candidate.group_id)
 
@@ -489,5 +496,34 @@ export async function submitCandidate(candidate: CandidateInsight): Promise<{ pr
     proposal_id: result.rows[0].id,
     status: result.rows[0].status,
     requires_approval: candidate.requires_approval,
+  }
+}
+// ── Validation ──────────────────────────────────────────────────────────────
+
+/**
+ * Validate that a candidate insight has all required fields.
+ * Throws if any required field is missing or invalid.
+ * This is a safety guardrail — no candidate should ever be submitted
+ * without passing this validation.
+ */
+export function validateCandidate(candidate: CandidateInsight): void {
+  const errors: string[] = []
+
+  if (!candidate.id || candidate.id.trim().length === 0) errors.push("id is required")
+  if (!candidate.group_id || !candidate.group_id.match(/^allura-/)) errors.push("group_id must match ^allura-")
+  if (!candidate.type || !["decision", "pattern", "failure", "optimization"].includes(candidate.type)) errors.push("type must be decision|pattern|failure|optimization")
+  if (!candidate.content || candidate.content.trim().length === 0) errors.push("content is required")
+  if (typeof candidate.confidence !== "number" || candidate.confidence < 0 || candidate.confidence > 1) errors.push("confidence must be 0.0–1.0")
+  if (!candidate.impact || !["low", "medium", "high"].includes(candidate.impact)) errors.push("impact must be low|medium|high")
+  if (typeof candidate.frequency !== "number" || candidate.frequency < 1) errors.push("frequency must be >= 1")
+  if (typeof candidate.novelty_score !== "number" || candidate.novelty_score < 0 || candidate.novelty_score > 1) errors.push("novelty_score must be 0.0–1.0")
+  if (!candidate.reasoning || candidate.reasoning.trim().length === 0) errors.push("reasoning is required")
+  if (!candidate.tier || !["emerging", "adoption", "mainstream"].includes(candidate.tier)) errors.push("tier must be emerging|adoption|mainstream")
+  if (!Array.isArray(candidate.source_event_ids)) errors.push("source_event_ids must be an array")
+  if (typeof candidate.requires_approval !== "boolean") errors.push("requires_approval must be boolean")
+  if (!candidate.created_at) errors.push("created_at is required")
+
+  if (errors.length > 0) {
+    throw new Error(`Invalid candidate: ${errors.join(", ")}`)
   }
 }
