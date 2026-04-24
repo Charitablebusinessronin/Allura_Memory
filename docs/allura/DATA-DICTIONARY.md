@@ -13,6 +13,7 @@ This document describes every table and node type in Allura's dual-database data
 ## Table of Contents
 
 - [PostgreSQL: events](#postgresql-events)
+- [PostgreSQL: canonical_proposals](#postgresql-canonical_proposals)
 - [Neo4j: Memory](#neo4j-memory)
 - [Neo4j: Agent](#neo4j-agent)
 - [Neo4j: Team](#neo4j-team)
@@ -51,6 +52,9 @@ The primary and only append-only log. Every memory operation — add, search, ge
 | `memory_promoted` | A memory was successfully promoted to Neo4j |
 | `promotion_failed` | Neo4j write failed — episodic record retained |
 | `promotion_queued` | SOC2 mode — memory queued for human approval |
+| `proposal_created` | A canonical proposal was created for HITL review |
+| `proposal_approved` | A proposal was approved and promoted to Neo4j |
+| `notion_sync_pending` | A proposal is queued for Notion page creation |
 | `session_start` | Agent session began |
 | `health_check` | System health check performed |
 
@@ -61,6 +65,71 @@ The primary and only append-only log. Every memory operation — add, search, ge
 | `completed` | Operation succeeded |
 | `failed` | Operation failed — see metadata.error |
 | `pending` | Operation in progress or awaiting human action |
+
+---
+
+## PostgreSQL: `canonical_proposals`
+
+The HITL (Human-in-the-Loop) promotion queue. Proposals are scored by the curator engine and stored here pending human approval. Once approved, they are promoted to Neo4j as InsightHead/Insight nodes.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | uuid | Yes | Primary key. Auto-generated via `gen_random_uuid()`. |
+| `group_id` | varchar(255) | Yes | Tenant namespace. CHECK constraint: must match `^allura-`. |
+| `content` | text | Yes | The proposed insight content text. |
+| `score` | numeric(3,2) | Yes | Curator confidence score (0.00–1.00). CHECK: `score >= 0.0 AND score <= 1.0`. |
+| `reasoning` | text | No | Curator engine's reasoning for the score. |
+| `tier` | varchar(20) | Yes | Confidence tier. CHECK: one of `emerging`, `adoption`, `mainstream`. |
+| `status` | varchar(20) | Yes | Lifecycle status. DEFAULT `pending`. CHECK: one of `pending`, `approved`, `rejected`. |
+| `trace_ref` | bigint | No | Foreign key to `events.id` (the originating trace event). ON DELETE SET NULL. |
+| `created_at` | timestamptz | Yes | Proposal creation timestamp. DEFAULT NOW(). |
+| `decided_at` | timestamptz | No | Timestamp when the proposal was approved or rejected. |
+| `decided_by` | varchar(255) | No | Identifier of the person or system that made the decision (e.g., `curator-cli`, `sabir`). |
+| `rationale` | text | No | Human-provided rationale for the decision. |
+| `witness_hash` | text | No | SHAKE-256 hash (64-byte output) of the decision payload for audit trail integrity. Indexed. |
+| `notion_page_id` | text | No | Notion page ID after sync. Indexed (partial, WHERE NOT NULL). |
+| `notion_synced_at` | timestamptz | No | Timestamp when the proposal was synced to Notion. |
+
+**`tier` values**
+
+| Value | Description |
+|-------|-------------|
+| `emerging` | Low confidence (0.0–0.5). Needs more evidence before promotion. |
+| `adoption` | Medium confidence (0.5–0.75). Worth tracking but not yet mainstream. |
+| `mainstream` | High confidence (0.75–1.0). Strong signal, ready for promotion. |
+
+**`status` values**
+
+| Value | Description |
+|-------|-------------|
+| `pending` | Awaiting human review and decision. |
+| `approved` | Human approved. Promoted to Neo4j as InsightHead/Insight. |
+| `rejected` | Human rejected. Not promoted. Retained for audit trail. |
+
+**Indexes**
+
+| Index | Type | Purpose |
+|-------|------|---------|
+| `canonical_proposals_pkey` | PRIMARY KEY | Unique row identifier |
+| `idx_canonical_proposals_group_date` | btree | Efficient queries by group and date |
+| `idx_canonical_proposals_pending` | btree (partial) | Fast pending proposal lookups |
+| `idx_canonical_proposals_status` | btree | Status-based filtering |
+| `idx_canonical_proposals_tier` | btree | Tier-based ordering |
+| `idx_canonical_proposals_trace_ref_unique` | UNIQUE (partial) | Prevent duplicate proposals per trace |
+| `idx_canonical_proposals_witness_hash` | btree (partial) | Audit trail lookups |
+| `idx_canonical_proposals_notion_page_id` | btree (partial) | Notion sync lookups |
+
+**Triggers**
+
+| Trigger | Event | Function |
+|---------|-------|----------|
+| `trigger_proposal_created` | AFTER INSERT | `log_proposal_created()` — emits `proposal_created` event |
+| `trigger_proposal_decided` | AFTER UPDATE | `log_proposal_decided()` — emits decision event |
+
+**Foreign Keys**
+
+- `trace_ref` → `events(id)` ON DELETE SET NULL
+- Referenced by: `notion_sync_dlq.proposal_id` → `canonical_proposals(id)` ON DELETE SET NULL
 
 ---
 
@@ -350,6 +419,51 @@ The `metadata` JSONB column in `events` carries event-specific data. Shapes by `
   "score": 0.91,
   "error": "Neo4j connection timeout",
   "fallback": "episodic_only"
+}
+```
+
+### `proposal_approved`
+
+Emitted when a curator approves a proposal and promotes it to Neo4j.
+
+```jsonc
+{
+  "proposal_id": "uuid",          // canonical_proposals.id
+  "memory_id": "uuid",           // Neo4j InsightHead insight_id
+  "score": "0.85",               // Curator confidence score
+  "tier": "mainstream",          // Confidence tier
+  "rationale": "High specificity" // Optional human rationale
+}
+```
+
+### `proposal_created`
+
+Emitted by trigger when a new proposal is inserted into `canonical_proposals`.
+
+```jsonc
+{
+  "proposal_id": "uuid",          // canonical_proposals.id
+  "score": "0.85",               // Curator confidence score
+  "tier": "mainstream",          // Confidence tier
+  "trace_ref": 12345             // Originating events.id (may be null)
+}
+```
+
+### `notion_sync_pending`
+
+Emitted after approval to queue Notion page creation. Picked up by the notion-sync-worker.
+
+```jsonc
+{
+  "proposal_id": "uuid",          // canonical_proposals.id
+  "content": "Insight text...",   // Proposal content for Notion page title
+  "score": 0.85,                 // Numeric score for Notion property
+  "tier": "mainstream",          // Maps to Notion Type select
+  "status": "approved",          // Proposal status at sync time
+  "curator_id": "curator-cli",   // Who approved
+  "rationale": "...",            // Optional rationale
+  "decided_at": "2026-04-24T...", // ISO timestamp
+  "data_source_id": "42894678-..." // Notion data source ID
 }
 ```
 
