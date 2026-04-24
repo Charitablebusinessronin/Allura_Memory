@@ -797,12 +797,33 @@ export async function linkInsightToAgent(
     group_id: groupId,
   });
 
-  // This would use Neo4j writeTransaction to create:
-  // MATCH (a:Agent {id: $agentId, group_id: $groupId})
-  // MATCH (i:Insight {id: $insightId})
-  // CREATE (a)-[:CONTRIBUTED {confidence: $confidence, timestamp: datetime()}]->(i)
-  
-  // For now, this is a placeholder - implementation requires Neo4j connection context
+  try {
+    const { writeTransaction } = await import("@/lib/neo4j/connection");
+
+    await writeTransaction((tx) =>
+      tx.run(
+        `MATCH (a:Agent {id: $agentId, group_id: $groupId})
+         MATCH (i:Memory {id: $insightId})
+         MERGE (a)-[r:CONTRIBUTED]->(i)
+         SET r.confidence = $confidence,
+             r.linked_at = datetime(),
+             r.group_id = $groupId`,
+        { agentId, insightId, confidence, groupId }
+      )
+    );
+
+    console.log('[knowledge-promotion] Successfully linked insight to agent:', {
+      agent_id: agentId,
+      insight_id: insightId,
+    });
+  } catch (error) {
+    // Non-fatal: Neo4j link failure should not block promotion
+    console.error('[knowledge-promotion] Failed to link insight to agent (non-fatal):', {
+      agent_id: agentId,
+      insight_id: insightId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 // ============================================================================
