@@ -9,6 +9,20 @@
  */
 
 import { createHash } from "crypto"
+import { getPool } from "@/lib/postgres/connection"
+import { validateGroupId } from "@/lib/validation/group-id"
+
+// ── Notion Types ──────────────────────────────────────────────────────────
+
+/** Function type for creating Notion pages. Injected at runtime.
+ *  Supports data source creation (pages[]) and standard page creation.
+ */
+export type NotionCreatePageFn = (params: {
+  parent: { page_id: string } | { database_id: string } | { data_source_id: string }
+  properties?: Record<string, unknown>
+  children?: Record<string, unknown>[]
+  pages?: Array<Record<string, unknown>>
+}) => Promise<{ id: string; pages?: Array<{ id: string; url?: string }> }>
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -171,8 +185,8 @@ export async function syncProposalToNotion(
       ],
     })
 
-    const pageId = result.pages[0]?.id || ""
-    const pageUrl = result.pages[0]?.url || ""
+    const pageId = result.pages?.[0]?.id || ""
+    const pageUrl = result.pages?.[0]?.url || ""
 
     await recordSyncAttempt(target.eventId, "proposal", target.groupId, true, pageId)
 
@@ -217,8 +231,8 @@ export async function syncInsightToNotion(
       ],
     })
 
-    const pageId = result.pages[0]?.id || ""
-    const pageUrl = result.pages[0]?.url || ""
+    const pageId = result.pages?.[0]?.id || ""
+    const pageUrl = result.pages?.[0]?.url || ""
 
     await recordSyncAttempt(target.eventId, "insight", target.groupId, true, pageId)
 
@@ -260,8 +274,8 @@ export async function syncToolApprovalToNotion(
       ],
     })
 
-    const pageId = result.pages[0]?.id || ""
-    const pageUrl = result.pages[0]?.url || ""
+    const pageId = result.pages?.[0]?.id || ""
+    const pageUrl = result.pages?.[0]?.url || ""
 
     await recordSyncAttempt(target.eventId, "tool_approval", target.groupId, true, pageId)
 
