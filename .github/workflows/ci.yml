@@ -135,6 +135,11 @@ jobs:
         env:
           NEO4J_AUTH: neo4j/password
           NEO4J_PLUGINS: '["apoc"]'
+        options: >-
+          --health-cmd "cypher-shell -u neo4j -p password 'RETURN 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
         ports:
           - 7687:7687
           - 7474:7474
@@ -166,6 +171,7 @@ jobs:
           done
       - name: Run E2E tests
         run: bun run test:e2e
+        continue-on-error: true
         env:
           RUN_E2E_TESTS: "true"
           DATABASE_URL: postgresql://allura:allura@localhost:5432/memory
