@@ -220,6 +220,25 @@ This document is the consolidated design surface for the memory system. If the s
 
 **Implementation:** `src/app/api/curator/approve/route.ts` → `createInsight()` on approve
 
+#### Headless CLI Alternative
+
+The Curator Approve CLI (`src/curator/approve-cli.ts`) provides a headless entry point to the same approval flow without requiring the Next.js dev server. It is invoked via:
+
+```bash
+bun run curator:approve [--auto-approve] [--group-id=<id>]
+```
+
+**Key properties:**
+- Uses the same `createInsight()` code path as the API route — identical invariants enforced
+- Validates `group_id` via `validateGroupId()` (F12)
+- Generates SHAKE-256 witness hash on every decision (B18)
+- Emits `proposal_approved` and `notion_sync_pending` events (DRIFT-1 fix)
+- Calls `linkMemoryContext()` best-effort after promotion (DRIFT-2 fix)
+- Idempotent: re-running on already-approved proposals is a no-op
+- `--auto-approve` flag enables CI/CD integration; default requires interactive confirmation
+
+**When to use:** CI/CD pipelines, batch approval of high-confidence proposals, environments without a running Next.js server.
+
 ---
 
 ### POST /api/memory/insights

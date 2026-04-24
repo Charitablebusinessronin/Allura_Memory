@@ -197,6 +197,7 @@ sequenceDiagram
 - Agents do not write through packaged MCP inspection servers
 - Controlled service endpoints remain the only write path for governed memory changes
 - Neo4j writes preserve immutable lineage and approval policy
+- The Curator Approve CLI (`src/curator/approve-cli.ts`) is an alternative entry point to the same governed write path — it uses the same `createInsight()` code path as the API route, enforces the same invariants (group_id validation, SHAKE-256 witness hash, append-only events), and emits `notion_sync_pending` events for async Notion sync
 
 ---
 
@@ -234,8 +235,9 @@ sequenceDiagram
 
 | Interface | Direction | Channel | Payload / Contract | Risk / Decision |
 |---|---|---|---|---|
-| AI Agent via Brooks / Team RAM | Inbound | Skills + packaged MCP servers | `neo4j-memory` first, `database-server` for evidence, `neo4j-cypher` only when needed | AD-03, AD-23 |
+| AI Agent via Brooks / Team RAM | Inbound | Skills + packaged MCP servers | `neo4j-memory` first, `database-server` for evidence, `neo4j-cypher` only when needed | AD-23, AD-03 |
 | Dashboard UI | Inbound | REST HTTP | JSON — memory records | AD-05 |
+| Curator Approve CLI | Inbound | CLI (`bun run curator:approve`) | Processes pending proposals from PostgreSQL, promotes approved ones to Neo4j via `createInsight()` | F6, B18, B19 |
 | PostgreSQL 16 | Outbound | TCP (pg driver) | SQL — append-only INSERTs + SELECTs | AD-01, RK-02 |
 | Neo4j 5.26 | Outbound | Bolt (neo4j driver) | Approved memory recall + read-only Cypher fallback + governed writes | AD-02, RK-01, AD-23 |
 
