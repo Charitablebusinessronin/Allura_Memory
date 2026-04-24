@@ -107,6 +107,7 @@ export function validateGroupId(groupId: unknown): string {
  * @returns Normalized group_id
  */
 export function normalizeGroupId(groupId: string): string {
+  if (!groupId || typeof groupId !== 'string') return '';
   return groupId.trim().toLowerCase();
 }
 

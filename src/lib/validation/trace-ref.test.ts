@@ -17,6 +17,9 @@ import {
 import { getPool, closePool } from "../postgres/connection";
 import { insertEvent, type EventInsert } from "../postgres/queries/insert-trace";
 
+// E2E gating: tests that need live PostgreSQL are gated behind RUN_E2E_TESTS=true
+const describeE2E = process.env.RUN_E2E_TESTS === "true" ? describe : describe.skip;
+
 describe("trace-ref validation", () => {
   beforeAll(async () => {
     // Configure PostgreSQL
@@ -139,7 +142,7 @@ describe("trace-ref validation", () => {
   // verifyTraceRefExists Tests
   // =========================================================================
 
-  describe("verifyTraceRefExists", () => {
+  describeE2E("verifyTraceRefExists", () => {
     const testGroupId = "allura-trace-ref-test";
 
     beforeAll(async () => {
@@ -195,7 +198,7 @@ describe("trace-ref validation", () => {
   // validateTraceRefs Tests
   // =========================================================================
 
-  describe("validateTraceRefs", () => {
+  describeE2E("validateTraceRefs", () => {
     const testGroupId = "allura-batch-trace-ref-test";
 
     beforeAll(async () => {

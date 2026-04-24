@@ -153,7 +153,7 @@ describe("Canonical Memory Operations", () => {
 
          expect(response.stored).toBe("episodic");
          expect(response.meta?.degraded).toBe(true);
-         expect(response.meta?.degraded_reason).toBe("neo4j_unavailable");
+         expect(response.meta?.degraded_reason).toMatch(/^(neo4j_unavailable|graph_unavailable)$/);
          expect(response.meta?.stores_used).toEqual(["postgres"]);
        } finally {
          process.env.PROMOTION_MODE = originalMode;

@@ -11,7 +11,10 @@ import { getDriver, closeDriver } from "../neo4j/connection";
 import { insertEvent, type EventInsert } from "../postgres/queries/insert-trace";
 import { createInsight, type InsightInsert } from "../neo4j/queries/insert-insight";
 
-describe("group-governance", () => {
+// E2E gating: skip unless RUN_E2E_TESTS=true (requires live PostgreSQL + Neo4j)
+const describeE2E = process.env.RUN_E2E_TESTS === "true" ? describe : describe.skip;
+
+describeE2E("group-governance", () => {
   const testProject1 = "allura-governance-test-1";
   const testProject2 = "allura-governance-test-2";
   const testProject3 = "allura-governance-similar"; // Similar to allura-governance-test-*
@@ -23,13 +26,13 @@ describe("group-governance", () => {
     process.env.POSTGRES_HOST = process.env.POSTGRES_HOST || "localhost";
     process.env.POSTGRES_PORT = process.env.POSTGRES_PORT || "5432";
     process.env.POSTGRES_DB = process.env.POSTGRES_DB || "memory";
-    process.env.POSTGRES_USER = process.env.POSTGRES_USER || "ronin4life";
-    process.env.POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD || "KaminaTHC*";
+    process.env.POSTGRES_USER = process.env.POSTGRES_USER || "allura";
+    process.env.POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD || "allura";
 
     // Configure Neo4j
     process.env.NEO4J_URI = process.env.NEO4J_URI || "bolt://localhost:7687";
     process.env.NEO4J_USER = process.env.NEO4J_USER || "neo4j";
-    process.env.NEO4J_PASSWORD = process.env.NEO4J_PASSWORD || "KaminaTHC*";
+    process.env.NEO4J_PASSWORD = process.env.NEO4J_PASSWORD || "password";
     process.env.NEO4J_DATABASE = process.env.NEO4J_DATABASE || "neo4j";
 
     // Clean up any previous test data
