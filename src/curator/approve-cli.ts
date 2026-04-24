@@ -122,10 +122,11 @@ async function getPendingProposals(groupId: string): Promise<PendingProposal[]> 
 /**
  * Check if a proposal has already been approved (idempotency check).
  */
-async function isProposalApproved(pool: Pool, proposalId: string): Promise<boolean> {
+async function isProposalApproved(pool: Pool, proposalId: string, groupId: string): Promise<boolean> {
+  // FINDING-3 fix: filter by group_id for defense-in-depth tenant isolation
   const result = await pool.query(
-    `SELECT status FROM canonical_proposals WHERE id = $1`,
-    [proposalId]
+    `SELECT status FROM canonical_proposals WHERE id = $1 AND group_id = $2`,
+    [proposalId, groupId]
   )
   return result.rows.length > 0 && result.rows[0].status === "approved"
 }
@@ -173,6 +174,30 @@ async function promoteToNeo4j(
         proposal_id: proposal.id,
       },
     })
+
+    // DRIFT-2 fix: Phase 3 sync contract — link AUTHORED_BY → Agent and RELATES_TO → Project
+    // Best-effort: failure does not block the approval (matches API route behavior)
+    try {
+      const { getNeo4jDriver } = require("../lib/neo4j/connection")
+      const { Neo4jGraphAdapter } = require("../lib/graph-adapter/neo4j-adapter")
+      const driver = getNeo4jDriver()
+      const adapter = new Neo4jGraphAdapter(driver)
+      const linkResult = await adapter.linkMemoryContext({
+        memory_id: memoryId as any,
+        group_id: groupId as any,
+        agent_id: curatorId ?? null,
+        project_id: null,
+      })
+      if (linkResult.authored_by || linkResult.relates_to) {
+        console.info(
+          `[sync-contract] curator-approve-cli: linked memory=${memoryId} ` +
+          `authored_by=${linkResult.authored_by} relates_to=${linkResult.relates_to}`
+        )
+      }
+      await adapter.close()
+    } catch (linkErr) {
+      console.warn(`[sync-contract] linkMemoryContext failed in curator-approve-cli:`, linkErr)
+    }
 
     return { memoryId }
   } catch (err) {
@@ -231,6 +256,38 @@ async function finalizeApproval(
       decidedAt,
     ]
   )
+
+  // Emit notion_sync_pending event for async MCP Docker processing
+  // The notion-sync-worker will pick this up and call MCP_DOCKER_notion-create-pages
+  // DRIFT-1 fix: matches API route behavior (route.ts line ~230)
+  try {
+    await pool.query(
+      `INSERT INTO events (
+        group_id, event_type, agent_id, status, metadata, created_at
+      ) VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        groupId,
+        "notion_sync_pending",
+        "curator-approve",
+        "pending",
+        JSON.stringify({
+          proposal_id: proposal.id,
+          content: proposal.content,
+          score: parseFloat(proposal.score),
+          tier: proposal.tier,
+          status: "approved",
+          curator_id: curatorId,
+          rationale: proposal.reasoning,
+          decided_at: decidedAt,
+          data_source_id: "42894678-aedb-4c90-9371-6494a9fe5270",
+        }),
+        decidedAt,
+      ]
+    )
+  } catch (notionErr) {
+    // Non-blocking: Notion sync failure must not block approval
+    console.warn(`[notion-sync] Failed to emit notion_sync_pending event:`, notionErr)
+  }
 }
 
 /**
@@ -243,8 +300,8 @@ async function processProposal(
   autoApprove: boolean,
   pool: Pool
 ): Promise<ApprovalResult> {
-  // Idempotency check: skip if already approved
-  const alreadyApproved = await isProposalApproved(pool, proposal.id)
+  // Idempotency check: skip if already approved (FINDING-3: includes group_id for tenant isolation)
+  const alreadyApproved = await isProposalApproved(pool, proposal.id, groupId)
   if (alreadyApproved) {
     return { proposal_id: proposal.id, status: "skipped", reason: "already approved" }
   }
