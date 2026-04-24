@@ -18,28 +18,37 @@
 -- 3. (Manual step) Re-embed all rows using scripts/re-embed-to-1024d.mjs
 -- 4. (Manual step) Cutover using scripts/cutover-to-1024d.sql
 --
--- IMPORTANT: Do NOT run cutover-to-1024d.sql until re-embedding is complete
--- and validated. The old 4096d column must be preserved until cutover.
+-- GUARD: Migration 16 only creates allura_memories when the ruvector type
+-- is available. This migration must also guard against missing table.
+-- If allura_memories does not exist, skip with a notice.
 -- ============================================================================
 
-BEGIN;
+DO $$
+BEGIN
+  -- Guard: only run if allura_memories table exists
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'allura_memories') THEN
 
--- Step 1: Add 1024d column (idempotent)
-ALTER TABLE allura_memories ADD COLUMN IF NOT EXISTS embedding_1024 vector(1024);
+    -- Step 1: Add 1024d column (idempotent)
+    ALTER TABLE allura_memories ADD COLUMN IF NOT EXISTS embedding_1024 vector(1024);
 
--- Step 2: Create HNSW index on 1024d column
--- This will be empty until re-embedding populates it.
--- Idempotent: IF NOT EXISTS
-CREATE INDEX IF NOT EXISTS allura_mem_hnsw
-    ON allura_memories USING hnsw (embedding_1024 vector_cosine_ops)
-    WITH (m = 16, ef_construction = 64)
-    WHERE embedding_1024 IS NOT NULL AND deleted_at IS NULL;
+    -- Step 2: Create HNSW index on 1024d column
+    -- This will be empty until re-embedding populates it.
+    -- Idempotent: IF NOT EXISTS
+    CREATE INDEX IF NOT EXISTS allura_mem_hnsw_1024
+        ON allura_memories USING hnsw (embedding_1024 vector_cosine_ops)
+        WITH (m = 16, ef_construction = 64)
+        WHERE embedding_1024 IS NOT NULL AND deleted_at IS NULL;
 
--- Step 3: Drop the old invalid HNSW index on 4096d column (if it exists)
--- This was broken by the 768→4096 migration and never rebuilt
-DROP INDEX IF EXISTS test_hnsw_idx;
+    -- Step 3: Drop the old invalid HNSW index on 4096d column (if it exists)
+    -- This was broken by the 768→4096 migration and never rebuilt
+    DROP INDEX IF EXISTS test_hnsw_idx;
 
-COMMIT;
+    RAISE NOTICE 'Migration 20: allura_memories updated with embedding_1024 column and HNSW index';
+
+  ELSE
+    RAISE NOTICE 'Migration 20: Skipping — allura_memories table does not exist (standard PG instance without RuVector)';
+  END IF;
+END $$;
 
 -- ============================================================================
 -- POST-MIGRATION STEPS (manual):
@@ -52,7 +61,7 @@ COMMIT;
 --    -- Should match total rows with embedding IS NOT NULL
 --
 -- 3. Verify HNSW is populated:
---    SELECT pg_size_pretty(pg_relation_size('allura_mem_hnsw'));
+--    SELECT pg_size_pretty(pg_relation_size('allura_mem_hnsw_1024'));
 --    -- Should be non-trivial (e.g., 1+ MB for 200+ rows)
 --
 -- 4. Cutover (drops old column, renames new column):
