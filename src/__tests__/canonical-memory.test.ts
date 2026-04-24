@@ -467,16 +467,18 @@ describe("Canonical Memory Operations", () => {
         metadata: { source: "manual" },
       });
 
-      // Search Group A
+      // Search Group A (all statuses to include newly-added episodic memories)
       const searchA = await memory_search({
         query: "Memory",
         group_id: GROUP_A,
+        status: "all" as any,
       });
 
       // Search Group B
       const searchB = await memory_search({
         query: "Memory",
         group_id: GROUP_B,
+        status: "all" as any,
       });
 
       // Verify isolation

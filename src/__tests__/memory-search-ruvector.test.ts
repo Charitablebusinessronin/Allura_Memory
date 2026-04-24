@@ -25,33 +25,48 @@ vi.mock("@/lib/ruvector/retrieval-adapter", () => ({
   searchWithFeedback: (...args: unknown[]) => mockSearchWithFeedback(...args),
 }));
 
-// Mock database connections
+// Mock database connections — PG query mock for fallback path (Step 3: PostgreSQL traces)
 const mockPgQuery = vi.fn();
-const mockNeo4jSession = {
-  run: vi.fn(),
-  close: vi.fn(),
+const mockPgPool = {
+  query: mockPgQuery,
+  end: vi.fn(),
+  on: vi.fn(),
 };
 
-vi.mock("pg", () => ({
-  Pool: vi.fn().mockImplementation(() => ({
-    query: mockPgQuery,
-    end: vi.fn(),
-    on: vi.fn(),
+// Mock graph adapter for Neo4j fallback path (Step 2: semantic search via graph adapter)
+const mockGraphSearchMemories = vi.fn();
+
+vi.mock("@/lib/graph-adapter", () => ({
+  createGraphAdapter: vi.fn().mockImplementation(() => ({
+    searchMemories: mockGraphSearchMemories,
   })),
+}));
+
+// Mock getConnections — memory_search calls this for Neo4j/PG fallback steps
+vi.mock("@/mcp/canonical-tools/connection", () => ({
+  getConnections: vi.fn().mockImplementation(async () => ({
+    pg: mockPgPool,
+    neo4j: {},
+  })),
+  resetConnections: vi.fn(),
+}));
+
+vi.mock("pg", () => ({
+  Pool: vi.fn().mockImplementation(() => mockPgPool),
 }));
 
 vi.mock("neo4j-driver", () => ({
   default: {
-    driver: vi.fn().mockReturnValue({
-      session: () => mockNeo4jSession,
-      close: vi.fn(),
-    }),
+    driver: vi.fn().mockReturnValue({ close: vi.fn() }),
     int: (val: number) => ({ toNumber: () => val }),
-    auth: {
-      basic: vi.fn(),
-    },
+    auth: { basic: vi.fn() },
   },
   Driver: vi.fn(),
+}));
+
+// Mock RuVector bridge (storeMemory used by memory_add, not memory_search — but imported by canonical-tools)
+vi.mock("@/lib/ruvector/bridge", () => ({
+  storeMemory: vi.fn().mockResolvedValue({ id: "1", status: "stored", createdAt: new Date().toISOString(), groupId: "allura-test" }),
 }));
 
 vi.mock("dotenv", () => ({ config: vi.fn() }));
@@ -88,6 +103,18 @@ vi.mock("@/lib/circuit-breaker/manager", () => ({
   BreakerManager: vi.fn(),
 }));
 
+// Mock budget-circuit sub-module (fail-open: all budget checks pass, circuit breakers execute directly)
+vi.mock("@/mcp/canonical-tools/budget-circuit", () => ({
+  getBudgetEnforcer: vi.fn().mockReturnValue(null),
+  getBreakerManager: vi.fn().mockReturnValue(null),
+  ensureSession: vi.fn().mockReturnValue("mock-session"),
+  checkBudget: vi.fn().mockResolvedValue({ allowed: true }),
+  recordToolCall: vi.fn(),
+  withCircuitBreaker: vi.fn().mockImplementation(
+    (_type: string, _group: string, _op: string, fn: () => unknown) => fn()
+  ),
+}));
+
 vi.mock("@/lib/errors/database-errors", () => ({
   DatabaseUnavailableError: class extends Error {
     operation: string;
@@ -121,6 +148,7 @@ function makeSearchRequest(overrides?: Partial<MemorySearchRequest>): MemorySear
   return {
     query: "test query",
     group_id: VALID_GROUP_ID as any,
+    status: "all" as any, // Bypass approved-only path to exercise RuVector primary backend
     ...overrides,
   };
 }
@@ -154,25 +182,19 @@ describe("memory_search RuVector PRIMARY backend (Slice B)", () => {
       shouldLogFeedback: true,
     });
 
-    // Default: Neo4j fallback returns results
-    mockNeo4jSession.run.mockResolvedValue({
-      records: [
-        {
-          get: (key: string) => {
-            const map: Record<string, unknown> = {
-              id: "neo4j-mem-1",
-              content: "Semantic knowledge about dark mode",
-              score: 0.9,
-              provenance: "conversation",
-              created_at: new Date().toISOString(),
-              usage_count: 5,
-              relevance: 0.9,
-            };
-            return map[key];
-          },
-        },
-      ],
-    });
+    // Default: Graph adapter fallback returns results (Neo4j semantic search)
+    mockGraphSearchMemories.mockResolvedValue([
+      {
+        id: "neo4j-mem-1",
+        content: "Semantic knowledge about dark mode",
+        score: 0.9,
+        provenance: "conversation",
+        created_at: new Date().toISOString(),
+        usage_count: 5,
+        relevance: 0.9,
+        tags: [],
+      },
+    ]);
 
     // Default: PG fallback returns results
     mockPgQuery.mockResolvedValue({
@@ -188,7 +210,10 @@ describe("memory_search RuVector PRIMARY backend (Slice B)", () => {
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    // Use clearAllMocks, not restoreAllMocks — restoreAllMocks resets
+    // vi.fn().mockImplementation() inside vi.mock factories, breaking
+    // module-level mocks (getConnections, createGraphAdapter) between tests.
+    vi.clearAllMocks();
   });
 
   describe("RuVector as PRIMARY (default)", () => {
@@ -274,7 +299,7 @@ describe("memory_search RuVector PRIMARY backend (Slice B)", () => {
       await memory_search(request);
 
       // Neo4j should not be queried when RuVector satisfies the limit
-      expect(mockNeo4jSession.run).not.toHaveBeenCalled();
+      expect(mockGraphSearchMemories).not.toHaveBeenCalled();
     });
 
     it("should NOT query PostgreSQL if RuVector returns sufficient results", async () => {
@@ -311,7 +336,7 @@ describe("memory_search RuVector PRIMARY backend (Slice B)", () => {
       const request = makeSearchRequest({ limit: 3 });
       await memory_search(request);
 
-      expect(mockNeo4jSession.run).toHaveBeenCalled();
+      expect(mockGraphSearchMemories).toHaveBeenCalled();
     });
 
     it("should include both ruvector and graph in stores_used", async () => {
@@ -350,10 +375,8 @@ describe("memory_search RuVector PRIMARY backend (Slice B)", () => {
         shouldLogFeedback: false,
       });
 
-      // Neo4j returns empty
-      mockNeo4jSession.run.mockResolvedValue({
-        records: [],
-      });
+      // Graph adapter returns empty (Neo4j semantic search returns nothing)
+      mockGraphSearchMemories.mockResolvedValue([]);
     });
 
     it("should query PostgreSQL when RuVector and Neo4j return no results", async () => {
@@ -397,7 +420,7 @@ describe("memory_search RuVector PRIMARY backend (Slice B)", () => {
     it("should fallback to Neo4j when RuVector fails", async () => {
       await memory_search(makeSearchRequest());
 
-      expect(mockNeo4jSession.run).toHaveBeenCalled();
+      expect(mockGraphSearchMemories).toHaveBeenCalled();
     });
 
     it("should include warning about RuVector failure in metadata", async () => {
@@ -435,8 +458,8 @@ describe("memory_search RuVector PRIMARY backend (Slice B)", () => {
         shouldLogFeedback: true,
       });
 
-      // Neo4j fails
-      mockNeo4jSession.run.mockRejectedValue(
+      // Graph adapter fails (Neo4j connection refused)
+      mockGraphSearchMemories.mockRejectedValue(
         new Error("Neo4j connection refused"),
       );
     });
@@ -489,7 +512,7 @@ describe("memory_search RuVector PRIMARY backend (Slice B)", () => {
     it("should fallback to Neo4j when RuVector returns empty", async () => {
       await memory_search(makeSearchRequest());
 
-      expect(mockNeo4jSession.run).toHaveBeenCalled();
+      expect(mockGraphSearchMemories).toHaveBeenCalled();
     });
   });
 
@@ -520,39 +543,29 @@ describe("memory_search RuVector PRIMARY backend (Slice B)", () => {
         shouldLogFeedback: true,
       });
 
-      // Neo4j has duplicate ID
-      mockNeo4jSession.run.mockResolvedValue({
-        records: [
-          {
-            get: (key: string) => {
-              const map: Record<string, unknown> = {
-                id: "dup-mem-1", // Same ID as RuVector
-                content: "Neo4j version (should be deduped)",
-                score: 0.85,
-                provenance: "conversation",
-                created_at: new Date().toISOString(),
-                usage_count: 0,
-                relevance: 0.85,
-              };
-              return map[key];
-            },
-          },
-          {
-            get: (key: string) => {
-              const map: Record<string, unknown> = {
-                id: "neo4j-unique",
-                content: "Neo4j unique",
-                score: 0.7,
-                provenance: "conversation",
-                created_at: new Date().toISOString(),
-                usage_count: 0,
-                relevance: 0.7,
-              };
-              return map[key];
-            },
-          },
-        ],
-      });
+      // Graph adapter returns results with a duplicate ID
+      mockGraphSearchMemories.mockResolvedValue([
+        {
+          id: "dup-mem-1", // Same ID as RuVector
+          content: "Neo4j version (should be deduped)",
+          score: 0.85,
+          provenance: "conversation",
+          created_at: new Date().toISOString(),
+          usage_count: 0,
+          relevance: 0.85,
+          tags: [],
+        },
+        {
+          id: "neo4j-unique",
+          content: "Neo4j unique",
+          score: 0.7,
+          provenance: "conversation",
+          created_at: new Date().toISOString(),
+          usage_count: 0,
+          relevance: 0.7,
+          tags: [],
+        },
+      ]);
 
       // PG returns empty for this test (we're testing RuVector+Neo4j dedup)
       mockPgQuery.mockResolvedValue({
