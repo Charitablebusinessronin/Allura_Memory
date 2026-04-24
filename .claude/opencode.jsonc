@@ -4,10 +4,8 @@
       "mcp__MCP_DOCKER__insert_data",
       "mcp__MCP_DOCKER__read_neo4j_cypher",
       "mcp__MCP_DOCKER__write_neo4j_cypher",
-      "mcp__MCP_DOCKER__tavily_search",
-      "mcp__MCP_DOCKER__tavily_research",
-      "mcp__MCP_DOCKER__tavily_crawl",
-      "mcp__MCP_DOCKER__tavily_extract",
+      "mcp__MCP_DOCKER__perplexica_search",
+
       "mcp__MCP_DOCKER__get-library-docs",
       "mcp__MCP_DOCKER__scrape_webpage",
       "mcp__MCP_DOCKER__browser_use_agent",

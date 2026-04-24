@@ -11,7 +11,7 @@ Load an approved MCP server and activate its tools.
 ## Examples
 
 ```
- /mcp-load tavily                # Load Tavily web search + crawl
+ /mcp-load perplexica           # Load Perplexica self-hosted AI search
  /mcp-load exa                   # Load neural web search (if approved)
 ```
 
@@ -27,18 +27,16 @@ Load an approved MCP server and activate its tools.
 
 - Server must be approved (via `/mcp-approve` or already in approved list)
 - Environment variables must be set (if required)
-- Example: `export TAVILY_API_TOKEN=...`
+- Perplexica is self-hosted — no API key required
 
 ## Result
 
 ```json
 {
   "event": "MCP_LOADED",
-  "server_id": "tavily",
+  "server_id": "perplexica",
   "tools_available": [
-    "mcp__MCP_DOCKER__tavily_search",
-    "mcp__MCP_DOCKER__tavily_research",
-    "mcp__MCP_DOCKER__tavily_crawl"
+    "mcp__MCP_DOCKER__perplexica_search"
   ]
 }
 ```

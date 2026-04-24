@@ -36,7 +36,7 @@ User: Sabir Asheed | Domain: Allura Agent-OS
 - Notion search → only on `BP` / `CR` commands
 - Memory-client skill → only when explicitly needed
 - MCP_DOCKER mcp-find/mcp-add → only when a required Brain tool is missing
-- exa / tavily / hyperbrowser / context7 / notion → **NEVER at boot**; load via `mcp-find` → `mcp-add` on-demand
+- exa / perplexica / hyperbrowser / context7 / notion → **NEVER at boot**; load via `mcp-find` → `mcp-add` on-demand
 
 ## On-Demand Load Map
 | Command        | Preferred context source                    |

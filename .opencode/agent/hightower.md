@@ -30,7 +30,7 @@ permission:
   MCP_DOCKER_insert_data: allow
   MCP_DOCKER_mcp-find: allow
   MCP_DOCKER_mcp-add: allow
-  MCP_DOCKER_tavily_search: allow
+  MCP_DOCKER_perplexica_search: allow
 ---
 
 

@@ -68,7 +68,7 @@ Intent-based routing, not model-based. The agent says what kind of work; the har
 | Intent gate | Jobs | Converts requests into crisp objectives |
 | Deep implementation | Woz | Give goal, not recipe |
 | Architecture question | Pike | Read-only consultation |
-| External docs | MCP tools (Context7, Tavily) | Platform concern, not an agent |
+| External docs | MCP tools (Context7, Perplexica) | Platform concern, not an agent |
 | Codebase search | Scout | Fast pattern discovery |
 | Strategic planning | Fowler | Interview-mode before code |
 | Performance concern | Bellard / Carmack | Measurement-first |

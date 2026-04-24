@@ -29,7 +29,7 @@ permission:
   MCP_DOCKER_add_observations: allow
   MCP_DOCKER_mcp-find: allow
   MCP_DOCKER_mcp-add: allow
-  MCP_DOCKER_tavily_search: allow
+  MCP_DOCKER_perplexica_search: allow
   allura-brain_memory_add: allow
   allura-brain_memory_search: allow
   allura-brain_memory_get: allow

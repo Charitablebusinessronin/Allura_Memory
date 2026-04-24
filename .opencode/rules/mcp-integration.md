@@ -30,10 +30,9 @@ mcp__MCP_DOCKER__mcp-add("server-name")
 ### Web Research
 | Tool | Use |
 |------|-----|
-| `mcp__MCP_DOCKER__tavily_search` | Fast current search |
-| `mcp__MCP_DOCKER__tavily_research` | Deep multi-source |
-| `mcp__MCP_DOCKER__tavily_crawl` | Crawl from root URL |
-| `mcp__MCP_DOCKER__tavily_extract` | Extract specific URL |
+| `mcp__MCP_DOCKER__perplexica_search` | Self-hosted AI search (no API key) |
+| `mcp__MCP_DOCKER__tavily_crawl` | Crawl from root URL (catalog) |
+| `mcp__MCP_DOCKER__tavily_extract` | Extract specific URL (catalog) |
 | `mcp__MCP_DOCKER__web_search_exa` | Neural/semantic search |
 
 ### Browser Automation (HyperBrowser)
@@ -68,4 +67,4 @@ mcp__MCP_DOCKER__mcp-add("server-name")
 - Tools: `memory_retrieve`, `memory_write`, `memory_propose_insight`
 
 ## Settings
-`.claude/settings.json` — allura-memory runs as local bun process; exa/tavily/hyperbrowser/context7 run via MCP Docker Toolkit (preferred over separate Docker containers).
+`.claude/settings.json` — allura-memory runs as local bun process; exa/perplexica/hyperbrowser/context7 run via MCP Docker Toolkit (preferred over separate Docker containers).

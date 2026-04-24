@@ -11,7 +11,7 @@ Use this reference to map memory objectives to MCP_DOCKER actions.
 | Query raw traces | `postgres`, `sql`, `database` | SQL query tool |
 | Validate DB shape | `postgres`, `sql` | list tables / describe table |
 | Search workspace docs | `notion` | notion search/fetch tools |
-| Add external search context | `tavily`, `brave` | web search tools |
+| Add external search context | `perplexica`, `brave` | web search tools |
 
 ## Minimal Verification Pattern
 

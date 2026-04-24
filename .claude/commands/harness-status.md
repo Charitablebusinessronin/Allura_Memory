@@ -25,7 +25,7 @@ Show the harness health, loaded servers, and available skills.
     "agent_id": "brooks",
     "postgres_available": true
   },
-  "loaded_servers": ["allura-brain", "tavily", "context7"],
+  "loaded_servers": ["allura-brain", "perplexica", "context7"],
   "approved_pending": ["postgresql", "neo4j"],
   "available_skills": [
     {"name": "code-review", "executor": "pike-interface-review"},

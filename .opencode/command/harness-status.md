@@ -25,7 +25,7 @@ Show the harness health, loaded servers, and available skills.
     "agent_id": "<agent_id>",
     "postgres_available": true
   },
-  "loaded_servers": ["<server-name>", "tavily", "context7"],
+  "loaded_servers": ["<server-name>", "perplexica", "context7"],
   "approved_pending": ["<pending-server>"],
   "available_skills": [
     {"name": "code-review", "executor": "pike"},
