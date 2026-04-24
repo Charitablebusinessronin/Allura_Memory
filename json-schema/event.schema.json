@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://allura.dev/schemas/event.schema.json",
+  "title": "Event",
+  "description": "Append-only episodic memory event in PostgreSQL",
+  "type": "object",
+  "required": ["group_id", "event_type", "agent_id", "status", "created_at"],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Auto-increment primary key"
+    },
+    "group_id": {
+      "type": "string",
+      "pattern": "^allura-[a-z0-9-]+$",
+      "description": "Tenant namespace"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "memory_add",
+        "memory_search",
+        "memory_get",
+        "memory_list",
+        "memory_delete",
+        "memory_promoted",
+        "promotion_failed",
+        "promotion_queued",
+        "session_start",
+        "health_check"
+      ],
+      "description": "Operation type"
+    },
+    "agent_id": {
+      "type": "string",
+      "description": "Identifier of the agent or user who triggered the event"
+    },
+    "workflow_id": {
+      "type": "string",
+      "description": "Optional grouping for multi-step workflows"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["completed", "failed", "pending"],
+      "description": "Operation status"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Event-specific payload"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Write timestamp. Immutable."
+    }
+  },
+  "additionalProperties": false
+}

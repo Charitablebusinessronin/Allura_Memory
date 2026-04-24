@@ -1,25 +1,9 @@
 {
   "mcpServers": {
     "allura-brain": {
-      "command": "docker",
-      "args": [
-        "exec", "-i", "allura-memory-mcp",
-        "bun", "src/mcp/memory-server-canonical.ts"
-      ],
-      "env": {
-        "POSTGRES_HOST": "knowledge-postgres",
-        "POSTGRES_PORT": "5432",
-        "POSTGRES_USER": "ronin4life",
-        "POSTGRES_PASSWORD": "${POSTGRES_PASSWORD}",
-        "POSTGRES_DB": "memory",
-        "NEO4J_URI": "bolt://knowledge-neo4j:7687",
-        "NEO4J_USER": "neo4j",
-        "NEO4J_PASSWORD": "${NEO4J_PASSWORD}",
-        "DEFAULT_GROUP_ID": "allura-system",
-        "PROMOTION_MODE": "soc2",
-        "AUTO_APPROVAL_THRESHOLD": "0.85"
-      }
+      "type": "http",
+      "url": "http://localhost:5888/mcp"
     }
   },
-  "_note": "When running via MCP_DOCKER toolkit (OpenClaw), allura-brain tools are already available as allura-brain_memory_* tools. This config is for OpenCode or other harnesses that need direct MCP server access. For Docker networking, use container names (knowledge-postgres, knowledge-neo4j). For local dev, use localhost."
+  "_note": "When running via MCP_DOCKER toolkit (OpenClaw), allura-brain tools are already available as allura-brain_memory_* tools. This config is for OpenCode or other harnesses that need direct MCP server access. For Docker networking, use container names (knowledge-postgres, knowledge-neo4j). For local dev, use localhost. Environment variables (POSTGRES_PASSWORD, NEO4J_PASSWORD, etc.) must be set in the harness environment — never commit them to this file."
 }

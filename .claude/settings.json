@@ -38,11 +38,8 @@
   "terminals": "tmux",
   "mcpServers": {
     "allura-brain": {
-      "command": "docker",
-      "args": [
-        "exec", "-i", "allura-memory-mcp",
-        "bun", "src/mcp/memory-server-canonical.ts"
-      ]
+      "type": "http",
+      "url": "http://localhost:5888/mcp"
     }
   },
   "commands": {

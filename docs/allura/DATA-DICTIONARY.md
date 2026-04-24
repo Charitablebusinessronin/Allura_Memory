@@ -24,6 +24,8 @@ This document describes every table and node type in Allura's dual-database data
 
 ## PostgreSQL: `events`
 
+**JSON Schema:** [`json-schema/event.schema.json`](../../json-schema/event.schema.json)
+
 The primary and only append-only log. Every memory operation — add, search, get, list, delete, promotion — produces one row. Rows are permanent. No UPDATE or DELETE, ever.
 
 | Field | Type | Required | Description |
@@ -63,6 +65,8 @@ The primary and only append-only log. Every memory operation — add, search, ge
 ---
 
 ## Neo4j: `Memory`
+
+**JSON Schema:** [`json-schema/memory.schema.json`](../../json-schema/memory.schema.json)
 
 Curated, promoted knowledge. Created via `MERGE`. Never edited after creation. Versioned via `SUPERSEDES` relationships.
 
@@ -137,6 +141,8 @@ Curated, promoted knowledge. Created via `MERGE`. Never edited after creation. V
 
 ## Neo4j: `Agent`
 
+**JSON Schema:** [`json-schema/agent.schema.json`](../../json-schema/agent.schema.json)
+
 Structural context node representing an AI agent in the team. Agents are members of Teams, contribute to Projects, and author Memory nodes. Seeded via `scripts/neo4j-seed-agents.cypher`.
 
 | Property | Type | Required | Description |
@@ -202,6 +208,8 @@ Structural context node representing an AI agent in the team. Agents are members
 
 ## Neo4j: `Team`
 
+**JSON Schema:** [`json-schema/team.schema.json`](../../json-schema/team.schema.json)
+
 Structural context node representing a team of agents. Seeded via `scripts/neo4j-seed-agents.cypher`.
 
 | Property | Type | Required | Description |
@@ -215,6 +223,8 @@ Structural context node representing a team of agents. Seeded via `scripts/neo4j
 ---
 
 ## Neo4j: `Project`
+
+**JSON Schema:** [`json-schema/project.schema.json`](../../json-schema/project.schema.json)
 
 Structural context node representing a project that agents contribute to and memories relate to. Seeded via `scripts/neo4j-seed-agents.cypher`.
 
