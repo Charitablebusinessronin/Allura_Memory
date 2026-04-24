@@ -79,7 +79,7 @@ model: openai/gpt-5.4-mini
 | Capability         | OpenCode Tool               | Claude Code Equivalent                        |
 |--------------------|-----------------------------|-----------------------------------------------|
 | Web search         | Exa                         | mcp__MCP_DOCKER__web_search_exa               |
-| Deep research      | Hyperbrowser / Playwright   | mcp__MCP_DOCKER__tavily_research              |
+| Deep research      | Perplexica (self-hosted)    | mcp__MCP_DOCKER__perplexica_search             |
 | Neo4j reads        | memory() wrapper            | mcp__memory__* tools                          |
 | Neo4j writes       | memory() wrapper            | mcp__memory__* tools (HITL via curator)       |
 | Postgres reads     | MCP_DOCKER_execute_sql      | mcp__MCP_DOCKER__execute_sql                  |
@@ -118,7 +118,7 @@ The following behaviors MUST be identical across both runtimes:
 
 2. **ollama-cloud/glm-5.1 vs claude-opus-4-6:** The Orchestrator models differ. GLM-5.1 is a Chinese LLM optimized for instruction-following; Claude Opus 4.6 is larger and more reasoning-capable. The Brooks persona behavior in the Claude Code Orchestrator compensates with explicit loop discipline in the prompt.
 
-3. **Context7 / YouTube Transcript:** Not available in Claude Code session. MemoryScout uses Tavily and Exa instead.
+3. **Context7 / YouTube Transcript:** Not available in Claude Code session. MemoryScout uses Perplexica and Exa instead.
 
 ## Excluded Models
 

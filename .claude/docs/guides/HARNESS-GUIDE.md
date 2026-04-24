@@ -29,19 +29,19 @@ User:
 
 Harness:
   Approved servers:
-    - tavily (web search, crawl, research)
+    - perplexica (self-hosted AI search, no API key)
     - exa (neural/semantic search)
   
   Pending approval:
     None
 
 User:
-  /mcp-load tavily
+  /mcp-load perplexica
 
 Harness:
-  ✅ Loaded: mcp__MCP_DOCKER__tavily_search
-  ✅ Loaded: mcp__MCP_DOCKER__tavily_research
-  ✅ Loaded: mcp__MCP_DOCKER__tavily_crawl
+  ✅ Loaded: mcp__MCP_DOCKER__perplexica_search
+  ✅ Loaded: mcp__MCP_DOCKER__perplexica_search
+
 
 Next step: Use the tools in your prompt
 ```
@@ -168,14 +168,14 @@ Harness:
 **Load an approved MCP server and activate its tools.**
 
 ```
-/mcp-load tavily                # Load Tavily
+/mcp-load perplexica           # Load Perplexica (self-hosted AI search)
 /mcp-load postgresql            # Load PostgreSQL (if approved)
 ```
 
 **Prerequisites:**
 - Server must be approved
 - Environment variables set (if required)
-- Example: `export TAVILY_API_TOKEN=...`
+- Perplexica is self-hosted — no API key required
 
 **Result:** Tools available immediately
 
@@ -357,11 +357,10 @@ Neo4j Promotion (curator approval only)
 
 ### "Environment variable missing"
 
-Some servers require environment variables (e.g., `TAVILY_API_TOKEN`). Set them before loading:
+Some servers require environment variables. Perplexica is self-hosted and needs no API key:
 
 ```bash
-export TAVILY_API_TOKEN=...
-/mcp-load tavily
+/mcp-load perplexica
 ```
 
 ### "Postgres unavailable"
@@ -386,7 +385,7 @@ Only Brooks (orchestrator) can approve servers and route skills. Non-Brooks user
 ## Next Steps
 
 1. **Try a discover:** `/mcp-discover`
-2. **Load Tavily:** `/mcp-load tavily`
+2. **Load Perplexica:** `/mcp-load perplexica`
 3. **Propose a skill:** `/skill-propose code-review`
 4. **Execute:** `/skill-load code-review`
 

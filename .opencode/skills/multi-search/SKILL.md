@@ -1,6 +1,6 @@
 ---
 name: multi-search
-description: Perform comprehensive research by combining multiple search sources - Context7 for documentation, Tavily for web search, and grep for codebases. Use this skill when you need to answer complex technical questions, research libraries/frameworks, find implementation patterns, or gather information from multiple sources to solve problems. This skill automatically coordinates Context7 (library docs), Tavily (web search), and grep (code search) to build complete answers.
+description: Perform comprehensive research by combining multiple search sources - Context7 for documentation, Perplexica for self-hosted AI search, and grep for codebases. Use this skill when you need to answer complex technical questions, research libraries/frameworks, find implementation patterns, or gather information from multiple sources to solve problems. This skill automatically coordinates Context7 (library docs), Perplexica (self-hosted AI search), and grep (code search) to build complete answers.
 ---
 
 # Multi-Search
@@ -9,7 +9,7 @@ description: Perform comprehensive research by combining multiple search sources
 
 This skill combines three powerful search capabilities to provide comprehensive research:
 - **Context7** - Up-to-date library documentation and code references
-- **Tavily** - Web search for current information, tutorials, and examples  
+- **Perplexica** - Self-hosted AI search for current information, tutorials, and examples (no API key)
 - **Grep** - Search codebases for implementation patterns and examples
 
 Use this skill when a single search source isn't enough to answer complex technical questions.
@@ -28,7 +28,7 @@ Use this skill when a single search source isn't enough to answer complex techni
 
 Determine what information is needed:
 - **Library/Framework docs** → Context7
-- **Current web info** → Tavily
+- **Current web info** → Perplexica
 - **Code patterns** → Grep
 
 ### Step 2: Execute Searches
@@ -40,8 +40,8 @@ Run searches in parallel using the appropriate tools:
 context7_resolve-library-id(libraryName="nextjs", query="app router documentation")
 context7_query-docs(libraryId="/vercel/next.js", query="middleware usage patterns")
 
-# Tavily - Search the web
-tavily_tavily_search(query="Next.js 15 middleware examples 2025", max_results=10)
+# Perplexica - Self-hosted AI search
+MCP_DOCKER_perplexica_search(query="Next.js 15 middleware examples 2025")
 
 # Grep - Search codebase
 grep_app_searchGitHub(query="middleware.ts", language=["TypeScript"], repo="vercel/next.js")
@@ -51,7 +51,7 @@ grep_app_searchGitHub(query="middleware.ts", language=["TypeScript"], repo="verc
 
 Combine findings into a comprehensive answer:
 - Use Context7 for official API and patterns
-- Use Tavily for current best practices and tutorials
+- Use Perplexica for current best practices and tutorials
 - Use Grep for real implementation examples
 
 ## Search Strategies
@@ -62,7 +62,7 @@ Combine findings into a comprehensive answer:
 
 **Pattern**:
 1. Context7: Resolve library ID and query docs for API reference
-2. Tavily: Search for recent tutorials and best practices
+2. Perplexica: Search for recent tutorials and best practices
 3. Grep: Find real-world usage examples on GitHub
 
 **Example**:
@@ -71,7 +71,7 @@ Combine findings into a comprehensive answer:
 context7_resolve-library-id(libraryName="zustand")
 context7_query-docs(libraryId="/pmndrs/zustand", query="persist middleware usage")
 
-tavily_tavily_search(query="Zustand persist middleware best practices 2025")
+MCP_DOCKER_perplexica_search(query="Zustand persist middleware best practices 2025")
 
 grep_app_searchGitHub(query="create.*persist.*zustand", language=["TypeScript"])
 ```
@@ -81,14 +81,14 @@ grep_app_searchGitHub(query="create.*persist.*zustand", language=["TypeScript"])
 **Goal**: Find solutions to specific errors or problems
 
 **Pattern**:
-1. Tavily: Search for the error message and solutions
+1. Perplexica: Search for the error message and solutions
 2. Context7: Query docs for proper usage
 3. Grep: Find working implementations
 
 **Example**:
 ```
 # Solve "cannot find module" error
-tavily_tavily_search(query='TypeScript "cannot find module" error ESNext moduleResolution')
+MCP_DOCKER_perplexica_search(query='TypeScript "cannot find module" error ESNext moduleResolution')
 
 context7_query-docs(libraryId="/microsoft/typescript", query="moduleResolution bundler vs nodeNext")
 
@@ -102,7 +102,7 @@ grep_app_searchGitHub(query="moduleResolution.*bundler", path="tsconfig.json")
 **Pattern**:
 1. Grep: Search for the pattern in popular repos
 2. Context7: Understand the official way
-3. Tavily: See variations and tradeoffs
+3. Perplexica: See variations and tradeoffs
 
 **Example**:
 ```
@@ -115,7 +115,7 @@ grep_app_searchGitHub(
 
 context7_query-docs(libraryId="/microsoft/typescript", query="error handling async await patterns")
 
-tavily_tavily_search(query="TypeScript error handling patterns 2025 best practices")
+MCP_DOCKER_perplexica_search(query="TypeScript error handling patterns 2025 best practices")
 ```
 
 ## Complete Examples
@@ -128,7 +128,7 @@ context7_resolve-library-id(libraryName="nextjs", query="authentication patterns
 context7_query-docs(libraryId="/vercel/next.js", query="NextAuth.js middleware authentication")
 
 # Step 2: Search for current best practices
-tavily_tavily_search(query="Next.js 15 authentication best practices 2025 NextAuth v5", max_results=10)
+MCP_DOCKER_perplexica_search(query="Next.js 15 authentication best practices 2025 NextAuth v5")
 
 # Step 3: Find real implementations
 grep_app_searchGitHub(query="auth.*middleware.*NextResponse", language=["TypeScript"], path="middleware.ts")
@@ -141,7 +141,7 @@ context7_query-docs(libraryId="/nextauthjs/next-auth", query="v5 middleware conf
 
 ```
 # Step 1: Search for the error online
-tavily_tavily_search(query='TypeScript "Property X does not exist on type Y" interface extension')
+MCP_DOCKER_perplexica_search(query='TypeScript "Property X does not exist on type Y" interface extension')
 
 # Step 2: Check TypeScript docs for proper typing
 context7_query-docs(libraryId="/microsoft/typescript", query="interface declaration merging module augmentation")
@@ -154,7 +154,7 @@ grep_app_searchGitHub(query="declare module.*interface.*augmentation", language=
 
 ```
 # Step 1: Get current comparison info
-tavily_tavily_search(query="Zustand vs Redux vs Jotai 2025 comparison performance bundle size")
+MCP_DOCKER_perplexica_search(query="Zustand vs Redux vs Jotai 2025 comparison performance bundle size")
 
 # Step 2: Get Zustand API docs
 context7_resolve-library-id(libraryName="zustand")
@@ -203,22 +203,19 @@ Query a library's documentation.
 context7_query-docs(libraryId="/facebook/react", query="useEffect cleanup function examples")
 ```
 
-### Tavily Tools
+### Perplexica — Self-Hosted AI Search
 
-#### tavily_tavily_search
+#### MCP_DOCKER_perplexica_search
 
-Search the web for current information.
+Search the web for current information via self-hosted Perplexica (no API key required).
 
 **Parameters:**
-- `query` (string): Search query - describe the ideal page
-- `max_results` (number, optional): Number of results (default: 8)
-- `search_depth` (string, optional): 'basic', 'advanced', 'fast', 'ultra-fast'
-
-**Returns:** Clean text from top search results
+- `query` (string): Search query
+- Self-hosted on port 7722 via Vane backend with Ollama embeddings
 
 **Example:**
 ```
-tavily_tavily_search(query="blog post comparing React Query and SWR performance 2025", max_results=10)
+MCP_DOCKER_perplexica_search(query="blog post comparing React Query and SWR performance 2025")
 ```
 
 ### Grep Tools
@@ -256,7 +253,7 @@ grep_app_searchGitHub(query="(?s)useEffect.*async function", useRegexp=true, lan
 - Good: "useEffect cleanup function with async operations"
 - Bad: "react hooks"
 
-**Tavily queries**: Describe the ideal page
+**Perplexica queries**: Describe the ideal page
 - Good: "blog post comparing React Query and SWR performance with benchmarks"
 - Bad: "React Query vs SWR"
 
@@ -272,7 +269,7 @@ Always run independent searches in parallel for faster results.
 
 Stop when you have:
 - [ ] Official API documentation (Context7)
-- [ ] Current context from web (Tavily)
+- [ ] Current context from web (Perplexica)
 - [ ] Working code examples (Grep)
 - [ ] Enough information to answer the question confidently
 
@@ -282,17 +279,17 @@ Don't over-search - 2-3 targeted queries per source usually suffice.
 
 | Information Need | Primary Source | Secondary Source | Fallback |
 |-----------------|---------------|------------------|----------|
-| API Reference | Context7 | Tavily | Grep |
-| Current Best Practices | Tavily | Context7 | Grep |
-| Implementation Examples | Grep | Tavily | Context7 |
-| Error Solutions | Tavily | Grep | Context7 |
-| Pattern Discovery | Grep | Context7 | Tavily |
-| Performance Comparison | Tavily | Grep | Context7 |
-| Migration Guides | Tavily | Context7 | Grep |
+| API Reference | Context7 | Perplexica | Grep |
+| Current Best Practices | Perplexica | Context7 | Grep |
+| Implementation Examples | Grep | Perplexica | Context7 |
+| Error Solutions | Perplexica | Grep | Context7 |
+| Pattern Discovery | Grep | Context7 | Perplexica |
+| Performance Comparison | Perplexica | Grep | Context7 |
+| Migration Guides | Perplexica | Context7 | Grep |
 | Quick Reference | Context7 | - | - |
 
 ## See Also
 
 - Context7: https://context7.com
-- Tavily Search: https://tavily.com
+- Perplexica: Self-hosted AI search (port 7722)
 - GitHub Search Syntax: https://docs.github.com/en/search-github

@@ -55,10 +55,9 @@ mcp__MCP_DOCKER__mcp-add("server-name")
 ### Web Research
 | Tool | Use |
 |------|-----|
-| `mcp__MCP_DOCKER__tavily_search` | Fast current search |
-| `mcp__MCP_DOCKER__tavily_research` | Deep multi-source |
-| `mcp__MCP_DOCKER__tavily_crawl` | Crawl from root URL |
-| `mcp__MCP_DOCKER__tavily_extract` | Extract specific URL |
+| `mcp__MCP_DOCKER__perplexica_search` | Self-hosted AI search (no API key) |
+| `mcp__MCP_DOCKER__tavily_crawl` | Crawl from root URL (catalog) |
+| `mcp__MCP_DOCKER__tavily_extract` | Extract specific URL (catalog) |
 | `mcp__MCP_DOCKER__web_search_exa` | Neural/semantic search |
 
 ### Browser Automation (HyperBrowser)
@@ -99,7 +98,7 @@ mcp__MCP_DOCKER__mcp-add("server-name")
 | Server | Trigger |
 |--------|---------|
 | `exa` | Web search needed |
-| `tavily` | Research/crawl needed |
+| `perplexica` | Web search needed |
 | `hyperbrowser` | Browser automation needed |
 | `context7` | Live library docs needed |
 | `notion` | Notion page read/write needed |
@@ -107,13 +106,13 @@ mcp__MCP_DOCKER__mcp-add("server-name")
 ### On-Demand Load Pattern
 ```
 # 1. Find the server
-mcp-find("tavily")
+mcp-find("perplexica")
 
 # 2. Add it (tools surface immediately)
-mcp-add("tavily")
+mcp-add("perplexica")
 
 # 3. Use the tools
-mcp__MCP_DOCKER__tavily_search("query")
+mcp__MCP_DOCKER__perplexica_search("query")
 ```
 
 ## Settings

@@ -226,7 +226,7 @@ RECOVERY_WINDOW_DAYS=30
 # ── External Integrations (optional for v1) ───────
 # NOTION_API_KEY=        # optional — Notion MCP integration
 # EXA_API_KEY=           # optional — web search
-# TAVILY_API_TOKEN=      # optional — web search
+# PERPLEXICA_URL=http://localhost:7722  # optional — self-hosted AI search (no API key needed)
 ```
 
 ---

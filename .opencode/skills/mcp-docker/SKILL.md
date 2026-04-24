@@ -25,7 +25,7 @@ Use `MCP_DOCKER_mcp-find` to search Docker Hub's MCP catalog:
 ```
 MCP_DOCKER_mcp-find --query "neo4j postgres mysql mongodb"
 MCP_DOCKER_mcp-find --query "browser playwright crawl scrape"
-MCP_DOCKER_mcp-find --query "tavily brave search web"
+MCP_DOCKER_mcp-find --query "perplexica brave search web"
 ```
 
 **Common search patterns:**
@@ -41,7 +41,7 @@ Use `MCP_DOCKER_mcp-config-set` to provide connection details and credentials:
 
 ```
 MCP_DOCKER_mcp-config-set --server neo4j --config '{"url":"bolt://localhost:7687","username":"neo4j","password":"password"}'
-MCP_DOCKER_mcp-config-set --server tavily --config '{"api_token":"tvly-xxxxx"}'
+MCP_DOCKER_mcp-config-set --server perplexica --config '{"url":"http://localhost:7722"}'
 MCP_DOCKER_mcp-config-set --server filesystem --config '{"paths":["/home/user/projects"]}'
 ```
 
@@ -56,7 +56,7 @@ Use `MCP_DOCKER_mcp-add` to register the configured server:
 
 ```
 MCP_DOCKER_mcp-add --name neo4j --activate
-MCP_DOCKER_mcp-add --name tavily --activate
+MCP_DOCKER_mcp-add --name perplexica --activate
 MCP_DOCKER_mcp-add --name filesystem --activate
 ```
 
@@ -66,7 +66,7 @@ Once added, use `MCP_DOCKER_mcp-exec` to call tools from the server:
 
 ```
 MCP_DOCKER_mcp-exec --name neo4j --tool read_neo4j_cypher --arguments '{"query":"MATCH (n) RETURN count(n)"}'
-MCP_DOCKER_mcp-exec --name tavily --tool search --arguments '{"query":"latest TypeScript features","max_results":10}'
+MCP_DOCKER_mcp-exec --name perplexica --tool search --arguments '{"query":"latest TypeScript features"}'
 ```
 
 ## Complete Examples
@@ -93,21 +93,15 @@ MCP_DOCKER_mcp-exec --name neo4j --tool read_neo4j_cypher --arguments '{
 }'
 ```
 
-### Example 2: Adding Web Search with Tavily
+### Example 2: Adding Self-Hosted AI Search with Perplexica
 
 ```
-# Configure Tavily
-MCP_DOCKER_mcp-config-set --server tavily --config '{
-  "api_token": "tvly-your-api-key"
-}'
-
-MCP_DOCKER_mcp-add --name tavily --activate
+# Perplexica is self-hosted — no API key needed
+MCP_DOCKER_mcp-add --name perplexica --activate
 
 # Search the web
-MCP_DOCKER_mcp-exec --name tavily --tool search --arguments '{
-  "query": "OpenCode MCP server announcement",
-  "max_results": 5,
-  "search_depth": "comprehensive"
+MCP_DOCKER_mcp-exec --name perplexica --tool search --arguments '{
+  "query": "OpenCode MCP server announcement"
 }'
 ```
 
@@ -159,7 +153,8 @@ MCP_DOCKER_mcp-exec --name allura-memory-mcp --tool search_memories --arguments 
 
 | Server | Description | Required Config |
 |--------|-------------|---------------|
-| `tavily` | Web search and extraction | api_token |
+| `perplexica` | Self-hosted AI search (no API key) | url (optional) |
+| `tavily` | Web search and extraction (API key) | api_token |
 | `brave` | Brave Search API | api_key |
 | `playwright` | Browser automation | none |
 | `firecrawl` | Web scraping | api_key |

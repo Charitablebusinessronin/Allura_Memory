@@ -49,13 +49,13 @@
       "essential": false,
       "rationale": "Library documentation lookup. Used by context7 skill."
     },
-    "tavily": {
+    "perplexica": {
       "status": "approved",
-      "approved_at": "2026-04-22T00:00:00Z",
+      "approved_at": "2026-04-24T00:00:00Z",
       "approved_by": "brooks-architect",
       "category": "search",
       "essential": false,
-      "rationale": "Web search and research. Used by multi-search skill."
+      "rationale": "Self-hosted AI search via Perplexica/Vane. Replaces Tavily — no API key required."
     }
   },
   "allura-graph-debug": {

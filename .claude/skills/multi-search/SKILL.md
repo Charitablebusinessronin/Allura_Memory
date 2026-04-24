@@ -1,6 +1,6 @@
 ---
 name: multi-search
-description: Comprehensive multi-source research skill coordinating five intelligence sources — Context7 (official docs), prompts.chat (AI instruction patterns), grep-mcp (real GitHub code), Tavily (web search), and local grep (our codebase). Use this skill when you need to answer complex technical questions, research libraries/frameworks, find implementation patterns, or gather information from multiple sources to solve problems. Automatically orchestrates all five sources with correct tool names and intake-only policy for prompts.chat.
+description: Comprehensive multi-source research skill coordinating five intelligence sources — Context7 (official docs), prompts.chat (AI instruction patterns), grep-mcp (real GitHub code), Perplexica (self-hosted AI search), and local grep (our codebase). Use this skill when you need to answer complex technical questions, research libraries/frameworks, find implementation patterns, or gather information from multiple sources to solve problems. Automatically orchestrates all five sources with correct tool names and intake-only policy for prompts.chat.
 ---
 
 # Multi-Search — Five-Source Intelligence Orchestration
@@ -14,10 +14,10 @@ This skill coordinates **five complementary intelligence sources** to build comp
 | **Context7**     | "What does the API officially say?"           | The reference manual               |
 | **prompts.chat** | "How do people instruct AI to do X?"          | The cookbook of agent recipes      |
 | **grep-mcp**     | "How do people actually code X?"              | The corpus of real implementations |
-| **Tavily**       | "What's the current best practice right now?" | The live knowledge feed            |
+| **Perplexica**   | "What's the current best practice right now?" | The live knowledge feed (self-hosted) |
 | **Local grep**   | "How did WE implement this?"                  | Our own mirror                     |
 
-**The triad** (Context7 + prompts.chat + grep-mcp) covers canonical docs, AI patterns, and real code. **Tavily** fills gaps for current events and recent best practices. **Local grep** keeps us honest about our own codebase.
+**The triad** (Context7 + prompts.chat + grep-mcp) covers canonical docs, AI patterns, and real code. **Perplexica** fills gaps for current events and recent best practices (self-hosted, no API key). **Local grep** keeps us honest about our own codebase.
 
 ## When to Use This Skill
 
@@ -29,7 +29,7 @@ Use multi-search when:
 - **Understanding APIs** — canonical reference + community patterns + working code
 - **Finding patterns in our codebase** — local grep first, then external validation
 - **Designing agent instructions** — prompts.chat for patterns, improve locally
-- **Debugging** — local code + Tavily for solutions + docs for correctness
+- **Debugging** — local code + Perplexica for solutions + docs for correctness
 
 Use **manual tool selection** when:
 
@@ -41,7 +41,7 @@ Use **manual tool selection** when:
 
 Pick the right source for the job. Fall back to others when the primary is insufficient.
 
-| Info Need              | Context7   | prompts.chat | grep-mcp   | Tavily     | Local grep |
+| Info Need              | Context7   | prompts.chat | grep-mcp   | Perplexica | Local grep |
 | ---------------------- | ---------- | ------------ | ---------- | ---------- | ---------- |
 | Official API           | ✅ Primary | —            | —          | Fallback   | —          |
 | AI agent instructions  | —          | ✅ Primary   | —          | Fallback   | —          |
@@ -49,7 +49,7 @@ Pick the right source for the job. Fall back to others when the primary is insuf
 | Current best practices | Fallback   | Fallback     | Fallback   | ✅ Primary | —          |
 | Library/Framework docs | ✅ Primary | —            | grep-mcp   | Fallback   | —          |
 | Debugging solutions    | —          | —            | grep-mcp   | ✅ Primary | Fallback   |
-| Pattern discovery      | grep-mcp   | Context7     | —          | Tavily     | ✅ Primary |
+| Pattern discovery      | grep-mcp   | Context7     | —          | Perplexica | ✅ Primary |
 | Prompt engineering     | —          | ✅ Primary   | —          | —          | —          |
 | Our own codebase       | —          | —            | —          | —          | ✅ Primary |
 | Community knowledge    | —          | ✅ Primary   | —          | Fallback   | —          |
@@ -65,9 +65,9 @@ Determine what information is needed:
 - **Library/Framework docs** → Context7 (primary), grep-mcp (secondary)
 - **AI instruction patterns** → prompts.chat (primary)
 - **Real code examples** → grep-mcp (primary), local grep (our code)
-- **Current best practices** → Tavily (primary)
+- **Current best practices** → Perplexica (primary)
 - **Our implementation** → local grep (primary)
-- **Debugging** → local grep + Tavily + Context7 + grep-mcp
+- **Debugging** → local grep + Perplexica + Context7 + grep-mcp
 
 ### Step 2: Pick Sources from Matrix
 
@@ -82,7 +82,7 @@ Run independent searches simultaneously. Each source returns different perspecti
 MCP_DOCKER_resolve-library-id(libraryName="next.js")
 prompts_chat_search_prompts(query="server actions", limit=10)
 grep-mcp_grep_query(query="useServer.*export", language="TypeScript")
-MCP_DOCKER_tavily_search(query="Next.js server actions best practices 2025")
+MCP_DOCKER_perplexica_search(query="Next.js server actions best practices 2025")
 # Local grep runs natively against our codebase
 ```
 
@@ -93,7 +93,7 @@ Combine findings into a coherent answer:
 1. **Start with Context7** for canonical API definitions
 2. **Layer prompts.chat** for established AI instruction patterns
 3. **Validate with grep-mcp** for real-world working implementations
-4. **Ground with Tavily** for current best practices and recent changes
+4. **Ground with Perplexica** for current best practices and recent changes
 5. **Check local grep** for our own implementation patterns
 
 When sources agree → high confidence. When they disagree → investigate the gap (usually where bugs or deprecated patterns hide).
@@ -141,7 +141,7 @@ prompts_chat_improve_prompt(
 
 **Goal:** Understand a library or framework thoroughly before writing code.
 
-**Pattern:** Context7 → grep-mcp → Tavily
+**Pattern:** Context7 → grep-mcp → Perplexica
 
 ```
 # Step 1: Get official docs (resolve first, then fetch)
@@ -156,18 +156,18 @@ MCP_DOCKER_get-library-docs(
 grep-mcp_grep_query(query="persist.*create", language="TypeScript", repo="pmndrs/zustand")
 
 # Step 3: Get current best practices
-MCP_DOCKER_tavily_search(query="Zustand persist middleware TypeScript best practices 2025", max_results=10)
+MCP_DOCKER_perplexica_search(query="Zustand persist middleware TypeScript best practices 2025")
 ```
 
 ### Strategy 2: Problem Solving
 
 **Goal:** Find solutions to specific errors or problems.
 
-**Pattern:** Tavily → Context7 → grep-mcp → Local grep
+**Pattern:** Perplexica → Context7 → grep-mcp → Local grep
 
 ```
 # Step 1: Search for the error message and solutions
-MCP_DOCKER_tavily_search(query="TypeScript cannot find module moduleResolution bundler", max_results=10)
+MCP_DOCKER_perplexica_search(query="TypeScript cannot find module moduleResolution bundler")
 
 # Step 2: Check official docs for proper usage
 MCP_DOCKER_get-library-docs(
@@ -187,7 +187,7 @@ grep-mcp_grep_query(query="moduleResolution", language="TypeScript", path="tscon
 
 **Goal:** Find how to implement a specific pattern across multiple sources.
 
-**Pattern:** grep-mcp → Context7 → Tavily → Local grep
+**Pattern:** grep-mcp → Context7 → Perplexica → Local grep
 
 ```
 # Step 1: Search for the pattern in popular repos
@@ -201,7 +201,7 @@ MCP_DOCKER_get-library-docs(
 )
 
 # Step 3: See variations and tradeoffs
-MCP_DOCKER_tavily_search(query="TypeScript error handling patterns 2025 best practices")
+MCP_DOCKER_perplexica_search(query="TypeScript error handling patterns 2025 best practices")
 
 # Step 4: Check our own patterns
 # Use local grep tool: pattern="catch" include="*.ts" path=/home/ronin704/Projects/allura memory/src/
@@ -237,7 +237,7 @@ prompts_chat_improve_prompt(
 
 **Goal:** Debug an error or unexpected behavior in our codebase.
 
-**Pattern:** Local grep → Tavily → Context7 → grep-mcp
+**Pattern:** Local grep → Perplexica → Context7 → grep-mcp
 
 ```
 # Step 1: Search our own codebase first
@@ -245,7 +245,7 @@ prompts_chat_improve_prompt(
 # Use local grep tool: pattern="neo4j.*driver.*session" include="*.ts"
 
 # Step 2: Search for the error message online
-MCP_DOCKER_tavily_search(query="Neo4j Bolt connection refused ECONNREFUSED TypeScript driver")
+MCP_DOCKER_perplexica_search(query="Neo4j Bolt connection refused ECONNREFUSED TypeScript driver")
 
 # Step 3: Check official API docs
 MCP_DOCKER_get-library-docs(
@@ -262,7 +262,7 @@ grep-mcp_grep_query(query="Neo4j.*driver.*session", language="TypeScript")
 
 Each agent has preferred intelligence sources based on their role. Use this map to decide which combination to invoke.
 
-| Agent         | Context7                           | prompts.chat                  | grep-mcp                                | Tavily                         | Local grep                  |
+| Agent         | Context7                           | prompts.chat                  | grep-mcp                                | Perplexica                     | Local grep                  |
 | ------------- | ---------------------------------- | ----------------------------- | --------------------------------------- | ------------------------------ | --------------------------- |
 | **Brooks**    | Architecture docs before decisions | Intake arch review prompts    | Reference architectures in top repos    | Fallback for recent ADRs       | Existing ADRs and patterns  |
 | **Woz**       | API signatures before writing code | Implementation templates      | Real code examples before building      | Fallback for deployment guides | Our existing implementation |
@@ -429,43 +429,23 @@ grep-mcp_grep_query(query="middleware.*NextResponse", language="TypeScript", pat
 - Always specify `language="TypeScript"` for Allura's stack to reduce noise
 - `path` is powerful for config patterns: `path="tsconfig.json"` for TypeScript configs
 
-### 4. Tavily — Web Search (via MCP_DOCKER)
+### 4. Perplexica — Self-Hosted AI Search (via MCP_DOCKER)
 
-Current information, tutorials, best practices, and anything too recent for Context7 or grep-mcp.
+Current information, tutorials, best practices, and anything too recent for Context7 or grep-mcp. Self-hosted on port 7722 — no API key required.
 
-#### MCP_DOCKER_tavily_search
+#### MCP_DOCKER_perplexica_search
 
 ```
-MCP_DOCKER_tavily_search(
-  query="Next.js 15 server actions best practices 2025",
-  max_results=10,
-  search_depth="advanced",
-  topic="general"
+MCP_DOCKER_perplexica_search(
+  query="Next.js 15 server actions best practices 2025"
 )
 ```
 
 **Parameters:**
 
-- `query` (string, required) — Search query describing the ideal page
-- `max_results` (number, optional) — Number of results (default based on plan)
-- `search_depth` (string, optional) — "basic", "advanced", "fast", "ultra-fast"
-- `topic` (string, optional) — "general" (standard web search)
-
-#### MCP_DOCKER_tavily_research
-
-Comprehensive research on a topic, combining multiple searches automatically.
-
-```
-MCP_DOCKER_tavily_research(
-  input="Compare Zustand vs Redux Toolkit vs Jotai for React state management in 2025",
-  model="pro"
-)
-```
-
-**Parameters:**
-
-- `input` (string, required) — Comprehensive description of the research task
-- `model` (string, optional) — "mini" for narrow tasks, "pro" for broad tasks, "auto" for automatic selection
+- `query` (string, required) — Search query
+- Self-hosted via Vane backend with Ollama embeddings — no external API key needed
+- Runs on port 7722 (HTTP MCP transport)
 
 ### 5. Local grep — Our Codebase Search (built-in tool)
 
@@ -541,15 +521,10 @@ MCP_DOCKER_get-library-docs(
 - **Quirk:** No `useRegexp` parameter — the `query` field accepts both literal strings and regex patterns directly. Simple patterns work reliably; complex lookaheads may not.
 - **Strategy:** Start with broad queries to discover patterns, then narrow with `repo` and `path` for specific implementations.
 
-### Tavily
+### Perplexica
 
-- **Rate limit:** 20 requests per minute via MCP_DOCKER.
-- **Depth options:**
-  - `basic` — quick lookups, fast
-  - `advanced` — thorough research (default for multi-search)
-  - `fast` — low-latency, high relevance
-  - `ultra-fast` — latency above all else
-- **Research mode:** Use `MCP_DOCKER_tavily_research` for complex multi-faceted questions. Use `model="pro"` for broad topics, `model="mini"` for narrow ones.
+- **Self-hosted** — runs on port 7722 via Vane backend with Ollama embeddings. No API key required.
+- **Rate limit:** No external rate limit (self-hosted). Be respectful of the local instance.
 - **Best for:** Current events, blog posts, tutorials, changelog entries, and anything too recent for Context7 or grep-mcp.
 
 ### Local grep
@@ -582,7 +557,7 @@ MCP_DOCKER_get-library-docs(
 | Library API           | Context7     | `MCP_DOCKER_get-library-docs(context7CompatibleLibraryID="/vercel/next.js", topic="server actions", tokens=5000)` |
 | AI prompt pattern     | prompts.chat | `prompts_chat_search_prompts(query="code review", limit=10)`                                                      |
 | Real code example     | grep-mcp     | `grep-mcp_grep_query(query="useServer.*export", language="TypeScript")`                                           |
-| Current best practice | Tavily       | `MCP_DOCKER_tavily_search(query="Next.js server actions best practices 2025")`                                    |
+| Current best practice | Perplexica  | `MCP_DOCKER_perplexica_search(query="Next.js server actions best practices 2025")`                               |
 | Our implementation    | Local grep   | `grep(pattern="server action", include="*.ts", path="src/")`                                                      |
 
 ## See Also
