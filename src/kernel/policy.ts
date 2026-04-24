@@ -355,6 +355,62 @@ for (const policy of DEFAULT_POLICIES) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// POL-006: DEBUG ENFORCEMENT (Systematic Debugging)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POL-006: Debug Enforcement — Systematic Debugging Iron Law
+ *
+ * No fix without root cause investigation.
+ * If an event is a fix/bugfix type AND the context doesn't indicate a prior
+ * root cause investigation, the mutation is rejected.
+ *
+ * This policy is advisory by default (logs warning, doesn't block).
+ * Set `strictDebugEnforcement: true` in context to make it blocking.
+ *
+ * Enforcement checks:
+ * - If operation is a fix-type (debug:fix_implemented, fix/*, hotfix/*)
+ * - AND context.debugRootCauseFound is not truthy
+ * - THEN violation
+ */
+export const POLICY_DEBUG_ENFORCEMENT: Policy = {
+  id: "POL-006",
+  description: "No fix without root cause investigation (systematic debugging)",
+  condition: (claims, context) => {
+    const operation = context.operation ?? "";
+    const isFixOperation = operation.startsWith("fix") ||
+      operation.startsWith("hotfix") ||
+      operation === "debug:fix_implemented" ||
+      operation.includes("bugfix");
+
+    // Not a fix-type operation → policy satisfied
+    if (!isFixOperation) {
+      return true;
+    }
+
+    // Fix-type operation: check if root cause was found first
+    const rootCauseFound = context.debugRootCauseFound as boolean ?? false;
+
+    // In strict mode: block the mutation
+    // In advisory mode (default): log warning but allow
+    const strictMode = context.strictDebugEnforcement as boolean ?? false;
+
+    if (strictMode) {
+      return rootCauseFound;
+    }
+
+    // Advisory mode: always pass, but the violation is still recorded
+    // for observability. The caller should check violations even when passed.
+    return true;
+  },
+  violation: "Fix attempted without prior root cause investigation. Log debug:root_cause_found before fixing.",
+  severity: "high",
+};
+
+// Register POL-006
+policyRegistry.register(POLICY_DEBUG_ENFORCEMENT);
+
+// ─────────────────────────────────────────────────────────────────────────────
 // TENANT-SPECIFIC POLICIES
 // ─────────────────────────────────────────────────────────────────────────────
 

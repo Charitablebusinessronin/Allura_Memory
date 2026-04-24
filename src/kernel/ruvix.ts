@@ -36,6 +36,7 @@ import {
   POLICY_PERMISSION_TIER,
   POLICY_ACTOR_VALIDATION,
   POLICY_AUDIT_TRAIL,
+  POLICY_DEBUG_ENFORCEMENT,
   policyRegistry,
   createTenantPolicies,
 } from "./policy";
@@ -309,6 +310,7 @@ export const RuVixKernel = {
   POLICY_PERMISSION_TIER,
   POLICY_ACTOR_VALIDATION,
   POLICY_AUDIT_TRAIL,
+  POLICY_DEBUG_ENFORCEMENT,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
