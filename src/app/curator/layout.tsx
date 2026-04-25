@@ -1,13 +1,13 @@
-"use client"
-
-import { useEffect } from "react"
-import { applyThemePreset } from "@/lib/preferences/theme-utils"
-import { persistPreference } from "@/lib/preferences/preferences-storage"
-
 export default function CuratorLayout({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    applyThemePreset("allura")
-    persistPreference("theme_preset", "allura")
-  }, [])
-  return <>{children}</>
+  return (
+    <>
+      {/* Force Allura theme immediately before hydration to prevent flash */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `document.documentElement.setAttribute("data-theme-preset", "allura");`,
+        }}
+      />
+      {children}
+    </>
+  )
 }
