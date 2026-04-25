@@ -1,0 +1,130 @@
+/*
+label: Allura
+value: allura
+*/
+
+:root[data-theme-preset="allura"] {
+  /* ── Allura brand primitives ── */
+  --allura-deep-navy: #1A2B4A;
+  --allura-coral: #E85A3C;
+  --allura-trust-green: #4CAF50;
+  --allura-clarity-blue: #5B8DB8;
+  --allura-pure-white: #F5F5F5;
+  --allura-ink-black: #1A1A1A;
+  --allura-warm-gray: #737373;
+
+  /* ── Generated fills (for backgrounds on coral text) ── */
+  --allura-navy-5: #e8ecf3;
+  --allura-navy-10: #d1d9e7;
+  --allura-coral-10: #fde5e0;
+  --allura-coral-20: #fbcbc2;
+
+  /* ── Status tokens ── */
+  --allura-status-active: var(--allura-trust-green);
+  --allura-status-proposed: var(--allura-clarity-blue);
+  --allura-status-forgotten: var(--allura-warm-gray);
+  --allura-status-warning: var(--allura-coral);
+
+  /* ── Shadow tokens ── */
+  --allura-shadow-card: 0 4px 24px rgba(26, 43, 74, 0.08);
+  --allura-shadow-hover: 0 8px 32px rgba(26, 43, 74, 0.12);
+  --allura-shadow-modal: 0 16px 48px rgba(26, 43, 74, 0.16);
+
+  /* ── Radius tokens ── */
+  --allura-radius-card: 16px;
+  --allura-radius-badge: 6px;
+  --allura-radius-button: 8px;
+  --allura-radius-input: 10px;
+
+  /* ── Semantic tokens → shadcn mapping ── */
+  --radius: 0.625rem;
+  --background: #F5F5F5;
+  --foreground: #1A1A1A;
+  --card: #FFFFFF;
+  --card-foreground: #1A1A1A;
+  --popover: #FFFFFF;
+  --popover-foreground: #1A1A1A;
+  --primary: #1A2B4A;
+  --primary-foreground: #F5F5F5;
+  --secondary: #E2E6EA;
+  --secondary-foreground: #1A2B4A;
+  --muted: #E2E6EA;
+  --muted-foreground: #737373;
+  --accent: #E85A3C;
+  --accent-foreground: #F5F5F5;
+  --destructive: #E85A3C;
+  --border: color-mix(in srgb, #1A2B4A 14%, white);
+  --input: color-mix(in srgb, #1A2B4A 12%, white);
+  --ring: #5B8DB8;
+  --chart-1: #1A2B4A;
+  --chart-2: #5B8DB8;
+  --chart-3: #4CAF50;
+  --chart-4: #E85A3C;
+  --chart-5: #737373;
+  --sidebar: #E8ECF3;
+  --sidebar-foreground: #1A1A1A;
+  --sidebar-primary: #1A2B4A;
+  --sidebar-primary-foreground: #F5F5F5;
+  --sidebar-accent: #E85A3C;
+  --sidebar-accent-foreground: #F5F5F5;
+  --sidebar-border: color-mix(in srgb, #1A2B4A 12%, white);
+  --sidebar-ring: #5B8DB8;
+
+  /* ── Shadows ── */
+  --shadow-2xs: 0px 1px 2px 0px rgb(26 43 74 / 0.04);
+  --shadow-xs: 0px 1px 2px 0px rgb(26 43 74 / 0.05);
+  --shadow-sm: 0px 4px 16px -10px rgb(26 43 74 / 0.10);
+  --shadow: 0px 10px 30px -18px rgb(26 43 74 / 0.12);
+  --shadow-md: 0px 14px 36px -18px rgb(26 43 74 / 0.16);
+  --shadow-lg: 0px 22px 48px -24px rgb(26 43 74 / 0.20);
+  --shadow-xl: 0px 28px 60px -28px rgb(26 43 74 / 0.24);
+  --shadow-2xl: 0px 36px 80px -32px rgb(26 43 74 / 0.30);
+
+  /* ── Font display ── */
+  .font-display {
+    font-family: var(--font-outfit), 'Outfit', system-ui, sans-serif;
+    font-weight: 700;
+  }
+}
+
+.dark:root[data-theme-preset="allura"] {
+  --background: #0F1A2E;
+  --foreground: #F5F5F5;
+  --card: #162035;
+  --card-foreground: #F5F5F5;
+  --popover: #162035;
+  --popover-foreground: #F5F5F5;
+  --primary: #5B8DB8;
+  --primary-foreground: #0F1A2E;
+  --secondary: #1E2D47;
+  --secondary-foreground: #F5F5F5;
+  --muted: #1E2D47;
+  --muted-foreground: #A3A3A3;
+  --accent: #E85A3C;
+  --accent-foreground: #F5F5F5;
+  --destructive: #E85A3C;
+  --border: rgb(245 245 245 / 0.10);
+  --input: rgb(245 245 245 / 0.12);
+  --ring: #5B8DB8;
+  --chart-1: #5B8DB8;
+  --chart-2: #1A2B4A;
+  --chart-3: #4CAF50;
+  --chart-4: #E85A3C;
+  --chart-5: #737373;
+  --sidebar: #162035;
+  --sidebar-foreground: #F5F5F5;
+  --sidebar-primary: #5B8DB8;
+  --sidebar-primary-foreground: #0F1A2E;
+  --sidebar-accent: #E85A3C;
+  --sidebar-accent-foreground: #F5F5F5;
+  --sidebar-border: rgb(245 245 245 / 0.10);
+  --sidebar-ring: #5B8DB8;
+  --shadow-2xs: 0px 1px 2px 0px rgb(0 0 0 / 0.20);
+  --shadow-xs: 0px 1px 2px 0px rgb(0 0 0 / 0.22);
+  --shadow-sm: 0px 4px 16px -10px rgb(0 0 0 / 0.30);
+  --shadow: 0px 10px 30px -18px rgb(0 0 0 / 0.35);
+  --shadow-md: 0px 14px 36px -18px rgb(0 0 0 / 0.40);
+  --shadow-lg: 0px 22px 48px -24px rgb(0 0 0 / 0.45);
+  --shadow-xl: 0px 28px 60px -28px rgb(0 0 0 / 0.50);
+  --shadow-2xl: 0px 36px 80px -32px rgb(0 0 0 / 0.55);
+}
