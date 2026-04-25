@@ -145,7 +145,7 @@ export function PanelDrawer({ memory, open, onClose, formatRelativeTime, classNa
             <div className="space-y-0">
               {/* Origin section */}
               <section className="border-b border-[var(--allura-deep-navy)]/10 px-6 py-5">
-                <p className="mb-3 text-[11px] font-bold tracking-[0.2em] text-[var(--allura-coral)] uppercase">
+                <p className="mb-3 text-[11px] font-bold tracking-[0.2em] text-[var(--allura-deep-navy)] uppercase">
                   Origin
                 </p>
                 <div className="flex items-center gap-3">
@@ -169,7 +169,7 @@ export function PanelDrawer({ memory, open, onClose, formatRelativeTime, classNa
 
               {/* Evidence section */}
               <section className="border-b border-[var(--allura-deep-navy)]/10 px-6 py-5">
-                <p className="mb-3 text-[11px] font-bold tracking-[0.2em] text-[var(--allura-coral)] uppercase">
+                <p className="mb-3 text-[11px] font-bold tracking-[0.2em] text-[var(--allura-deep-navy)] uppercase">
                   Evidence
                 </p>
                 <div className="space-y-2">
@@ -186,7 +186,7 @@ export function PanelDrawer({ memory, open, onClose, formatRelativeTime, classNa
 
               {/* Content preview */}
               <section className="border-b border-[var(--allura-deep-navy)]/10 px-6 py-5">
-                <p className="mb-3 text-[11px] font-bold tracking-[0.2em] text-[var(--allura-coral)] uppercase">
+                <p className="mb-3 text-[11px] font-bold tracking-[0.2em] text-[var(--allura-deep-navy)] uppercase">
                   Content
                 </p>
                 <p className="text-sm leading-6 text-[var(--allura-ink-black)]">
@@ -213,7 +213,7 @@ export function PanelDrawer({ memory, open, onClose, formatRelativeTime, classNa
 
               {/* Actions section */}
               <section className="px-6 py-5">
-                <p className="mb-3 text-[11px] font-bold tracking-[0.2em] text-[var(--allura-coral)] uppercase">
+                <p className="mb-3 text-[11px] font-bold tracking-[0.2em] text-[var(--allura-deep-navy)] uppercase">
                   Actions
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -232,7 +232,7 @@ export function PanelDrawer({ memory, open, onClose, formatRelativeTime, classNa
                   </Button>
                   <Button
                     variant="ghost"
-                    className="text-[var(--allura-coral)] hover:bg-[var(--allura-coral-10)]"
+                    className="text-[var(--allura-deep-navy)] hover:bg-[var(--allura-coral-10)]"
                     style={{ borderRadius: "var(--allura-radius-button)" }}
                   >
                     Deprecate

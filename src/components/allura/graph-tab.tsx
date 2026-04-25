@@ -160,7 +160,7 @@ export function GraphTab({ onNodeClick }: GraphTabProps) {
 
       {/* Neighborhood mode indicator */}
       {neighborhoodMode && (
-        <div className="absolute top-3 right-3 z-10 rounded-lg bg-[var(--allura-coral-10)] px-3 py-1 text-xs font-medium text-[var(--allura-coral)]">
+        <div className="absolute top-3 right-3 z-10 rounded-lg bg-[var(--allura-coral-10)] px-3 py-1 text-xs font-medium text-[var(--allura-deep-navy)]">
           Neighborhood mode
         </div>
       )}

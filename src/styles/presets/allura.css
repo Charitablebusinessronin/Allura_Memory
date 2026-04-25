@@ -80,11 +80,13 @@ value: allura
   --shadow-xl: 0px 28px 60px -28px rgb(26 43 74 / 0.24);
   --shadow-2xl: 0px 36px 80px -32px rgb(26 43 74 / 0.30);
 
-  /* ── Font display ── */
-  .font-display {
-    font-family: var(--font-outfit), 'Outfit', system-ui, sans-serif;
-    font-weight: 700;
-  }
+}
+
+/* ── Font display utility ── */
+[data-theme-preset="allura"] .font-display,
+.font-display {
+  font-family: var(--font-outfit), 'Outfit', system-ui, sans-serif;
+  font-weight: 700;
 }
 
 .dark:root[data-theme-preset="allura"] {
