@@ -29,6 +29,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
   CallToolRequestSchema,
+  isInitializeRequest,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 
@@ -124,17 +125,18 @@ import type {
 
 // ── MCP Server Setup (Streamable HTTP) ───────────────────────────────────────
 
-const mcpServer = new Server(
-  {
-    name: "allura-memory-canonical",
-    version: "1.0.0",
-  },
-  {
-    capabilities: {
-      tools: {},
+function createMcpServer(): Server {
+  const mcpServer = new Server(
+    {
+      name: "allura-memory-canonical",
+      version: "1.0.0",
     },
-  }
-);
+    {
+      capabilities: {
+        tools: {},
+      },
+    }
+  );
 
 // ── MCP Tool Handlers (Streamable HTTP) ──────────────────────────────────────
 
@@ -271,13 +273,39 @@ mcpServer.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 });
 
-// Create Streamable HTTP transport (stateless mode for simplicity)
-const mcpTransport = new StreamableHTTPServerTransport({
-  sessionIdGenerator: undefined, // Stateless — no session affinity required
-});
+  return mcpServer;
+}
 
-// Connect the MCP server to the transport
-await mcpServer.connect(mcpTransport);
+const mcpTransports = new Map<string, StreamableHTTPServerTransport>();
+
+async function createMcpTransport(): Promise<StreamableHTTPServerTransport> {
+  let initializedSessionId: string | undefined;
+  const transport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: () => randomUUID(),
+    onsessioninitialized: (sessionId) => {
+      initializedSessionId = sessionId;
+      mcpTransports.set(sessionId, transport);
+    },
+  });
+
+  transport.onclose = () => {
+    if (initializedSessionId) {
+      mcpTransports.delete(initializedSessionId);
+    }
+  };
+
+  await createMcpServer().connect(transport);
+  return transport;
+}
+
+async function readJsonBody(req: IncomingMessage): Promise<unknown> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  if (chunks.length === 0) return undefined;
+  return JSON.parse(Buffer.concat(chunks).toString("utf-8"));
+}
 
 // ── Initialize Observability ──────────────────────────────────────────────────
 
@@ -328,10 +356,38 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     }
 
     try {
-      // Delegate to the MCP Streamable HTTP transport
-      // The transport handles JSON-RPC message parsing, session management,
-      // and SSE streaming per the MCP Streamable HTTP specification.
-      await mcpTransport.handleRequest(req, res);
+      const sessionIdHeader = req.headers["mcp-session-id"];
+      const sessionId = Array.isArray(sessionIdHeader) ? sessionIdHeader[0] : sessionIdHeader;
+      let transport: StreamableHTTPServerTransport | undefined;
+      let parsedBody: unknown;
+
+      if (sessionId) {
+        transport = mcpTransports.get(sessionId);
+        if (!transport) {
+          res.writeHead(404, { ...corsHeaders(req.headers["origin"]), "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "MCP session not found" }));
+          transaction.finish();
+          return;
+        }
+      } else if (req.method === "POST") {
+        parsedBody = await readJsonBody(req);
+        if (!isInitializeRequest(parsedBody)) {
+          res.writeHead(400, { ...corsHeaders(req.headers["origin"]), "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "MCP session required" }));
+          transaction.finish();
+          return;
+        }
+        transport = await createMcpTransport();
+      } else {
+        res.writeHead(400, { ...corsHeaders(req.headers["origin"]), "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "MCP session required" }));
+        transaction.finish();
+        return;
+      }
+
+      // Delegate to the MCP Streamable HTTP transport. The transport handles
+      // JSON-RPC parsing, session management, and SSE streaming per the spec.
+      await transport.handleRequest(req, res, parsedBody);
     } catch (error) {
       console.error("[mcp-streamable-http] Error handling request:", error);
       captureException(error, extractRequestContext(req));
@@ -439,7 +495,7 @@ server.listen(PORT, () => {
 process.on("SIGTERM", () => {
   console.log("Shutting down...");
   server.close(() => {
-    mcpTransport.close().then(() => {
+    Promise.all([...mcpTransports.values()].map((transport) => transport.close())).then(() => {
       process.exit(0);
     });
   });
@@ -448,7 +504,7 @@ process.on("SIGTERM", () => {
 process.on("SIGINT", () => {
   console.log("Interrupted, shutting down...");
   server.close(() => {
-    mcpTransport.close().then(() => {
+    Promise.all([...mcpTransports.values()].map((transport) => transport.close())).then(() => {
       process.exit(0);
     });
   });

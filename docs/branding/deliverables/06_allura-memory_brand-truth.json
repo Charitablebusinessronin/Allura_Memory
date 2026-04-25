@@ -1,0 +1,161 @@
+{
+  "brand_name": "Allura",
+  "tagline": "MEMORY THAT SHOWS ITS WORK",
+  "legal_entity": "Allura AI, Inc.",
+  "category": "AI Memory Layer / Knowledge Management",
+  "version": "2.0",
+  "date_created": "2026-04-23",
+  "date_updated": "2026-04-24",
+  "group_id": "allura-team-durham",
+  "note": "Synced from root brand-truth.json. Colors verified against Figma Primitives collection (PAQpnxQZENNwbhmk5qxOjR).",
+  "figma_sync": {
+    "synced_at": "2026-04-24T00:00:00Z",
+    "synced_by": "kotler",
+    "figma_file": "PAQpnxQZENNwbhmk5qxOjR",
+    "collections_synced": ["Allura Primitives", "Allura Semantic", "Allura Spacing", "Allura Typography"],
+    "notes": "Figma is source of truth. Local files updated to match Allura Primitives collection."
+  },
+
+  "brand_promise": "To give people the power to hold on to what matters and share it with the people who matter most.",
+  "positioning": "Warm + Connected",
+  "positioning_statement": "Allura is a modern, human-centered technology brand that brings clarity to the moments that matter. We help people preserve, connect and empower their memories through intelligent solutions that are simple, trustworthy and built for real life.",
+
+  "archetype": {
+    "primary": "Caregiver",
+    "primary_score": 50,
+    "secondary": "Creator",
+    "secondary_score": 30,
+    "tertiary": "Explorer",
+    "tertiary_score": 20
+  },
+
+  "personality_dimensions": {
+    "caregiver": "We lead with empathy and act with care. We protect what matters and put people first in everything we do.",
+    "creator": "We build with purpose and design with intention. We turn ideas into simple, intelligent solutions.",
+    "explorer": "We stay curious and open to what's next. We explore new ideas, challenge the status quo and keep evolving."
+  },
+
+  "core_values": [
+    {
+      "name": "MEMORY",
+      "description": "We honor what matters. We help people preserve the moments, stories and connections that shape their lives."
+    },
+    {
+      "name": "CONNECTION",
+      "description": "We bring people closer. Our solutions make it easy to share, relive and strengthen the bonds that matter most."
+    },
+    {
+      "name": "CLARITY",
+      "description": "We make complex things simple. Intuitive design and clear experiences create confidence."
+    },
+    {
+      "name": "TRUST",
+      "description": "We protect what people trust us with. Security, reliability and transparency are at the core of everything we do."
+    },
+    {
+      "name": "EMPOWERMENT",
+      "description": "We give people the power to hold on, look back and move forward with the people who matter."
+    }
+  ],
+
+  "color_system": {
+    "source": "Figma variable collection — Allura Primitives (PAQpnxQZENNwbhmk5qxOjR)",
+    "primitives": [
+      { "name": "Deep Navy",    "hex": "#1A2B4A", "figmaVar": "color/brand/deep-navy",    "usage": "Primary brand color — trust, depth, intelligence" },
+      { "name": "Coral",        "hex": "#E85A3C", "figmaVar": "color/brand/coral",         "usage": "Action color — warmth, energy, human touch" },
+      { "name": "Trust Green",  "hex": "#4CAF50", "figmaVar": "color/brand/trust-green",   "usage": "Success, growth, positive reinforcement" },
+      { "name": "Clarity Blue", "hex": "#5B8DB8", "figmaVar": "color/brand/clarity-blue",  "usage": "Information, calm, clarity" },
+      { "name": "Pure White",   "hex": "#F5F5F5", "figmaVar": "color/brand/pure-white",    "usage": "Clean backgrounds, breathing room" },
+      { "name": "Ink Black",    "hex": "#1A1A1A", "figmaVar": "color/brand/ink-black",     "usage": "Primary text color" },
+      { "name": "Warm Gray",    "hex": "#737373", "figmaVar": "color/brand/warm-gray",     "usage": "Secondary text, subtle elements" }
+    ],
+    "semantic": {
+      "action_primary":   "color/brand/coral",
+      "action_secondary": "color/brand/deep-navy",
+      "action_tertiary":  "color/brand/trust-green",
+      "text_primary":     "color/brand/ink-black",
+      "text_secondary":   "color/brand/warm-gray",
+      "text_inverted":    "color/brand/pure-white",
+      "text_brand":       "color/brand/deep-navy",
+      "surface_primary":  "color/brand/pure-white",
+      "surface_secondary":"color/brand/clarity-blue",
+      "surface_inverted": "color/brand/deep-navy",
+      "status_success":   "color/brand/trust-green",
+      "status_info":      "color/brand/clarity-blue",
+      "status_warning":   "color/brand/coral"
+    }
+  },
+
+  "typography": {
+    "primary_font": "Inter",
+    "fallback_fonts": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    "scale": {
+      "hero":       { "size": "64px", "line_height": 1.1,  "weight": 700 },
+      "h1":         { "size": "48px", "line_height": 1.1,  "weight": 700 },
+      "h2":         { "size": "36px", "line_height": 1.1,  "weight": 600 },
+      "h3":         { "size": "28px", "line_height": 1.5,  "weight": 600 },
+      "h4":         { "size": "24px", "line_height": 1.5,  "weight": 600 },
+      "body_large": { "size": "18px", "line_height": 1.75, "weight": 400 },
+      "body":       { "size": "16px", "line_height": 1.5,  "weight": 400 },
+      "caption":    { "size": "14px", "line_height": 1.5,  "weight": 400 },
+      "overline":   { "size": "12px", "line_height": 1.5,  "weight": 600, "letter_spacing": "0.05em", "text_transform": "uppercase" }
+    }
+  },
+
+  "spacing": {
+    "scale": [4, 8, 12, 16, 24, 32, 48, 64, 96, 128],
+    "unit": "px"
+  },
+
+  "figma": {
+    "file_key": "PAQpnxQZENNwbhmk5qxOjR",
+    "pages": [
+      "Page 2 — Brand Overview",
+      "Page 3 — Brand Essence",
+      "Page 4 — Brand Personality",
+      "Page 5 — Allura in Action",
+      "Page 6 — Brand Assets",
+      "Page 7 — Instagram Post",
+      "Page 8 — Social Media & Newsletter",
+      "Page 9 — Wireframes"
+    ],
+    "variable_collections": [
+      "Allura Primitives",
+      "Allura Semantic",
+      "Allura Spacing",
+      "Allura Typography"
+    ]
+  },
+
+  "qa_review": {
+    "date": "2026-04-23",
+    "reviewer": "Munari",
+    "overall_score": 96.7,
+    "result": "PASS",
+    "items_passed": 58,
+    "items_total": 60
+  },
+
+  "deliverables": {
+    "figma_file": "https://www.figma.com/design/PAQpnxQZENNwbhmk5qxOjR/allura-gpt",
+    "notion_page": "https://www.notion.so/3481d9be65b381109a74f02c224d9e23",
+    "notion_page_id": "3481d9be-65b3-8110-9a74-f02c224d9e23",
+    "design_tokens_css": "clients/allura-memory/design-system/tokens.css",
+    "design_tokens_json": "clients/allura-memory/deliverables/design-tokens/tokens.json",
+    "color_palette": "clients/allura-memory/assets/colors/color-palette.json",
+    "component_styles": "clients/allura-memory/design-system/components.css",
+    "react_components": "clients/allura-memory/design-system/AlluraComponents.jsx",
+    "qa_report": "clients/allura-memory/05_qa-reviewer_qa-report.md"
+  },
+
+  "pipeline_status": {
+    "phase_0_intent_gate": "COMPLETE",
+    "phase_1_strategy": "COMPLETE",
+    "phase_2_naming": "COMPLETE",
+    "phase_3_visual_direction": "COMPLETE",
+    "phase_4_brand_kit": "COMPLETE",
+    "phase_5_qa": "PASS",
+    "phase_6_allura_memory": "COMPLETE",
+    "phase_7_report": "PENDING"
+  }
+}

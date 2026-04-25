@@ -7,10 +7,29 @@
 
 import { Pool } from "pg"
 import neo4j, { Driver } from "neo4j-driver"
-import { config } from "dotenv"
+import { existsSync, readFileSync } from "fs"
+import { parse } from "dotenv"
 import { resetBudgetState } from "./budget-circuit"
 
-config()
+// Load base config plus local overrides without clobbering already-injected
+// runtime environment variables. This keeps Docker/CI/Varlock injection
+// authoritative while still allowing .env.local to override .env on disk.
+function loadEnvFiles(): void {
+  const merged: Record<string, string> = {}
+
+  for (const path of [".env", ".env.local"]) {
+    if (!existsSync(path)) continue
+    Object.assign(merged, parse(readFileSync(path)))
+  }
+
+  for (const [key, value] of Object.entries(merged)) {
+    if (process.env[key] === undefined) {
+      process.env[key] = value
+    }
+  }
+}
+
+loadEnvFiles()
 
 // ── Connection Management ─────────────────────────────────────────────────
 

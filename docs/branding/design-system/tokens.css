@@ -1,0 +1,101 @@
+:root {
+  /* ============================================
+     ALLURA DESIGN SYSTEM — CSS Custom Properties
+     Generated from Figma Variables
+     ============================================ */
+
+  /* Primitive Colors — Source: Figma Variables (Allura Primitives collection, PAQpnxQZENNwbhmk5qxOjR) */
+  --color-brand-deep-navy: #1A2B4A;
+  --color-brand-coral: #E85A3C;
+  --color-brand-trust-green: #4CAF50;
+  --color-brand-clarity-blue: #5B8DB8;
+  --color-brand-pure-white: #F5F5F5;
+  --color-brand-ink-black: #1A1A1A;
+  --color-brand-warm-gray: #737373;
+
+  /* Semantic Colors — Action */
+  --color-action-primary: var(--color-brand-coral);
+  --color-action-secondary: var(--color-brand-deep-navy);
+  --color-action-tertiary: var(--color-brand-trust-green);
+
+  /* Semantic Colors — Text */
+  --color-text-primary: var(--color-brand-ink-black);
+  --color-text-secondary: var(--color-brand-warm-gray);
+  --color-text-inverted: var(--color-brand-pure-white);
+  --color-text-brand: var(--color-brand-deep-navy);
+
+  /* Semantic Colors — Surface */
+  --color-surface-primary: var(--color-brand-pure-white);
+  --color-surface-secondary: var(--color-brand-clarity-blue);
+  --color-surface-inverted: var(--color-brand-deep-navy);
+
+  /* Semantic Colors — Status */
+  --color-status-success: var(--color-brand-trust-green);
+  --color-status-info: var(--color-brand-clarity-blue);
+  --color-status-warning: var(--color-brand-coral);
+
+  /* Spacing Scale */
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-48: 48px;
+  --space-64: 64px;
+  --space-96: 96px;
+  --space-128: 128px;
+
+  /* Typography Scale */
+  --font-size-hero: 64px;
+  --font-size-h1: 48px;
+  --font-size-h2: 36px;
+  --font-size-h3: 28px;
+  --font-size-h4: 24px;
+  --font-size-body-large: 18px;
+  --font-size-body: 16px;
+  --font-size-caption: 14px;
+  --font-size-overline: 12px;
+
+  /* Line Heights */
+  --font-line-height-tight: 1.1;
+  --font-line-height-normal: 1.5;
+  --font-line-height-relaxed: 1.75;
+
+  /* Letter Spacing */
+  --font-letter-spacing-tight: -0.02em;
+  --font-letter-spacing-normal: 0;
+  --font-letter-spacing-wide: 0.05em;
+
+  /* Font Families */
+  --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-secondary: 'Georgia', 'Times New Roman', serif;
+
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 9999px;
+
+  /* Shadows */
+  --shadow-card: 0 4px 16px rgba(26, 43, 74, 0.08);
+  --shadow-elevated: 0 8px 32px rgba(26, 43, 74, 0.12);
+  --shadow-focus: 0 0 0 3px rgba(232, 90, 60, 0.3);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 350ms ease;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-text-primary: var(--color-brand-pure-white);
+    --color-text-secondary: #A0A0A0;
+    --color-surface-primary: #1A1A1A;
+    --color-surface-inverted: var(--color-brand-pure-white);
+    --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.3);
+    --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.4);
+  }
+}

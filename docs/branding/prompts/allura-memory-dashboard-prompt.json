@@ -1,0 +1,268 @@
+{
+  "prompt": {
+    "meta": {
+      "title": "Allura Memory Dashboard — Design Brief",
+      "version": "1.0",
+      "date": "2026-04-25",
+      "status": "ready_for_implementation"
+    },
+    "context": {
+      "brand": "Allura",
+      "tagline": "MEMORY THAT SHOWS ITS WORK",
+      "legal_entity": "Allura AI, Inc.",
+      "category": "AI Memory Layer / Knowledge Management",
+      "brand_promise": "To give people the power to hold on to what matters and share it with the people who matter most.",
+      "positioning": "Warm + Connected",
+      "archetype": {
+        "primary": "Caregiver (50%)",
+        "secondary": "Creator (30%)",
+        "tertiary": "Explorer (20%)"
+      },
+      "core_values": ["MEMORY", "CONNECTION", "CLARITY", "TRUST", "EMPOWERMENT"],
+      "voice": "Warm, approachable, intelligent. Clear, jargon-free, human. Helpful guide, not know-it-all expert.",
+      "reading_level": "8th–10th grade (Flesch-Kincaid)",
+      "must_not": ["Revolutionary", "game-changing", "AI-powered as main benefit", "Seamless", "effortless", "Best-in-class", "Leverage", "Synergy", "All caps for emphasis", "Exclamation points"]
+    },
+    "design_system": {
+      "source_of_truth": "Figma file PAQpnxQZENNwbhmk5qxOjR — Allura Primitives collection",
+      "typography": {
+        "primary_font": "Inter",
+        "fallback": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        "body_size": "16px",
+        "body_line_height": 1.6,
+        "heading_weights": [600, 700],
+        "corner_radius": "8–12px"
+      },
+      "colors": {
+        "deep_navy": { "hex": "#1A2B4A", "usage": "Primary brand — trust, depth, intelligence. Buttons, headers, nav." },
+        "coral": { "hex": "#E85A3C", "usage": "Action — warmth, energy. Primary CTAs, active states, highlights." },
+        "trust_green": { "hex": "#4CAF50", "usage": "Success, growth, positive reinforcement. Approved status." },
+        "clarity_blue": { "hex": "#5B8DB8", "usage": "Information, calm. Links, info badges, graph nodes." },
+        "pure_white": { "hex": "#F5F5F5", "usage": "Backgrounds, card surfaces, breathing room." },
+        "ink_black": { "hex": "#1A1A1A", "usage": "Primary text, headings." },
+        "warm_gray": { "hex": "#737373", "usage": "Secondary text, captions, meta info." }
+      },
+      "semantic_tokens": {
+        "action_primary": "coral",
+        "action_secondary": "deep_navy",
+        "text_primary": "ink_black",
+        "text_secondary": "warm_gray",
+        "surface_primary": "pure_white",
+        "surface_inverted": "deep_navy",
+        "status_success": "trust_green",
+        "status_info": "clarity_blue",
+        "status_warning": "coral"
+      },
+      "spacing": {
+        "gutter": "24px",
+        "card_gap": "12px",
+        "section_padding": "48px",
+        "card_padding": "20px"
+      },
+      "iconography": {
+        "style": "Line icons, 2px stroke, rounded caps",
+        "default_size": "24px",
+        "grid": "24×24px"
+      }
+    },
+    "task": {
+      "description": "Design a high-fidelity mockup of the Allura Memory Dashboard — a clean, governed interface for viewing, searching, and managing AI system memories.",
+      "deliverable": "Single-file HTML/CSS/JS mockup (or Figma-ready design spec) showing the /memory route with all key screens and interactions.",
+      "stack": "HTML5 + Tailwind CSS (or vanilla CSS) + minimal JS for interactivity. No frameworks required.",
+      "responsive": "Mobile-first. Stack drawer under cards on small screens."
+    },
+    "screens": [
+      {
+        "id": "memory_dashboard",
+        "route": "/memory",
+        "title": "Memory Dashboard",
+        "layout": {
+          "header": "Hero section with Allura logo mark + page title 'What your system remembers' + 'Add Memory' button (coral)",
+          "search": "Full-width search bar with placeholder 'Search memories, topics, or agents...'",
+          "tabs": ["Memories", "Recently Forgotten", "Graph"],
+          "main": "Scrollable list of memory cards. Load more + results count footer."
+        },
+        "memory_card": {
+          "structure": [
+            "Status badge (top-left): Active | Forgotten | Pending | Deprecated — color-coded",
+            "Confidence bar (top-right): horizontal bar 0–100%, color-coded (green >75, amber 50–75, red <50)",
+            "Memory text: plain English, max 2 lines, 16px Inter",
+            "Meta row: 'Created 2 hours ago · by Scout'",
+            "Actions: 'View Source' text button (clarity blue) + 'Forget' text button (warm gray)"
+          ],
+          "states": {
+            "active": "White card, subtle shadow, ink_black text",
+            "hover": "Pure white background with 2px coral left border, slight lift shadow",
+            "low_confidence": "Warning icon + amber confidence bar + tooltip 'Confidence below 50%'"
+          },
+          "empty_state": "Illustrated empty state: 'Nothing saved yet. Add the first memory.' with coral CTA button."
+        },
+        "interactions": {
+          "search": "Real-time filter with 100ms debounce. Show 'No memories match \"query\". Save it manually?' if zero results.",
+          "view_source": "Opens right-side provenance drawer (see screen: provenance_drawer).",
+          "forget": "Moves card to 'Recently Forgotten' tab. 30-day recovery window.",
+          "load_more": "Infinite scroll or 'Load more' button. Show count: 'Showing 24 of 156 memories'."
+        }
+      },
+      {
+        "id": "provenance_drawer",
+        "title": "Provenance Drawer (Right Panel)",
+        "trigger": "Click 'View Source' on any memory card",
+        "layout": {
+          "width": "400px desktop, full-width stacked on mobile",
+          "position": "Fixed right panel, slides in",
+          "header": "Memory text (truncated) + close button"
+        },
+        "sections": [
+          {
+            "name": "Origin",
+            "content": "Agent avatar + name (e.g., 'Scout'), timestamp, workflow ID. Badge: 'Auto-captured' or 'User-added'."
+          },
+          {
+            "name": "Evidence",
+            "content": "Collapsible list of raw trace cards. Each trace shows: tool call name, timestamp, snippet of LLM output or tool result. 'No traces available' if empty."
+          },
+          {
+            "name": "Actions",
+            "content": "Buttons: 'Promote to Insight' (trust green), 'Deprecate' (coral), 'Edit' (clarity blue). Disabled states for insufficient permissions."
+          }
+        ],
+        "states": {
+          "loading": "Skeleton loader with text 'Finding source traces...'",
+          "ready": "Full evidence list",
+          "empty": "'Source not available' with info icon"
+        }
+      },
+      {
+        "id": "curator_queue",
+        "route": "/curator",
+        "title": "Curator Approval Queue",
+        "layout": {
+          "left_panel": "List of proposed insight cards. Each shows: summary (1 line), confidence %, trace count, timestamp.",
+          "right_panel": "Selected insight detail: full text, evidence list, confidence breakdown.",
+          "bottom_bar": "Sticky action bar: [Approve] [Edit] [Reject]"
+        },
+        "insight_card": {
+          "summary": "Plain English, max 12 words",
+          "confidence": "Percentage + color bar",
+          "source_traces": "Count badge",
+          "actions": "Approve (trust green), Edit (clarity blue), Reject (coral)"
+        },
+        "empty_state": "'No insights waiting for review. Check back later.' with calm illustration."
+      },
+      {
+        "id": "graph_tab",
+        "route": "/memory?tab=graph",
+        "title": "Memory Graph",
+        "layout": "Full-width canvas area. Minimal chrome.",
+        "graph_spec": {
+          "library": "React Flow (or D3 force-directed for HTML mockup)",
+          "max_nodes": 100,
+          "demo_nodes": 20,
+          "node_types": {
+            "person": { "color": "clarity_blue", "shape": "circle", "icon": "user" },
+            "topic": { "color": "deep_navy", "shape": "rounded_rect", "icon": "tag" },
+            "decision": { "color": "trust_green", "shape": "diamond", "icon": "check" },
+            "trace": { "color": "warm_gray", "shape": "small_circle", "icon": "activity" }
+          },
+          "edge_types": {
+            "derived_from": { "style": "dashed", "color": "warm_gray" },
+            "approved_by": { "style": "solid", "color": "trust_green" },
+            "supersedes": { "style": "solid", "color": "coral", "arrowhead": "target" }
+          },
+          "interactions": {
+            "pan_zoom": "Mouse drag to pan, scroll to zoom. Fit-to-view button.",
+            "node_click": "Opens memory card in right panel (same as provenance drawer).",
+            "search": "Filter graph by node name. 'Show neighborhood' button for dense graphs.",
+            "too_big": "If >50 nodes visible, show 'Show neighborhood' to focus on selected node + 2-hop neighbors."
+          }
+        }
+      }
+    ],
+    "components": {
+      "status_badge": {
+        "active": { "label": "Active", "bg": "#4CAF50", "text": "#FFFFFF" },
+        "forgotten": { "label": "Forgotten", "bg": "#737373", "text": "#FFFFFF" },
+        "pending": { "label": "Pending", "bg": "#5B8DB8", "text": "#FFFFFF" },
+        "deprecated": { "label": "Deprecated", "bg": "#E85A3C", "text": "#FFFFFF" }
+      },
+      "confidence_bar": {
+        "high": { "min": 75, "color": "#4CAF50", "label": "Strong" },
+        "medium": { "min": 50, "color": "#5B8DB8", "label": "Good" },
+        "low": { "min": 0, "color": "#E85A3C", "label": "Needs Review" }
+      },
+      "buttons": {
+        "primary": { "bg": "#E85A3C", "text": "#FFFFFF", "hover": "#D14A2E", "radius": "8px" },
+        "secondary": { "bg": "#1A2B4A", "text": "#FFFFFF", "hover": "#131F36", "radius": "8px" },
+        "tertiary": { "bg": "transparent", "text": "#5B8DB8", "border": "1px solid #5B8DB8", "hover": "#F0F4F8" },
+        "danger": { "bg": "transparent", "text": "#E85A3C", "hover": "#FDF2F0" }
+      }
+    },
+    "writing_guidelines": {
+      "reading_level": "6th grade for UI labels, 8th–10th for body copy",
+      "max_sentence_length": 20,
+      "voice": "Active, human, jargon-free",
+      "examples": {
+        "good": ["Search what your system remembers.", "View Source", "Recently Forgotten", "Nothing saved yet. Add the first memory."],
+        "bad": ["Query the semantic memory index.", "Inspect provenance traces", "Soft-deleted", "No data found."]
+      },
+      "labels": {
+        "search_placeholder": "Search memories, topics, or agents...",
+        "add_memory": "Add Memory",
+        "view_source": "View Source",
+        "forget": "Forget",
+        "restore": "Restore",
+        "approve": "Approve",
+        "reject": "Reject",
+        "edit": "Edit",
+        "promote": "Promote to Insight",
+        "deprecate": "Deprecate",
+        "load_more": "Load more",
+        "showing": "Showing {count} of {total} memories",
+        "no_results": "No memories match '{query}'. Save it manually?",
+        "no_traces": "Source not available",
+        "finding_traces": "Finding source traces...",
+        "graph_empty": "No connections to show.",
+        "graph_neighborhood": "Show neighborhood"
+      }
+    },
+    "technical_requirements": {
+      "data_hooks": [
+        "Reuse existing useMemoryList hook for memory list",
+        "Create useProvenanceDrawer(memoryId) hook for drawer data"
+      ],
+      "graph": "React Flow (force-directed), 100 nodes max, 20-node demo dataset",
+      "performance": "Infinite scroll, 100ms search debounce, <1s load with 100 memories",
+      "responsive": "Mobile-first. Drawer stacks below cards on <768px."
+    },
+    "edge_cases": [
+      { "case": "No memories", "behavior": "Empty state with illustration and 'Add Memory' CTA" },
+      { "case": "No search results", "behavior": "'No memories match \"query\". Save it manually?' with suggestion link" },
+      { "case": "Low confidence (<50%)", "behavior": "Warning badge on card, amber confidence bar, tooltip on hover" },
+      { "case": "No provenance", "behavior": "'Source not available' in drawer with info icon" },
+      { "case": "Graph too big", "behavior": "'Show neighborhood' button to focus on selected node + 2-hop neighbors" },
+      { "case": "Curator queue empty", "behavior": "'No insights waiting for review. Check back later.' with calm illustration" }
+    ],
+    "acceptance_criteria": [
+      "Memory cards show status badge + confidence bar + plain English text + meta + actions",
+      "Provenance drawer opens on 'View Source', shows origin/evidence/actions with loading/empty states",
+      "Curator queue has left/right layout with approve/edit/reject workflow",
+      "Graph tab renders 20-node demo with pan/zoom/node-click interactions",
+      "All UI text follows 6th-grade readability and active voice guidelines",
+      "Page loads in <1s with 100 memories (simulated)",
+      "Passes mobile responsive test: cards stack, drawer becomes bottom sheet, graph is scrollable"
+    ],
+    "implementation_phases": [
+      { "phase": 1, "deliverable": "Memory cards + provenance drawer", "timeline": "2 days" },
+      { "phase": 2, "deliverable": "Curator approval queue", "timeline": "3 days" },
+      { "phase": 3, "deliverable": "Graph tab + tab navigation", "timeline": "4 days" },
+      { "phase": 4, "deliverable": "Mobile responsive + performance optimizations", "timeline": "2 days" }
+    ],
+    "next_actions": [
+      "Build /memory upgraded + provenance drawer first (Phase 1)",
+      "Wire useProvenanceDrawer hook with mock data",
+      "Test empty states + low-confidence memory edge cases",
+      "Log design decision on mockup approval"
+    ]
+  }
+}

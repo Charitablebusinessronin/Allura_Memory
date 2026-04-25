@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>allura — Applications</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
+  :root {
+    --color-primary: #FFC300;
+    --color-secondary: #0581A7;
+    --color-tertiary: #BDBD0D;
+    --color-neutral: #142329;
+    --color-accent: #F5F5F5;
+    --font-heading: "Outfit", system-ui, sans-serif;
+    --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background: #F5F5F5; color: var(--color-neutral); font-family: var(--font-body); }
+
+  .header {
+    background: var(--color-neutral);
+    color: white;
+    padding: 40px 60px;
+    text-align: center;
+  }
+  .header h1 {
+    font-family: var(--font-heading);
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: 2px;
+  }
+  .header p {
+    font-size: 16px;
+    color: rgba(255,255,255,0.6);
+    margin-top: 8px;
+  }
+  .yellow-bar {
+    width: 60px; height: 4px;
+    background: var(--color-primary);
+    margin: 20px auto 0;
+    border-radius: 2px;
+  }
+
+  .section {
+    max-width: 1300px;
+    margin: 50px auto;
+    padding: 0 60px;
+  }
+  .section-title {
+    font-family: var(--font-heading);
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 30px;
+  }
+
+  .app-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    margin-bottom: 50px;
+  }
+  .app-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .app-visual {
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    position: relative;
+  }
+  .app-visual img {
+    max-width: 100%;
+    max-height: 140px;
+    object-fit: contain;
+  }
+  .app-info {
+    padding: 24px;
+  }
+  .app-label {
+    font-family: var(--font-heading);
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--color-primary);
+    margin-bottom: 4px;
+  }
+  .app-title {
+    font-family: var(--font-heading);
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .app-desc {
+    font-size: 14px;
+    line-height: 1.5;
+    color: rgba(20,35,41,0.85);
+  }
+
+  .mock-browser {
+    border-radius: 12px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+  }
+  .mock-chrome {
+    background: #e8e8e8;
+    padding: 10px 16px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .mock-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #ccc;
+  }
+  .mock-dot:nth-child(1) { background: #ff5f56; }
+  .mock-dot:nth-child(2) { background: #ffbd2e; }
+  .mock-dot:nth-child(3) { background: #27c93f; }
+  .mock-url {
+    flex: 1;
+    background: white;
+    border-radius: 4px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: #444;
+    text-align: center;
+  }
+
+  .mock-website {
+    background: var(--color-accent);
+    padding: 40px;
+  }
+  .mock-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+  }
+  .mock-logo {
+    font-family: var(--font-heading);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--color-neutral);
+  }
+  .mock-nav-links {
+    display: flex;
+    gap: 24px;
+  }
+  .mock-nav-links span {
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--color-neutral);
+  }
+  .mock-hero {
+    text-align: center;
+    padding: 40px 0;
+  }
+  .mock-hero h2 {
+    font-family: var(--font-heading);
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--color-neutral);
+  }
+  .mock-hero p {
+    font-size: 16px;
+    color: rgba(20,35,41,0.85);
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .ig-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  .ig-post {
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, #142329 0%, #142329 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .ig-post-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0; right: 0;
+    padding: 16px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.6));
+  }
+  .ig-post-overlay span {
+    font-family: var(--font-heading);
+    font-size: 18px;
+    color: white;
+  }
+
+  .email-mock {
+    max-width: 600px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .email-header {
+    background: var(--color-primary);
+    padding: 20px;
+    text-align: center;
+  }
+  .email-header h3 {
+    font-family: var(--font-heading);
+    font-size: 20px;
+    color: var(--color-neutral);
+  }
+  .email-body {
+    padding: 30px;
+  }
+  .email-body p {
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 12px;
+    color: rgba(20,35,41,0.8);
+  }
+  .email-cta {
+    display: inline-block;
+    background: var(--color-primary);
+    color: var(--color-neutral);
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-family: var(--font-heading);
+    font-size: 14px;
+    font-weight: 700;
+    margin-top: 16px;
+  }
+
+  .app-icon-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  .app-icon {
+    aspect-ratio: 1;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-neutral);
+    overflow: hidden;
+  }
+  .app-icon img {
+    width: 60%;
+    height: 60%;
+    object-fit: contain;
+  }
+
+  .dark-section {
+    background: var(--color-neutral);
+    padding: 60px;
+    border-radius: 12px;
+    margin-bottom: 40px;
+  }
+  .dark-section h3 {
+    font-family: var(--font-heading);
+    font-size: 24px;
+    color: white;
+    margin-bottom: 20px;
+  }
+  .dark-section p {
+    font-size: 15px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.6;
+  }
+
+  .page-nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    padding: 40px 0;
+    background: #fff;
+  }
+  .nav-circle {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--color-neutral);
+    display: block;
+    transition: all 0.2s ease;
+  }
+  .nav-circle.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+  .nav-circle:hover {
+    transform: scale(1.2);
+    border-color: var(--color-primary);
+  }
+
+  @media (max-width: 900px) {
+    .app-grid { grid-template-columns: repeat(2, 1fr); }
+    .app-icon-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 600px) {
+    .app-grid { grid-template-columns: 1fr; }
+    .ig-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>ALLURA IN THE WORLD</h1>
+  <p>How the brand shows up across every touchpoint.</p>
+  <div class="yellow-bar"></div>
+</div>
+
+<!-- APPLICATION CARDS -->
+<div class="section">
+  <div class="app-grid">
+    <div class="app-card">
+      <div class="app-visual" style="background:#fff;border-bottom:1px solid rgba(0,0,0,0.06);">
+        <div style="width:280px;height:160px;background:white;border:1px solid rgba(0,0,0,0.1);border-radius:8px;padding:20px;display:flex;flex-direction:column;justify-content:space-between;">
+          <div style="font-family:var(--font-heading);font-size:20px;font-weight:700;color:var(--color-neutral);">allura</div>
+          <div style="font-size:12px;color:rgba(20,35,41,0.6);line-height:1.4;">
+            <div style="font-weight:600;">Maya Chen</div>
+            <div>Community Lead</div>
+            <div style="margin-top:4px;">maya@allura.io</div>
+          </div>
+        </div>
+      </div>
+      <div class="app-info">
+        <p class="app-label">The Handshake</p>
+        <h3 class="app-title">Business Card</h3>
+        <p class="app-desc">Clean, left-aligned, and confident. Warm Yellow accents on White stock invite touch. The Primary Wordmark leads; your name follows in Outfit Bold.</p>
+      </div>
+    </div>
+
+    <div class="app-card">
+      <div class="app-visual" style="background:#FAFAF8;border-bottom:1px solid rgba(0,0,0,0.06);">
+        <div style="width:200px;height:260px;background:white;border:1px solid rgba(0,0,0,0.08);padding:30px;display:flex;flex-direction:column;">
+          <div style="font-family:var(--font-heading);font-size:16px;font-weight:700;color:var(--color-neutral);margin-bottom:20px;">allura</div>
+          <div style="font-size:11px;color:rgba(20,35,41,0.6);line-height:1.5;">
+            <div style="margin-bottom:12px;">March 15, 2026</div>
+            <div style="margin-bottom:12px;">Dear Community Partner,</div>
+            <div>Thank you for joining...</div>
+          </div>
+        </div>
+      </div>
+      <div class="app-info">
+        <p class="app-label">The Formal Hello</p>
+        <h3 class="app-title">Letterhead</h3>
+        <p class="app-desc">White canvas, Dark Gray type, 1-inch margins all around. Professional without being sterile. The logo sits top-left like a friendly signature.</p>
+      </div>
+    </div>
+
+    <div class="app-card">
+      <div class="app-visual" style="background:#142329;border-bottom:1px solid rgba(255,255,255,0.1);">
+        <div style="text-align:center;">
+          <div style="width:80px;height:80px;background:var(--color-primary);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+            <span style="font-family:var(--font-heading);font-size:32px;font-weight:700;color:var(--color-neutral);">a</span>
+          </div>
+          <div style="font-family:var(--font-heading);font-size:14px;font-weight:700;color:white;">allura</div>
+        </div>
+      </div>
+      <div class="app-info">
+        <p class="app-label">The First Glance</p>
+        <h3 class="app-title">Social Profile</h3>
+        <p class="app-desc">Icon Only in the avatar. Full Wordmark in the bio. Warmth and recognition in a single scroll stop.</p>
+      </div>
+    </div>
+
+    <div class="app-card">
+      <div class="app-visual" style="background:white;border-bottom:1px solid rgba(0,0,0,0.06);">
+        <div style="width:240px;height:140px;background:linear-gradient(135deg,#142329,#142329);border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:24px;">
+          <div style="font-family:var(--font-heading);font-size:22px;font-weight:700;color:white;margin-bottom:8px;">Welcome to allura</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.7);">Where communities come alive.</div>
+        </div>
+      </div>
+      <div class="app-info">
+        <p class="app-label">The Stage</p>
+        <h3 class="app-title">Presentation Template</h3>
+        <p class="app-desc">16:9 ratio. White backgrounds for content slides; Dark Gray for title moments. Outfit commands attention; Inter delivers detail.</p>
+      </div>
+    </div>
+
+    <div class="app-card">
+      <div class="app-visual" style="background:#FAFAF8;border-bottom:1px solid rgba(0,0,0,0.06);">
+        <div style="text-align:center;font-size:12px;color:rgba(20,35,41,0.6);line-height:1.6;">
+          <div style="font-family:var(--font-heading);font-size:14px;font-weight:700;color:var(--color-neutral);margin-bottom:8px;">Maya Chen | allura</div>
+          <div>maya@allura.io</div>
+          <div style="margin-top:8px;color:var(--color-secondary);">allura.io</div>
+        </div>
+      </div>
+      <div class="app-info">
+        <p class="app-label">The Digital Handshake</p>
+        <h3 class="app-title">Email Signature</h3>
+        <p class="app-desc">Inter 14px for body, Warm Yellow for links. Icons for social connection. Small, clear, and unmistakably warm.</p>
+      </div>
+    </div>
+
+    <div class="app-card">
+      <div class="app-visual" style="background:#142329;border-bottom:1px solid rgba(255,255,255,0.1);">
+        <div style="width:160px;height:160px;background:white;border-radius:12px;display:flex;align-items:center;justify-content:center;">
+          <div style="text-align:center;">
+            <div style="font-family:var(--font-heading);font-size:24px;font-weight:700;color:var(--color-neutral);margin-bottom:4px;">allura</div>
+            <div style="font-size:10px;color:rgba(20,35,41,0.6);text-transform:uppercase;letter-spacing:1px;">Community Event</div>
+          </div>
+        </div>
+      </div>
+      <div class="app-info">
+        <p class="app-label">The Conversation Starter</p>
+        <h3 class="app-title">Social Post</h3>
+        <p class="app-desc">1080×1080 or 1200×675. White or Dark Gray canvas. Outfit headlines. Inter body. Warm Yellow for CTAs. Always lead with human benefit.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WEBSITE MOCK -->
+<div class="section">
+  <h2 class="section-title">Website Mockup</h2>
+  <div class="mock-browser">
+    <div class="mock-chrome">
+      <div class="mock-dot"></div>
+      <div class="mock-dot"></div>
+      <div class="mock-dot"></div>
+      <div class="mock-url">allura.io</div>
+    </div>
+    <div class="mock-website">
+      <div class="mock-nav">
+        <div class="mock-logo">allur<span style="color:#FFC300;">a</span></div>
+        <div class="mock-nav-links">
+          <span>Events</span>
+          <span>Communities</span>
+          <span>About</span>
+          <span>Contact</span>
+        </div>
+      </div>
+      <div class="mock-hero">
+        <h2>Where communities<br>come alive.</h2>
+        <p>Create digital and physical spaces where communities thrive, connections deepen, and every voice is valued.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INSTAGRAM MOCK -->
+<div class="section">
+  <h2 class="section-title">Social Media</h2>
+  <div class="ig-grid">
+    <div class="ig-post">
+      <img src="../assets/logos/allura-logo/allura-logo-primary.png" alt="allura" style="max-width:60%;max-height:60%;object-fit:contain;">
+      <div class="ig-post-overlay">
+        <span>Brand Launch</span>
+      </div>
+    </div>
+    <div class="ig-post">
+      <img src="../assets/mood-board/CMv0S4e4J8qmN70lpLEjD_image (1).png" alt="Community" style="width:100%;height:100%;object-fit:cover;">
+      <div class="ig-post-overlay">
+        <span>Community First</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP ICONS -->
+<div class="section">
+  <h2 class="section-title">App Icons</h2>
+  <div class="app-icon-grid">
+    <div class="app-icon" style="background:var(--color-primary);">
+      <img src="../assets/logos/allura-logo/allura-logo-icon-only.png" alt="App icon">
+    </div>
+    <div class="app-icon" style="background:#fff;border:2px solid rgba(0,0,0,0.08);">
+      <img src="../assets/logos/allura-logo/allura-logo-primary.png" alt="Light icon">
+    </div>
+    <div class="app-icon" style="background:linear-gradient(135deg,#0581A7,#142329);">
+      <img src="../assets/logos/allura-logo/allura-logo-icon-only.png" alt="Gradient icon">
+    </div>
+    <div class="app-icon" style="background:var(--color-neutral);">
+      <img src="../assets/logos/allura-logo/allura-logo-icon-only.png" alt="Dark icon">
+    </div>
+  </div>
+</div>
+
+<nav class="page-nav">
+  <a href="brand-overview.html" class="nav-circle" aria-label="Brand Overview"></a>
+  <a href="color-system.html" class="nav-circle" aria-label="Color System"></a>
+  <a href="logo-chooser.html" class="nav-circle" aria-label="Logo Chooser"></a>
+  <a href="typography.html" class="nav-circle" aria-label="Typography"></a>
+  <a href="applications.html" class="nav-circle active" aria-label="Applications"></a>
+</nav>
+
+</body>
+</html>

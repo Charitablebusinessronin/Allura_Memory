@@ -1,0 +1,407 @@
+{
+  "_meta": {
+    "name": "Allura Design Tokens",
+    "version": "2.0.0",
+    "source": "Figma Brand Kit - https://www.figma.com/design/PAQpnxQZENNwbhmk5qxOjR/allura-gpt",
+    "client": "allura-memory",
+    "generated": "2026-04-22",
+    "updated": "2026-04-24",
+    "sync_note": "Synced from Figma Allura Primitives collection (PAQpnxQZENNwbhmk5qxOjR)",
+    "brandArchetype": {
+      "primary": "Caregiver",
+      "secondary": "Creator",
+      "tertiary": "Explorer",
+      "distribution": {
+        "caregiver": 0.5,
+        "creator": 0.3,
+        "explorer": 0.2
+      }
+    },
+    "tagline": "Memory that shows its work"
+  },
+  "primitives": {
+    "colors": {
+      "deepNavy": {
+        "name": "Deep Navy",
+        "figmaVar": "color/brand/deep-navy",
+        "hex": "#1A2B4A",
+        "rgb": [26, 43, 74],
+        "usage": "Primary brand color — trust, depth, intelligence"
+      },
+      "coral": {
+        "name": "Coral",
+        "figmaVar": "color/brand/coral",
+        "hex": "#E85A3C",
+        "rgb": [232, 90, 60],
+        "usage": "Action color — warmth, energy, human touch"
+      },
+      "trustGreen": {
+        "name": "Trust Green",
+        "figmaVar": "color/brand/trust-green",
+        "hex": "#4CAF50",
+        "rgb": [76, 175, 80],
+        "usage": "Success, growth, positive reinforcement"
+      },
+      "clarityBlue": {
+        "name": "Clarity Blue",
+        "figmaVar": "color/brand/clarity-blue",
+        "hex": "#5B8DB8",
+        "rgb": [91, 141, 184],
+        "usage": "Information, calm, clarity"
+      },
+      "pureWhite": {
+        "name": "Pure White",
+        "figmaVar": "color/brand/pure-white",
+        "hex": "#F5F5F5",
+        "rgb": [245, 245, 245],
+        "usage": "Clean backgrounds, breathing room"
+      },
+      "inkBlack": {
+        "name": "Ink Black",
+        "figmaVar": "color/brand/ink-black",
+        "hex": "#1A1A1A",
+        "rgb": [26, 26, 26],
+        "usage": "Primary text color"
+      },
+      "warmGray": {
+        "name": "Warm Gray",
+        "figmaVar": "color/brand/warm-gray",
+        "hex": "#737373",
+        "rgb": [115, 115, 115],
+        "usage": "Secondary text, subtle elements"
+      }
+    }
+  },
+  "semantic": {
+    "colors": {
+      "action": {
+        "primary": {
+          "name": "color/action/primary",
+          "ref": "primitives.colors.coral",
+          "hex": "#E85A3C",
+          "usage": "Primary buttons, CTAs, highlights, key actions"
+        },
+        "secondary": {
+          "name": "color/action/secondary",
+          "ref": "primitives.colors.deepNavy",
+          "hex": "#1A2B4A",
+          "usage": "Secondary buttons, links, trust moments"
+        },
+        "tertiary": {
+          "name": "color/action/tertiary",
+          "ref": "primitives.colors.trustGreen",
+          "hex": "#4CAF50",
+          "usage": "Tertiary actions, success states, community"
+        }
+      },
+      "text": {
+        "primary": {
+          "name": "color/text/primary",
+          "ref": "primitives.colors.inkBlack",
+          "hex": "#1A1A1A",
+          "usage": "Headlines, body text, primary content"
+        },
+        "secondary": {
+          "name": "color/text/secondary",
+          "ref": "primitives.colors.warmGray",
+          "hex": "#737373",
+          "usage": "Subheadings, secondary information, captions"
+        },
+        "inverted": {
+          "name": "color/text/inverted",
+          "ref": "primitives.colors.pureWhite",
+          "hex": "#F5F5F5",
+          "usage": "Text on dark backgrounds"
+        },
+        "brand": {
+          "name": "color/text/brand",
+          "ref": "primitives.colors.deepNavy",
+          "hex": "#1A2B4A",
+          "usage": "Brand-colored text, logo lockups"
+        },
+        "muted": {
+          "name": "color/text/muted",
+          "hex": "rgba(26, 26, 26, 0.6)",
+          "usage": "Captions, helper text, disabled states"
+        }
+      },
+      "surface": {
+        "primary": {
+          "name": "color/surface/primary",
+          "ref": "primitives.colors.pureWhite",
+          "hex": "#F5F5F5",
+          "usage": "Main backgrounds, cards"
+        },
+        "secondary": {
+          "name": "color/surface/secondary",
+          "ref": "primitives.colors.clarityBlue",
+          "hex": "#5B8DB8",
+          "usage": "Info sections, calm accents"
+        },
+        "inverted": {
+          "name": "color/surface/inverted",
+          "ref": "primitives.colors.deepNavy",
+          "hex": "#1A2B4A",
+          "usage": "Dark sections, footer, contrast areas"
+        },
+        "elevated": {
+          "name": "color/surface/elevated",
+          "hex": "#FFFFFF",
+          "usage": "Cards on colored backgrounds, modals"
+        }
+      },
+      "status": {
+        "success": {
+          "name": "color/status/success",
+          "ref": "primitives.colors.trustGreen",
+          "hex": "#4CAF50",
+          "usage": "Success messages, confirmations"
+        },
+        "info": {
+          "name": "color/status/info",
+          "ref": "primitives.colors.clarityBlue",
+          "hex": "#5B8DB8",
+          "usage": "Informational messages, tips"
+        },
+        "warning": {
+          "name": "color/status/warning",
+          "ref": "primitives.colors.coral",
+          "hex": "#E85A3C",
+          "usage": "Warnings, attention needed"
+        },
+        "error": {
+          "name": "color/status/error",
+          "hex": "#E74C3C",
+          "usage": "Errors, destructive actions"
+        }
+      }
+    }
+  },
+  "typography": {
+    "families": {
+      "primary": {
+        "name": "Inter",
+        "fallback": ["-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+        "weights": [300, 400, 500, 600, 700, 900],
+        "usage": "Primary font for all text"
+      },
+      "display": {
+        "name": "Inter",
+        "fallback": ["-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+        "usage": "Headlines and display text"
+      },
+      "mono": {
+        "name": "SF Mono",
+        "fallback": ["Monaco", "Inconsolata", "monospace"],
+        "usage": "Code, technical content"
+      }
+    },
+    "sizes": {
+      "hero": {
+        "value": "4rem",
+        "px": 64,
+        "usage": "Hero headlines"
+      },
+      "display": {
+        "value": "3rem",
+        "px": 48,
+        "usage": "Display text"
+      },
+      "h1": {
+        "value": "2.5rem",
+        "px": 40,
+        "usage": "Page titles"
+      },
+      "h2": {
+        "value": "2rem",
+        "px": 32,
+        "usage": "Section headings"
+      },
+      "h3": {
+        "value": "1.5rem",
+        "px": 24,
+        "usage": "Subsection headings"
+      },
+      "h4": {
+        "value": "1.25rem",
+        "px": 20,
+        "usage": "Card titles"
+      },
+      "h5": {
+        "value": "1.125rem",
+        "px": 18,
+        "usage": "Small headings"
+      },
+      "h6": {
+        "value": "1rem",
+        "px": 16,
+        "usage": "Labels"
+      },
+      "body": {
+        "value": "1rem",
+        "px": 16,
+        "usage": "Body text"
+      },
+      "bodySm": {
+        "value": "0.875rem",
+        "px": 14,
+        "usage": "Small body text"
+      },
+      "caption": {
+        "value": "0.75rem",
+        "px": 12,
+        "usage": "Captions"
+      },
+      "overline": {
+        "value": "0.6875rem",
+        "px": 11,
+        "usage": "Overlines, labels"
+      }
+    },
+    "weights": {
+      "light": 300,
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700,
+      "black": 900
+    },
+    "lineHeights": {
+      "tight": 1.1,
+      "snug": 1.25,
+      "normal": 1.5,
+      "relaxed": 1.625,
+      "loose": 2
+    },
+    "letterSpacing": {
+      "tight": "-0.025em",
+      "normal": "0",
+      "wide": "0.025em",
+      "wider": "0.05em",
+      "widest": "0.1em"
+    }
+  },
+  "spacing": {
+    "scale": {
+      "0": { "value": "0", "px": 0 },
+      "px": { "value": "1px", "px": 1 },
+      "0.5": { "value": "0.125rem", "px": 2 },
+      "1": { "value": "0.25rem", "px": 4 },
+      "2": { "value": "0.5rem", "px": 8 },
+      "3": { "value": "0.75rem", "px": 12 },
+      "4": { "value": "1rem", "px": 16 },
+      "5": { "value": "1.25rem", "px": 20 },
+      "6": { "value": "1.5rem", "px": 24 },
+      "8": { "value": "2rem", "px": 32 },
+      "10": { "value": "2.5rem", "px": 40 },
+      "12": { "value": "3rem", "px": 48 },
+      "16": { "value": "4rem", "px": 64 },
+      "20": { "value": "5rem", "px": 80 },
+      "24": { "value": "6rem", "px": 96 },
+      "32": { "value": "8rem", "px": 128 },
+      "40": { "value": "10rem", "px": 160 },
+      "48": { "value": "12rem", "px": 192 },
+      "56": { "value": "14rem", "px": 224 },
+      "64": { "value": "16rem", "px": 256 }
+    },
+    "semantic": {
+      "stack": {
+        "xs": { "ref": "spacing.scale.2", "usage": "Tight vertical spacing" },
+        "sm": { "ref": "spacing.scale.4", "usage": "Small vertical spacing" },
+        "md": { "ref": "spacing.scale.6", "usage": "Medium vertical spacing" },
+        "lg": { "ref": "spacing.scale.8", "usage": "Large vertical spacing" },
+        "xl": { "ref": "spacing.scale.12", "usage": "Extra large vertical spacing" },
+        "2xl": { "ref": "spacing.scale.16", "usage": "Section spacing" }
+      },
+      "inline": {
+        "xs": { "ref": "spacing.scale.1", "usage": "Tight horizontal spacing" },
+        "sm": { "ref": "spacing.scale.2", "usage": "Small horizontal spacing" },
+        "md": { "ref": "spacing.scale.3", "usage": "Medium horizontal spacing" },
+        "lg": { "ref": "spacing.scale.4", "usage": "Large horizontal spacing" },
+        "xl": { "ref": "spacing.scale.6", "usage": "Extra large horizontal spacing" }
+      }
+    }
+  },
+  "borderRadius": {
+    "none": { "value": "0", "usage": "Square corners" },
+    "sm": { "value": "0.25rem", "px": 4, "usage": "Small elements" },
+    "md": { "value": "0.5rem", "px": 8, "usage": "Buttons, inputs" },
+    "lg": { "value": "0.75rem", "px": 12, "usage": "Cards" },
+    "xl": { "value": "1rem", "px": 16, "usage": "Large cards" },
+    "2xl": { "value": "1.5rem", "px": 24, "usage": "Modals" },
+    "3xl": { "value": "2rem", "px": 32, "usage": "Feature cards" },
+    "full": { "value": "9999px", "usage": "Pills, avatars" }
+  },
+  "shadows": {
+    "ambient": {
+      "sm": { "value": "0 1px 2px rgba(20, 35, 41, 0.05)", "usage": "Subtle depth" },
+      "md": { "value": "0 4px 6px rgba(20, 35, 41, 0.05)", "usage": "Card hover" },
+      "lg": { "value": "0 10px 15px rgba(20, 35, 41, 0.05)", "usage": "Elevated cards" },
+      "xl": { "value": "0 20px 25px rgba(20, 35, 41, 0.05)", "usage": "Modals" }
+    },
+    "directional": {
+      "sm": { "value": "0 1px 3px rgba(20, 35, 41, 0.1)", "usage": "Button press" },
+      "md": { "value": "0 4px 6px rgba(20, 35, 41, 0.1)", "usage": "Card shadow" },
+      "lg": { "value": "0 10px 15px rgba(20, 35, 41, 0.1)", "usage": "Dropdowns" },
+      "xl": { "value": "0 20px 25px rgba(20, 35, 41, 0.1)", "usage": "Dialogs" }
+    },
+    "combined": {
+      "sm": { "refs": ["shadows.ambient.sm", "shadows.directional.sm"], "usage": "Default elevation" },
+      "md": { "refs": ["shadows.ambient.md", "shadows.directional.md"], "usage": "Card elevation" },
+      "lg": { "refs": ["shadows.ambient.lg", "shadows.directional.lg"], "usage": "High elevation" },
+      "xl": { "refs": ["shadows.ambient.xl", "shadows.directional.xl"], "usage": "Maximum elevation" }
+    },
+    "elevation": {
+      "1": { "value": "0 1px 2px rgba(20, 35, 41, 0.08)", "usage": "Subtle cards" },
+      "2": { "value": "0 2px 4px rgba(20, 35, 41, 0.08), 0 1px 2px rgba(20, 35, 41, 0.04)", "usage": "Cards" },
+      "3": { "value": "0 4px 8px rgba(20, 35, 41, 0.08), 0 2px 4px rgba(20, 35, 41, 0.04)", "usage": "Elevated cards" },
+      "4": { "value": "0 8px 16px rgba(20, 35, 41, 0.08), 0 4px 8px rgba(20, 35, 41, 0.04)", "usage": "Modals" },
+      "5": { "value": "0 16px 32px rgba(20, 35, 41, 0.08), 0 8px 16px rgba(20, 35, 41, 0.04)", "usage": "Overlays" }
+    },
+    "focus": {
+      "default": { "value": "0 0 0 3px rgba(232, 90, 60, 0.3)", "usage": "Focus rings" },
+      "error": { "value": "0 0 0 3px rgba(231, 76, 60, 0.3)", "usage": "Error focus" }
+    }
+  },
+  "transitions": {
+    "duration": {
+      "instant": { "value": "0ms", "usage": "No animation" },
+      "fast": { "value": "100ms", "usage": "Micro-interactions" },
+      "normal": { "value": "200ms", "usage": "Standard transitions" },
+      "slow": { "value": "300ms", "usage": "Emphasis animations" },
+      "slower": { "value": "500ms", "usage": "Page transitions" }
+    },
+    "easing": {
+      "linear": { "value": "linear", "usage": "Constant speed" },
+      "in": { "value": "cubic-bezier(0.4, 0, 1, 1)", "usage": "Accelerate" },
+      "out": { "value": "cubic-bezier(0, 0, 0.2, 1)", "usage": "Decelerate" },
+      "inOut": { "value": "cubic-bezier(0.4, 0, 0.2, 1)", "usage": "Standard" },
+      "bounce": { "value": "cubic-bezier(0.68, -0.55, 0.265, 1.55)", "usage": "Playful" }
+    }
+  },
+  "zIndex": {
+    "base": { "value": 0, "usage": "Default" },
+    "dropdown": { "value": 100, "usage": "Dropdowns" },
+    "sticky": { "value": 200, "usage": "Sticky headers" },
+    "fixed": { "value": 300, "usage": "Fixed elements" },
+    "modalBackdrop": { "value": 400, "usage": "Modal overlays" },
+    "modal": { "value": 500, "usage": "Modals" },
+    "popover": { "value": 600, "usage": "Popovers" },
+    "tooltip": { "value": 700, "usage": "Tooltips" },
+    "toast": { "value": 800, "usage": "Toasts" }
+  },
+  "modes": {
+    "light": {
+      "colorSurfacePrimary": "primitives.colors.white",
+      "colorSurfaceInverted": "primitives.colors.darkGray",
+      "colorTextPrimary": "primitives.colors.darkGray",
+      "colorTextInverted": "primitives.colors.white"
+    },
+    "dark": {
+      "colorSurfacePrimary": "primitives.colors.darkGray",
+      "colorSurfaceInverted": "primitives.colors.white",
+      "colorTextPrimary": "primitives.colors.white",
+      "colorTextInverted": "primitives.colors.darkGray"
+    }
+  }
+}

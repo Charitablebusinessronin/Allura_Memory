@@ -1,0 +1,112 @@
+{
+  "timestamp": "2026-04-22T09:22:46.959Z",
+  "client": "allura-memory",
+  "agent": "glaser",
+  "group_id": "allura-team-durham",
+  "mockups": [
+    {
+      "id": "dashboard-main",
+      "name": "Main Memory Dashboard",
+      "category": "Dashboard",
+      "prompt": "UI/UX design mockup for \"allura\" memory dashboard web application, warm and connected brand identity, Caregiver archetype aesthetic. Clean interface with soft rounded corners and droplet-shaped UI elements. Primary color: warm golden yellow (#FFC300) accents on white (#F5F5F5) background. Deep teal-blue (#0581A7) for secondary actions. Dashboard shows: memory cards in a grid layout with soft shadows, \"Your Memories\" header in geometric sans-serif typography, navigation sidebar with rounded icons, search bar with pill shape, warm and inviting empty states. Soft ambient shadows, 3-layer depth system. No photorealistic elements, no photos of people, clean vector UI style. Professional SaaS dashboard aesthetic with human-centered warmth.",
+      "style_preset": "MINIMAL_ILLUSTRATION",
+      "request_id": "019db47f-cb68-7cb0-a621-0fc77b1e1cac",
+      "image_url": "https://v3b.fal.media/files/b/0a9741f2/wRetc3RN5Ot39l9Wu114z_image.png",
+      "seed": 1691714163,
+      "output_path": "/home/ronin704/Projects/Brand maker/clients/allura-memory/generated-images/mockups/dashboard-main.png",
+      "timestamp": "2026-04-22T09:23:03.199Z",
+      "status": "success"
+    },
+    {
+      "id": "dashboard-timeline",
+      "name": "Memory Timeline View",
+      "category": "Dashboard",
+      "prompt": "UI/UX design mockup for \"allura\" memory timeline interface, warm community-focused brand. Vertical timeline layout with droplet-shaped nodes connected by flowing curved lines. Color palette: warm yellow (#FFC300) highlights, deep blue (#0581A7) connectors, forest green (#BDBD0D) accents on cream white background. Timeline shows memory entries with rounded cards, date markers, \"Your Journey\" header. Soft organic curves suggesting water ripples, gentle shadow layers. Clean sans-serif typography (Outfit/Inter style). No photorealistic elements, no stock photos, pure UI mockup. Warm, trustworthy, innovative mood.",
+      "style_preset": "MINIMAL_ILLUSTRATION",
+      "request_id": "019db480-118d-7a63-8de1-70ee2557ee88",
+      "image_url": "https://v3b.fal.media/files/b/0a9741f4/xF5nYEwIlJkmaJK04_5-u_image.png",
+      "seed": 877598995,
+      "output_path": "/home/ronin704/Projects/Brand maker/clients/allura-memory/generated-images/mockups/dashboard-timeline.png",
+      "timestamp": "2026-04-22T09:23:22.376Z",
+      "status": "success"
+    },
+    {
+      "id": "dashboard-search",
+      "name": "Search & Results Screen",
+      "category": "Dashboard",
+      "prompt": "UI/UX design mockup for \"allura\" memory search interface. Clean search results page with prominent search bar at top, pill-shaped with warm yellow (#FFC300) accent. Results displayed as rounded cards with soft shadows, filter chips in deep blue (#0581A7). White background with subtle warm cream tones. \"Find Your Memories\" header in bold geometric sans-serif. Tag cloud with rounded pills in various brand colors. Empty state illustration with warm, inviting message. No photorealistic elements, no photos, pure interface design. Caregiver archetype warmth with Creator archetype craft.",
+      "style_preset": "MINIMAL_ILLUSTRATION",
+      "request_id": "019db480-5c7b-79a0-bc5f-a2c3f65decba",
+      "image_url": "https://v3b.fal.media/files/b/0a9741f5/F-gDjMHgdxdzPVBXGvBLv_image.png",
+      "seed": 283686854,
+      "output_path": "/home/ronin704/Projects/Brand maker/clients/allura-memory/generated-images/mockups/dashboard-search.png",
+      "timestamp": "2026-04-22T09:23:39.098Z",
+      "status": "success"
+    },
+    {
+      "id": "mobile-home",
+      "name": "Mobile Home Screen",
+      "category": "Mobile",
+      "prompt": "Mobile app UI mockup for \"allura\" memory app home screen, iPhone frame. Warm and connected brand aesthetic. Bottom navigation with rounded icons, floating action button in warm yellow (#FFC300). Home screen shows: greeting \"Good morning\" in friendly sans-serif, memory preview cards with rounded corners and soft shadows, \"Recent Memories\" section with horizontal scroll. Deep blue (#0581A7) accents, cream white background. Droplet-shaped UI elements, soft ambient shadows. No photorealistic content, no photos of people, clean vector UI. Portrait mobile format, professional app design.",
+      "style_preset": "MINIMAL_ILLUSTRATION",
+      "request_id": "019db480-9dd6-7110-bc1f-c6e3f660d5a6",
+      "image_url": "https://v3b.fal.media/files/b/0a9741f7/UToJHYCllZya-ede1BOWW_image.png",
+      "seed": 1737691426,
+      "output_path": "/home/ronin704/Projects/Brand maker/clients/allura-memory/generated-images/mockups/mobile-home.png",
+      "timestamp": "2026-04-22T09:23:58.608Z",
+      "status": "success"
+    },
+    {
+      "id": "mobile-capture",
+      "name": "Memory Capture Screen",
+      "category": "Mobile",
+      "prompt": "Mobile app UI mockup for \"allura\" memory capture screen, iPhone frame. \"Capture a Memory\" interface with large rounded capture button in warm yellow (#FFC300). Text input area with soft rounded corners, tag selection with pill-shaped chips in deep blue (#0581A7) and warm green (#BDBD0D). Voice memo button, photo attachment area with placeholder icon. Cream white background, dark gray (#142329) text. Friendly, inviting interface with Caregiver archetype warmth. No photorealistic elements, clean vector UI design. Portrait mobile format.",
+      "style_preset": "MINIMAL_ILLUSTRATION",
+      "request_id": "019db480-ea01-7853-b4bd-acaa19af928a",
+      "image_url": "https://v3b.fal.media/files/b/0a9741f9/mYfcjgNJOliblexjtUSws_image.png",
+      "seed": 1740763353,
+      "output_path": "/home/ronin704/Projects/Brand maker/clients/allura-memory/generated-images/mockups/mobile-capture.png",
+      "timestamp": "2026-04-22T09:24:16.396Z",
+      "status": "success"
+    },
+    {
+      "id": "mobile-settings",
+      "name": "Settings & Profile Screen",
+      "category": "Mobile",
+      "prompt": "Mobile app UI mockup for \"allura\" settings and profile screen, iPhone frame. Profile section with circular avatar placeholder in warm yellow (#FFC300) ring. Settings list with rounded rows, toggle switches in deep blue (#0581A7). \"Your Profile\" header in geometric sans-serif. Menu items: Account, Notifications, Privacy, Help, Log Out. Cream white background, soft shadows on cards. Clean, organized layout with Caregiver archetype approachability. No photorealistic elements, vector UI only. Portrait mobile format.",
+      "style_preset": "MINIMAL_ILLUSTRATION",
+      "request_id": "019db481-2f8b-7951-8545-b7392eb756b4",
+      "image_url": "https://v3b.fal.media/files/b/0a9741fb/ZFhlUcxqvCwekNmMUHeQ5_image.png",
+      "seed": 1235606832,
+      "output_path": "/home/ronin704/Projects/Brand maker/clients/allura-memory/generated-images/mockups/mobile-settings.png",
+      "timestamp": "2026-04-22T09:24:33.862Z",
+      "status": "success"
+    },
+    {
+      "id": "marketing-landing",
+      "name": "Landing Page Hero",
+      "category": "Marketing",
+      "prompt": "Website landing page hero section design for \"allura\" - community memory platform. Large headline \"Where Memories Come Alive\" in bold geometric sans-serif (Outfit style). Subheadline in warm gray. Primary CTA button in warm yellow (#FFC300) with rounded pill shape. Secondary CTA in outline style with deep blue (#0581A7) border. Hero illustration: abstract droplet shapes, connected nodes suggesting community, warm color palette with yellow, blue, green accents on white background. Soft gradient, no photorealistic imagery, clean vector illustration style. Navigation bar with logo placeholder. Warm, inviting, professional SaaS landing page aesthetic.",
+      "style_preset": "EDITORIAL",
+      "request_id": "019db481-73b5-7c42-b774-ff62250c502c",
+      "image_url": "https://v3b.fal.media/files/b/0a9741fd/0tScMa2JzTU8lthVCd8ff_image.png",
+      "seed": 1168180872,
+      "output_path": "/home/ronin704/Projects/Brand maker/clients/allura-memory/generated-images/mockups/marketing-landing.png",
+      "timestamp": "2026-04-22T09:24:56.050Z",
+      "status": "success"
+    },
+    {
+      "id": "marketing-features",
+      "name": "Features Page",
+      "category": "Marketing",
+      "prompt": "Website features page design for \"allura\" memory platform. \"Features That Feel Like Home\" header in bold sans-serif. Three feature cards in a row, each with rounded corners, soft shadows, icon placeholder in warm yellow (#FFC300), deep blue (#0581A7), and warm green (#BDBD0D). Feature titles: \"Capture Moments\", \"Connect Stories\", \"Cherish Forever\". Clean icon illustrations, brief descriptions in readable sans-serif. White background with subtle warm cream sections. Professional SaaS marketing page aesthetic, no photorealistic elements, vector graphics only. Warm, trustworthy, innovative mood.",
+      "style_preset": "EDITORIAL",
+      "request_id": "019db481-ca64-7aa1-b9a8-da81315fe077",
+      "image_url": "https://v3b.fal.media/files/b/0a9741ff/RgzhtfaAg-MJ3YJyk0FCn_image.png",
+      "seed": 1632220603,
+      "output_path": "/home/ronin704/Projects/Brand maker/clients/allura-memory/generated-images/mockups/marketing-features.png",
+      "timestamp": "2026-04-22T09:25:13.452Z",
+      "status": "success"
+    }
+  ]
+}

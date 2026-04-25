@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>allura — Brand Overview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/allura-theme.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    /* ============================================
+       BRAND OVERVIEW — INDEX.HTML
+       allura-memory client | Team Durham
+       ============================================ */
+
+    /* Hero Section */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      background: linear-gradient(135deg, var(--color-warm-yellow) 0%, var(--color-cream) 50%, var(--color-deep-blue) 100%);
+      padding: calc(var(--space-3xl) + 80px) var(--space-lg) var(--space-3xl);
+      overflow: hidden;
+    }
+
+    .hero__inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: var(--space-2xl);
+      align-items: center;
+    }
+
+    .hero__content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero__logo {
+      width: 180px;
+      height: auto;
+      margin-bottom: var(--space-lg);
+      filter: drop-shadow(0 4px 12px rgba(20, 35, 41, 0.15));
+    }
+
+    .hero__brand-name {
+      font-family: var(--font-heading);
+      font-size: clamp(3rem, 8vw, 5.5rem);
+      font-weight: 700;
+      color: var(--color-dark-gray);
+      line-height: 1.05;
+      margin-bottom: var(--space-md);
+      letter-spacing: -0.03em;
+    }
+
+    .hero__brand-name .smile-a {
+      position: relative;
+      display: inline-block;
+    }
+
+    .hero__brand-name .smile-a::after {
+      content: '';
+      position: absolute;
+      bottom: 6px;
+      left: 8%;
+      width: 84%;
+      height: 5px;
+      background: var(--color-warm-yellow);
+      border-radius: 50%;
+      opacity: 0.95;
+    }
+
+    .hero__tagline {
+      font-family: var(--font-heading);
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      font-weight: 600;
+      color: var(--color-deep-blue);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: var(--space-lg);
+    }
+
+    .hero__promise {
+      font-family: var(--font-body);
+      font-size: clamp(1.125rem, 1.5vw, 1.375rem);
+      color: var(--color-dark-gray);
+      max-width: 560px;
+      line-height: 1.7;
+      margin-bottom: var(--space-xl);
+      opacity: 0.9;
+    }
+
+    .hero__stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-md);
+      position: relative;
+      z-index: 2;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      box-shadow: var(--shadow-card);
+      transition: transform var(--transition-base), box-shadow var(--transition-base);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-6px) rotate(1deg);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .stat-card:nth-child(2):hover { transform: translateY(-6px) rotate(-1deg); }
+    .stat-card:nth-child(3):hover { transform: translateY(-6px) rotate(0.5deg); }
+    .stat-card:nth-child(4):hover { transform: translateY(-6px) rotate(-0.5deg); }
+
+    .stat-card__number {
+      font-family: var(--font-heading);
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--color-warm-yellow);
+      line-height: 1;
+      margin-bottom: var(--space-xs);
+      text-shadow: 0 2px 4px rgba(20, 35, 41, 0.1);
+    }
+
+    .stat-card__label {
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-dark-gray);
+      line-height: 1.4;
+    }
+
+    /* Decorative floating shapes */
+    .hero__shape {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.15;
+      pointer-events: none;
+    }
+
+    .hero__shape--1 {
+      width: 400px;
+      height: 400px;
+      background: var(--color-warm-yellow);
+      top: -100px;
+      right: -100px;
+      filter: blur(60px);
+    }
+
+    .hero__shape--2 {
+      width: 300px;
+      height: 300px;
+      background: var(--color-warm-green);
+      bottom: 10%;
+      left: -80px;
+      filter: blur(50px);
+      opacity: 0.12;
+    }
+
+    /* Section Styles */
+    .section {
+      padding: var(--space-3xl) var(--space-lg);
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section--light {
+      background: var(--color-cream);
+    }
+
+    .section--dark {
+      background: var(--color-dark-gray);
+      color: var(--color-white);
+    }
+
+    .section--dark h2,
+    .section--dark h3,
+    .section--dark h4 {
+      color: var(--color-white);
+    }
+
+    .section__label {
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--color-deep-blue);
+      margin-bottom: var(--space-md);
+      font-weight: 600;
+    }
+
+    .section--dark .section__label {
+      color: var(--color-warm-yellow);
+    }
+
+    .section__title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 3vw, 2.5rem);
+      font-weight: 700;
+      margin-bottom: var(--space-lg);
+      line-height: 1.2;
+    }
+
+    .section__intro {
+      font-size: 1.125rem;
+      color: var(--color-text-secondary);
+      max-width: 640px;
+      margin-bottom: var(--space-xl);
+      line-height: 1.7;
+    }
+
+    .section--dark .section__intro {
+      color: rgba(245, 245, 245, 0.7);
+    }
+
+    /* Origin Story — Icon Cards */
+    .origin-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+      margin-top: var(--space-xl);
+    }
+
+    .origin-card {
+      background: var(--color-white);
+      border-radius: var(--radius-lg);
+      padding: var(--space-xl) var(--space-lg);
+      box-shadow: var(--shadow-card);
+      transition: transform var(--transition-base), box-shadow var(--transition-base);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .origin-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--color-warm-yellow), var(--color-deep-blue));
+      opacity: 0;
+      transition: opacity var(--transition-base);
+    }
+
+    .origin-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .origin-card:hover::before {
+      opacity: 1;
+    }
+
+    .origin-card__icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto var(--space-md);
+      background: linear-gradient(135deg, var(--color-warm-yellow), var(--color-warm-green));
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      box-shadow: var(--shadow-directional);
+    }
+
+    .origin-card__title {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: var(--space-sm);
+      color: var(--color-dark-gray);
+    }
+
+    .origin-card__text {
+      font-size: 0.9375rem;
+      color: var(--color-text-secondary);
+      line-height: 1.7;
+    }
+
+    /* Values Row */
+    .values-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      margin-top: var(--space-lg);
+      justify-content: center;
+    }
+
+    .value-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: var(--space-xs) var(--space-md);
+      background: var(--color-white);
+      border-radius: var(--radius-full);
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--color-dark-gray);
+      box-shadow: var(--shadow-ambient);
+      transition: all var(--transition-base);
+      border: 1px solid rgba(20, 35, 41, 0.06);
+    }
+
+    .value-pill:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-directional);
+      background: var(--color-warm-yellow);
+    }
+
+    .value-pill__rank {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--color-deep-blue);
+      color: var(--color-white);
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    /* Brand Personality — Meters */
+    .personality-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: var(--space-lg);
+      margin-top: var(--space-xl);
+    }
+
+    .personality-item {
+      text-align: center;
+    }
+
+    .personality-meter {
+      width: 100%;
+      height: 160px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-lg);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: var(--space-md);
+      display: flex;
+      align-items: flex-end;
+      padding: var(--space-sm);
+    }
+
+    .personality-meter__fill {
+      width: 100%;
+      border-radius: var(--radius-md);
+      transition: height 1s ease-out;
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: var(--space-xs);
+    }
+
+    .personality-meter__fill--warmth {
+      background: linear-gradient(180deg, #FFD54F, var(--color-warm-yellow));
+      height: 90%;
+    }
+
+    .personality-meter__fill--competence {
+      background: linear-gradient(180deg, #4FC3F7, var(--color-deep-blue));
+      height: 70%;
+    }
+
+    .personality-meter__fill--excitement {
+      background: linear-gradient(180deg, #DCE775, var(--color-warm-green));
+      height: 60%;
+    }
+
+    .personality-meter__fill--sophistication {
+      background: linear-gradient(180deg, #B0BEC5, #78909C);
+      height: 60%;
+    }
+
+    .personality-meter__fill--ruggedness {
+      background: linear-gradient(180deg, #BCAAA4, #8D6E63);
+      height: 30%;
+    }
+
+    .personality-meter__score {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--color-dark-gray);
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+    }
+
+    .personality-item__name {
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--color-white);
+      margin-bottom: var(--space-xs);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .personality-item__score {
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      color: rgba(245, 245, 245, 0.6);
+    }
+
+    /* Brand Archetypes */
+    .archetype-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+      margin-top: var(--space-xl);
+    }
+
+    .archetype-card {
+      background: var(--color-white);
+      border-radius: var(--radius-lg);
+      padding: var(--space-xl);
+      box-shadow: var(--shadow-card);
+      transition: transform var(--transition-base), box-shadow var(--transition-base);
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .archetype-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .archetype-card--primary { border-top: 4px solid var(--color-warm-yellow); }
+    .archetype-card--secondary { border-top: 4px solid var(--color-deep-blue); }
+    .archetype-card--tertiary { border-top: 4px solid var(--color-warm-green); }
+
+    .archetype-card__percent {
+      font-family: var(--font-heading);
+      font-size: 3rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: var(--space-sm);
+    }
+
+    .archetype-card--primary .archetype-card__percent { color: var(--color-warm-yellow); }
+    .archetype-card--secondary .archetype-card__percent { color: var(--color-deep-blue); }
+    .archetype-card--tertiary .archetype-card__percent { color: var(--color-warm-green); }
+
+    .archetype-card__title {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--color-dark-gray);
+      margin-bottom: var(--space-sm);
+    }
+
+    .archetype-card__desc {
+      font-size: 0.9375rem;
+      color: var(--color-text-secondary);
+      line-height: 1.7;
+    }
+
+    /* Quick Navigation Cards */
+    .quick-nav {
+      padding: var(--space-3xl) var(--space-lg);
+      background: linear-gradient(180deg, var(--color-cream) 0%, var(--color-white) 100%);
+    }
+
+    .quick-nav__inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .quick-nav__title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 3vw, 2.5rem);
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: var(--space-xs);
+    }
+
+    .quick-nav__subtitle {
+      text-align: center;
+      color: var(--color-text-secondary);
+      margin-bottom: var(--space-xl);
+      font-size: 1.0625rem;
+    }
+
+    .quick-nav__grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-lg);
+    }
+
+    .quick-nav__card {
+      background: var(--color-white);
+      border-radius: var(--radius-lg);
+      padding: var(--space-xl) var(--space-lg);
+      box-shadow: var(--shadow-card);
+      transition: transform var(--transition-base), box-shadow var(--transition-base);
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .quick-nav__card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--color-warm-yellow), var(--color-deep-blue));
+      transform: scaleX(0);
+      transition: transform var(--transition-base);
+      transform-origin: left;
+    }
+
+    .quick-nav__card:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .quick-nav__card:hover::after {
+      transform: scaleX(1);
+    }
+
+    .quick-nav__icon {
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: var(--space-md);
+      box-shadow: var(--shadow-ambient);
+    }
+
+    .quick-nav__card:nth-child(1) .quick-nav__icon { background: linear-gradient(135deg, #FFF3E0, var(--color-warm-yellow)); }
+    .quick-nav__card:nth-child(2) .quick-nav__icon { background: linear-gradient(135deg, #E3F2FD, var(--color-deep-blue)); }
+    .quick-nav__card:nth-child(3) .quick-nav__icon { background: linear-gradient(135deg, #F1F8E9, var(--color-warm-green)); }
+    .quick-nav__card:nth-child(4) .quick-nav__icon { background: linear-gradient(135deg, #ECEFF1, var(--color-dark-gray)); }
+
+    .quick-nav__name {
+      font-family: var(--font-heading);
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--color-dark-gray);
+      margin-bottom: var(--space-xs);
+    }
+
+    .quick-nav__desc {
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+      line-height: 1.5;
+    }
+
+    .quick-nav__arrow {
+      margin-top: auto;
+      padding-top: var(--space-md);
+      font-size: 1.25rem;
+      color: var(--color-deep-blue);
+      transition: transform var(--transition-base);
+    }
+
+    .quick-nav__card:hover .quick-nav__arrow {
+      transform: translateX(4px);
+    }
+
+    /* Taglines Marquee */
+    .taglines-section {
+      padding: var(--space-2xl) var(--space-lg);
+      background: var(--color-dark-gray);
+      overflow: hidden;
+    }
+
+    .taglines-track {
+      display: flex;
+      gap: var(--space-xl);
+      animation: marquee 30s linear infinite;
+      width: max-content;
+    }
+
+    .taglines-track:hover {
+      animation-play-state: paused;
+    }
+
+    @keyframes marquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .tagline-item {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--color-white);
+      white-space: nowrap;
+      opacity: 0.7;
+      transition: opacity var(--transition-fast);
+      flex-shrink: 0;
+    }
+
+    .tagline-item:hover {
+      opacity: 1;
+      color: var(--color-warm-yellow);
+    }
+
+    .tagline-separator {
+      color: var(--color-warm-yellow);
+      opacity: 0.5;
+    }
+
+    /* Footer */
+    .footer {
+      background: var(--color-dark-gray);
+      color: var(--color-white);
+      padding: var(--space-2xl) var(--space-lg) var(--space-lg);
+      margin-top: 0;
+    }
+
+    .footer__inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+
+    .footer__brand {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1.5rem;
+      margin-bottom: var(--space-sm);
+    }
+
+    .footer__brand span {
+      color: var(--color-warm-yellow);
+    }
+
+    .footer__legal {
+      font-size: 0.875rem;
+      opacity: 0.6;
+      margin-bottom: var(--space-sm);
+    }
+
+    .footer__promise {
+      font-size: 0.875rem;
+      opacity: 0.5;
+      line-height: 1.6;
+      max-width: 320px;
+    }
+
+    .footer__heading {
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--color-warm-yellow);
+      margin-bottom: var(--space-md);
+      font-weight: 600;
+    }
+
+    .footer__links {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+
+    .footer__links a {
+      color: rgba(245, 245, 245, 0.7);
+      font-size: 0.875rem;
+      transition: color var(--transition-fast);
+    }
+
+    .footer__links a:hover {
+      color: var(--color-warm-yellow);
+    }
+
+    .footer__bottom {
+      max-width: 1200px;
+      margin: var(--space-xl) auto 0;
+      padding-top: var(--space-lg);
+      border-top: 1px solid rgba(245, 245, 245, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8125rem;
+      opacity: 0.4;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .hero__inner {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+
+      .hero__promise {
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .hero__stats {
+        max-width: 480px;
+        margin: 0 auto;
+      }
+
+      .origin-grid,
+      .archetype-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .personality-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .quick-nav__grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .footer__inner {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .origin-grid,
+      .archetype-grid,
+      .personality-grid,
+      .quick-nav__grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero__stats {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .footer__inner {
+        grid-template-columns: 1fr;
+        gap: var(--space-xl);
+      }
+
+      .footer__bottom {
+        flex-direction: column;
+        gap: var(--space-sm);
+        text-align: center;
+      }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .taglines-track {
+        animation: none;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+      }
+
+      .reveal {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================
+       FIXED NAVIGATION
+       ============================================ -->
+  <nav class="nav" role="navigation" aria-label="Main navigation">
+    <div class="nav__inner">
+      <a href="index.html" class="nav__logo">allur<span style="color: var(--color-warm-yellow);">a</span></a>
+      <ul class="nav__links">
+        <li><a href="index.html" class="active" aria-current="page">Overview</a></li>
+        <li><a href="logo-chooser.html">Logo</a></li>
+        <li><a href="color-system.html">Colors</a></li>
+        <li><a href="typography.html">Typography</a></li>
+        <li><a href="applications.html">Applications</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ============================================
+       HERO SECTION
+       ============================================ -->
+  <section class="hero">
+    <div class="hero__shape hero__shape--1"></div>
+    <div class="hero__shape hero__shape--2"></div>
+
+    <div class="hero__inner">
+      <div class="hero__content reveal">
+        <img src="../assets/logos/allura-logo/logo main.png" alt="allura logo" class="hero__logo">
+        <h1 class="hero__brand-name">allur<span class="smile-a">a</span></h1>
+        <p class="hero__tagline">Where communities come alive</p>
+        <p class="hero__promise">We create digital and physical spaces where communities thrive, connections deepen, and every voice is valued — through technology that feels warm, not cold.</p>
+      </div>
+
+      <div class="hero__stats">
+        <div class="stat-card reveal">
+          <div class="stat-card__number">5</div>
+          <div class="stat-card__label">Core Values<br>Connection First</div>
+        </div>
+        <div class="stat-card reveal">
+          <div class="stat-card__number">3</div>
+          <div class="stat-card__label">Brand Archetypes<br>Caregiver-led</div>
+        </div>
+        <div class="stat-card reveal">
+          <div class="stat-card__number">5</div>
+          <div class="stat-card__label">Aaker Dimensions<br>Warmth Dominant</div>
+        </div>
+        <div class="stat-card reveal">
+          <div class="stat-card__number">25-45</div>
+          <div class="stat-card__label">Target Age<br>Urban Community</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       ORIGIN STORY — MISSION, VISION, VALUES
+       ============================================ -->
+  <section class="section section--light">
+    <div class="reveal">
+      <p class="section__label">Origin Story</p>
+      <h2 class="section__title">Why we exist</h2>
+      <p class="section__intro">allura was born from a simple belief: technology should bring people closer, not push them apart. Every decision we make starts with community.</p>
+
+      <div class="origin-grid">
+        <div class="card origin-card">
+          <div class="origin-card__icon">&#127759;</div>
+          <h3 class="origin-card__title">Mission</h3>
+          <p class="origin-card__text">To create digital and physical spaces where communities thrive, connections deepen, and every voice is valued — through technology that feels warm, not cold; inviting, not distant.</p>
+        </div>
+
+        <div class="card origin-card">
+          <div class="origin-card__icon">&#128161;</div>
+          <h3 class="origin-card__title">Vision</h3>
+          <p class="origin-card__text">A world where technology serves as a bridge, not a barrier — where urban communities are empowered to celebrate their culture, support one another, and build futures together.</p>
+        </div>
+
+        <div class="card origin-card">
+          <div class="origin-card__icon">&#128170;</div>
+          <h3 class="origin-card__title">Values</h3>
+          <p class="origin-card__text">Connection, Warmth, Craft, Empowerment, and Inclusion — ranked in order of priority. These five principles guide every product decision, partnership, and community interaction.</p>
+        </div>
+      </div>
+
+      <div class="values-row">
+        <span class="value-pill"><span class="value-pill__rank">1</span> Connection</span>
+        <span class="value-pill"><span class="value-pill__rank">2</span> Warmth</span>
+        <span class="value-pill"><span class="value-pill__rank">3</span> Craft</span>
+        <span class="value-pill"><span class="value-pill__rank">4</span> Empowerment</span>
+        <span class="value-pill"><span class="value-pill__rank">5</span> Inclusion</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       BRAND PERSONALITY — AAKER DIMENSIONS
+       ============================================ -->
+  <section class="section section--dark">
+    <div class="reveal">
+      <p class="section__label">Brand Personality</p>
+      <h2 class="section__title">How allura feels</h2>
+      <p class="section__intro">Measured against Jennifer Aaker's five brand personality dimensions, allura leads with warmth and competence — approachable yet capable.</p>
+
+      <div class="personality-grid">
+        <div class="personality-item">
+          <div class="personality-meter">
+            <div class="personality-meter__fill personality-meter__fill--warmth">
+              <span class="personality-meter__score">4.5</span>
+            </div>
+          </div>
+          <div class="personality-item__name">Warmth</div>
+          <div class="personality-item__score">4.5 / 5.0</div>
+        </div>
+
+        <div class="personality-item">
+          <div class="personality-meter">
+            <div class="personality-meter__fill personality-meter__fill--competence">
+              <span class="personality-meter__score">3.5</span>
+            </div>
+          </div>
+          <div class="personality-item__name">Competence</div>
+          <div class="personality-item__score">3.5 / 5.0</div>
+        </div>
+
+        <div class="personality-item">
+          <div class="personality-meter">
+            <div class="personality-meter__fill personality-meter__fill--excitement">
+              <span class="personality-meter__score">3.0</span>
+            </div>
+          </div>
+          <div class="personality-item__name">Excitement</div>
+          <div class="personality-item__score">3.0 / 5.0</div>
+        </div>
+
+        <div class="personality-item">
+          <div class="personality-meter">
+            <div class="personality-meter__fill personality-meter__fill--sophistication">
+              <span class="personality-meter__score">3.0</span>
+            </div>
+          </div>
+          <div class="personality-item__name">Sophistication</div>
+          <div class="personality-item__score">3.0 / 5.0</div>
+        </div>
+
+        <div class="personality-item">
+          <div class="personality-meter">
+            <div class="personality-meter__fill personality-meter__fill--ruggedness">
+              <span class="personality-meter__score">1.5</span>
+            </div>
+          </div>
+          <div class="personality-item__name">Ruggedness</div>
+          <div class="personality-item__score">1.5 / 5.0</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       BRAND ARCHETYPES
+       ============================================ -->
+  <section class="section">
+    <div class="reveal">
+      <p class="section__label">Brand Archetype</p>
+      <h2 class="section__title">The soul of allura</h2>
+      <p class="section__intro">Our archetype blend shapes how we show up in every touchpoint — from product copy to community events.</p>
+
+      <div class="archetype-grid">
+        <div class="card archetype-card archetype-card--primary">
+          <div class="archetype-card__percent">50%</div>
+          <h3 class="archetype-card__title">The Caregiver</h3>
+          <p class="archetype-card__desc">You will be seen, celebrated, and elevated. Intimacy, connection, feeling valued for exactly who you are. This is the dominant force in allura's voice.</p>
+        </div>
+
+        <div class="card archetype-card archetype-card--secondary">
+          <div class="archetype-card__percent">30%</div>
+          <h3 class="archetype-card__title">The Creator</h3>
+          <p class="archetype-card__desc">You belong here — no code-switching, no velvet rope, no performance required. We build tools that let communities express themselves.</p>
+        </div>
+
+        <div class="card archetype-card archetype-card--tertiary">
+          <div class="archetype-card__percent">20%</div>
+          <h3 class="archetype-card__title">The Explorer</h3>
+          <p class="archetype-card__desc">Joy as resistance. Playfulness as culture. We encourage communities to discover new connections and celebrate their unique identity.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       TAGLINES MARQUEE
+       ============================================ -->
+  <section class="taglines-section" aria-label="Brand taglines">
+    <div class="taglines-track">
+      <span class="tagline-item">Where communities come alive</span>
+      <span class="tagline-separator">&#10022;</span>
+      <span class="tagline-item">Connection, not just content</span>
+      <span class="tagline-separator">&#10022;</span>
+      <span class="tagline-item">Built for belonging</span>
+      <span class="tagline-separator">&#10022;</span>
+      <span class="tagline-item">Technology that feels like home</span>
+      <span class="tagline-separator">&#10022;</span>
+      <span class="tagline-item">Your community, amplified</span>
+      <span class="tagline-separator">&#10022;</span>
+      <!-- Duplicate for seamless loop -->
+      <span class="tagline-item">Where communities come alive</span>
+      <span class="tagline-separator">&#10022;</span>
+      <span class="tagline-item">Connection, not just content</span>
+      <span class="tagline-separator">&#10022;</span>
+      <span class="tagline-item">Built for belonging</span>
+      <span class="tagline-separator">&#10022;</span>
+      <span class="tagline-item">Technology that feels like home</span>
+      <span class="tagline-separator">&#10022;</span>
+      <span class="tagline-item">Your community, amplified</span>
+      <span class="tagline-separator">&#10022;</span>
+    </div>
+  </section>
+
+  <!-- ============================================
+       QUICK NAVIGATION
+       ============================================ -->
+  <section class="quick-nav">
+    <div class="quick-nav__inner">
+      <h2 class="quick-nav__title">Explore the brand</h2>
+      <p class="quick-nav__subtitle">Dive deeper into every element of the allura identity system</p>
+
+      <div class="quick-nav__grid">
+        <a href="logo-chooser.html" class="quick-nav__card">
+          <div class="quick-nav__icon">&#127912;</div>
+          <span class="quick-nav__name">Logo System</span>
+          <span class="quick-nav__desc">Primary, secondary, and icon-only variants with usage rules</span>
+          <span class="quick-nav__arrow">&rarr;</span>
+        </a>
+
+        <a href="color-system.html" class="quick-nav__card">
+          <div class="quick-nav__icon">&#127912;</div>
+          <span class="quick-nav__name">Color System</span>
+          <span class="quick-nav__desc">Warm Yellow, Deep Blue, Warm Green, and neutral palette specs</span>
+          <span class="quick-nav__arrow">&rarr;</span>
+        </a>
+
+        <a href="typography.html" class="quick-nav__card">
+          <div class="quick-nav__icon">&#9997;</div>
+          <span class="quick-nav__name">Typography</span>
+          <span class="quick-nav__desc">Outfit for headings, Inter for body — sizing and pairing rules</span>
+          <span class="quick-nav__arrow">&rarr;</span>
+        </a>
+
+        <a href="applications.html" class="quick-nav__card">
+          <div class="quick-nav__icon">&#128188;</div>
+          <span class="quick-nav__name">Applications</span>
+          <span class="quick-nav__desc">Business cards, letterhead, social templates, and digital specs</span>
+          <span class="quick-nav__arrow">&rarr;</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       FOOTER
+       ============================================ -->
+  <footer class="footer">
+    <div class="footer__inner">
+      <div>
+        <div class="footer__brand">allur<span>a</span></div>
+        <p class="footer__legal">Allura Memory Inc.</p>
+        <p class="footer__promise">We create digital and physical spaces where communities thrive, connections deepen, and every voice is valued.</p>
+      </div>
+
+      <div>
+        <h4 class="footer__heading">Brand Pages</h4>
+        <ul class="footer__links">
+          <li><a href="index.html">Overview</a></li>
+          <li><a href="logo-chooser.html">Logo System</a></li>
+          <li><a href="color-system.html">Color System</a></li>
+          <li><a href="typography.html">Typography</a></li>
+          <li><a href="applications.html">Applications</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="footer__heading">Brand Specs</h4>
+        <ul class="footer__links">
+          <li><a href="#" onclick="return false;">Fonts: Outfit + Inter</a></li>
+          <li><a href="#" onclick="return false;">Colors: 5-color system</a></li>
+          <li><a href="#" onclick="return false;">Archetype: Caregiver-led</a></li>
+          <li><a href="#" onclick="return false;">Kit Version: 3.2</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer__bottom">
+      <span>&copy; 2026 Allura Memory Inc. All rights reserved.</span>
+      <span>Brand Kit v3.2 — Team Durham</span>
+    </div>
+  </footer>
+
+  <!-- ============================================
+       SCROLL REVEAL SCRIPT
+       ============================================ -->
+  <script>
+    (function() {
+      const reveals = document.querySelectorAll('.reveal');
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -40px 0px'
+      });
+
+      reveals.forEach(el => observer.observe(el));
+
+      // Stagger stat cards
+      const statCards = document.querySelectorAll('.stat-card');
+      statCards.forEach((card, i) => {
+        card.style.animationDelay = (i * 0.15) + 's';
+        card.classList.add('animate-fade-in-up');
+      });
+    })();
+  </script>
+
+</body>
+</html>

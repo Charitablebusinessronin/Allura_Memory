@@ -1,5 +1,27 @@
 import { createEnv } from "@t3-oss/env-nextjs"
+import { config, parse } from "dotenv"
+import { existsSync, readFileSync } from "fs"
 import { z } from "zod"
+
+// Load base config plus local overrides without clobbering already-injected
+// runtime environment variables. This keeps Docker/CI/Varlock injection
+// authoritative while still allowing .env.local to override .env on disk.
+function loadEnvFiles() {
+  const merged = {}
+
+  for (const path of [".env", ".env.local"]) {
+    if (!existsSync(path)) continue
+    Object.assign(merged, parse(readFileSync(path)))
+  }
+
+  for (const [key, value] of Object.entries(merged)) {
+    if (process.env[key] === undefined) {
+      process.env[key] = value
+    }
+  }
+}
+
+loadEnvFiles()
 
 export const env = createEnv({
   server: {

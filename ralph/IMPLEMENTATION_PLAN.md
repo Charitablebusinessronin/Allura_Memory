@@ -246,6 +246,147 @@
   - Include rollback plan, performance benchmarks
   - Acceptance: ADR complete and reviewed
 
+## S9 Tasks: Allura Memory Dashboard v2.0 Design System
+
+**Design Spec:** `docs/branding/deliverables/06_allura-memory_brand-truth.json` + JSON design prompt
+**Context File:** `ralph/ulw-context.md`
+**Agent Routing:** Woz (primary builder), Pike (interface review), Bellard (perf audit), Jobs (acceptance gates), Fowler (maintainability review)
+**New Dependency:** `@xyflow/react` (Phase 6 only)
+
+### Phase 1: Design Token Integration (~2h)
+
+- [ ] **S9-1**: Create allura theme preset (`src/styles/presets/allura.css`)
+  - Brand primitives as CSS custom properties: `--allura-deep-navy` (#1A2B4A), `--allura-coral` (#E85A3C), `--allura-trust-green` (#4CAF50), `--allura-clarity-blue` (#5B8DB8), `--allura-pure-white` (#F5F5F5), `--allura-ink-black` (#1A1A1A), `--allura-warm-gray` (#737373)
+  - Semantic tokens mapped to shadcn/ui variables under `[data-theme-preset="allura"]`: `--background`, `--foreground`, `--card`, `--primary`, `--accent`, `--border`, etc.
+  - Shadow tokens: `--allura-shadow-card`, `--allura-shadow-hover`, `--allura-shadow-modal`, `--allura-shadow-flat`
+  - Radius tokens: card 16px, badge 6px, button 8px, input 10px
+  - WCAG constraint: coral never on pure_white background (1.3:1 fail)
+  - Acceptance: allura preset selectable, colors match hex values exactly, Outfit loads for `.font-display`
+
+- [ ] **S9-2**: Add Outfit display font utility class
+  - Add `.font-display { font-family: var(--font-outfit); }` in `globals.css` `@layer utilities`
+  - Verify Outfit font already registered in `src/lib/fonts/registry.ts`
+  - Acceptance: `font-display` class renders text in Outfit 700
+
+- [ ] **S9-3**: Add allura to theme switcher and import in globals.css
+  - File: `src/app/(main)/dashboard/_components/sidebar/theme-switcher.tsx`
+  - Add "allura" as selectable preset option
+  - File: `src/app/globals.css` — add `@import "../styles/presets/allura.css"` alongside existing presets
+  - Acceptance: "allura" appears in theme switcher, selecting it applies brand tokens
+
+### Phase 2: Shared Brand Components (~4h)
+
+- [ ] **S9-4**: Create StatusBadge component (`src/components/allura/status-badge.tsx`)
+  - Variants: `active` (bg: #4CAF50, text: #FFFFFF, label: "Active"), `proposed` (bg: #5B8DB8, text: #FFFFFF, label: "Proposed"), `forgotten` (bg: #9B9B9B, text: #FFFFFF, label: "Forgotten"), `low_confidence` (bg: #E85A3C, text: #FFFFFF, label: "Low Confidence")
+  - 6px radius, Inter 600/12px uppercase
+  - Acceptance: 4 variants render with correct colors and labels
+
+- [ ] **S9-5**: Create ConfidenceBar component (`src/components/allura/confidence-bar.tsx`)
+  - Props: `value: number` (0-100), width 120px, `--allura-deep-navy` fill, `#E2E6EA` track, 4px radius
+  - Acceptance: fills correctly for values 0, 50, 100; renders at 120px width
+
+- [ ] **S9-6**: Create TraceCard component (`src/components/allura/trace-card.tsx`)
+  - Background: #F5F5F5, 8px radius, shows tool call name + input snippet + timestamp (Inter 400/12px warm_gray)
+  - Acceptance: renders 3 fields; reused in ProvenanceDrawer and CuratorQueue
+
+- [ ] **S9-7**: Create EmptyState component (`src/components/allura/empty-state.tsx`)
+  - Props: `text: string`, `cta?: ReactNode`; no error icons, centered, warm_gray color
+  - Acceptance: renders with text only and text+CTA variants
+
+- [ ] **S9-8**: Create PanelDrawer component (`src/components/allura/panel-drawer.tsx`)
+  - 420px desktop / 100% mobile right-sliding panel
+  - Header: "← Back" button + section H4 title
+  - Sections: Origin (coral uppercase overline, agent name + trace count), Evidence (coral uppercase overline, TraceCard list), Actions (Promote deep_navy filled, Edit deep_navy outlined, Deprecate ghost)
+  - Border radius: 16px 0 0 16px, modal shadow
+  - Lazy-loads on open (not on mount)
+  - Focus trap and keyboard nav (Escape to close)
+  - Loading: "Finding source traces…" with pulse animation on overline bar
+  - Empty: "Source not available" warm_gray centered, no error icon
+  - Acceptance: slides from right, focus trap works, responsive, lazy-loads
+
+- [ ] **S9-9**: Create brand-compliant MemoryCard component (`src/components/allura/memory-card.tsx`)
+  - Composes StatusBadge + ConfidenceBar
+  - bg: #FFFFFF, 16px radius, card shadow, hover→hover shadow
+  - Memory text: Inter 400/16px/#1A1A1A max 3 lines, caption: Inter 500/12px/#737373
+  - Actions: "View Source" deep_navy link left, "Forget" coral ghost right
+  - Mobile: swipe-left reveals coral Forget button
+  - Acceptance: card renders with badge, bar, text, actions; hover elevates shadow
+
+### Phase 3: Memory List Page (~4h)
+
+- [ ] **S9-10**: Create branded memory layout (`src/app/memory/layout.tsx`)
+  - Deep navy (#1A2B4A) top navbar: allura wordmark (from `docs/branding/assets/logos/allura-logo/Wordmark.png`) left, user avatar right, "+ Add Memory" coral CTA button
+  - No sidebar, full-width, mobile-first, single column
+  - Navbar: Inter 600, coral button 8px radius, `page_bg: #F5F5F5` background below navbar
+  - Acceptance: layout renders without sidebar, navbar matches spec
+
+- [ ] **S9-11**: Redesign /memory page (`src/app/memory/page.tsx`)
+  - Hero: "What does your system know?" Inter 700/40px/#1A1A1A
+  - Search: full width, "Search what your system remembers…", 10px radius, #E2E6EA border, #9B9B9B placeholder
+  - Tabs: "Memories" / "Recently Forgotten" / "Graph" — active tab: deep_navy underline 2px
+  - Memory cards: new MemoryCard component from S9-9
+  - Empty states: new EmptyState component from S9-7 ("Nothing saved yet. Add the first memory.")
+  - Search empty: "No memories match '[query]'. Save it manually?"
+  - Wire up useMemoryList hook (existing data layer)
+  - Acceptance: page matches design prompt, `bun run typecheck` passes
+
+### Phase 4: Provenance Drawer (~2h)
+
+- [ ] **S9-12**: Wire View Source to PanelDrawer
+  - MemoryCard "View Source" action opens PanelDrawer
+  - Origin section: agent name + trace count (Inter 500/14px)
+  - Evidence section: TraceCard list (reuse TraceCard from S9-6)
+  - Actions: Promote (deep_navy filled), Edit (deep_navy outlined), Deprecate (ghost)
+  - Loading: "Finding source traces…" with pulse animation
+  - Empty: "Source not available" warm_gray, no error icon
+  - Acceptance: drawer opens on View Source click, all sections render, loading/empty states work
+
+### Phase 5: Curator Queue Redesign (~3h)
+
+- [ ] **S9-13**: Restructure curator to two-column layout (`src/app/(main)/dashboard/curator/page.tsx`)
+  - Left panel: 300px fixed width, compact cards (summary 2 lines, confidence %, trace count, status badge)
+  - Right panel: flex-1, expanded detail (summary text, confidence bar, evidence traces via TraceCard, actions row)
+  - Actions: Approve ✓ (deep_navy filled), Edit ✎ (outlined charcoal), Reject ✕ (ghost, coral on hover)
+  - Empty state: "All caught up. No insights waiting for review." (reuse EmptyState)
+  - Reuse existing curator API (`/api/curator/proposals`, `/api/curator/approve`)
+  - Acceptance: two-column layout renders, selection works, approve/reject actions functional, typecheck passes
+
+### Phase 6: Graph Tab (~5h)
+
+- [ ] **S9-14**: Install @xyflow/react and create GraphTab skeleton (`src/components/allura/graph-tab.tsx`)
+  - Run: `bun add @xyflow/react`
+  - React Flow force-directed layout with `@xyflow/react`
+  - Node types: people (#F5F5F5 fill/#1A2B4A border), topics (#FFFFFF fill/#4CAF50 border), decisions (#FFFFFF fill/#1A1A1A border), traces (#F8F8F8 fill/#9B9B9B border)
+  - Edge types: derived_from (deep_navy dashed), approved_by (trust_green solid), supersedes (ink_black solid with arrowhead)
+  - 100 node cap with neighborhood mode at 80+ nodes (show connected neighborhood + toast)
+  - Search overlay (top-left), zoom controls (bottom-right), neighborhood toggle button
+  - Node click → opens PanelDrawer (reuse S9-8)
+  - Overflow toast: "Showing neighborhood only. Zoom out to see more."
+  - Acceptance: graph renders with correct node/edge types, 100-node cap enforced, PanelDrawer opens on node click
+
+- [ ] **S9-15**: Add Graph tab to /memory page
+  - File: `src/app/memory/page.tsx`
+  - Third tab "Graph" renders `<GraphTab />`
+  - Pass group_id and search query context to GraphTab
+  - Acceptance: tab switches to graph view, typecheck passes
+
+### Phase 7: Polish & QA (~2h)
+
+- [ ] **S9-16**: WCAG and copy audit
+  - Verify no coral-on-white foreground pairs (1.3:1 ratio fail per design spec)
+  - Verify all copy matches design prompt rules:
+    - ✅ "What does your system know?", "View Source", "Forget", "All caught up.", "Source not available", "Nothing saved yet."
+    - ❌ "Query the index", "Inspect provenance", "Record deleted", "Null", "Model score", "Zero results", "Node limit exceeded"
+  - Verify empty states have no error icons
+  - Verify keyboard navigation and focus rings on all interactive elements
+  - Acceptance: zero WCAG AA failures, zero forbidden copy phrases
+
+- [ ] **S9-17**: Final typecheck and test pass
+  - Run: `bun run typecheck && bun test`
+  - Verify all new components render without runtime errors
+  - Verify existing pages unaffected by allura preset addition
+  - Acceptance: 0 type errors, 0 test failures
+
 ## Progress Log
 
 | Time | Task | Action | Result |

@@ -36,3 +36,29 @@
   - Remaining follow-up work is focused on legacy runtime/config drift and tightening routing intent inference
 - Important lesson:
   - Plan order is not execution order; architecture only becomes real when the runtime contract enforces it
+
+## 2026-04-25: Session Complete
+
+- Project: allura-system / Allura Memory
+- Agent: brooks-architect
+- Summary: Recovered and validated the canonical MCP Streamable HTTP gateway path after memory tool and runtime drift investigation.
+- Key changes:
+  - Fixed `src/mcp/canonical-http-gateway.ts` by replacing reused stateless transport with stateful per-session transport management keyed by `Mcp-Session-Id`.
+  - Fixed env loading in `env.mjs` and `src/mcp/canonical-tools/connection.ts` so runtime-injected env vars remain authoritative while `.env.local` can override `.env` only when variables are not already set.
+  - Updated `docker-compose.yml` MCP/http-gateway secret handling to avoid interpolated secret overrides that bypass `env_file` precedence.
+  - Updated `opencode.json` toward canonical HTTP gateway usage instead of local `npx tsx` stdio runtime drift.
+  - Added `scripts/validate-env.sh` and updated `.env.example`.
+- Why:
+  - The governed memory path had multiple ingress surfaces; tool namespace availability did not prove end-to-end health. The canonical HTTP gateway needed real MCP initialize/tools protocol validation, not just `/ready` health.
+- Validation:
+  - Pruned Docker build cache after Docker reported no space left on device.
+  - Rebuilt `mcp` and `http-gateway` containers successfully.
+  - `bash scripts/brain-stack.sh wait-ready 120` passed.
+  - `RUN_MCP_TESTS=true ALLURA_MCP_HTTP_URL="http://127.0.0.1:5888" bun vitest run src/__tests__/mcp-streamable-http.test.ts` passed: 12/12 tests.
+  - `bun run typecheck` passed.
+- Final state:
+  - Canonical MCP Streamable HTTP gateway at `http://127.0.0.1:5888/mcp` is validated.
+  - Chat-harness `allura-brain_memory_add` still fails with stale SASL/password behavior, indicating a separate ingress path remains drifted from the rebuilt canonical gateway.
+  - Working tree has uncommitted changes pending review/commit.
+- Important lesson:
+  - Health probes are not protocol proofs. A castle gate may look sound from the road, yet still fail to lower the drawbridge; validate the actual client path.
