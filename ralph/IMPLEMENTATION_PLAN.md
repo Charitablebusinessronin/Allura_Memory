@@ -71,52 +71,29 @@
 
 ### Slice C: RuVector Graph Adapter (P0 - MUST complete first)
 
-- [ ] **S8-C1**: Create IGraphAdapter interface
-  - Files: `src/lib/graph/adapter.ts`
-  - Methods: createNode, createEdge, query, traverse, getNodeById, updateNode
-  - Include proper TypeScript types for all parameters and returns
-  - Acceptance: Interface compiles and exports all required methods
+**Status:** Partially complete. `src/lib/graph-adapter/` already exists with IGraphAdapter (`types.ts`), Neo4j adapter (`neo4j-adapter.ts`), RuVector adapter (`ruvector-adapter.ts`), and factory (`factory.ts`).
 
-- [ ] **S8-C2**: Implement Neo4j adapter wrapper
-  - Files: `src/lib/graph/neo4j-adapter.ts`
-  - Wrap existing neo4j driver behind IGraphAdapter interface
-  - Implement all interface methods using existing Neo4j queries
-  - Acceptance: All existing graph operations work through adapter
-
+- [x] **S8-C1**: Create IGraphAdapter interface — DONE (exists in `src/lib/graph-adapter/types.ts`)
+- [x] **S8-C2**: Implement Neo4j adapter wrapper — DONE (`src/lib/graph-adapter/neo4j-adapter.ts`)
 - [ ] **S8-C3**: Add ruvector-graph service to docker-compose
   - Files: `docker-compose.yml`
   - Service: ruvnet/ruvector-graph:latest
   - Ports: 7474 (HTTP), 7687 (Bolt)
   - Healthcheck configured
   - Acceptance: docker compose up starts ruvector-graph container
-
-- [ ] **S8-C4**: Implement ruvector-graph adapter
-  - Files: `src/lib/graph/ruvector-graph-adapter.ts`
-  - Connect to ruvector-graph service
-  - Implement all IGraphAdapter methods using ruvector-graph Cypher
-  - Handle connection errors gracefully
-  - Acceptance: Adapter connects and executes basic Cypher queries
-
+- [x] **S8-C4**: Implement ruvector-graph adapter — DONE (`src/lib/graph-adapter/ruvector-adapter.ts`)
 - [ ] **S8-C5**: Migrate memory_writer.ts to adapter pattern
   - Files: `src/lib/memory/writer.ts`
   - Replace direct neo4j calls with adapter methods
   - Use factory pattern to select adapter based on GRAPH_BACKEND env
   - Acceptance: memory_write operations go through adapter interface
-
 - [ ] **S8-C6**: Migrate memory_search graph fallback to adapter
   - Files: `src/lib/memory/search.ts`
   - Use IGraphAdapter for graph fallback path
   - Acceptance: Search uses adapter when falling back from RuVector
-
-- [ ] **S8-C7**: Implement GRAPH_BACKEND feature flag
-  - Files: `src/lib/graph/factory.ts`, `.env`, `docker-compose.yml`
-  - Env var GRAPH_BACKEND supporting 'neo4j' or 'ruvector'
-  - Factory returns appropriate adapter based on env
-  - Default to 'neo4j' for backward compatibility until Slice E
-  - Acceptance: Switching env var changes active adapter
-
+- [x] **S8-C7**: Implement GRAPH_BACKEND feature flag — DONE (`src/lib/graph-adapter/factory.ts`)
 - [ ] **S8-C8**: Adapter parity tests
-  - Files: `src/lib/graph/__tests__/adapter-parity.test.ts`
+  - Files: `src/lib/graph-adapter/__tests__/adapter-parity.test.ts`
   - Tests run same queries through both adapters
   - Verify identical results for: node creation, edge creation, queries, traversals
   - Acceptance: All parity tests pass
