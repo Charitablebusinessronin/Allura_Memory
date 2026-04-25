@@ -1,0 +1,13 @@
+{
+  "active": true,
+  "iteration": 1,
+  "minIterations": 1,
+  "maxIterations": 1,
+  "completionPromise": "COMPLETE",
+  "tasksMode": false,
+  "taskPromise": "READY_FOR_NEXT_TASK",
+  "prompt": "Execute the next most important task from ralph/IMPLEMENTATION_PLAN.md. Read ralph/PROMPT_ulw.md for instructions. Work through one task completely. Validate with 'bun run typecheck && bun test'. Commit and update plan. Output <promise>TASK_COMPLETE</promise> when done.",
+  "startedAt": "2026-04-25T10:20:14.227Z",
+  "model": "",
+  "agent": "opencode"
+}
