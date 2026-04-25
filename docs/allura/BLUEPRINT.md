@@ -12,6 +12,7 @@ Allura is a sovereign AI memory engine — a self-hosted, governed alternative t
 
 ## Table of Contents
 
+- [0) Brand Identity](#0-brand-identity)
 - [1) Core Concepts](#1-core-concepts)
 - [2) Requirements](#2-requirements)
 - [3) Architecture](#3-architecture)
@@ -24,6 +25,51 @@ Allura is a sovereign AI memory engine — a self-hosted, governed alternative t
 - [10) Admin Workflow](#10-admin-workflow)
 - [11) References](#11-references)
 - [12) Documentation Authority & Sync Contract](#12-documentation-authority--sync-contract)
+
+---
+
+## 0) Brand Identity
+
+**Name:** allura (always lowercase in copy) / Allura Memory (legal / title context)  
+**Tagline:** MEMORY THAT SHOWS ITS WORK  
+**Positioning:** Warm + Connected — the AI memory layer for real life  
+**Brand Promise:** We create spaces where connection thrives, community grows, and everyone belongs
+
+### Core Values
+
+| Value | Description |
+|-------|-------------|
+| MEMORY | Preserving what matters, faithfully |
+| CONNECTION | Bridging people and their AI |
+| CLARITY | Making memory visible, not hidden |
+| TRUST | Governed, auditable, never opaque |
+| EMPOWERMENT | Giving people agency over their own data |
+
+### Target Persona
+
+**Maya**, 31, Oakland — urban community organizer. Wants technology that feels warm, not soulless.  
+Represents: urban millennials / Gen Z, ages 25–45.
+
+### Brand Archetype
+
+Caregiver 50% · Creator 30% · Explorer 20%
+
+### Voice
+
+| Dimension | Score |
+|-----------|-------|
+| Formality | 4/10 |
+| Enthusiasm | 6/10 |
+| Technicality | 3/10 |
+| Humor | 4/10 |
+
+**Use:** Community · Connection · Belonging · Together · Warmth · Inviting · Welcoming · Craft · Care · Celebrate · Amplify  
+**Avoid:** "users" (→ "people") · frictionless · leverage · seamless · scalable
+
+### Source of Truth
+
+`docs/branding/deliverables/06_allura-memory_brand-truth.json` — machine-readable brand canon, synced to Figma (`PAQpnxQZENNwbhmk5qxOjR`)  
+Full system: [`docs/branding/deliverables/README.md`](../branding/deliverables/README.md)
 
 ---
 
@@ -584,6 +630,7 @@ Before any Neo4j write, search for an existing node with matching `content` + `g
 - [DATA-DICTIONARY.md](./DATA-DICTIONARY.md)
 - [RISKS-AND-DECISIONS.md](./RISKS-AND-DECISIONS.md)
 - [DESIGN-ALLURA.md](./DESIGN-ALLURA.md) — UI/UX wireframes and design rules
+- [Brand System](../branding/deliverables/README.md) — allura brand identity (colors, typography, voice, logos)
 - [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md) — Governed memory pipeline design
 - [REQUIREMENTS-MATRIX.md](./REQUIREMENTS-MATRIX.md) — Competitive analysis and use case fit
 - [VALIDATION-GATE.md](../archive/allura/VALIDATION-GATE.md) — Acceptance checklist and benchmark matrix

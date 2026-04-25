@@ -1,130 +1,167 @@
-<!-- Context: project-intelligence/decisions | Priority: high | Version: 1.0 | Updated: 2025-01-12 -->
+<!-- Context: project-intelligence/decisions | Priority: high | Version: 2.0 | Updated: 2026-04-25 -->
 
-# Decisions Log
+# Decisions Log — allura Memory
 
-> Record major architectural and business decisions with full context. This prevents "why was this done?" debates.
-
-## Quick Reference
-
-- **Purpose**: Document decisions so future team members understand context
-- **Format**: Each decision as a separate entry
-- **Status**: Decided | Pending | Under Review | Deprecated
-
-## Decision Template
-
-```markdown
-## [Decision Title]
-
-**Date**: YYYY-MM-DD
-**Status**: [Decided/Pending/Under Review/Deprecated]
-**Owner**: [Who owns this decision]
-
-### Context
-[What situation prompted this decision? What was the problem or opportunity?]
-
-### Decision
-[What was decided? Be specific about the choice made.]
-
-### Rationale
-[Why this decision? What were the alternatives and why were they rejected?]
-
-### Alternatives Considered
-| Alternative | Pros | Cons | Why Rejected? |
-|-------------|------|------|---------------|
-| [Alt 1] | [Pros] | [Cons] | [Why not chosen] |
-| [Alt 2] | [Pros] | [Cons] | [Why not chosen] |
-
-### Impact
-**Positive**: [What this enables or improves]
-**Negative**: [What trade-offs or limitations this creates]
-**Risk**: [What could go wrong]
-
-### Related
-- [Links to related decisions, PRs, issues, or documentation]
-```
+> Records major architectural and business decisions. Prevents "why was this done?" debates.  
+> Full decision history in Allura Brain: query `WHERE event_type = 'ARCHITECTURE_DECISION' AND agent_id = 'brooks'`
 
 ---
 
-## Decision: [Title]
+## Decision: Dual-Database Architecture (PostgreSQL + Neo4j)
 
-**Date**: YYYY-MM-DD
-**Status**: [Status]
-**Owner**: [Owner]
+**Date:** 2026-01-12  
+**Status:** Decided  
+**Owner:** Brooks (architect)
 
 ### Context
-[What was happening? Why did we need to decide?]
+allura needs both an immutable audit trail and fast semantic search. A single database forces a trade-off between write-once reliability and query-time flexibility.
 
 ### Decision
-[What we decided]
+PostgreSQL 16 for episodic append-only traces. Neo4j 5.26 for versioned semantic knowledge graph. Both run in the same Docker Compose stack.
 
 ### Rationale
-[Why this was the right choice]
+- Postgres = truth: append-only events table, no UPDATE/DELETE ever
+- Neo4j = speed: APOC-powered graph queries, semantic search, SUPERSEDES versioning
+- Two stores enable HITL governance: raw trace → curator review → approved knowledge
 
 ### Alternatives Considered
-| Alternative | Pros | Cons | Why Rejected? |
-|-------------|------|------|---------------|
-| [Option A] | [Good things] | [Bad things] | [Reason] |
-| [Option B] | [Good things] | [Bad things] | [Reason] |
+| Alternative | Pros | Cons | Why Rejected |
+|-------------|------|------|--------------|
+| Single Postgres | Simpler ops | No native graph queries, no semantic versioning | Kills semantic search quality |
+| Single Neo4j | Graph-native | No append-only guarantee, harder audit compliance | Mutability risk for audit trail |
 
 ### Impact
-- **Positive**: [What we gain]
-- **Negative**: [What we trade off]
-- **Risk**: [What to watch for]
-
-### Related
-- [Link to PR #000]
-- [Link to issue #000]
-- [Link to documentation]
+- **Positive:** Audit + semantic precision coexist; SOC2-ready by default
+- **Negative:** Two DB services to operate; more complex dev setup
+- **Risk:** Schema drift between PG and Neo4j (mitigated by curator pipeline)
 
 ---
 
-## Decision: [Title]
+## Decision: HITL Governance (SOC2 Mode)
 
-**Date**: YYYY-MM-DD
-**Status**: [Status]
-**Owner**: [Owner]
+**Date:** 2026-01-12  
+**Status:** Decided  
+**Owner:** Brooks
 
 ### Context
-[What was happening?]
+Enterprise customers require proof that AI agents cannot autonomously modify canonical knowledge. Without a human gate, allura is indistinguishable from any other memory store.
 
 ### Decision
-[What we decided]
+`PROMOTION_MODE=soc2` routes high-confidence proposals to a pending queue. No Neo4j write happens until a curator explicitly approves. `PROMOTION_MODE=auto` available for developer tier.
 
 ### Rationale
-[Why this was right]
-
-### Alternatives Considered
-| Alternative | Pros | Cons | Why Rejected? |
-|-------------|------|------|---------------|
-| [Option A] | [Good things] | [Bad things] | [Reason] |
+- Governance = differentiator vs mem0 (which has no approval flow)
+- Append-only Postgres preserves all proposals for audit, regardless of approval
+- `bun run curator:approve` / `bun run curator:reject` are the only sanctioned promotion paths
 
 ### Impact
-- **Positive**: [What we gain]
-- **Negative**: [What we trade off]
+- **Positive:** Enterprise compliance market; auditable knowledge lifecycle
+- **Negative:** Adds latency for promoted knowledge in SOC2 mode
+- **Risk:** Curators bottleneck if proposal volume spikes (mitigated by auto-promotion threshold)
 
-### Related
-- [Link]
+---
+
+## Decision: allura Name Casing
+
+**Date:** 2026-04-24  
+**Status:** Decided  
+**Owner:** Brand (David Ogilvy persona)
+
+### Context
+Brand finalization required a consistent rule for how the product name appears in all copy.
+
+### Decision
+Always lowercase `allura` in running copy. `Allura Memory` in legal / title context only. Never `ALLURA`, never `The Allura`.
+
+### Rationale
+Phonoaesthetic: soft opening, liquid 'l', warm resonant tone. Lowercase reinforces approachability and warmth vs cold capitalized tech brands.
+
+### Impact
+- **Positive:** Consistent brand identity across all surfaces
+- **Negative:** Agents and contributors must be reminded — easy to drift
+- **Risk:** Template files or auto-capitalization may violate this (enforce with grep in CI if needed)
+
+---
+
+## Decision: Dashboard Course Correction (2026-04-25)
+
+**Date:** 2026-04-25  
+**Status:** Decided  
+**Owner:** Brooks
+
+### Context
+A previous session erroneously cloned the Blazity/Vercel Next.js Enterprise Boilerplate into `apps/allura-dashboard`. The user's real working dashboard already existed at `src/app/(main)/dashboard` on `localhost:3100`.
+
+### Decision
+Remove `apps/allura-dashboard` (the mistaken scaffold). The canonical dashboard lives at `src/app/(main)/dashboard`. Port 3100 is the allura dashboard; it is NOT Paperclip.
+
+### Rationale
+Conceptual integrity: one dashboard, one codebase. The mistaken clone created a parallel surface with different assumptions (Paperclip port, external boilerplate deps) that contaminated the session context.
+
+### Impact
+- **Positive:** Single dashboard surface; no competing assumptions
+- **Negative:** Lost the session exploring the boilerplate setup
+- **Risk:** None — the real dashboard is preserved and unmodified
+
+---
+
+## Decision: MCP Docker CLI Check Opt-In
+
+**Date:** 2026-04-25  
+**Status:** Decided  
+**Owner:** Brooks
+
+### Context
+`scripts/test-mcp-browser.ts` was conflating an optional external `mcp-docker` CLI status check with browser/dev-server validation. The repository aliases `@mcp-docker` imports to local Vitest mocks, so `bun x mcp-docker status` is not a normal prerequisite and caused false failures.
+
+### Decision
+Skip MCP Docker CLI check by default. Require `USE_REAL_MCP_DOCKER=true` env var to opt into real Docker MCP validation. Keep canonical Streamable HTTP test as the protocol gate.
+
+### Rationale
+Fewer confusing pre-conditions = cleaner developer experience. Protocol health is already validated by the dedicated Streamable HTTP integration test (12/12 passing).
+
+### Impact
+- **Positive:** `bun run test:mcp` gives actionable output without a running Docker MCP server
+- **Negative:** Real Docker MCP integration requires explicit opt-in — slightly less default coverage
+- **Risk:** Developers may forget `USE_REAL_MCP_DOCKER=true` for full integration testing
+
+---
+
+## Decision: Bun-Only Runtime
+
+**Date:** 2026-01-12  
+**Status:** Decided  
+**Owner:** Sabir (user)
+
+### Context
+Zero-trust supply chain policy. npm/npx introduce risk via network-fetched executables and unpinned package resolution.
+
+### Decision
+Bun is the only permitted package manager and runtime. `npm`, `npx`, `pnpm`, `yarn` are banned.
+
+### Rationale
+Bun's lockfile model + supply chain isolation. Faster than Node for scripts. All CLAUDE.md instructions enforce this.
+
+### Impact
+- **Positive:** Reproducible installs; no npm supply chain exposure
+- **Negative:** Some npm-only tools require alternatives or wrapping
+- **Risk:** Contributors may accidentally run npm — catch with `bun run lint`
 
 ---
 
 ## Deprecated Decisions
 
-Decisions that were later overturned (for historical context):
-
 | Decision | Date | Replaced By | Why |
 |----------|------|-------------|-----|
-| [Old decision] | [Date] | [New decision] | [Reason] |
+| `roninclaw-*` group_id namespace | 2026-01-12 | `allura-*` | Tenant namespace aligned to product name |
+| Local allura-memory MCP server | 2026-04-19 | MCP_DOCKER tools | Docker-backed servers only; local MCP retired |
+| apps/allura-dashboard (Vercel boilerplate) | 2026-04-25 | `src/app/(main)/dashboard` | Mistaken parallel scaffold; removed |
 
-## Onboarding Checklist
-
-- [ ] Understand the philosophy behind major architectural choices
-- [ ] Know why certain technologies were chosen over alternatives
-- [ ] Understand trade-offs that were made
-- [ ] Know where to find decision context when questions arise
-- [ ] Understand what decisions are pending and why
+---
 
 ## Related Files
 
-- `technical-domain.md` - Technical implementation affected by these decisions
-- `business-tech-bridge.md` - How decisions connect business and technical
-- `living-notes.md` - Current open questions that may become decisions
+- `technical-domain.md` — technical implementation affected by these decisions
+- `business-tech-bridge.md` — business rationale behind technical choices
+- `living-notes.md` — current open questions that may become decisions
+- `docs/allura/RISKS-AND-DECISIONS.md` — full AD/RK register with formal schema

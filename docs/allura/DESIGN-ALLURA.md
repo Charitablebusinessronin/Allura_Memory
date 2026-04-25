@@ -27,6 +27,60 @@
 
 ---
 
+## Visual Identity
+
+Brand source of truth: `docs/branding/deliverables/06_allura-memory_brand-truth.json` · Figma: `PAQpnxQZENNwbhmk5qxOjR`
+
+### Color Palette
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| Deep Navy | `#1A2B4A` | Primary brand, headings, nav |
+| Coral | `#E85A3C` | CTA, action, accents |
+| Trust Green | `#4CAF50` | Success states |
+| Clarity Blue | `#5B8DB8` | Info, secondary actions |
+| Pure White | `#F5F5F5` | Backgrounds (primary) |
+| Ink Black | `#1A1A1A` | Body text |
+| Warm Gray | `#737373` | Secondary text, captions |
+
+**Usage ratio:** 55% Pure White · 20% Ink Black · 15% Deep Navy · 7% Coral · 3% status colors
+
+**Forbidden pairings (WCAG fail):** Coral on White (1.3:1) · White on Coral (1.3:1)
+
+### Typography
+
+| Role | Typeface | Weight | Size |
+|------|----------|--------|------|
+| Display / Hero | Outfit | 700 | 96px (never below 20px) |
+| Section headings | Outfit | 700 | 56px |
+| Headings H1–H4 | Inter | 600–700 | 48px → 24px |
+| Body | Inter | 400 | 16–18px |
+| Caption / Overline | Inter | 400–600 | 12–14px |
+
+Fallback: `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`
+
+**Rules:** Left-aligned headings · Never justified · Never all-caps · Max 75 chars/line · 1.5× line-height
+
+### Shadow System (3-layer editorial)
+
+| Level | Value |
+|-------|-------|
+| Card | `0 4px 20px -4px rgba(20,35,41,0.08), 0 8px 16px -4px rgba(20,35,41,0.12)` |
+| Hover | `0 6px 24px -4px rgba(20,35,41,0.12), 0 12px 20px -4px rgba(20,35,41,0.16)` |
+| Modal | Card + `0 2px 4px 0 rgba(20,35,41,0.16)` |
+
+### Spacing & Radius
+
+Scale: `4 · 8 · 12 · 16 · 24 · 32 · 48 · 64 · 96 · 128px`  
+Default card radius: `16px` · Min touch target: `48px`
+
+### Iconography
+
+Rounded soft style · 2px stroke weight · 24px default / 20px dense UI  
+10 brand SVG icons: `docs/branding/assets/icons/`
+
+---
+
 ## Consumer View
 
 ### 1. Memory List — Default (`/memory`)
