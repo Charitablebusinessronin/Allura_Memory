@@ -51,6 +51,14 @@ export const THEME_PRESET_OPTIONS = [
       dark: "oklch(0.64 0.17 36.44)",
     },
   },
+  {
+    label: "Allura",
+    value: "allura",
+    primary: {
+      light: "#1A2B4A",
+      dark: "#5B8DB8",
+    },
+  },
 ] as const
 
 export const THEME_PRESET_VALUES = THEME_PRESET_OPTIONS.map((p) => p.value)

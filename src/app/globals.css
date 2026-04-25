@@ -8,6 +8,7 @@
 @import "../styles/presets/durham.css";
 @import "../styles/presets/soft-pop.css";
 @import "../styles/presets/tangerine.css";
+@import "../styles/presets/allura.css";
 
 @custom-variant dark (&:is(.dark *));
 
