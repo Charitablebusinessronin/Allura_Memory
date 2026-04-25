@@ -48,12 +48,14 @@
 
 ## P2 Tasks (after all P1s)
 
-- [ ] **S7-7**: Update Neo4j agent-nodes.ts to Team RAM naming
+- [x] **S7-7**: Update Neo4j agent-nodes.ts to Team RAM naming
   - File: `src/lib/neo4j/agent-nodes.ts`
-  - Replace legacy `memory-*` agent names with Team RAM names
-  - Add all 10 agents, matching `.md` frontmatter models
-  - Add `fallback_model` to AgentInsert interface
+  - Replaced legacy `memory-*` agent names with Team RAM names (brooks, jobs, woz, scout, knuth, bellard, carmack, pike, fowler, hightower)
+  - Added all 10 agents matching `.opencode/agent/*.md` frontmatter models
+  - Added `fallback_model` to AgentInsert interface (already present in AgentNode)
+  - Acceptance: Typecheck passes, all 10 agents defined with correct models
   - BLOCKED BY: S7-8, S7-9 (model fixes must land first)
+  - **Status**: DONE — commit dcf9b8d2
 
 - [x] **S7-5**: Commit untracked .opencode/rules/ files
   - Files: `.opencode/rules/AI-GUIDELINES.md`, `.opencode/rules/_bootstrap.md`
