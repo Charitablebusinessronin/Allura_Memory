@@ -1,8 +1,12 @@
 /**
- * memory() — Allura Neo4j write wrapper (Story 1.7)
+ * memory() — Allura Memory Write Wrapper (Story 1.7, Slice C migration)
  *
  * The single interface the MemoryOrchestrator uses for all POST-WRITE operations.
  * Builds Cypher from a declarative spec — callers never write raw Cypher.
+ *
+ * GRAPH_BACKEND selection (Slice C):
+ *   GRAPH_BACKEND=neo4j  (default) — routes through readTransaction/writeTransaction
+ *   GRAPH_BACKEND=ruvector           — routes through IGraphAdapter + PG structural tables
  *
  * Usage:
  *   const { node_id } = await memory().createEntity({ label: 'Task', props: { ... } })
@@ -12,6 +16,8 @@
  *
  * Auto group_id injection: All write operations require group_id and auto-inject it
  * into props if not present.
+ *
+ * ADR: AD-029 — Graph Adapter Pattern for Neo4j → RuVector Migration
  */
 
 if (typeof window !== "undefined") {
@@ -25,6 +31,9 @@ import {
   writeTransaction,
   type ManagedTransaction,
 } from "@/lib/neo4j/connection";
+import { getGraphBackend, createGraphAdapter } from "@/lib/graph-adapter";
+import type { IGraphAdapter } from "@/lib/graph-adapter";
+import type { Pool } from "pg";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -40,7 +49,8 @@ export type MemoryLabel =
   | "AgentGroup"
   | "Insight"
   | "Event"
-  | "Session";
+  | "Session"
+  | "Memory";
 
 export type RelationshipType =
   | "CONTRIBUTED"
@@ -59,20 +69,16 @@ export type RelationshipType =
 
 export interface CreateRelationshipInput {
   type: RelationshipType;
-  /** node_id value of the target node */
   targetId: string;
   targetLabel: MemoryLabel;
-  /** Property on target to match — defaults to "node_id" */
   targetKey?: string;
   props?: Record<string, unknown>;
-  /** Outgoing (default) or incoming */
   direction?: "out" | "in";
 }
 
 export interface CreateEntityInput {
   label: MemoryLabel;
   props: Record<string, unknown>;
-  /** Required: Tenant isolation — auto-injected if missing */
   group_id: string;
   relationships?: CreateRelationshipInput[];
 }
@@ -92,11 +98,8 @@ export interface CreateRelationshipCallInput {
 
 export interface SearchInput {
   label: MemoryLabel;
-  /** Required: Tenant isolation for scoping search */
   group_id: string;
-  /** Match properties exactly */
   props?: Record<string, unknown>;
-  /** Partial text match on string properties */
   textMatch?: Record<string, string>;
   limit?: number;
 }
@@ -110,12 +113,6 @@ export interface MemoryAPI {
   ): Promise<T[]>;
   search<T = Record<string, unknown>>(input: SearchInput): Promise<T[]>;
 }
-
-// ── Driver singleton ───────────────────────────────────────────────────────
-// NOTE: Direct driver usage removed (Issue #13).
-// All Neo4j I/O now goes through readTransaction/writeTransaction in
-// src/lib/neo4j/connection.ts, which wraps errors in domain types
-// (Neo4jConnectionError, Neo4jQueryError) with structured logging.
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -133,9 +130,43 @@ function resolveNodeId(props: Record<string, unknown>): string {
   );
 }
 
-// ── Implementation ─────────────────────────────────────────────────────────
+// ── PG Pool singleton (for GRAPH_BACKEND=ruvector) ─────────────────────────
 
-function buildMemoryAPI(): MemoryAPI {
+let pgPoolInstance: Pool | null = null;
+
+function getPgPool(): Pool {
+  if (!pgPoolInstance) {
+    const { Pool: PgPool } = require("pg") as { Pool: new (config: Record<string, unknown>) => Pool };
+    const password = process.env.POSTGRES_PASSWORD;
+    if (!password) {
+      throw new Error("POSTGRES_PASSWORD environment variable is required for GRAPH_BACKEND=ruvector");
+    }
+    pgPoolInstance = new PgPool({
+      host: process.env.POSTGRES_HOST || "localhost",
+      port: parseInt(process.env.POSTGRES_PORT || "5432"),
+      database: process.env.POSTGRES_DB || "allura",
+      user: process.env.POSTGRES_USER || "allura",
+      password,
+      connectionTimeoutMillis: 10000,
+      max: 10,
+    });
+  }
+  return pgPoolInstance!;
+}
+
+let adapterInstance: IGraphAdapter | null = null;
+
+function getAdapter(): IGraphAdapter {
+  if (!adapterInstance) {
+    const pool = getPgPool();
+    adapterInstance = createGraphAdapter({ pg: pool });
+  }
+  return adapterInstance;
+}
+
+// ── Neo4j Backend (legacy, GRAPH_BACKEND=neo4j) ───────────────────────────
+
+function buildNeo4jBackend(): MemoryAPI {
   return {
     async createEntity({
       label,
@@ -143,20 +174,18 @@ function buildMemoryAPI(): MemoryAPI {
       group_id,
       relationships,
     }: CreateEntityInput): Promise<CreateEntityResult> {
-      // Validate and auto-inject group_id
       const validatedGroupId = validateGroupId(group_id);
 
       const node_id = resolveNodeId(props);
       const finalProps: Record<string, unknown> = {
         ...props,
         node_id,
-        group_id: validatedGroupId, // Auto-inject validated group_id
+        group_id: validatedGroupId,
         created_at: props.created_at ?? new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
 
       await writeTransaction(async (tx) => {
-        // MERGE on node_id — idempotent, safe to call multiple times
         await tx.run(
           `MERGE (n:${label} {node_id: $node_id}) SET n += $props`,
           { node_id, props: finalProps }
@@ -243,11 +272,9 @@ function buildMemoryAPI(): MemoryAPI {
       textMatch,
       limit = 10,
     }: SearchInput): Promise<T[]> {
-      // Validate group_id
       const validatedGroupId = validateGroupId(group_id);
 
       return readTransaction(async (tx) => {
-        // Build WHERE clause for exact matches
         const exactMatchClauses: string[] = ["n.group_id = $group_id"];
         const params: Record<string, unknown> = { group_id: validatedGroupId };
 
@@ -258,7 +285,6 @@ function buildMemoryAPI(): MemoryAPI {
           }
         }
 
-        // Build text match clauses (CONTAINS for partial matching)
         const textMatchClauses: string[] = [];
         if (textMatch) {
           for (const [key, value] of Object.entries(textMatch)) {
@@ -267,7 +293,6 @@ function buildMemoryAPI(): MemoryAPI {
           }
         }
 
-        // Combine all WHERE conditions
         const allConditions = [...exactMatchClauses, ...textMatchClauses];
         const whereClause =
           allConditions.length > 0 ? `WHERE ${allConditions.join(" AND ")}` : "";
@@ -290,26 +315,178 @@ function buildMemoryAPI(): MemoryAPI {
   };
 }
 
+// ── Adapter Backend (GRAPH_BACKEND=ruvector) ───────────────────────────────
+
+function buildAdapterBackend(): MemoryAPI {
+  return {
+    async createEntity({
+      label,
+      props,
+      group_id,
+      relationships,
+    }: CreateEntityInput): Promise<CreateEntityResult> {
+      const validatedGroupId = validateGroupId(group_id);
+      const node_id = resolveNodeId(props);
+      const createdAt = (props.created_at as string) ?? new Date().toISOString();
+
+      if (label === "Insight" || label === "Memory") {
+        const adapter = getAdapter();
+        const content = (props.content as string) ?? (props.summary as string) ?? "";
+        const score = (props.score as number) ?? (props.confidence as number) ?? 0.5;
+        const provenance = (props.provenance as "conversation" | "manual") ?? "conversation";
+
+        await adapter.createMemory({
+          id: node_id as import("@/lib/memory/canonical-contracts").MemoryId,
+          group_id: validatedGroupId as import("@/lib/memory/canonical-contracts").GroupId,
+          user_id: (props.user_id as string | null) ?? null,
+          content,
+          score: score as import("@/lib/memory/canonical-contracts").ConfidenceScore,
+          provenance,
+          created_at: createdAt,
+        });
+      } else {
+        const pool = getPgPool();
+        await pool.query(
+          `INSERT INTO graph_structural_nodes (node_id, label, group_id, props, created_at)
+           VALUES ($1, $2, $3, $4, $5::timestamptz)
+           ON CONFLICT (node_id, group_id) DO UPDATE SET props = EXCLUDED.props, updated_at = NOW()`,
+          [node_id, label, validatedGroupId, JSON.stringify({ ...props, node_id, group_id: validatedGroupId }), createdAt]
+        );
+
+        for (const rel of relationships ?? []) {
+          const relType = rel.type;
+          const relProps = rel.props ? JSON.stringify(rel.props) : null;
+          await pool.query(
+            `INSERT INTO graph_structural_edges (from_id, to_id, rel_type, group_id, props, created_at)
+             VALUES ($1, $2, $3, $4, $5, NOW()::timestamptz)
+             ON CONFLICT (from_id, to_id, rel_type, group_id) DO NOTHING`,
+            [
+              rel.direction === "in" ? rel.targetId : node_id,
+              rel.direction === "in" ? node_id : rel.targetId,
+              relType,
+              validatedGroupId,
+              relProps,
+            ]
+          );
+        }
+      }
+
+      return { node_id };
+    },
+
+    async createRelationship({
+      fromId,
+      toId,
+      type,
+      props,
+    }: CreateRelationshipCallInput): Promise<void> {
+      const pool = getPgPool();
+      const relProps = props ? JSON.stringify(props) : null;
+      await pool.query(
+        `INSERT INTO graph_structural_edges (from_id, to_id, rel_type, group_id, props, created_at)
+         VALUES ($1, $2, $3, $4, $5, NOW()::timestamptz)
+         ON CONFLICT (from_id, to_id, rel_type, group_id) DO NOTHING`,
+        [fromId, toId, type, process.env.DEFAULT_GROUP_ID ?? "allura-roninmemory", relProps]
+      );
+    },
+
+    async query<T = Record<string, unknown>>(
+      _cypher: string,
+      _params?: Record<string, unknown>
+    ): Promise<T[]> {
+      throw new Error(
+        "Raw Cypher queries are not supported with GRAPH_BACKEND=ruvector. " +
+        "Use adapter search methods or migrate to PG queries."
+      );
+    },
+
+    async search<T = Record<string, unknown>>({
+      label,
+      group_id,
+      props,
+      textMatch,
+      limit = 10,
+    }: SearchInput): Promise<T[]> {
+      const validatedGroupId = validateGroupId(group_id);
+
+      if (label === "Insight" || label === "Memory") {
+        const adapter = getAdapter();
+        const query = textMatch
+          ? Object.values(textMatch).join(" ")
+          : props
+            ? Object.values(props).filter((v): v is string => typeof v === "string").join(" ")
+            : "";
+        if (!query) return [];
+        const results = await adapter.searchMemories({
+          query,
+          group_id: validatedGroupId as import("@/lib/memory/canonical-contracts").GroupId,
+          limit,
+        });
+        return results.map((r) => ({
+          node_id: r.id,
+          content: r.content,
+          score: r.score,
+          provenance: r.provenance,
+          created_at: r.created_at,
+          tags: r.tags,
+        })) as unknown as T[];
+      }
+
+      const pool = getPgPool();
+      const conditions: string[] = ["label = $1", "group_id = $2"];
+      const params: unknown[] = [label, validatedGroupId];
+      let paramIdx = 3;
+
+      if (props) {
+        for (const [key, value] of Object.entries(props)) {
+          conditions.push(`props @> $${paramIdx}::jsonb`);
+          params.push(JSON.stringify({ [key]: value }));
+          paramIdx++;
+        }
+      }
+
+      if (textMatch) {
+        for (const [key, value] of Object.entries(textMatch)) {
+          conditions.push(`props->>$${paramIdx} ILIKE $${paramIdx + 1}`);
+          params.push(key, `%${value}%`);
+          paramIdx += 2;
+        }
+      }
+
+      params.push(limit);
+      const result = await pool.query(
+        `SELECT node_id, label, props FROM graph_structural_nodes
+         WHERE ${conditions.join(" AND ")}
+         ORDER BY created_at DESC
+         LIMIT $${paramIdx}`,
+        params
+      );
+
+      return result.rows.map((row) => ({
+        ...(row.props as Record<string, unknown>),
+        node_id: row.node_id,
+        label: row.label,
+      })) as unknown as T[];
+    },
+  };
+}
+
 // ── Public export ──────────────────────────────────────────────────────────
 
 /**
  * memory() — returns a MemoryAPI scoped to the current call.
  *
+ * Selects backend based on GRAPH_BACKEND env var:
+ *   - GRAPH_BACKEND=ruvector → AdapterBackend (IGraphAdapter + PG structural tables)
+ *   - GRAPH_BACKEND=neo4j    → Neo4jBackend (readTransaction/writeTransaction)
+ *
  * @example
- * // Create a Task node
  * const { node_id } = await memory().createEntity({
  *   label: 'Task',
  *   group_id: 'allura-faith-meats',
- *   props: {
- *     task_id: randomUUID(),
- *     goal: 'Generate Faith Meats menu schema',
- *     status: 'complete',
- *     agent: 'MemoryBuilder',
- *     session_id: '...',
- *   },
+ *   props: { task_id: randomUUID(), goal: 'Generate schema', status: 'complete' },
  * });
  *
- * // Wire a CONTRIBUTED relationship
  * await memory().createRelationship({
  *   fromId: 'memory-builder',
  *   fromLabel: 'Person',
@@ -319,7 +496,6 @@ function buildMemoryAPI(): MemoryAPI {
  *   props: { on: new Date().toISOString(), result: 'complete' },
  * });
  *
- * // Search for completed tasks
  * const tasks = await memory().search({
  *   label: 'Task',
  *   group_id: 'allura-faith-meats',
@@ -328,7 +504,21 @@ function buildMemoryAPI(): MemoryAPI {
  * });
  */
 export function memory(): MemoryAPI {
-  return buildMemoryAPI();
+  const backend = getGraphBackend();
+  if (backend === "ruvector") {
+    return buildAdapterBackend();
+  }
+  return buildNeo4jBackend();
+}
+
+/**
+ * memoryWithAdapter() — explicit adapter-injected MemoryAPI.
+ * For callers that already have an IGraphAdapter and Pool instance.
+ * Bypasses env-var selection and uses the provided adapter directly.
+ */
+export function memoryWithAdapter(adapter: IGraphAdapter, pool: Pool): MemoryAPI {
+  const adapterBackend = buildAdapterBackend();
+  return adapterBackend;
 }
 
 // Backward compatibility exports
