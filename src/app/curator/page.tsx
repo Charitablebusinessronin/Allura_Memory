@@ -353,14 +353,14 @@ function PendingView({
 
             {selectedProposal.reasoning && (
               <div>
-                <p className="mb-1 text-[11px] font-bold tracking-[0.2em] text-[var(--allura-coral)] uppercase">Reasoning</p>
+                <p className="mb-1 text-[11px] font-bold tracking-[0.2em] text-[var(--allura-deep-navy)] uppercase">Reasoning</p>
                 <p className="text-sm leading-6 text-[var(--allura-warm-gray)]">{selectedProposal.reasoning}</p>
               </div>
             )}
 
             {/* Trace evidence */}
             <div>
-              <p className="mb-2 text-[11px] font-bold tracking-[0.2em] text-[var(--allura-coral)] uppercase">Evidence</p>
+              <p className="mb-2 text-[11px] font-bold tracking-[0.2em] text-[var(--allura-deep-navy)] uppercase">Evidence</p>
               <TraceCard
                 tool="memory.propose"
                 snippet={`Score: ${(selectedProposal.score * 100).toFixed(0)}% — ${selectedProposal.reasoning || "Auto-scored by curator pipeline"}`}
@@ -396,7 +396,7 @@ function PendingView({
                 <Button
                   variant="ghost"
                   onClick={() => rejectProposal(selectedProposal)}
-                  className="text-[var(--allura-warm-gray)] hover:bg-[var(--allura-coral-10)] hover:text-[var(--allura-coral)]"
+                  className="text-[var(--allura-warm-gray)] hover:bg-[var(--allura-coral-10)] hover:text-[var(--allura-deep-navy)]"
                   style={{ borderRadius: "var(--allura-radius-button)" }}
                 >
                   Reject ✕
