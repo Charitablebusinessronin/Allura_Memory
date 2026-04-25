@@ -266,7 +266,7 @@ async function handleClerkAuth(request: NextRequest): Promise<NextResponse> {
  * Clerk is loaded dynamically to avoid import-time crashes when
  * NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is not configured.
  */
-export default async function proxy(request: NextRequest): Promise<NextResponse> {
+export default async function proxy(request: NextRequest, _event?: unknown): Promise<NextResponse> {
   if (!isClerkEnabled()) {
     return handleDevAuth(request)
   }
