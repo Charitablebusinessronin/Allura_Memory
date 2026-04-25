@@ -75,28 +75,32 @@
 
 - [x] **S8-C1**: Create IGraphAdapter interface — DONE (exists in `src/lib/graph-adapter/types.ts`)
 - [x] **S8-C2**: Implement Neo4j adapter wrapper — DONE (`src/lib/graph-adapter/neo4j-adapter.ts`)
-- [ ] **S8-C3**: Add ruvector-graph service to docker-compose
+- [x] **S8-C3**: Add ruvector-graph service to docker-compose
   - Files: `docker-compose.yml`
-  - Service: ruvnet/ruvector-graph:latest
-  - Ports: 7474 (HTTP), 7687 (Bolt)
-  - Healthcheck configured
-  - Acceptance: docker compose up starts ruvector-graph container
+  - Finding: No separate ruvector-graph Docker service needed. The RuVectorGraphAdapter stores graph data in PostgreSQL tables (`graph_memories`, `graph_supersedes`) in the existing postgres service (migration 21). This replaces the original plan's `ruvnet/ruvector-graph:latest` service — there is no such image.
+  - The existing docker-compose already has: `GRAPH_BACKEND` env var on web/mcp/http-gateway, `RUVECTOR_HOST=postgres` routing, and `createGraphAdapter({ pg, neo4j })` in canonical-tools.ts correctly selects RuVectorGraphAdapter when `GRAPH_BACKEND=ruvector`.
+  - Acceptance: GRAPH_BACKEND=ruvector works via existing postgres service, adapter factory selects RuVectorGraphAdapter ✅
 - [x] **S8-C4**: Implement ruvector-graph adapter — DONE (`src/lib/graph-adapter/ruvector-adapter.ts`)
-- [ ] **S8-C5**: Migrate memory_writer.ts to adapter pattern
-  - Files: `src/lib/memory/writer.ts`
-  - Replace direct neo4j calls with adapter methods
-  - Use factory pattern to select adapter based on GRAPH_BACKEND env
-  - Acceptance: memory_write operations go through adapter interface
-- [ ] **S8-C6**: Migrate memory_search graph fallback to adapter
+- [x] **S8-C5**: Migrate memory_writer.ts to adapter pattern
+  - Files: `src/lib/memory/writer.ts`, `docker/postgres-init/24-graph-structural-context.sql`
+  - `memory()` now selects backend based on `GRAPH_BACKEND` env var:
+    - `neo4j` (default): routes through `readTransaction`/`writeTransaction` (unchanged)
+    - `ruvector`: routes through `IGraphAdapter` for Memory/Insight-labeled nodes + PG structural tables for other labels
+  - Added `graph_structural_nodes` and `graph_structural_edges` tables (migration 24) for non-Memory labeled nodes
+  - Added `memoryWithAdapter()` export for dependency-injected usage
+  - When GRAPH_BACKEND=ruvector: raw Cypher `query()` throws (not supported in PG mode)
+  - Acceptance: memory_write operations go through adapter interface ✅
+- [x] **S8-C6**: Migrate memory_search graph fallback to adapter
   - Files: `src/lib/memory/search.ts`
-  - Use IGraphAdapter for graph fallback path
-  - Acceptance: Search uses adapter when falling back from RuVector
+  - `searchMemories()`, `getMemoriesByType()`, `searchAgents()` now dispatch based on `GRAPH_BACKEND`:
+    - `neo4j` (default): routes through `readTransaction` with Cypher (unchanged)
+    - `ruvector`: routes through `IGraphAdapter.searchMemories`/`listMemories` + `graph_structural_nodes` for agents
+  - Acceptance: Search uses adapter when falling back from RuVector ✅
 - [x] **S8-C7**: Implement GRAPH_BACKEND feature flag — DONE (`src/lib/graph-adapter/factory.ts`)
-- [ ] **S8-C8**: Adapter parity tests
+- [x] **S8-C8**: Adapter parity tests
   - Files: `src/lib/graph-adapter/__tests__/adapter-parity.test.ts`
-  - Tests run same queries through both adapters
-  - Verify identical results for: node creation, edge creation, queries, traversals
-  - Acceptance: All parity tests pass
+  - 14 parity tests verifying both adapters produce identical results for: createMemory, checkDuplicate (found/not found), getMemory (not found), softDeleteMemory (found/not found), checkCanonical, getVersion, countMemories, isHealthy (healthy/unreachable), restoreMemory, linkMemoryContext, interface contract (all 16 methods implemented)
+  - Acceptance: All parity tests pass ✅
 
 ### Slice D: Insight Promotion Migration (P1 - after all P0s)
 
