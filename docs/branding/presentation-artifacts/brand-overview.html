@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>allura — Brand Overview</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #FFC300;
+      --color-secondary: #0581A7;
+      --color-tertiary: #BDBD0D;
+      --color-neutral: #142329;
+      --color-accent: #F5F5F5;
+      --font-heading: "Outfit", system-ui, sans-serif;
+      --font-body: "Inter", system-ui, sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-body);
+      color: var(--color-neutral);
+      background: #F5F5F5;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 40px;
+    }
+
+    /* Hero */
+    .hero {
+      background: #142329;
+      padding: 120px 0 100px;
+      position: relative;
+    }
+    .accent-bar {
+      width: 60px;
+      height: 5px;
+      background: var(--color-primary);
+      margin-bottom: 40px;
+    }
+    .brand-name {
+      font-family: var(--font-heading);
+      font-size: 120px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+      margin-bottom: 24px;
+    }
+    .brand-name .smile-a {
+      position: relative;
+      display: inline-block;
+    }
+    .brand-name .smile-a::after {
+      content: '';
+      position: absolute;
+      bottom: 8px;
+      left: 10%;
+      width: 80%;
+      height: 6px;
+      background: var(--color-primary);
+      border-radius: 50%;
+      opacity: 0.9;
+    }
+    .tagline {
+      font-family: var(--font-heading);
+      font-size: 36px;
+      color: var(--color-accent);
+      letter-spacing: 0.5px;
+      font-weight: 600;
+      margin-bottom: 32px;
+    }
+    .promise {
+      font-family: var(--font-body);
+      font-size: 22px;
+      color: rgba(245,245,245,0.7);
+      max-width: 700px;
+      line-height: 1.6;
+    }
+
+    /* Sections */
+    .section-light {
+      background: #F5F5F5;
+      padding: 80px 0;
+    }
+    .section-dark {
+      background: var(--color-neutral);
+      padding: 80px 0;
+    }
+    .section-label {
+      font-family: var(--font-heading);
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--color-neutral);
+      margin-bottom: 40px;
+      font-weight: 600;
+    }
+    .section-dark .section-label {
+      color: var(--color-accent);
+    }
+
+    /* Cards grid */
+    .cards-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .archetype-card {
+      background: var(--color-neutral);
+      color: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      border-top: 3px solid var(--color-primary);
+    }
+    .archetype-card.secondary { border-top-color: var(--color-secondary); }
+    .archetype-card.tertiary { border-top-color: var(--color-tertiary); }
+    .archetype-card .percent {
+      font-family: var(--font-heading);
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .archetype-card .title {
+      font-family: var(--font-heading);
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .archetype-card .desc {
+      font-family: var(--font-body);
+      font-size: 15px;
+      color: rgba(255,255,255,0.8);
+      line-height: 1.5;
+    }
+
+    /* Proof Points */
+    .proof-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      margin-top: 40px;
+    }
+    .proof-item {
+      padding-left: 20px;
+      border-left: 3px solid var(--color-primary);
+    }
+    .proof-item:nth-child(2) { border-left-color: var(--color-secondary); }
+    .proof-item:nth-child(3) { border-left-color: var(--color-tertiary); }
+    .proof-item:nth-child(4) { border-left-color: var(--color-primary); }
+    .proof-item:nth-child(5) { border-left-color: var(--color-secondary); }
+    .proof-item:nth-child(6) { border-left-color: var(--color-tertiary); }
+    .proof-item h4 {
+      font-family: var(--font-heading);
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--color-secondary);
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    .proof-item p {
+      font-size: 15px;
+      color: var(--color-neutral);
+      line-height: 1.5;
+    }
+
+    /* Photo Cards */
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 40px;
+    }
+    .photo-card {
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px -4px rgba(20, 35, 41, 0.08), 0 8px 16px -4px rgba(20, 35, 41, 0.12);
+    }
+    .photo-card img {
+      width: 100%;
+      height: 260px;
+      object-fit: cover;
+      display: block;
+    }
+    .photo-caption {
+      padding: 24px;
+      position: relative;
+    }
+    .photo-caption::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--color-primary);
+    }
+    .photo-caption h4 {
+      font-family: var(--font-heading);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--color-neutral);
+      margin-bottom: 8px;
+    }
+    .photo-caption p {
+      font-size: 14px;
+      color: #555;
+      line-height: 1.5;
+    }
+
+    /* Page Nav */
+    .page-nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      padding: 40px 0;
+      background: #fff;
+    }
+    .nav-circle {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid var(--color-neutral);
+      display: block;
+      transition: all 0.2s ease;
+    }
+    .nav-circle.active {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+    }
+    .nav-circle:hover {
+      transform: scale(1.2);
+      border-color: var(--color-primary);
+    }
+
+    @media (max-width: 1024px) {
+      .cards-row, .proof-grid, .photo-grid { grid-template-columns: repeat(2, 1fr); }
+      .brand-name { font-size: 80px; }
+      .tagline { font-size: 28px; }
+    }
+    @media (max-width: 640px) {
+      .cards-row, .proof-grid, .photo-grid { grid-template-columns: 1fr; }
+      .brand-name { font-size: 56px; }
+      .tagline { font-size: 20px; }
+      .container { padding: 0 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <div class="accent-bar"></div>
+      <div style="background: #F5F5F5; padding: 32px 48px; border-radius: 16px; display: inline-block; margin-bottom: 24px;">
+        <img src="../assets/logos/allura-logo/allura-logo-primary.png" alt="allura Primary Wordmark" style="max-width: 360px; display: block;">
+      </div>
+      <p class="tagline">Where communities come alive</p>
+      <p class="promise">We create digital and physical spaces where communities thrive, connections deepen, and every voice is valued — through technology that feels warm, not cold; inviting, not distant.</p>
+    </div>
+  </section>
+
+  <!-- Brand Archetypes -->
+  <section class="section-light">
+    <div class="container">
+      <p class="section-label">BRAND ARCHETYPE</p>
+      <div class="cards-row">
+        <div class="archetype-card">
+          <div class="percent">50%</div>
+          <div class="title">THE CAREGIVER</div>
+          <div class="desc">Nurturing, supporting, protecting community</div>
+        </div>
+        <div class="archetype-card secondary">
+          <div class="percent">30%</div>
+          <div class="title">THE CREATOR</div>
+          <div class="desc">Crafting with intention, building with care</div>
+        </div>
+        <div class="archetype-card tertiary">
+          <div class="percent">20%</div>
+          <div class="title">THE EXPLORER</div>
+          <div class="desc">Discovering new ways to connect</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Proof Points -->
+  <section class="section-light" style="padding-top: 0;">
+    <div class="container">
+      <p class="section-label">PROOF POINTS</p>
+      <div class="proof-grid">
+        <div class="proof-item">
+          <h4>COMMUNITY-FIRST DESIGN</h4>
+          <p>We build for gathering, not for scrolling. Every feature starts with the question: "Does this bring people closer?"</p>
+        </div>
+        <div class="proof-item">
+          <h4>WARMTH-FIRST TECHNOLOGY</h4>
+          <p>Our platform rejects cold efficiency. We choose human benefit over algorithmic optimization every time.</p>
+        </div>
+        <div class="proof-item">
+          <h4>CULTURE-CELEBRATING</h4>
+          <p>We design for diverse urban cultures. Your neighborhood's identity shapes our product, not the other way around.</p>
+        </div>
+        <div class="proof-item">
+          <h4>INCLUSIVE-BY-DESIGN</h4>
+          <p>WCAG AA standards, gender-neutral language, and accessible interfaces are baseline — never afterthoughts.</p>
+        </div>
+        <div class="proof-item">
+          <h4>INTENTIONAL CRAFT</h4>
+          <p>Empty states say "Your community is growing," not "No results found." Every word earns its place.</p>
+        </div>
+        <div class="proof-item">
+          <h4>VOICE-EMPOWERING</h4>
+          <p>We give communities tools to promote their own events, tell their own stories, and lead their own conversations.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Brand in Action -->
+  <section class="section-dark">
+    <div class="container">
+      <p class="section-label">THE BRAND IN ACTION</p>
+      <div class="photo-grid">
+        <div class="photo-card">
+          <img src="../assets/mood-board/CMv0S4e4J8qmN70lpLEjD_image (1).png" alt="Neighborhood Gathering">
+          <div class="photo-caption">
+            <h4>Neighborhood Gathering</h4>
+            <p>Monthly potlucks in Oakland. Block parties in Brooklyn. We design for the moments where strangers become neighbors.</p>
+          </div>
+        </div>
+        <div class="photo-card">
+          <img src="../assets/mood-board/Gemini_Generated_Image_3gng993gng993gng.png" alt="Digital-Physical Bridge">
+          <div class="photo-caption">
+            <h4>Digital-Physical Bridge</h4>
+            <p>A community organizer posts an event on allura. Three neighbors show up. One brings a friend. Connection grows from a single tap.</p>
+          </div>
+        </div>
+        <div class="photo-card">
+          <img src="../assets/mood-board/CMv0S4e4J8qmN70lpLEjD_image (1).png" alt="Celebrating Urban Culture">
+          <div class="photo-caption">
+            <h4>Celebrating Urban Culture</h4>
+            <p>Street art festivals. Local markets. Cultural celebrations. We amplify the voices that make cities feel alive.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Page Nav -->
+  <nav class="page-nav">
+    <a href="brand-overview.html" class="nav-circle active" aria-label="Brand Overview"></a>
+    <a href="color-system.html" class="nav-circle" aria-label="Color System"></a>
+    <a href="logo-chooser.html" class="nav-circle" aria-label="Logo Chooser"></a>
+    <a href="typography.html" class="nav-circle" aria-label="Typography"></a>
+    <a href="applications.html" class="nav-circle" aria-label="Applications"></a>
+  </nav>
+
+</body>
+</html>

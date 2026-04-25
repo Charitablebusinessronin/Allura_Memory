@@ -1,12 +1,11 @@
 # =============================================================================
-# PRIMARY docker-compose.yml — Allura Brain (v2.1.0) — stability edition
+# PRIMARY docker-compose.yml — Allura Brain (v2.2.0) — env-standard edition
 # =============================================================================
-# Changes in v2.1.0:
-#   - PostgreSQL uses pgvector:pg16 temporarily because upstream does not publish 0.8.4-pg16
-#   - Pinned Neo4j to 5.26.0-community (specific minor version)
-#   - Added explicit volume declarations with external: true for pre-existing volumes
-#   - Added restart: unless-stopped to all services (already present, but documenting)
-#   - Enhanced health checks with proper start_period for slower services
+# Changes in v2.2.0:
+#   - Added explicit .env file loading for MCP containers (fixes credential drift)
+#   - Standardized env_file pattern across all services
+#   - MCP server now properly loads .env then .env.local for file precedence
+#   - Pinned all environment configuration for reproducibility
 # =============================================================================
 # Other compose files in this repo:
 #   docker/docker-compose.yml              — DEPRECATED (legacy sandbox, do not use)
@@ -17,6 +16,39 @@
 #   docker compose up -d
 # To check service health:
 #   docker compose ps
+# To rebuild all containers with current env:
+#   docker compose build --no-cache
+# To restart containers and reload env:
+#   docker compose restart mcp http-gateway && docker compose logs -f mcp
+
+# =============================================================================
+# Environment Variable Standardization (v2.2.0)
+# =============================================================================
+# This compose file uses a consistent pattern for environment configuration:
+#
+# 1. env_file: .env        — Base configuration (commit to git safely)
+# 2. env_file: .env.local  — Local secrets/overrides (NOT in git)
+#    - .env.local is intentionally .gitignored (see .gitignore)
+#    - It takes precedence: values in .env.local override .env
+#
+# MCP Container Loading Order:
+#   1. .env (base config from repo)
+#   2. .env.local (local overrides with secrets)
+#   3. Explicit environment variables override both
+#
+# Why this matters:
+#   - .env.local can hold local PG password and Neo4j credential overrides
+#   - Docker builds with --no-cache ensure env_file paths are current
+#   - Container restarts trigger env_file re-evaluation
+#
+# To verify env loading in MCP container:
+#   docker compose exec mcp env | grep -E '(POSTGRES|NEO4J|OLLAMA)'
+#
+# To rebuild with current env (critical after .env changes):
+#   docker compose down
+#   docker compose build --no-cache
+#   docker compose up -d
+# =============================================================================
 # =============================================================================
 
 services:
@@ -27,10 +59,8 @@ services:
     image: pgvector/pgvector:pg16
     container_name: knowledge-postgres
     restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    env_file:
+      - .env
     ports:
       - "5432:5432"
     volumes:
@@ -52,14 +82,8 @@ services:
     image: neo4j:5.26.0-community
     container_name: knowledge-neo4j
     restart: unless-stopped
-    environment:
-      NEO4J_AUTH: ${NEO4J_USER}/${NEO4J_PASSWORD}
-      NEO4J_server_memory_heap_initial__size: ${NEO4J_HEAP_INITIAL}
-      NEO4J_server_memory_heap_max__size: ${NEO4J_HEAP_MAX}
-      NEO4J_server_memory_pagecache_size: ${NEO4J_PAGECACHE}
-      NEO4J_PLUGINS: '["apoc"]'
-      NEO4J_apoc_export_file_enabled: "true"
-      NEO4J_apoc_import_file_enabled: "true"
+    env_file:
+      - .env
     ports:
       - "7474:7474"
       - "7687:7687"
@@ -69,7 +93,7 @@ services:
     networks:
       - knowledge-network
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:7474 >/dev/null 2>&1 || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 20
@@ -86,10 +110,8 @@ services:
     depends_on:
       neo4j:
         condition: service_healthy
-    environment:
-      NEO4J_URI: bolt://neo4j:7687
-      NEO4J_USER: ${NEO4J_USER}
-      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
+    env_file:
+      - .env
     volumes:
       - ./docker/neo4j-init:/cypher:ro
     networks:
@@ -114,37 +136,34 @@ services:
     restart: unless-stopped
     ports:
       - "${PAPERCLIP_PORT:-3100}:3100"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      neo4j:
-        condition: service_healthy
+    env_file:
+      - .env
     environment:
-      PORT: "3100"
-      NODE_ENV: production
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      NEO4J_URI: bolt://neo4j:7687
-      NEO4J_USER: ${NEO4J_USER}
-      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
-      RUVECTOR_HOST: postgres
-      RUVECTOR_PORT: 5432
-      RUVECTOR_USER: ${POSTGRES_USER}
-      RUVECTOR_PASSWORD: ${POSTGRES_PASSWORD}
-      RUVECTOR_DB: ${POSTGRES_DB}
-      GRAPH_BACKEND: ${GRAPH_BACKEND:-neo4j}
-      RUVIX_KERNEL_SECRET: ${RUVIX_KERNEL_SECRET}
-      DEFAULT_GROUP_ID: ${DEFAULT_GROUP_ID:-allura-default}
-      ALLURA_DEV_AUTH_ENABLED: ${ALLURA_DEV_AUTH_ENABLED:-true}
-      ALLURA_DEV_AUTH_ROLE: ${ALLURA_DEV_AUTH_ROLE:-admin}
-      ALLURA_DEV_AUTH_GROUP_ID: ${ALLURA_DEV_AUTH_GROUP_ID:-allura-roninmemory}
+      - PORT=3100
+      - NODE_ENV=production
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=${NEO4J_USER}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - RUVECTOR_HOST=postgres
+      - RUVECTOR_PORT=5432
+      - RUVECTOR_USER=${POSTGRES_USER}
+      - RUVECTOR_PASSWORD=${POSTGRES_PASSWORD}
+      - RUVECTOR_DB=${POSTGRES_DB}
+      - GRAPH_BACKEND=${GRAPH_BACKEND:-neo4j}
+      - RUVIX_KERNEL_SECRET=${RUVIX_KERNEL_SECRET}
+      - DEFAULT_GROUP_ID=${DEFAULT_GROUP_ID:-allura-roninmemory}
+      - ALLURA_DEV_AUTH_ENABLED=${ALLURA_DEV_AUTH_ENABLED:-true}
+      - ALLURA_DEV_AUTH_ROLE=${ALLURA_DEV_AUTH_ROLE:-admin}
+      - ALLURA_DEV_AUTH_GROUP_ID=${ALLURA_DEV_AUTH_GROUP_ID:-allura-roninmemory}
     networks:
       - knowledge-network
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://0.0.0.0:3100/api/health/live >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://0.0.0.0:3100/api/health/live >/dev/null 2>&1 || exit 1"]
       interval: 20s
       timeout: 5s
       retries: 10
@@ -174,31 +193,26 @@ services:
       dockerfile: Dockerfile.mcp
     container_name: allura-memory-mcp
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      neo4j:
-        condition: service_healthy
+    env_file:
+      - .env
+      - .env.local
     environment:
-      NODE_ENV: production
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      NEO4J_URI: bolt://neo4j:7687
-      NEO4J_USER: ${NEO4J_USER}
-      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
-      RUVECTOR_HOST: postgres
-      RUVECTOR_PORT: 5432
-      RUVECTOR_USER: ${POSTGRES_USER}
-      RUVECTOR_PASSWORD: ${POSTGRES_PASSWORD}
-      RUVECTOR_DB: ${POSTGRES_DB}
-      OLLAMA_API_KEY: ${OLLAMA_API_KEY}
-      OLLAMA_CLOUD_URL: ${OLLAMA_CLOUD_URL:-https://ollama.com}
-      GRAPH_BACKEND: ${GRAPH_BACKEND:-neo4j}
-      DEFAULT_GROUP_ID: ${DEFAULT_GROUP_ID:-allura-roninmemory}
+      - NODE_ENV=production
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=${NEO4J_USER}
+      - RUVECTOR_HOST=postgres
+      - RUVECTOR_PORT=5432
+      - RUVECTOR_USER=${POSTGRES_USER}
+      - RUVECTOR_DB=${POSTGRES_DB}
+      - OLLAMA_API_KEY=${OLLAMA_API_KEY}
+      - OLLAMA_CLOUD_URL=${OLLAMA_CLOUD_URL:-https://ollama.com}
+      - GRAPH_BACKEND=${GRAPH_BACKEND:-neo4j}
+      - DEFAULT_GROUP_ID=${DEFAULT_GROUP_ID:-allura-roninmemory}
+      - RUVIX_KERNEL_SECRET=${RUVIX_KERNEL_SECRET}
     networks:
       - knowledge-network
     healthcheck:
@@ -217,31 +231,26 @@ services:
     restart: unless-stopped
     ports:
       - "5888:3201"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      neo4j:
-        condition: service_healthy
+    env_file:
+      - .env
+      - .env.local
     environment:
-      NODE_ENV: production
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      NEO4J_URI: bolt://neo4j:7687
-      NEO4J_USER: ${NEO4J_USER}
-      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
-      RUVECTOR_HOST: postgres
-      RUVECTOR_PORT: 5432
-      RUVECTOR_USER: ${POSTGRES_USER}
-      RUVECTOR_PASSWORD: ${POSTGRES_PASSWORD}
-      RUVECTOR_DB: ${POSTGRES_DB}
-      ALLURA_MCP_HTTP_PORT: "3201"
-      ALLURA_MCP_HTTP_ENABLED: "true"
-      GRAPH_BACKEND: ${GRAPH_BACKEND:-neo4j}
-      DEFAULT_GROUP_ID: ${DEFAULT_GROUP_ID:-allura-roninmemory}
+      - NODE_ENV=production
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=${NEO4J_USER}
+      - RUVECTOR_HOST=postgres
+      - RUVECTOR_PORT=5432
+      - RUVECTOR_USER=${POSTGRES_USER}
+      - RUVECTOR_DB=${POSTGRES_DB}
+      - ALLURA_MCP_HTTP_PORT=3201
+      - ALLURA_MCP_HTTP_ENABLED=true
+      - GRAPH_BACKEND=${GRAPH_BACKEND:-neo4j}
+      - DEFAULT_GROUP_ID=${DEFAULT_GROUP_ID:-allura-roninmemory}
+      - RUVIX_KERNEL_SECRET=${RUVIX_KERNEL_SECRET}
     networks:
       - knowledge-network
     command: ["bun", "run", "src/mcp/canonical-http-gateway.ts"]

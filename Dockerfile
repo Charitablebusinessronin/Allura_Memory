@@ -17,8 +17,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3100
 
-# Install wget for the health check probe (not present in slim image)
-RUN apt-get update -qq && apt-get install -y --no-install-recommends wget && rm -rf /var/lib/apt/lists/*
+# Install curl for the health check probe (not present in slim image)
+RUN apt-get update -qq && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
@@ -27,6 +27,6 @@ COPY --from=builder /app/public ./public
 
 EXPOSE 3100
 HEALTHCHECK --interval=20s --timeout=5s --retries=10 \
-  CMD wget -qO- http://0.0.0.0:3100/api/health/live >/dev/null || exit 1
+  CMD curl -f http://0.0.0.0:3100/api/health/live >/dev/null 2>&1 || exit 1
 
 CMD ["bun", "run", "start"]

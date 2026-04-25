@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Allura Design System — Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="components.css">
+  <style>
+    .demo-section {
+      padding: var(--space-64) 0;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    .demo-section:last-child {
+      border-bottom: none;
+    }
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--space-24);
+      margin-top: var(--space-32);
+    }
+    .demo-color-swatch {
+      width: 100%;
+      height: 80px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: flex-end;
+      padding: var(--space-12);
+      font-size: var(--font-size-caption);
+      font-weight: 600;
+      color: white;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    .demo-color-swatch.light {
+      color: var(--color-text-primary);
+      text-shadow: none;
+    }
+    .demo-spacing-block {
+      background-color: var(--color-brand-coral);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: var(--font-size-caption);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="allura-bg-navy" style="padding: var(--space-48) 0;">
+    <div class="allura-container">
+      <span class="allura-overline" style="color: var(--color-brand-coral);">Design System</span>
+      <h1 class="allura-heading-hero" style="color: var(--color-text-inverted); margin-top: var(--space-16);">
+        Allura
+      </h1>
+      <p class="allura-body-large" style="color: rgba(255,255,255,0.8); max-width: 600px; margin-top: var(--space-16);">
+        A warm, human-centered brand identity for an AI memory system that never forgets what matters.
+      </p>
+    </div>
+  </header>
+
+  <!-- Color Palette -->
+  <section class="demo-section">
+    <div class="allura-container">
+      <span class="allura-overline">01 — Colors</span>
+      <h2 class="allura-heading-2" style="margin-top: var(--space-16);">Brand Palette</h2>
+      
+      <div class="demo-grid" style="margin-top: var(--space-32);">
+        <div>
+          <div class="demo-color-swatch allura-bg-navy">Deep Navy #1A2B4A</div>
+          <p class="allura-caption" style="margin-top: var(--space-8);">Primary brand color — trust, depth, intelligence</p>
+        </div>
+        <div>
+          <div class="demo-color-swatch allura-bg-coral">Coral #E85A3C</div>
+          <p class="allura-caption" style="margin-top: var(--space-8);">Action color — warmth, energy, human touch</p>
+        </div>
+        <div>
+          <div class="demo-color-swatch allura-bg-green">Trust Green #4CAF50</div>
+          <p class="allura-caption" style="margin-top: var(--space-8);">Success, growth, positive reinforcement</p>
+        </div>
+        <div>
+          <div class="demo-color-swatch allura-bg-blue">Clarity Blue #5B8DB8</div>
+          <p class="allura-caption" style="margin-top: var(--space-8);">Information, calm, clarity</p>
+        </div>
+        <div>
+          <div class="demo-color-swatch allura-bg-white light" style="border: 1px solid #ddd;">Pure White #F5F5F5</div>
+          <p class="allura-caption" style="margin-top: var(--space-8);">Clean backgrounds, breathing room</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Typography -->
+  <section class="demo-section">
+    <div class="allura-container">
+      <span class="allura-overline">02 — Typography</span>
+      <h2 class="allura-heading-2" style="margin-top: var(--space-16);">Type Scale</h2>
+      
+      <div class="allura-stack-lg" style="margin-top: var(--space-32);">
+        <h1 class="allura-heading-hero">Hero — 64px</h1>
+        <h1 class="allura-heading-1">Heading 1 — 48px</h1>
+        <h2 class="allura-heading-2">Heading 2 — 36px</h2>
+        <h3 class="allura-heading-3">Heading 3 — 28px</h3>
+        <h4 class="allura-heading-4">Heading 4 — 24px</h4>
+        <p class="allura-body-large">Body Large — 18px. The quick brown fox jumps over the lazy dog.</p>
+        <p class="allura-body">Body — 16px. The quick brown fox jumps over the lazy dog.</p>
+        <p class="allura-caption">Caption — 14px. The quick brown fox jumps over the lazy dog.</p>
+        <span class="allura-overline">Overline — 12px</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Buttons -->
+  <section class="demo-section">
+    <div class="allura-container">
+      <span class="allura-overline">03 — Buttons</span>
+      <h2 class="allura-heading-2" style="margin-top: var(--space-16);">Button Variants</h2>
+      
+      <div class="demo-grid" style="margin-top: var(--space-32);">
+        <div class="allura-stack-md">
+          <button class="allura-btn allura-btn-primary">Primary Button</button>
+          <button class="allura-btn allura-btn-secondary">Secondary Button</button>
+          <button class="allura-btn allura-btn-tertiary">Tertiary Button</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cards -->
+  <section class="demo-section">
+    <div class="allura-container">
+      <span class="allura-overline">04 — Cards</span>
+      <h2 class="allura-heading-2" style="margin-top: var(--space-16);">Card Component</h2>
+      
+      <div class="demo-grid" style="margin-top: var(--space-32);">
+        <div class="allura-card">
+          <h4 class="allura-card-title">Memory Preservation</h4>
+          <p class="allura-card-body">AI systems don't forget. They remember what matters. Our technology preserves every meaningful interaction.</p>
+          <div style="margin-top: var(--space-16);">
+            <span class="allura-badge allura-badge-success">Active</span>
+          </div>
+        </div>
+        
+        <div class="allura-card">
+          <h4 class="allura-card-title">Human Connection</h4>
+          <p class="allura-card-body">Technology should bring people closer, not push them apart. We design for empathy and understanding.</p>
+          <div style="margin-top: var(--space-16);">
+            <span class="allura-badge allura-badge-info">In Progress</span>
+          </div>
+        </div>
+        
+        <div class="allura-card">
+          <h4 class="allura-card-title">Clarity First</h4>
+          <p class="allura-card-body">Complex technology made simple. We believe in transparent systems that users can trust and understand.</p>
+          <div style="margin-top: var(--space-16);">
+            <span class="allura-badge allura-badge-warning">Review</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Spacing -->
+  <section class="demo-section">
+    <div class="allura-container">
+      <span class="allura-overline">05 — Spacing</span>
+      <h2 class="allura-heading-2" style="margin-top: var(--space-16);">Spacing Scale</h2>
+      
+      <div class="allura-stack-md" style="margin-top: var(--space-32);">
+        <div class="demo-spacing-block" style="width: 100%; height: 4px;">4px</div>
+        <div class="demo-spacing-block" style="width: 100%; height: 8px;">8px</div>
+        <div class="demo-spacing-block" style="width: 100%; height: 12px;">12px</div>
+        <div class="demo-spacing-block" style="width: 100%; height: 16px;">16px</div>
+        <div class="demo-spacing-block" style="width: 100%; height: 24px;">24px</div>
+        <div class="demo-spacing-block" style="width: 100%; height: 32px;">32px</div>
+        <div class="demo-spacing-block" style="width: 100%; height: 48px;">48px</div>
+        <div class="demo-spacing-block" style="width: 100%; height: 64px;">64px</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Brand Essence -->
+  <section class="demo-section" style="background-color: var(--color-brand-deep-navy);">
+    <div class="allura-container">
+      <span class="allura-overline" style="color: var(--color-brand-coral);">06 — Brand Essence</span>
+      <h2 class="allura-heading-2" style="color: var(--color-text-inverted); margin-top: var(--space-16);">Warm + Connected</h2>
+      
+      <div class="demo-grid" style="margin-top: var(--space-32);">
+        <div>
+          <h4 class="allura-heading-4" style="color: var(--color-brand-coral);">Memory</h4>
+          <p class="allura-body" style="color: rgba(255,255,255,0.8);">Preserving what matters most</p>
+        </div>
+        <div>
+          <h4 class="allura-heading-4" style="color: var(--color-brand-trust-green);">Connection</h4>
+          <p class="allura-body" style="color: rgba(255,255,255,0.8);">Bringing people closer together</p>
+        </div>
+        <div>
+          <h4 class="allura-heading-4" style="color: var(--color-brand-clarity-blue);">Clarity</h4>
+          <p class="allura-body" style="color: rgba(255,255,255,0.8);">Transparent, understandable systems</p>
+        </div>
+        <div>
+          <h4 class="allura-heading-4" style="color: var(--color-brand-coral);">Trust</h4>
+          <p class="allura-body" style="color: rgba(255,255,255,0.8);">Built on reliability and integrity</p>
+        </div>
+        <div>
+          <h4 class="allura-heading-4" style="color: var(--color-brand-trust-green);">Empowerment</h4>
+          <p class="allura-body" style="color: rgba(255,255,255,0.8);">Giving users control and confidence</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Forms -->
+  <section class="demo-section">
+    <div class="allura-container">
+      <span class="allura-overline">07 — Forms</span>
+      <h2 class="allura-heading-2" style="margin-top: var(--space-16);">Form Components</h2>
+      
+      <div class="demo-grid" style="margin-top: var(--space-32);">
+        <div class="allura-input-group">
+          <label class="allura-input-label">Text Input</label>
+          <input type="text" class="allura-input" placeholder="Enter your name">
+        </div>
+        <div class="allura-input-group">
+          <label class="allura-input-label">Text Input with Error</label>
+          <input type="text" class="allura-input allura-input-error" value="invalid@email">
+          <span class="allura-input-error-text">Please enter a valid email address</span>
+        </div>
+        <div class="allura-input-group">
+          <label class="allura-input-label">Textarea</label>
+          <textarea class="allura-input allura-textarea" placeholder="Tell us your story..."></textarea>
+        </div>
+        <div class="allura-input-group">
+          <label class="allura-input-label">Select</label>
+          <select class="allura-input allura-select">
+            <option>Select a plan</option>
+            <option>Starter</option>
+            <option>Professional</option>
+            <option>Enterprise</option>
+          </select>
+        </div>
+        <label class="allura-checkbox">
+          <input type="checkbox" class="allura-checkbox-input" checked>
+          <span class="allura-checkbox-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          <span class="allura-checkbox-label">Remember me</span>
+        </label>
+        <label class="allura-toggle">
+          <span class="allura-toggle-label">Notifications</span>
+          <input type="checkbox" class="allura-toggle-input" checked>
+          <span class="allura-toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <!-- Data Display -->
+  <section class="demo-section">
+    <div class="allura-container">
+      <span class="allura-overline">08 — Data Display</span>
+      <h2 class="allura-heading-2" style="margin-top: var(--space-16);">Data Display Components</h2>
+      
+      <div class="demo-grid" style="margin-top: var(--space-32);">
+        <div class="allura-stack-md" style="align-items: flex-start;">
+          <h4 class="allura-heading-4">Avatars</h4>
+          <div class="allura-inline-md" style="align-items: center;">
+            <div class="allura-avatar allura-avatar-sm"><span class="allura-avatar-fallback">JD</span></div>
+            <div class="allura-avatar allura-avatar-md"><span class="allura-avatar-fallback">JD</span></div>
+            <div class="allura-avatar allura-avatar-lg"><span class="allura-avatar-fallback">JD</span></div>
+            <div class="allura-avatar allura-avatar-xl"><span class="allura-avatar-fallback">JD</span></div>
+          </div>
+        </div>
+        <div class="allura-stack-md" style="align-items: flex-start;">
+          <h4 class="allura-heading-4">Tooltip</h4>
+          <div class="allura-tooltip">
+            <button class="allura-btn allura-btn-secondary">Hover me</button>
+            <span class="allura-tooltip-text">This is a helpful tooltip</span>
+          </div>
+        </div>
+        <div class="allura-stack-md" style="align-items: flex-start;">
+          <h4 class="allura-heading-4">Alerts</h4>
+          <div class="allura-alert allura-alert-info">
+            <div class="allura-alert-content">
+              <h4 class="allura-alert-title">Information</h4>
+              <p class="allura-alert-body">Your memory backup is scheduled for tonight.</p>
+            </div>
+          </div>
+          <div class="allura-alert allura-alert-success">
+            <div class="allura-alert-content">
+              <h4 class="allura-alert-title">Success</h4>
+              <p class="allura-alert-body">Your memories have been successfully synced.</p>
+            </div>
+          </div>
+          <div class="allura-alert allura-alert-warning">
+            <div class="allura-alert-content">
+              <h4 class="allura-alert-title">Warning</h4>
+              <p class="allura-alert-body">Storage is 85% full. Consider upgrading your plan.</p>
+            </div>
+          </div>
+        </div>
+        <div class="allura-stack-md" style="align-items: flex-start;">
+          <h4 class="allura-heading-4">Progress Bar</h4>
+          <div class="allura-progress allura-progress-md" style="width: 100%;">
+            <span class="allura-progress-label">Memory Sync — 75%</span>
+            <div class="allura-progress-track">
+              <div class="allura-progress-fill" style="width: 75%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Navigation -->
+  <section class="demo-section">
+    <div class="allura-container">
+      <span class="allura-overline">09 — Navigation</span>
+      <h2 class="allura-heading-2" style="margin-top: var(--space-16);">Navigation Components</h2>
+      
+      <div style="margin-top: var(--space-32); border: 1px solid var(--color-brand-warm-gray); border-radius: var(--radius-md); overflow: hidden;">
+        <nav class="allura-navbar" style="border-bottom: 1px solid var(--color-brand-warm-gray);">
+          <div class="allura-navbar-inner">
+            <div class="allura-navbar-logo">
+              <img src="../assets/logos/allura-logo/allura-logo-primary.png" alt="Allura" style="height: 32px;">
+            </div>
+            <div class="allura-navbar-links">
+              <a href="#" class="allura-nav-item allura-nav-item-active">Home</a>
+              <a href="#" class="allura-nav-item">Features</a>
+              <a href="#" class="allura-nav-item">Pricing</a>
+              <a href="#" class="allura-nav-item">About</a>
+              <button class="allura-btn allura-btn-primary" style="padding: var(--space-8) var(--space-16);">Get Started</button>
+            </div>
+          </div>
+        </nav>
+        <div style="padding: var(--space-48); background: linear-gradient(135deg, var(--color-brand-deep-navy) 0%, #2a3f5f 100%); color: white;">
+          <span class="allura-overline" style="color: var(--color-brand-coral);">Preview</span>
+          <h2 class="allura-heading-2" style="color: white; margin-top: var(--space-16);">Navbar in Context</h2>
+          <p class="allura-body-large" style="color: rgba(255,255,255,0.8); margin-top: var(--space-16);">The navigation bar adapts to your brand with clear hierarchy and accessible focus states.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Layout / Sections -->
+  <section class="demo-section">
+    <div class="allura-container">
+      <span class="allura-overline">10 — Layout</span>
+      <h2 class="allura-heading-2" style="margin-top: var(--space-16);">Layout Components</h2>
+      
+      <div class="demo-grid" style="margin-top: var(--space-32);">
+        <div class="allura-feature-card">
+          <div class="allura-feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3 class="allura-feature-title">Secure Storage</h3>
+          <p class="allura-feature-description">Bank-level encryption keeps your memories safe and private.</p>
+        </div>
+        <div class="allura-feature-card">
+          <div class="allura-feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <h3 class="allura-feature-title">Family Sharing</h3>
+          <p class="allura-feature-description">Share precious moments with the people who matter most.</p>
+        </div>
+        <div class="allura-feature-card">
+          <div class="allura-feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <h3 class="allura-feature-title">Smart Search</h3>
+          <p class="allura-feature-description">Find any memory instantly with AI-powered search.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Hero Section -->
+  <section class="allura-hero">
+    <div class="allura-container">
+      <div class="allura-hero-content">
+        <span class="allura-overline" style="color: var(--color-brand-coral);">Memory That Shows Its Work</span>
+        <h1 class="allura-heading-hero" style="margin-top: var(--space-16);">Never Forget What Matters</h1>
+        <p class="allura-body-large" style="margin-top: var(--space-16);">Allura is the sovereign memory layer for AI. Capture, connect, and activate what matters — so your AI systems never forget.</p>
+        <div class="allura-hero-cta">
+          <button class="allura-btn allura-btn-primary">Start Free Trial</button>
+          <button class="allura-btn allura-btn-secondary" style="color: white; border-color: rgba(255,255,255,0.5);">Learn More</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="allura-footer">
+    <div class="allura-container">
+      <div class="allura-footer-inner">
+        <div class="allura-footer-brand">
+          <img src="../assets/logos/allura-logo/allura-logo-primary.png" alt="Allura" style="height: 32px; filter: brightness(0) invert(1);">
+        </div>
+        <div class="allura-footer-links">
+          <a href="#" class="allura-footer-link">Privacy</a>
+          <a href="#" class="allura-footer-link">Terms</a>
+          <a href="#" class="allura-footer-link">Support</a>
+          <a href="#" class="allura-footer-link">Contact</a>
+        </div>
+        <p class="allura-footer-copyright">© 2026 Allura AI, Inc. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <footer style="padding: var(--space-48) 0; text-align: center;">
+    <div class="allura-container">
+      <p class="allura-caption">Allura Design System — Generated from Figma Variables</p>
+      <p class="allura-caption" style="margin-top: var(--space-8);">Team Durham — April 2026</p>
+    </div>
+  </footer>
+
+</body>
+</html>

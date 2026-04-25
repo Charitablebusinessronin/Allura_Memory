@@ -1,0 +1,83 @@
+{
+  "brandName": "Allura",
+  "version": "2.0",
+  "lastUpdated": "2026-04-24",
+  "source": "Figma — PAQpnxQZENNwbhmk5qxOjR (Allura Primitives collection)",
+  "note": "All hex values derived directly from Figma variable collection r/g/b values (0-1 range × 255). Do not edit manually.",
+
+  "primitives": {
+    "deepNavy": {
+      "hex": "#1A2B4A",
+      "rgb": "26, 43, 74",
+      "figmaVariable": "color/brand/deep-navy",
+      "figmaRaw": { "r": 0.102, "g": 0.169, "b": 0.290 },
+      "usage": "Primary brand color — trust, depth, intelligence"
+    },
+    "coral": {
+      "hex": "#E85A3C",
+      "rgb": "232, 90, 60",
+      "figmaVariable": "color/brand/coral",
+      "figmaRaw": { "r": 0.910, "g": 0.353, "b": 0.235 },
+      "usage": "Action color — warmth, energy, human touch"
+    },
+    "trustGreen": {
+      "hex": "#4CAF50",
+      "rgb": "76, 175, 80",
+      "figmaVariable": "color/brand/trust-green",
+      "figmaRaw": { "r": 0.298, "g": 0.686, "b": 0.314 },
+      "usage": "Success, growth, positive reinforcement"
+    },
+    "clarityBlue": {
+      "hex": "#5B8DB8",
+      "rgb": "91, 141, 184",
+      "figmaVariable": "color/brand/clarity-blue",
+      "figmaRaw": { "r": 0.357, "g": 0.553, "b": 0.722 },
+      "usage": "Information, calm, clarity"
+    },
+    "pureWhite": {
+      "hex": "#F5F5F5",
+      "rgb": "245, 245, 245",
+      "figmaVariable": "color/brand/pure-white",
+      "figmaRaw": { "r": 0.961, "g": 0.961, "b": 0.961 },
+      "usage": "Clean backgrounds, breathing room"
+    },
+    "inkBlack": {
+      "hex": "#1A1A1A",
+      "rgb": "26, 26, 26",
+      "figmaVariable": "color/brand/ink-black",
+      "figmaRaw": { "r": 0.102, "g": 0.102, "b": 0.102 },
+      "usage": "Primary text color"
+    },
+    "warmGray": {
+      "hex": "#737373",
+      "rgb": "115, 115, 115",
+      "figmaVariable": "color/brand/warm-gray",
+      "figmaRaw": { "r": 0.451, "g": 0.451, "b": 0.451 },
+      "usage": "Secondary text, subtle elements"
+    }
+  },
+
+  "semantic": {
+    "action": {
+      "primary":   { "ref": "coral",        "hex": "#E85A3C", "figmaVar": "color/action/primary" },
+      "secondary": { "ref": "deepNavy",     "hex": "#1A2B4A", "figmaVar": "color/action/secondary" },
+      "tertiary":  { "ref": "trustGreen",   "hex": "#4CAF50", "figmaVar": "color/action/tertiary" }
+    },
+    "text": {
+      "primary":   { "ref": "inkBlack",     "hex": "#1A1A1A", "figmaVar": "color/text/primary" },
+      "secondary": { "ref": "warmGray",     "hex": "#737373", "figmaVar": "color/text/secondary" },
+      "inverted":  { "ref": "pureWhite",    "hex": "#F5F5F5", "figmaVar": "color/text/inverted" },
+      "brand":     { "ref": "deepNavy",     "hex": "#1A2B4A", "figmaVar": "color/text/brand" }
+    },
+    "surface": {
+      "primary":   { "ref": "pureWhite",    "hex": "#F5F5F5", "figmaVar": "color/surface/primary" },
+      "secondary": { "ref": "clarityBlue",  "hex": "#5B8DB8", "figmaVar": "color/surface/secondary" },
+      "inverted":  { "ref": "deepNavy",     "hex": "#1A2B4A", "figmaVar": "color/surface/inverted" }
+    },
+    "status": {
+      "success":   { "ref": "trustGreen",   "hex": "#4CAF50", "figmaVar": "color/status/success" },
+      "info":      { "ref": "clarityBlue",  "hex": "#5B8DB8", "figmaVar": "color/status/info" },
+      "warning":   { "ref": "coral",        "hex": "#E85A3C", "figmaVar": "color/status/warning" }
+    }
+  }
+}

@@ -1,0 +1,125 @@
+:root {
+  /* Primitive Colors — Figma Allura Primitives (PAQpnxQZENNwbhmk5qxOjR) */
+  --color-brand-deep-navy: #1A2B4A;
+  --color-brand-coral: #E85A3C;
+  --color-brand-trust-green: #4CAF50;
+  --color-brand-clarity-blue: #5B8DB8;
+  --color-brand-pure-white: #F5F5F5;
+  --color-brand-ink-black: #1A1A1A;
+  --color-brand-warm-gray: #737373;
+
+  /* Semantic Tokens */
+  --color-action-primary: var(--color-brand-coral);
+  --color-action-secondary: var(--color-brand-deep-navy);
+  --color-action-tertiary: var(--color-brand-trust-green);
+  --color-text-primary: var(--color-brand-ink-black);
+  --color-text-secondary: var(--color-brand-warm-gray);
+  --color-text-brand: var(--color-brand-deep-navy);
+  --color-text-inverted: var(--color-brand-pure-white);
+  --color-surface-primary: var(--color-brand-pure-white);
+  --color-surface-secondary: rgba(91, 141, 184, 0.08);
+  --color-surface-inverted: var(--color-brand-deep-navy);
+
+  /* Typography — Inter only */
+  --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Spacing */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
+  --space-2xl: 4rem;
+  --space-3xl: 6rem;
+
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-full: 9999px;
+
+  /* 3-Layer Editorial Shadows */
+  --shadow-ambient: 0 4px 20px -4px rgba(20, 35, 41, 0.08);
+  --shadow-directional: 0 8px 16px -4px rgba(20, 35, 41, 0.12);
+  --shadow-contact: 0 2px 4px 0 rgba(20, 35, 41, 0.16);
+  --shadow-card: var(--shadow-ambient), var(--shadow-directional);
+  --shadow-hover: var(--shadow-ambient), var(--shadow-directional), var(--shadow-contact);
+  --shadow-elevated: 0 12px 40px -8px rgba(20, 35, 41, 0.18), 0 4px 12px -2px rgba(20, 35, 41, 0.12);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+  background: var(--color-surface-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography Scale */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+
+h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: clamp(1.5rem, 4vw, 2.25rem); }
+h3 { font-size: clamp(1.25rem, 3vw, 1.5rem); }
+h4 { font-size: 1.25rem; }
+
+p {
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 65ch;
+}
+
+a {
+  color: var(--color-action-secondary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--color-action-primary);
+}
+
+/* Utility Classes */
+.text-gradient {
+  background: linear-gradient(135deg, var(--color-brand-deep-navy), var(--color-brand-coral));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

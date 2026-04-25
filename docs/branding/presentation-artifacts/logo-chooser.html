@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>allura — Logo System</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
+  :root {
+    --color-primary: #FFC300;
+    --color-secondary: #0581A7;
+    --color-tertiary: #BDBD0D;
+    --color-neutral: #142329;
+    --color-accent: #F5F5F5;
+    --font-heading: "Outfit", system-ui, sans-serif;
+    --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background: #F5F5F5; color: var(--color-neutral); font-family: var(--font-body); }
+
+  .header {
+    background: var(--color-neutral);
+    color: white;
+    padding: 40px 60px;
+    text-align: center;
+  }
+  .header h1 {
+    font-family: var(--font-heading);
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: 2px;
+  }
+  .header p {
+    font-size: 16px;
+    color: rgba(255,255,255,0.6);
+    margin-top: 8px;
+  }
+  .yellow-bar {
+    width: 60px; height: 4px;
+    background: var(--color-primary);
+    margin: 20px auto 0;
+    border-radius: 2px;
+  }
+
+  .instructions {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 60px;
+    text-align: center;
+  }
+  .instructions h2 {
+    font-family: var(--font-heading);
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .instructions p {
+    font-size: 16px;
+    color: #444;
+    line-height: 1.6;
+  }
+
+  .section-title {
+    font-family: var(--font-heading);
+    font-size: 32px;
+    font-weight: 700;
+    text-align: center;
+    margin: 50px 0 30px;
+    letter-spacing: 2px;
+  }
+  .section-title::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 3px;
+    background: var(--color-primary);
+    margin: 12px auto 0;
+    border-radius: 2px;
+  }
+
+  .logo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 0 60px;
+  }
+  .logo-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .logo-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  }
+  .logo-img-wrap {
+    padding: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    background: #FAFAF8;
+  }
+  .logo-img-wrap img {
+    max-width: 100%;
+    max-height: 160px;
+    object-fit: contain;
+  }
+  .logo-info {
+    padding: 24px;
+  }
+  .logo-direction {
+    font-family: var(--font-heading);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--color-secondary);
+    margin-bottom: 8px;
+  }
+  .logo-concept {
+    font-size: 13px;
+    color: #444;
+    line-height: 1.5;
+  }
+
+  .logo-card-wide {
+    grid-column: 1 / -1;
+    display: flex;
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .logo-card-wide .logo-img-wrap {
+    flex: 0 0 400px;
+    min-height: 200px;
+  }
+  .logo-card-wide .logo-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .usage-section {
+    max-width: 1300px;
+    margin: 60px auto;
+    padding: 0 60px;
+  }
+  .usage-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .usage-table th {
+    background: var(--color-neutral);
+    color: white;
+    font-family: var(--font-heading);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 14px 20px;
+    text-align: left;
+  }
+  .usage-table td {
+    padding: 14px 20px;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+  }
+  .usage-table tr:last-child td { border-bottom: none; }
+  .usage-table td:first-child {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--color-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .page-nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    padding: 40px 0;
+    background: #fff;
+  }
+  .nav-circle {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--color-neutral);
+    display: block;
+    transition: all 0.2s ease;
+  }
+  .nav-circle.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+  .nav-circle:hover {
+    transform: scale(1.2);
+    border-color: var(--color-primary);
+  }
+
+  @media (max-width: 900px) {
+    .logo-grid { grid-template-columns: repeat(2, 1fr); }
+    .logo-card-wide { flex-direction: column; }
+    .logo-card-wide .logo-img-wrap { flex: auto; }
+  }
+  @media (max-width: 600px) {
+    .logo-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>CHOOSE YOUR LOGO</h1>
+  <p>4 approved variants. Each carries the same promise.</p>
+  <div class="yellow-bar"></div>
+</div>
+
+<div class="instructions">
+  <h2>Instructions</h2>
+  <p>Choose the right mark for the right moment. Every variant carries the same promise: warmth, invitation, and community.</p>
+</div>
+
+<h2 class="section-title">Logo Variants</h2>
+
+<div class="logo-grid">
+  <div class="logo-card">
+    <div class="logo-img-wrap">
+      <img src="../assets/logos/allura-logo/allura-logo-primary.png" alt="Primary Wordmark">
+    </div>
+    <div class="logo-info">
+      <p class="logo-direction">Primary Wordmark</p>
+      <p class="logo-concept">The default face of allura. The full wordmark with its signature gesture — the gentle upward curve of the final 'a' that creates a subtle, subconscious smile. This is the mark people remember.</p>
+    </div>
+  </div>
+
+  <div class="logo-card">
+    <div class="logo-img-wrap">
+      <img src="../assets/logos/allura-logo/allura-logo-full-mark.png" alt="Full Mark">
+    </div>
+    <div class="logo-info">
+      <p class="logo-direction">Full Mark</p>
+      <p class="logo-concept">The wordmark at its most confident scale. Slightly larger proportions, optimized for hero moments and brand statements. The Full Mark lets the gesture breathe.</p>
+    </div>
+  </div>
+
+  <div class="logo-card">
+    <div class="logo-img-wrap" style="background:#142329;">
+      <img src="../assets/logos/allura-logo/allura-logo-icon-only.png" alt="Icon Only">
+    </div>
+    <div class="logo-info">
+      <p class="logo-direction">Icon Only</p>
+      <p class="logo-concept">The distilled essence of allura — the "a" gesture, isolated and iconic. Compact, recognizable, and instantly warm even at tiny sizes. Best for social avatars, app icons, and favicons.</p>
+    </div>
+  </div>
+
+  <div class="logo-card-wide">
+    <div class="logo-img-wrap">
+      <img src="../assets/logos/allura-logo/allura-logo-alternate.png" alt="Alternate Mark">
+    </div>
+    <div class="logo-info">
+      <p class="logo-direction">Alternate Mark</p>
+      <p class="logo-concept">A special-occasion variant for merchandise, editorial layouts, and creative campaigns. Maintains the gesture but opens new possibilities for expression. Use for branded merchandise, experimental campaigns, and partner co-branding.</p>
+    </div>
+  </div>
+</div>
+
+<div class="usage-section">
+  <h2 class="section-title" style="margin-top:0;">Usage Rules</h2>
+  <table class="usage-table">
+    <thead>
+      <tr>
+        <th>Rule</th>
+        <th>Guidance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Clear Space</td>
+        <td>Minimum clear space equals the x-height of the lowercase 'a'. Never crowd the mark.</td>
+      </tr>
+      <tr>
+        <td>Minimum Size</td>
+        <td>120px wide (digital), 1.5 inches (print), 32×32px (favicon / icon only).</td>
+      </tr>
+      <tr>
+        <td>Color Lock</td>
+        <td>Use approved brand colors only. Never apply effects, gradients, or filters.</td>
+      </tr>
+      <tr>
+        <td>The Gesture</td>
+        <td>Never flatten or alter the upward curve of the final 'a'. It is our smile.</td>
+      </tr>
+      <tr>
+        <td>Proportion</td>
+        <td>Never stretch, rotate, or distort. Scale uniformly from center.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<nav class="page-nav">
+  <a href="brand-overview.html" class="nav-circle" aria-label="Brand Overview"></a>
+  <a href="color-system.html" class="nav-circle" aria-label="Color System"></a>
+  <a href="logo-chooser.html" class="nav-circle active" aria-label="Logo Chooser"></a>
+  <a href="typography.html" class="nav-circle" aria-label="Typography"></a>
+  <a href="applications.html" class="nav-circle" aria-label="Applications"></a>
+</nav>
+
+</body>
+</html>

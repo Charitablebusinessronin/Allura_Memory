@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>allura — Type System</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
+  :root {
+    --color-primary: #FFC300;
+    --color-secondary: #0581A7;
+    --color-tertiary: #BDBD0D;
+    --color-neutral: #142329;
+    --color-accent: #F5F5F5;
+    --font-heading: "Outfit", system-ui, sans-serif;
+    --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background: #F5F5F5; color: var(--color-neutral); font-family: var(--font-body); }
+
+  .header {
+    background: var(--color-neutral);
+    color: white;
+    padding: 40px 60px;
+    text-align: center;
+  }
+  .header h1 {
+    font-family: var(--font-heading);
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: 2px;
+  }
+  .header p {
+    font-size: 16px;
+    color: rgba(255,255,255,0.6);
+    margin-top: 8px;
+  }
+  .yellow-bar {
+    width: 60px; height: 4px;
+    background: var(--color-primary);
+    margin: 20px auto 0;
+    border-radius: 2px;
+  }
+
+  .section {
+    max-width: 1200px;
+    margin: 50px auto;
+    padding: 0 60px;
+  }
+  .section-title {
+    font-family: var(--font-heading);
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 30px;
+  }
+  .section-title::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 3px;
+    background: var(--color-primary);
+    margin: 12px 0 0;
+    border-radius: 2px;
+  }
+
+  .font-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+    margin-bottom: 50px;
+  }
+  .font-card {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .font-card h3 {
+    font-family: var(--font-heading);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--color-secondary);
+    margin-bottom: 8px;
+  }
+  .font-card .role {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--color-primary);
+    margin-bottom: 16px;
+  }
+  .font-card p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: rgba(20,35,41,0.85);
+  }
+  .font-card .specimen {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+    font-size: 42px;
+    font-weight: 700;
+  }
+  .font-card .specimen.outfit { font-family: var(--font-heading); }
+  .font-card .specimen.inter { font-family: var(--font-body); font-weight: 400; }
+
+  .scale-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    margin-bottom: 50px;
+  }
+  .scale-table th {
+    background: var(--color-neutral);
+    color: white;
+    font-family: var(--font-heading);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    padding: 14px 20px;
+    text-align: left;
+    text-transform: uppercase;
+  }
+  .scale-table td {
+    padding: 16px 20px;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+    vertical-align: middle;
+  }
+  .scale-table tr:last-child td { border-bottom: none; }
+  .scale-table td:first-child {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--color-secondary);
+  }
+  .scale-sample {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    color: rgba(20,35,41,0.5);
+    background: #f5f5f5;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+
+  .specimen-section {
+    margin-bottom: 50px;
+  }
+  .specimen-block {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    margin-bottom: 24px;
+  }
+  .specimen-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+  .specimen-h1 {
+    font-family: var(--font-heading);
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+  .specimen-h2 {
+    font-family: var(--font-heading);
+    font-size: 36px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin-bottom: 16px;
+  }
+  .specimen-h3 {
+    font-family: var(--font-heading);
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 16px;
+  }
+  .specimen-body-large {
+    font-family: var(--font-body);
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .specimen-body {
+    font-family: var(--font-body);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .specimen-small {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+  .specimen-caption {
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+    color: rgba(20,35,41,0.6);
+  }
+
+  .dark-demo {
+    background: var(--color-neutral);
+    border-radius: 16px;
+    padding: 60px;
+    color: white;
+    margin-bottom: 50px;
+  }
+  .dark-demo h2 {
+    font-family: var(--font-heading);
+    font-size: 56px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+    color: var(--color-primary);
+  }
+  .dark-demo p {
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.75);
+    max-width: 600px;
+  }
+
+  .page-nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    padding: 40px 0;
+    background: #fff;
+  }
+  .nav-circle {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--color-neutral);
+    display: block;
+    transition: all 0.2s ease;
+  }
+  .nav-circle.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+  .nav-circle:hover {
+    transform: scale(1.2);
+    border-color: var(--color-primary);
+  }
+
+  @media (max-width: 900px) {
+    .font-cards { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>TYPE SYSTEM</h1>
+  <p>Outfit + Inter. Readable, warm, unmistakably human.</p>
+  <div class="yellow-bar"></div>
+</div>
+
+<!-- FONT DESCRIPTIONS -->
+<div class="section">
+  <h2 class="section-title">Primary &amp; Secondary Typefaces</h2>
+  <div class="font-cards">
+    <div class="font-card">
+      <h3>Outfit</h3>
+      <p class="role">Primary Typeface</p>
+      <p>A geometric sans-serif with a generous heart. Its rounded terminals echo the softness of the allura gesture, giving headlines a friendly authority without ever feeling cold.</p>
+      <div class="specimen outfit">Welcome to allura.</div>
+    </div>
+    <div class="font-card">
+      <h3>Inter</h3>
+      <p class="role">Secondary Typeface</p>
+      <p>Designed for screens and for people. Exceptionally readable at all sizes, it carries a quiet warmth that lets content shine without distraction.</p>
+      <div class="specimen inter">Where communities come alive.</div>
+    </div>
+  </div>
+</div>
+
+<!-- TYPE SCALE -->
+<div class="section">
+  <h2 class="section-title">Type Scale</h2>
+  <table class="scale-table">
+    <thead>
+      <tr>
+        <th>Level</th>
+        <th>Font</th>
+        <th>Size</th>
+        <th>Weight</th>
+        <th>Line Height</th>
+        <th>Letter Spacing</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>H1</td><td>Outfit</td><td>48px / 3rem</td><td>Bold (700)</td><td>1.1</td><td>-0.02em</td></tr>
+      <tr><td>H2</td><td>Outfit</td><td>36px / 2.25rem</td><td>SemiBold (600)</td><td>1.2</td><td>-0.01em</td></tr>
+      <tr><td>H3</td><td>Outfit</td><td>24px / 1.5rem</td><td>SemiBold (600)</td><td>1.3</td><td>0</td></tr>
+      <tr><td>Body Large</td><td>Inter</td><td>18px / 1.125rem</td><td>Regular (400)</td><td>1.6</td><td>0</td></tr>
+      <tr><td>Body</td><td>Inter</td><td>16px / 1rem</td><td>Regular (400)</td><td>1.6</td><td>0</td></tr>
+      <tr><td>Body Small</td><td>Inter</td><td>14px / 0.875rem</td><td>Regular (400)</td><td>1.5</td><td>0.01em</td></tr>
+      <tr><td>Caption</td><td>Inter</td><td>12px / 0.75rem</td><td>Medium (500)</td><td>1.4</td><td>0.02em</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- SPECIMEN SECTION -->
+<div class="section specimen-section">
+  <h2 class="section-title">Specimens</h2>
+
+  <div class="specimen-block">
+    <div class="specimen-label">H1 — Outfit Bold, 48px</div>
+    <div class="specimen-h1">Welcome to allura.<br>Where communities come alive.</div>
+  </div>
+
+  <div class="specimen-block">
+    <div class="specimen-label">H2 — Outfit SemiBold, 36px</div>
+    <div class="specimen-h2">Your neighborhood, amplified.</div>
+  </div>
+
+  <div class="specimen-block">
+    <div class="specimen-label">H3 — Outfit SemiBold, 24px</div>
+    <div class="specimen-h3">Host a gathering. Start a conversation. Build something meaningful together.</div>
+  </div>
+
+  <div class="specimen-block">
+    <div class="specimen-label">Body Large — Inter Regular, 18px</div>
+    <div class="specimen-body-large">What if your digital space felt as inviting as your favorite neighborhood spot? With allura, it can.</div>
+  </div>
+
+  <div class="specimen-block">
+    <div class="specimen-label">Body — Inter Regular, 16px</div>
+    <div class="specimen-body">We believe technology should bring people closer, not drive them apart. That is why we built allura — a platform that feels as warm as the communities it serves.</div>
+  </div>
+
+  <div class="specimen-block">
+    <div class="specimen-label">Body Small — Inter Regular, 14px</div>
+    <div class="specimen-small">Every interaction matters. Every word earns its place. We craft with intention, because communities deserve thoughtfulness.</div>
+  </div>
+
+  <div class="specimen-block">
+    <div class="specimen-label">Caption — Inter Medium, 12px</div>
+    <div class="specimen-caption">Your community is growing. Here is how to nurture it.</div>
+  </div>
+</div>
+
+<!-- DARK MODE DEMO -->
+<div class="section">
+  <div class="dark-demo">
+    <h2>Dark Mode</h2>
+    <p>On dark surfaces, Outfit glows with warmth and Inter stays quietly legible. Our colors shift: Warm Yellow becomes luminous, Deep Blue becomes a steady anchor, and every word remains readable.</p>
+  </div>
+</div>
+
+<nav class="page-nav">
+  <a href="brand-overview.html" class="nav-circle" aria-label="Brand Overview"></a>
+  <a href="color-system.html" class="nav-circle" aria-label="Color System"></a>
+  <a href="logo-chooser.html" class="nav-circle" aria-label="Logo Chooser"></a>
+  <a href="typography.html" class="nav-circle active" aria-label="Typography"></a>
+  <a href="applications.html" class="nav-circle" aria-label="Applications"></a>
+</nav>
+
+</body>
+</html>

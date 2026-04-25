@@ -1,0 +1,855 @@
+/* ============================================
+   ALLURA DESIGN SYSTEM — Component Styles
+   ============================================ */
+
+@import url('tokens.css');
+
+/* Base Styles */
+body {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-body);
+  line-height: var(--font-line-height-normal);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface-primary);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography */
+.allura-heading-hero {
+  font-size: var(--font-size-hero);
+  line-height: var(--font-line-height-tight);
+  letter-spacing: var(--font-letter-spacing-tight);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.allura-heading-1 {
+  font-size: var(--font-size-h1);
+  line-height: var(--font-line-height-tight);
+  letter-spacing: var(--font-letter-spacing-tight);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.allura-heading-2 {
+  font-size: var(--font-size-h2);
+  line-height: var(--font-line-height-tight);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.allura-heading-3 {
+  font-size: var(--font-size-h3);
+  line-height: var(--font-line-height-normal);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.allura-heading-4 {
+  font-size: var(--font-size-h4);
+  line-height: var(--font-line-height-normal);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.allura-body-large {
+  font-size: var(--font-size-body-large);
+  line-height: var(--font-line-height-relaxed);
+  color: var(--color-text-primary);
+}
+
+.allura-body {
+  font-size: var(--font-size-body);
+  line-height: var(--font-line-height-normal);
+  color: var(--color-text-secondary);
+}
+
+.allura-caption {
+  font-size: var(--font-size-caption);
+  line-height: var(--font-line-height-normal);
+  color: var(--color-text-secondary);
+}
+
+.allura-overline {
+  font-size: var(--font-size-overline);
+  line-height: var(--font-line-height-normal);
+  letter-spacing: var(--font-letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-brand);
+  font-weight: 600;
+}
+
+/* Buttons */
+.allura-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-24);
+  border: none;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  text-decoration: none;
+}
+
+.allura-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.allura-btn-primary {
+  background-color: var(--color-action-primary);
+  color: var(--color-text-inverted);
+}
+
+.allura-btn-primary:hover {
+  background-color: #D44A2E;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-elevated);
+}
+
+.allura-btn-primary:active {
+  transform: translateY(0);
+}
+
+.allura-btn-secondary {
+  background-color: transparent;
+  color: var(--color-text-brand);
+  border: 2px solid var(--color-action-secondary);
+}
+
+.allura-btn-secondary:hover {
+  background-color: var(--color-action-secondary);
+  color: var(--color-text-inverted);
+  transform: translateY(-2px);
+}
+
+.allura-btn-tertiary {
+  background-color: transparent;
+  color: var(--color-action-tertiary);
+  padding: var(--space-8) 0;
+}
+
+.allura-btn-tertiary:hover {
+  text-decoration: underline;
+}
+
+/* Cards */
+.allura-card {
+  background-color: var(--color-surface-primary);
+  border-radius: var(--radius-md);
+  padding: var(--space-24);
+  box-shadow: var(--shadow-card);
+  transition: all var(--transition-normal);
+}
+
+.allura-card:hover {
+  box-shadow: var(--shadow-elevated);
+  transform: translateY(-4px);
+}
+
+.allura-card-title {
+  font-size: var(--font-size-h4);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-12) 0;
+}
+
+.allura-card-body {
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  line-height: var(--font-line-height-relaxed);
+  margin: 0;
+}
+
+/* Arch Shape (Brand Signature) */
+.allura-arch {
+  border-radius: 50% 50% 0 0;
+  overflow: hidden;
+}
+
+.allura-arch-sm {
+  width: 80px;
+  height: 80px;
+}
+
+.allura-arch-md {
+  width: 120px;
+  height: 120px;
+}
+
+.allura-arch-lg {
+  width: 200px;
+  height: 200px;
+}
+
+/* Status Badges */
+.allura-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-4) var(--space-12);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+}
+
+.allura-badge-success {
+  background-color: rgba(76, 175, 80, 0.15);
+  color: var(--color-status-success);
+}
+
+.allura-badge-info {
+  background-color: rgba(91, 141, 184, 0.15);
+  color: var(--color-status-info);
+}
+
+.allura-badge-warning {
+  background-color: rgba(232, 90, 60, 0.15);
+  color: var(--color-status-warning);
+}
+
+/* Layout Utilities */
+.allura-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-24);
+}
+
+.allura-stack-sm > * + * {
+  margin-top: var(--space-8);
+}
+
+.allura-stack-md > * + * {
+  margin-top: var(--space-16);
+}
+
+.allura-stack-lg > * + * {
+  margin-top: var(--space-32);
+}
+
+.allura-inline-sm > * + * {
+  margin-left: var(--space-8);
+}
+
+.allura-inline-md > * + * {
+  margin-left: var(--space-16);
+}
+
+/* Brand Colors Background Utilities */
+.allura-bg-navy { background-color: var(--color-brand-deep-navy); }
+.allura-bg-coral { background-color: var(--color-brand-coral); }
+.allura-bg-green { background-color: var(--color-brand-trust-green); }
+.allura-bg-blue { background-color: var(--color-brand-clarity-blue); }
+.allura-bg-white { background-color: var(--color-brand-pure-white); }
+
+/* Responsive */
+@media (max-width: 768px) {
+  :root {
+    --font-size-hero: 40px;
+    --font-size-h1: 32px;
+    --font-size-h2: 28px;
+    --font-size-h3: 24px;
+    --font-size-h4: 20px;
+  }
+  
+  .allura-container {
+    padding: 0 var(--space-16);
+  }
+
+  .allura-navbar-inner {
+    flex-direction: column;
+    gap: var(--space-16);
+  }
+
+  .allura-navbar-links {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .allura-footer-inner {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--space-24);
+  }
+
+  .allura-hero-content {
+    padding: var(--space-48) 0;
+  }
+}
+
+/* ============================================
+   FORM COMPONENTS
+   ============================================ */
+
+.allura-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  width: 100%;
+}
+
+.allura-input-label {
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.allura-input,
+.allura-textarea,
+.allura-select {
+  padding: var(--space-12) var(--space-16);
+  border: 1.5px solid var(--color-brand-warm-gray);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  width: 100%;
+}
+
+.allura-input:focus,
+.allura-textarea:focus,
+.allura-select:focus {
+  outline: none;
+  border-color: var(--color-action-primary);
+  box-shadow: var(--shadow-focus);
+}
+
+.allura-input::placeholder,
+.allura-textarea::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.7;
+}
+
+.allura-input-error {
+  border-color: var(--color-status-warning);
+}
+
+.allura-input-error:focus {
+  box-shadow: 0 0 0 3px rgba(232, 90, 60, 0.2);
+}
+
+.allura-input-error-text {
+  font-size: var(--font-size-caption);
+  color: var(--color-status-warning);
+}
+
+.allura-input-disabled,
+.allura-textarea:disabled,
+.allura-select:disabled {
+  background-color: #f5f5f5;
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.allura-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.allura-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23737373' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 40px;
+}
+
+/* Checkbox */
+.allura-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-12);
+  cursor: pointer;
+  user-select: none;
+}
+
+.allura-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.allura-checkbox-box {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-brand-warm-gray);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.allura-checkbox-box svg {
+  width: 14px;
+  height: 14px;
+  color: white;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all var(--transition-fast);
+}
+
+.allura-checkbox-input:checked + .allura-checkbox-box {
+  background-color: var(--color-action-primary);
+  border-color: var(--color-action-primary);
+}
+
+.allura-checkbox-input:checked + .allura-checkbox-box svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.allura-checkbox-input:focus + .allura-checkbox-box {
+  box-shadow: var(--shadow-focus);
+}
+
+.allura-checkbox-label {
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+}
+
+.allura-checkbox-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Toggle */
+.allura-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-12);
+  cursor: pointer;
+  user-select: none;
+}
+
+.allura-toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.allura-toggle-slider {
+  width: 44px;
+  height: 24px;
+  background-color: var(--color-brand-warm-gray);
+  border-radius: var(--radius-pill);
+  position: relative;
+  transition: background-color var(--transition-normal);
+  flex-shrink: 0;
+}
+
+.allura-toggle-slider::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform var(--transition-normal);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.allura-toggle-input:checked + .allura-toggle-slider {
+  background-color: var(--color-action-primary);
+}
+
+.allura-toggle-input:checked + .allura-toggle-slider::before {
+  transform: translateX(20px);
+}
+
+.allura-toggle-input:focus + .allura-toggle-slider {
+  box-shadow: var(--shadow-focus);
+}
+
+.allura-toggle-label {
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+}
+
+.allura-toggle-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   DATA DISPLAY COMPONENTS
+   ============================================ */
+
+/* Avatar */
+.allura-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: var(--color-brand-deep-navy);
+  color: white;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.allura-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.allura-avatar-sm { width: 32px; height: 32px; font-size: 12px; }
+.allura-avatar-md { width: 40px; height: 40px; font-size: 14px; }
+.allura-avatar-lg { width: 56px; height: 56px; font-size: 18px; }
+.allura-avatar-xl { width: 80px; height: 80px; font-size: 24px; }
+
+/* Tooltip */
+.allura-tooltip {
+  position: relative;
+  display: inline-flex;
+}
+
+.allura-tooltip-text {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--color-brand-deep-navy);
+  color: white;
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-caption);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-fast), visibility var(--transition-fast);
+  z-index: 100;
+  pointer-events: none;
+}
+
+.allura-tooltip-text::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--color-brand-deep-navy);
+}
+
+.allura-tooltip:hover .allura-tooltip-text {
+  opacity: 1;
+  visibility: visible;
+}
+
+.allura-tooltip-bottom .allura-tooltip-text {
+  bottom: auto;
+  top: calc(100% + 8px);
+}
+
+.allura-tooltip-bottom .allura-tooltip-text::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: var(--color-brand-deep-navy);
+}
+
+/* Alert */
+.allura-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-16);
+  padding: var(--space-16) var(--space-24);
+  border-radius: var(--radius-md);
+  border-left: 4px solid;
+}
+
+.allura-alert-info {
+  background-color: rgba(91, 141, 184, 0.1);
+  border-left-color: var(--color-status-info);
+}
+
+.allura-alert-success {
+  background-color: rgba(76, 175, 80, 0.1);
+  border-left-color: var(--color-status-success);
+}
+
+.allura-alert-warning {
+  background-color: rgba(232, 90, 60, 0.1);
+  border-left-color: var(--color-status-warning);
+}
+
+.allura-alert-error {
+  background-color: rgba(220, 38, 38, 0.1);
+  border-left-color: #DC2626;
+}
+
+.allura-alert-content {
+  flex: 1;
+}
+
+.allura-alert-title {
+  font-size: var(--font-size-h5);
+  font-weight: 600;
+  margin: 0 0 var(--space-4) 0;
+  color: var(--color-text-primary);
+}
+
+.allura-alert-body {
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.allura-alert-close {
+  background: none;
+  border: none;
+  padding: var(--space-4);
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.allura-alert-close:hover {
+  color: var(--color-text-primary);
+  background-color: rgba(0,0,0,0.05);
+}
+
+.allura-alert-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Progress Bar */
+.allura-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  width: 100%;
+}
+
+.allura-progress-label {
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.allura-progress-track {
+  width: 100%;
+  background-color: var(--color-brand-warm-gray);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.allura-progress-fill {
+  height: 100%;
+  background-color: var(--color-action-primary);
+  border-radius: var(--radius-pill);
+  transition: width var(--transition-slow);
+}
+
+.allura-progress-sm .allura-progress-track { height: 4px; }
+.allura-progress-md .allura-progress-track { height: 8px; }
+.allura-progress-lg .allura-progress-track { height: 12px; }
+
+/* ============================================
+   NAVIGATION COMPONENTS
+   ============================================ */
+
+.allura-navbar {
+  padding: var(--space-16) 0;
+  background-color: var(--color-surface-primary);
+  border-bottom: 1px solid var(--color-brand-warm-gray);
+}
+
+.allura-navbar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-24);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.allura-navbar-links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-32);
+}
+
+.allura-nav-item {
+  font-size: var(--font-size-body);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+  position: relative;
+}
+
+.allura-nav-item:hover {
+  color: var(--color-action-primary);
+}
+
+.allura-nav-item-active {
+  color: var(--color-action-primary);
+  font-weight: 600;
+}
+
+.allura-nav-item-active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--color-action-primary);
+  border-radius: 2px;
+}
+
+/* ============================================
+   LAYOUT / SECTION COMPONENTS
+   ============================================ */
+
+.allura-hero {
+  background: linear-gradient(135deg, var(--color-brand-deep-navy) 0%, #2a3f5f 100%);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.allura-hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(232, 90, 60, 0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.allura-hero-content {
+  position: relative;
+  z-index: 1;
+  padding: var(--space-96) 0;
+  max-width: 700px;
+}
+
+.allura-hero-content .allura-heading-hero,
+.allura-hero-content .allura-heading-1 {
+  color: white;
+}
+
+.allura-hero-content .allura-body-large {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.allura-hero-cta {
+  margin-top: var(--space-32);
+  display: flex;
+  gap: var(--space-16);
+}
+
+/* Feature Card */
+.allura-feature-card {
+  padding: var(--space-32);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-primary);
+  box-shadow: var(--shadow-card);
+  transition: all var(--transition-normal);
+  text-align: center;
+}
+
+.allura-feature-card:hover {
+  box-shadow: var(--shadow-elevated);
+  transform: translateY(-4px);
+}
+
+.allura-feature-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto var(--space-16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(232, 90, 60, 0.1);
+  border-radius: var(--radius-md);
+  color: var(--color-action-primary);
+}
+
+.allura-feature-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.allura-feature-title {
+  font-size: var(--font-size-h4);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-8) 0;
+}
+
+.allura-feature-description {
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  line-height: var(--font-line-height-relaxed);
+  margin: 0;
+}
+
+/* Footer */
+.allura-footer {
+  background-color: var(--color-brand-deep-navy);
+  color: white;
+  padding: var(--space-48) 0 var(--space-24);
+}
+
+.allura-footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-24);
+}
+
+.allura-footer-links {
+  display: flex;
+  gap: var(--space-24);
+  flex-wrap: wrap;
+}
+
+.allura-footer-link {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  font-size: var(--font-size-body);
+  transition: color var(--transition-fast);
+}
+
+.allura-footer-link:hover {
+  color: white;
+}
+
+.allura-footer-copyright {
+  width: 100%;
+  text-align: center;
+  font-size: var(--font-size-caption);
+  color: rgba(255, 255, 255, 0.5);
+  margin: var(--space-24) 0 0 0;
+  padding-top: var(--space-24);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}

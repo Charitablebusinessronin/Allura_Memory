@@ -2,9 +2,10 @@
   "$schema": "https://opencode.ai/config.json",
   "model": "ollama-cloud/glm-5.1",
   "mcp": {
-    "memory": {
-      "type": "local",
-      "command": ["npx", "tsx", "src/mcp/memory-server-canonical.ts"],
+    "allura-brain": {
+      "type": "remote",
+      "url": "http://localhost:5888/mcp",
+      "oauth": false,
       "enabled": true
     }
   }

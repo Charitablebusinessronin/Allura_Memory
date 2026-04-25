@@ -1,0 +1,154 @@
+/**
+ * Allura Design Tokens
+ * Version: 2.0
+ * Last Updated: 2026-04-24
+ * Source: Figma — PAQpnxQZENNwbhmk5qxOjR (Allura Primitives collection)
+ *
+ * Colors sourced directly from Figma variable collections.
+ * Primitives → Semantic aliasing matches Figma "Allura Semantic" collection.
+ */
+
+:root {
+  /* ============================================
+     PRIMITIVES — Figma "Allura Primitives"
+     ============================================ */
+
+  --color-deep-navy: #1A2B4A;     /* color/brand/deep-navy  — trust, depth, intelligence */
+  --color-coral: #E85A3C;         /* color/brand/coral       — warmth, energy, human touch */
+  --color-trust-green: #4CAF50;   /* color/brand/trust-green — success, growth */
+  --color-clarity-blue: #5B8DB8;  /* color/brand/clarity-blue — information, calm */
+  --color-pure-white: #F5F5F5;    /* color/brand/pure-white  — backgrounds, breathing room */
+  --color-ink-black: #1A1A1A;     /* color/brand/ink-black   — primary text */
+  --color-warm-gray: #737373;     /* color/brand/warm-gray   — secondary text */
+
+  /* ============================================
+     SEMANTIC — Figma "Allura Semantic"
+     ============================================ */
+
+  /* Action */
+  --color-action-primary: var(--color-coral);
+  --color-action-secondary: var(--color-deep-navy);
+  --color-action-tertiary: var(--color-trust-green);
+
+  /* Text */
+  --color-text-primary: var(--color-ink-black);
+  --color-text-secondary: var(--color-warm-gray);
+  --color-text-inverted: var(--color-pure-white);
+  --color-text-brand: var(--color-deep-navy);
+
+  /* Surface */
+  --color-surface-primary: var(--color-pure-white);
+  --color-surface-secondary: var(--color-clarity-blue);
+  --color-surface-inverted: var(--color-deep-navy);
+
+  /* Status */
+  --color-status-success: var(--color-trust-green);
+  --color-status-info: var(--color-clarity-blue);
+  --color-status-warning: var(--color-coral);
+
+  /* ============================================
+     TYPOGRAPHY — Figma "Allura Typography"
+     ============================================ */
+
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --text-hero: 4rem;           /* 64px */
+  --text-h1: 3rem;             /* 48px */
+  --text-h2: 2.25rem;          /* 36px */
+  --text-h3: 1.75rem;          /* 28px */
+  --text-h4: 1.5rem;           /* 24px */
+  --text-body-large: 1.125rem; /* 18px */
+  --text-body: 1rem;           /* 16px */
+  --text-caption: 0.875rem;    /* 14px */
+  --text-overline: 0.75rem;    /* 12px */
+
+  --leading-tight: 1.1;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.05em;
+
+  /* ============================================
+     SPACING — Figma "Allura Spacing"
+     ============================================ */
+
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-48: 48px;
+  --space-64: 64px;
+  --space-96: 96px;
+  --space-128: 128px;
+
+  /* ============================================
+     BORDER RADIUS
+     ============================================ */
+
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 9999px;
+
+  /* ============================================
+     SHADOWS
+     ============================================ */
+
+  --shadow-card: 0 4px 16px rgba(26, 43, 74, 0.08);
+  --shadow-elevated: 0 8px 32px rgba(26, 43, 74, 0.12);
+  --shadow-focus: 0 0 0 3px rgba(232, 90, 60, 0.3);
+
+  /* ============================================
+     TRANSITIONS
+     ============================================ */
+
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 350ms ease;
+
+  /* ============================================
+     Z-INDEX
+     ============================================ */
+
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-popover: 600;
+  --z-tooltip: 700;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-text-primary: var(--color-pure-white);
+    --color-text-secondary: #A0A0A0;
+    --color-surface-primary: #1A1A1A;
+    --color-surface-inverted: var(--color-pure-white);
+    --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.3);
+    --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.allura-surface {
+  background-color: var(--color-surface-primary);
+  color: var(--color-text-primary);
+}
+
+.allura-surface-dark {
+  background-color: var(--color-surface-inverted);
+  color: var(--color-text-inverted);
+}
+
+.allura-accent-coral    { color: var(--color-coral); }
+.allura-accent-blue     { color: var(--color-clarity-blue); }
+.allura-accent-green    { color: var(--color-trust-green); }
+.allura-accent-navy     { color: var(--color-deep-navy); }
