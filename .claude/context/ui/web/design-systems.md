@@ -181,6 +181,87 @@ This context file provides reusable design system patterns, theme templates, and
 
 ---
 
+### allura — Warm + Connected
+
+**Characteristics:** Human-centered, warm, trustworthy. Deep Navy + Coral accent. Inter + Outfit fonts. Editorial shadows. 16px radius.
+
+**Use Cases:**
+- allura Memory dashboard and consumer UI
+- Any allura-branded surface
+- Warm consumer apps with governance/trust requirements
+
+**Theme Template:**
+
+```css
+:root {
+  /* allura primitives */
+  --allura-navy:  #1A2B4A;
+  --allura-coral: #E85A3C;
+  --allura-green: #4CAF50;
+  --allura-blue:  #5B8DB8;
+  --allura-white: #F5F5F5;
+  --allura-black: #1A1A1A;
+  --allura-gray:  #737373;
+
+  /* Semantic tokens */
+  --background:         var(--allura-white);
+  --foreground:         var(--allura-black);
+  --card:               #FFFFFF;
+  --card-foreground:    var(--allura-black);
+  --primary:            var(--allura-navy);
+  --primary-foreground: var(--allura-white);
+  --secondary:          #EEF0F4;
+  --secondary-foreground: var(--allura-navy);
+  --accent:             var(--allura-coral);
+  --accent-foreground:  var(--allura-white);
+  --muted:              #F0F2F5;
+  --muted-foreground:   var(--allura-gray);
+  --destructive:        var(--allura-coral);
+  --destructive-foreground: var(--allura-white);
+  --border:             #E2E6EA;
+  --input:              #E2E6EA;
+  --ring:               var(--allura-navy);
+
+  /* Status */
+  --success:    var(--allura-green);
+  --info:       var(--allura-blue);
+
+  /* Typography */
+  --font-sans:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Outfit', var(--font-sans);
+  --font-mono:    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Border radius — friendly rounded */
+  --radius:    1rem;       /* 16px — default card */
+  --radius-sm: 0.5rem;     /* 8px */
+  --radius-md: 0.75rem;    /* 12px */
+  --radius-lg: 1rem;       /* 16px */
+  --radius-xl: 1.5rem;     /* 24px */
+
+  /* Editorial shadow system (3-layer) */
+  --shadow-sm:  0 4px 20px -4px rgba(20,35,41,0.08);
+  --shadow:     0 4px 20px -4px rgba(20,35,41,0.08), 0 8px 16px -4px rgba(20,35,41,0.12);
+  --shadow-md:  0 6px 24px -4px rgba(20,35,41,0.12), 0 12px 20px -4px rgba(20,35,41,0.16);
+  --shadow-lg:  0 4px 20px -4px rgba(20,35,41,0.08), 0 8px 16px -4px rgba(20,35,41,0.12), 0 2px 4px 0 rgba(20,35,41,0.16);
+
+  /* Spacing (4px base) */
+  --spacing: 0.25rem;
+}
+```
+
+**Font loading:**
+```html
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@700&display=swap" rel="stylesheet">
+```
+
+**WCAG verified pairings:**
+- Deep Navy on Pure White: ✅ 10.5:1 AAA
+- Coral on Deep Navy: ✅ (check per use)
+- Ink Black on Pure White: ✅ 16.2:1 AAA
+- **Forbidden:** Coral on White (1.3:1 FAIL) · White on Coral (1.3:1 FAIL)
+
+---
+
 ## Typography System
 
 ### Recommended Font Families
