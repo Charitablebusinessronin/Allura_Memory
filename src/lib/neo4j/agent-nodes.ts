@@ -1,10 +1,11 @@
 /**
- * Agent Memory Nodes - Neo4j Operations
- * 
- * Manages persistent memory nodes for Allura Agent-OS agents.
- * Each agent has a unique memory node that tracks its state, contributions,
- * and learning over time.
- * 
+ * Team RAM Agent Nodes - Neo4j Operations
+ *
+ * Manages persistent memory nodes for Allura Agent-OS Team RAM agents.
+ * Each of the 10 Team RAM agents (Brooks, Jobs, Woz, Scout, Knuth,
+ * Bellard, Carmack, Pike, Fowler, Hightower) has a unique memory node
+ * that tracks its state, contributions, and learning over time.
+ *
  * **Tenant Isolation**: All operations require `group_id` for multi-tenant safety.
  * **Steel Frame Versioning**: Agent nodes support SUPERSEDES lineage.
  */
@@ -624,77 +625,107 @@ export async function linkAgentToGroup(
 }
 
 /**
- * Initialize default agent memory nodes for Allura
- * Creates all 7 Memory{Role} agents with the specified group_id
- * 
- * @param group_id - Tenant isolation identifier (defaults to 'allura-default')
- * @returns Array of created agent nodes
+ * Team RAM Agent Nodes — The Surgical Team
+ *
+ * Maps the 10 Team RAM agents from `.opencode/agent/*.md` frontmatter
+ * to persistent Neo4j nodes. Each agent tracks its model assignment,
+ * role, and runtime state.
  */
 export async function initializeDefaultAgents(
   group_id: string = "allura-default"
 ): Promise<AgentNode[]> {
-  const defaultAgents: AgentInsert[] = [
+  const teamRamAgents: AgentInsert[] = [
     {
-      agent_id: "memory-orchestrator",
-      name: "MemoryOrchestrator",
-      role: "BMad workflow coordination",
-      model: "ollama-cloud/glm-5.1",
+      agent_id: "brooks",
+      name: "Brooks",
+      role: "Chief Architect — conceptual integrity, contracts, ADRs, final sign-off",
+      model: "openai/gpt-5.4",
+      fallback_model: "ollama-cloud/glm-5.1",
       group_id,
     },
     {
-      agent_id: "memory-architect",
-      name: "MemoryArchitect",
-      role: "System design lead",
-      model: "ollama-cloud/glm-5.1",
+      agent_id: "jobs",
+      name: "Jobs",
+      role: "Intent Gate — converts requests into crisp objectives, constraints, and acceptance criteria",
+      model: "ollama-cloud/kimi-k2.5",
+      fallback_model: "ollama-cloud/glm-5.1",
       group_id,
     },
     {
-      agent_id: "memory-builder",
-      name: "MemoryBuilder",
-      role: "Infrastructure implementation",
-      model: "ollama-cloud/gpt-5.4-mini",
+      agent_id: "woz",
+      name: "Woz",
+      role: "Primary Builder — implements the Brooks plan with minimal ceremony, ships working code",
+      model: "ollama-cloud/qwen3-coder-next",
+      fallback_model: "ollama-cloud/glm-5.1",
       group_id,
     },
     {
-      agent_id: "memory-guardian",
-      name: "MemoryGuardian",
-      role: "Quality gates and validation",
-      model: "ollama-cloud/glm-5.1",
-      group_id,
-    },
-    {
-      agent_id: "memory-scout",
-      name: "MemoryScout",
-      role: "Context discovery",
+      agent_id: "scout",
+      name: "Scout",
+      role: "Recon — fast repo scanning, file path finding, context discovery",
       model: "ollama-cloud/nemotron-3-super:cloud",
+      fallback_model: "ollama-cloud/nemotron-3-super",
       group_id,
     },
     {
-      agent_id: "memory-analyst",
-      name: "MemoryAnalyst",
-      role: "Memory system metrics",
+      agent_id: "knuth",
+      name: "Knuth",
+      role: "Data Architect — PostgreSQL, Neo4j, schema specialist, query optimization",
       model: "ollama-cloud/glm-5.1",
+      fallback_model: "ollama-cloud/qwen3-coder-next",
       group_id,
     },
     {
-      agent_id: "memory-chronicler",
-      name: "MemoryChronicler",
-      role: "Documentation/specs",
+      agent_id: "bellard",
+      name: "Bellard",
+      role: "Diagnostics & Performance — measurement-first, deep diagnostics under constraints",
       model: "ollama-cloud/glm-5.1",
+      fallback_model: "ollama-cloud/qwen3-coder-next",
+      group_id,
+    },
+    {
+      agent_id: "carmack",
+      name: "Carmack",
+      role: "Performance & Optimization — API design, latency reduction, hot path optimization",
+      model: "ollama-cloud/qwen3-coder-next",
+      fallback_model: "ollama-cloud/glm-5.1",
+      group_id,
+    },
+    {
+      agent_id: "pike",
+      name: "Pike",
+      role: "Interface Review — surface area, concurrency hazards, API ergonomics, simplicity gate",
+      model: "openai/gpt-5.4-mini",
+      fallback_model: "openai/gpt-5.4",
+      group_id,
+    },
+    {
+      agent_id: "fowler",
+      name: "Fowler",
+      role: "Refactor Gate — maintainability, incremental reversible changes, design drift documentation",
+      model: "ollama-cloud/glm-5.1",
+      fallback_model: "ollama-cloud/qwen3-coder-next",
+      group_id,
+    },
+    {
+      agent_id: "hightower",
+      name: "Hightower",
+      role: "DevOps — CI/CD, IaC, container orchestration, observability",
+      model: "openai/gpt-5.4",
+      fallback_model: "openai/gpt-5.4-mini",
       group_id,
     },
   ];
 
   const createdAgents: AgentNode[] = [];
 
-  for (const agent of defaultAgents) {
+  for (const agent of teamRamAgents) {
     try {
       const created = await createAgentNode(agent);
       createdAgents.push(created);
     } catch (error) {
       // Skip if agent already exists
       if (error instanceof AgentConflictError) {
-        // Agent exists, get it instead
         const existing = await getAgentNode(agent.agent_id, agent.group_id);
         if (existing) {
           createdAgents.push(existing);
