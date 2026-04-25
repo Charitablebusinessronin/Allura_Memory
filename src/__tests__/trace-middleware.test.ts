@@ -17,7 +17,7 @@ const mockFetch = vi.fn()
 vi.stubGlobal("fetch", mockFetch)
 
 // Import after mocking
-import { middleware, config } from "../middleware"
+import proxy, { config } from "../proxy"
 import { NextRequest } from "next/server"
 
 function createMockRequest(path: string, headers: Record<string, string> = {}): NextRequest {
@@ -46,7 +46,7 @@ describe("TraceMiddleware", () => {
 
       const mockEvent = { waitUntil: vi.fn() } as unknown as NextFetchEvent
 
-      const response = await middleware(request, mockEvent)
+      const response = await proxy(request, mockEvent)
 
       // Response should be NextResponse.next() — middleware passes through
       expect(response).toBeDefined()
@@ -77,7 +77,7 @@ describe("TraceMiddleware", () => {
 
       const mockEvent = { waitUntil: vi.fn() } as unknown as NextFetchEvent
 
-      const response = await middleware(request, mockEvent)
+      const response = await proxy(request, mockEvent)
 
       // Response should still pass through
       expect(response).toBeDefined()
@@ -97,7 +97,7 @@ describe("TraceMiddleware", () => {
         })
         const mockEvent = { waitUntil: vi.fn() } as unknown as NextFetchEvent
 
-        await middleware(request, mockEvent)
+        await proxy(request, mockEvent)
         expect(mockFetch).not.toHaveBeenCalled()
       }
     })
@@ -108,7 +108,7 @@ describe("TraceMiddleware", () => {
       })
       const mockEvent = { waitUntil: vi.fn() } as unknown as NextFetchEvent
 
-      await middleware(request, mockEvent)
+      await proxy(request, mockEvent)
       expect(mockFetch).not.toHaveBeenCalled()
     })
 
@@ -118,7 +118,7 @@ describe("TraceMiddleware", () => {
       })
       const mockEvent = { waitUntil: vi.fn() } as unknown as NextFetchEvent
 
-      await middleware(request, mockEvent)
+      await proxy(request, mockEvent)
       expect(mockFetch).not.toHaveBeenCalled()
     })
   })
@@ -136,7 +136,7 @@ describe("TraceMiddleware", () => {
       const mockEvent = { waitUntil: vi.fn() } as unknown as NextFetchEvent
 
       const startTime = performance.now()
-      const response = await middleware(request, mockEvent)
+      const response = await proxy(request, mockEvent)
       const elapsed = performance.now() - startTime
 
       // Middleware should return in <50ms even though fetch takes 5000ms
@@ -157,7 +157,7 @@ describe("TraceMiddleware", () => {
       const mockEvent = { waitUntil: vi.fn() } as unknown as NextFetchEvent
 
       // Should not throw
-      const response = await middleware(request, mockEvent)
+      const response = await proxy(request, mockEvent)
       expect(response).toBeDefined()
     })
   })
