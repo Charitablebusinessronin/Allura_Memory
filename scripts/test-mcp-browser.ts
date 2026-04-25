@@ -2,8 +2,18 @@
 /**
  * MCP Browser Test Runner
  * 
- * Runs MCP-based browser tests using the Playwright MCP server.
- * Handles server startup, test execution, and cleanup.
+ * Runs MCP-adjacent browser tests.
+ *
+ * Important contract boundary:
+ * - This runner validates the Next.js/browser test surface.
+ * - It does NOT validate the canonical MCP Streamable HTTP /mcp protocol gate.
+ *   Use `RUN_MCP_TESTS=true ALLURA_MCP_HTTP_URL=... bun vitest run
+ *   src/__tests__/mcp-streamable-http.test.ts` for that gate.
+ *
+ * The Vitest configuration aliases @mcp-docker/* imports to local mocks by
+ * default, so an external mcp-docker CLI is not a normal prerequisite. Set
+ * USE_REAL_MCP_DOCKER=true only when intentionally testing against real MCP
+ * Docker servers.
  */
 
 import { spawn } from "child_process";
@@ -66,14 +76,24 @@ async function runCommand(
 }
 
 async function checkMcpServers(): Promise<boolean> {
+  if (process.env.USE_REAL_MCP_DOCKER !== "true") {
+    console.log("🔍 MCP Docker CLI check skipped");
+    console.log("   Using Vitest aliases/mocks for @mcp-docker/* imports.");
+    console.log("   Set USE_REAL_MCP_DOCKER=true to require real MCP Docker servers.");
+    return true;
+  }
+
   console.log("🔍 Checking MCP Docker servers...");
-  
+
   try {
-    // Check if MCP Docker is available
+    // Check if MCP Docker is available. This path is opt-in because the
+    // published package may not expose a runnable CLI in all environments.
     const result = await runCommand("bun", ["x", "mcp-docker", "status"], { timeout: 10000 });
     return result.exitCode === 0;
-  } catch {
+  } catch (error) {
     console.warn("⚠️  MCP Docker status check failed");
+    console.warn("   Disable this check by unsetting USE_REAL_MCP_DOCKER.");
+    console.warn(`   Cause: ${error instanceof Error ? error.message : String(error)}`);
     return false;
   }
 }
@@ -218,7 +238,9 @@ async function main(): Promise<void> {
 
   if (!devServerRunning) {
     console.error("\n❌ Next.js dev server is not running!");
-    console.log("   Please start it with: bun run dev\n");
+    console.log("   This is a browser/dev validation precondition, not a /mcp protocol failure.");
+    console.log(`   Please start it with: PAPERCLIP_PORT=${PAPERCLIP_PORT} bun run dev`);
+    console.log(`   Expected health endpoint: http://localhost:${PAPERCLIP_PORT}/api/health\n`);
     process.exit(1);
   }
 
