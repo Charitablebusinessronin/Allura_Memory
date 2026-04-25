@@ -110,6 +110,76 @@ Standards and conventions for CSS frameworks, responsive design, and styling bes
 
 ---
 
+## allura Brand System
+
+When building allura UI, these tokens are canonical. They override all generic examples below.
+
+### allura Color Tokens
+
+```css
+:root {
+  /* allura primitives */
+  --allura-navy:   #1A2B4A;  /* Deep Navy — primary brand, headings, nav */
+  --allura-coral:  #E85A3C;  /* Coral — CTA, action, accents */
+  --allura-green:  #4CAF50;  /* Trust Green — success states */
+  --allura-blue:   #5B8DB8;  /* Clarity Blue — info, secondary actions */
+  --allura-white:  #F5F5F5;  /* Pure White — backgrounds (primary) */
+  --allura-black:  #1A1A1A;  /* Ink Black — body text */
+  --allura-gray:   #737373;  /* Warm Gray — secondary text, captions */
+
+  /* Semantic mappings */
+  --primary:            var(--allura-navy);
+  --primary-foreground: var(--allura-white);
+  --accent:             var(--allura-coral);
+  --success:            var(--allura-green);
+  --info:               var(--allura-blue);
+  --muted-foreground:   var(--allura-gray);
+  --background:         var(--allura-white);
+  --foreground:         var(--allura-black);
+}
+```
+
+**Usage ratio:** 55% `--allura-white` · 20% `--allura-black` · 15% `--allura-navy` · 7% `--allura-coral` · 3% status colors
+
+**Forbidden pairings (WCAG fail):** Coral on White (1.3:1) · White on Coral (1.3:1)
+
+### allura Typography
+
+**Primary UI font:** Inter (Google Fonts, weights 400–700)  
+**Display / hero only:** Outfit (700 weight, never below 20px)  
+**Fallback:** `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`
+
+```html
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@700&display=swap" rel="stylesheet">
+```
+
+| Role | Typeface | Weight | Size |
+|------|----------|--------|------|
+| Display / Hero | Outfit | 700 | 96px |
+| Section headings | Outfit | 700 | 56px |
+| H1–H4 | Inter | 600–700 | 48px → 24px |
+| Body | Inter | 400 | 16–18px |
+| Caption / Overline | Inter | 400–600 | 12–14px |
+
+**Rules:** Left-aligned headings · Never justified · Never all-caps · Max 75 chars/line · 1.5× line-height
+
+### allura Shadow System (3-layer editorial)
+
+```css
+/* Card — default elevation */
+box-shadow: 0 4px 20px -4px rgba(20,35,41,0.08), 0 8px 16px -4px rgba(20,35,41,0.12);
+
+/* Hover — interactive lift */
+box-shadow: 0 6px 24px -4px rgba(20,35,41,0.12), 0 12px 20px -4px rgba(20,35,41,0.16);
+
+/* Modal — full 3-layer */
+box-shadow: 0 4px 20px -4px rgba(20,35,41,0.08), 0 8px 16px -4px rgba(20,35,41,0.12), 0 2px 4px 0 rgba(20,35,41,0.16);
+```
+
+Default card radius: `16px` · Min touch target: `48px`
+
+---
+
 ## Color Palette Guidelines
 
 ### Avoid Bootstrap Blue
