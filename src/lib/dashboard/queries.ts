@@ -169,3 +169,16 @@ export async function loadGraph(): Promise<DashboardResult<{ nodes: GraphNode[];
     return failure(error)
   }
 }
+
+export async function loadGraphNodes(nodeType: string): Promise<DashboardResult<{ nodes: GraphNode[]; edges: GraphEdge[] }>> {
+  try {
+    const result = await getGraph()
+    const mapped = mapGraph(result.data)
+    const nodes = mapped.nodes.filter((n) => n.type === nodeType)
+    const nodeIds = new Set(nodes.map((n) => n.id))
+    const edges = mapped.edges.filter((e) => nodeIds.has(e.source) || nodeIds.has(e.target))
+    return { data: { nodes, edges }, error: null, degraded: result.degraded, warnings: warningFrom("graph", result.warning) }
+  } catch (error) {
+    return failure(error)
+  }
+}
