@@ -1,4 +1,4 @@
-import { Brain, ClipboardList, Database, type LucideIcon, Search, Lightbulb, ScrollText } from "lucide-react"
+import { Brain, FileText, Folder, GitBranch, Home, Lightbulb, Settings, type LucideIcon, Users } from "lucide-react"
 
 export interface NavSubItem {
   title: string
@@ -29,44 +29,16 @@ export interface NavGroup {
 export const sidebarItems: NavGroup[] = [
   {
     id: 1,
-    label: "Memory",
+    label: "Allura Brain",
     items: [
-      {
-        title: "Memories",
-        url: "/memory",
-        icon: Brain,
-      },
-      {
-        title: "Search",
-        url: "/memory?view=search",
-        icon: Search,
-      },
-    ],
-  },
-  {
-    id: 2,
-    label: "Admin",
-    items: [
-      {
-        title: "Curator",
-        url: "/dashboard/curator",
-        icon: ClipboardList,
-      },
-      {
-        title: "Memories (Admin)",
-        url: "/dashboard/memories",
-        icon: Database,
-      },
-      {
-        title: "Audit Log",
-        url: "/dashboard/audit",
-        icon: ScrollText,
-      },
-      {
-        title: "Insights",
-        url: "/dashboard/insights",
-        icon: Lightbulb,
-      },
+      { title: "Overview", url: "/dashboard", icon: Home },
+      { title: "Memories", url: "/dashboard/memories", icon: Brain },
+      { title: "Graph", url: "/dashboard/graph", icon: GitBranch },
+      { title: "Insights", url: "/dashboard/insights", icon: Lightbulb },
+      { title: "Evidence", url: "/dashboard/evidence", icon: FileText },
+      { title: "Agents", url: "/dashboard/agents", icon: Users },
+      { title: "Projects", url: "/dashboard/projects", icon: Folder },
+      { title: "Settings", url: "/dashboard/settings", icon: Settings },
     ],
   },
 ]

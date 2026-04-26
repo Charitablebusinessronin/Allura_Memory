@@ -85,21 +85,29 @@ These serve as the fallback; there is no separate default.css file. */
   --sidebar-accent: oklch(0.963 0.002 197.1);
   --sidebar-accent-foreground: oklch(0.218 0.008 223.9);
   --sidebar-border: oklch(0.925 0.005 214.3);
-  --sidebar-ring: oklch(0.723 0.014 214.4);
+   --sidebar-ring: oklch(0.723 0.014 214.4);
 
-  /* fonts */
-  --font-sans: var(--font-inter);
-  --font-mono: var(--font-geist-mono);
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.148 0.004 228.8);
-  --brand-graphite: #1c232b;
-  --brand-warm-slate: #3a4a5b;
-  --brand-steel-blue: #4e6e8a;
-  --brand-rich-navy: #2c3e56;
-  --brand-amber-ochre: #b8893c;
-  --brand-soft-amber: #d4a84b;
-  --brand-mist: #e9eef2;
-  --brand-warm-mist: #f0eef2;
+   /* fonts */
+   --font-sans: var(--font-inter);
+   --font-mono: var(--font-geist-mono);
+   --background: oklch(1 0 0);
+   --foreground: oklch(0.148 0.004 228.8);
+   --brand-graphite: #1c232b;
+   --brand-warm-slate: #3a4a5b;
+   --brand-steel-blue: #4e6e8a;
+   --brand-rich-navy: #2c3e56;
+   --brand-amber-ochre: #b8893c;
+   --brand-soft-amber: #d4a84b;
+   --brand-mist: #e9eef2;
+   --brand-warm-mist: #f0eef2;
+
+   /* Allura brand tokens */
+   --brand-blue: #1D4ED8;
+   --brand-orange: #FF5A2E;
+   --brand-green: #157A4A;
+   --brand-charcoal: #111827;
+   --brand-gold: #C89B3C;
+   --brand-cream: #F5F1E6;
 }
 
 .dark {
@@ -139,9 +147,17 @@ These serve as the fallback; there is no separate default.css file. */
   --brand-steel-blue: #4e6e8a;
   --brand-rich-navy: #2c3e56;
   --brand-amber-ochre: #b8893c;
-  --brand-soft-amber: #d4a84b;
-  --brand-mist: #e9eef2;
-  --brand-warm-mist: #f0eef2;
+   --brand-soft-amber: #d4a84b;
+   --brand-mist: #e9eef2;
+   --brand-warm-mist: #f0eef2;
+
+   /* Allura brand tokens */
+   --brand-blue: #1D4ED8;
+   --brand-orange: #FF5A2E;
+   --brand-green: #157A4A;
+   --brand-charcoal: #111827;
+   --brand-gold: #C89B3C;
+   --brand-cream: #F5F1E6;
 }
 
 @layer base {
