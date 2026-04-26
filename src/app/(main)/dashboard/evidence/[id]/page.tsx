@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 
-import { ErrorState, LoadingState, PageHeader, StatusPill, WarningList } from "@/components/dashboard/components"
+import { ErrorState, LoadingState, PageHeader, StatusPill, WarningList } from "@/components/dashboard"
 import { Button } from "@/components/ui/button"
 import { loadEvidenceDetail } from "@/lib/dashboard/queries"
 import type { DashboardResult, Evidence } from "@/lib/dashboard/types"

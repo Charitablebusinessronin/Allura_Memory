@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 
-import { ErrorState, GraphSummary, LoadingState, PageHeader, WarningList } from "@/components/dashboard/components"
+import { ErrorState, GraphSummary, LoadingState, PageHeader, WarningList } from "@/components/dashboard"
 import { loadGraph } from "@/lib/dashboard/queries"
 import type { DashboardResult, GraphEdge, GraphNode } from "@/lib/dashboard/types"
 

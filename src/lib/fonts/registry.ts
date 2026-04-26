@@ -19,6 +19,9 @@ import {
 } from "next/font/google";
 
 import { GeistPixelSquare } from "geist/font/pixel";
+import "@fontsource/ibm-plex-sans/400.css";
+import "@fontsource/ibm-plex-sans/500.css";
+import "@fontsource/ibm-plex-sans/700.css";
 
 const inter = Inter({
   subsets: ["latin"],

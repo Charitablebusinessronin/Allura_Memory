@@ -1,14 +1,19 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Search } from "lucide-react"
 
-import { EmptyState, ErrorState, LoadingState, MemoryCard, PageHeader, WarningList } from "@/components/dashboard/components"
-import { Input } from "@/components/ui/input"
+import { EmptyState, ErrorState, LoadingState, MemoryCard, PageHeader, SearchInput, Tabs, WarningList } from "@/components/dashboard"
 import { loadMemories } from "@/lib/dashboard/queries"
 import type { DashboardResult, Memory } from "@/lib/dashboard/types"
 
 type Tab = "all" | "event" | "outcome" | "insight"
+
+const tabItems: Array<{ value: Tab; label: string }> = [
+  { value: "all", label: "All" },
+  { value: "event", label: "Events" },
+  { value: "outcome", label: "Outcomes" },
+  { value: "insight", label: "Insights" },
+]
 
 export default function MemoriesPage() {
   const [query, setQuery] = useState("")
@@ -28,18 +33,11 @@ export default function MemoriesPage() {
   }, [state?.data, tab])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" style={{ fontFamily: "var(--font-ibm-plex-sans)" }}>
       <PageHeader title="Memory Feed" description="Search and explore real memories from Allura Brain." />
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-        <div className="relative flex-1">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-          <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search memories..." className="pl-9" />
-        </div>
-        <div className="flex gap-2">
-          {(["all", "event", "outcome", "insight"] as const).map((value) => (
-            <button key={value} type="button" onClick={() => setTab(value)} className={`rounded-md px-3 py-2 text-sm ${tab === value ? "bg-[#111827] text-white" : "bg-muted text-muted-foreground"}`}>{value}</button>
-          ))}
-        </div>
+        <SearchInput value={query} onChange={setQuery} placeholder="Search memories..." />
+        <Tabs items={tabItems} value={tab} onChange={setTab} />
       </div>
       {!state ? <LoadingState /> : state.error ? <ErrorState message={state.error} /> : <>
         <WarningList warnings={state.warnings} />

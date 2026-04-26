@@ -1,4 +1,4 @@
-import { PageHeader } from "@/components/dashboard/components"
+import { PageHeader } from "@/components/dashboard"
 import { DASHBOARD_GROUP_ID } from "@/lib/dashboard/api"
 
 export default function SettingsPage() {

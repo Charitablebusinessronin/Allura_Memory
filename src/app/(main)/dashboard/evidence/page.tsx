@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 
-import { EmptyState, ErrorState, EvidenceCard, LoadingState, PageHeader, WarningList } from "@/components/dashboard/components"
+import { EmptyState, ErrorState, EvidenceCard, LoadingState, PageHeader, WarningList } from "@/components/dashboard"
 import { loadEvidence } from "@/lib/dashboard/queries"
 import type { DashboardResult, Evidence } from "@/lib/dashboard/types"
 

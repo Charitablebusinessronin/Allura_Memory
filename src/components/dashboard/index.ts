@@ -9,12 +9,9 @@ export { ConfidenceBadge } from "./ConfidenceBadge"
 export { SearchInput } from "./SearchInput"
 export { Tabs } from "./Tabs"
 export { ActivityPanel } from "./ActivityPanel"
-// Brand-aligned Allura dashboard components live in components.tsx
-// These barrel exports pull from the monolithic file to avoid duplicating
-// component logic while the split-out components are being migrated.
-export { InsightCard } from "./components"
-export { InsightActions } from "./components"
-export { MemoryCard } from "./components"
-export { EvidenceCard } from "./components"
-export { SystemStatusCard } from "./components"
-export { GraphSummary } from "./components"
+export { InsightCard } from "./InsightCard"
+export { InsightActions } from "./InsightActions"
+export { MemoryCard } from "./MemoryCard"
+export { EvidenceCard } from "./EvidenceCard"
+export { SystemStatusCard } from "./SystemStatusCard"
+export { GraphSummary } from "./GraphSummary"
