@@ -3,7 +3,15 @@ import { GitBranch } from "lucide-react"
 import type { GraphEdge, GraphNode } from "@/lib/dashboard/types"
 import { EmptyState } from "./EmptyState"
 
-export function GraphSummary({ nodes, edges, totalEdges }: { nodes: GraphNode[]; edges: GraphEdge[]; totalEdges?: number }) {
+interface GraphSummaryProps {
+  nodes: GraphNode[]
+  edges: GraphEdge[]
+  totalEdges?: number
+  selectedNodeId?: string | null
+  onNodeClick?: (nodeId: string | null) => void
+}
+
+export function GraphSummary({ nodes, edges, totalEdges, selectedNodeId, onNodeClick }: GraphSummaryProps) {
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
       <div className="relative min-h-[520px] overflow-hidden rounded-xl border bg-[var(--dashboard-surface-alt)] p-6">
@@ -16,11 +24,20 @@ export function GraphSummary({ nodes, edges, totalEdges }: { nodes: GraphNode[];
           <div className="relative grid h-full place-items-center">
             <div className="flex max-w-3xl flex-wrap items-center justify-center gap-4">
               {nodes.slice(0, 24).map((node) => (
-                <div key={node.id} className="rounded-xl border bg-card px-4 py-3 text-center shadow-xs">
+                <button
+                  key={node.id}
+                  type="button"
+                  onClick={() => onNodeClick?.(selectedNodeId === node.id ? null : node.id)}
+                  className={`rounded-xl border px-4 py-3 text-center shadow-xs transition-colors ${
+                    selectedNodeId === node.id
+                      ? "border-[var(--dashboard-accent)] bg-[var(--dashboard-accent)]/10 ring-2 ring-[var(--dashboard-accent)]/30"
+                      : "bg-card hover:bg-muted/50"
+                  }`}
+                >
                   <GitBranch className="mx-auto mb-1 size-4 text-[var(--tone-blue-text)]" />
                   <p className="text-sm font-medium">{node.label}</p>
                   <p className="text-muted-foreground text-xs">{node.type}</p>
-                </div>
+                </button>
               ))}
             </div>
           </div>

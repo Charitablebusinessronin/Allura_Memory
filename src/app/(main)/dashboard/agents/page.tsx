@@ -3,12 +3,74 @@
 import { useEffect, useMemo, useState } from "react"
 
 import { EmptyState, ErrorState, LoadingState, PageHeader, WarningList } from "@/components/dashboard"
-import { loadMemories } from "@/lib/dashboard/queries"
-import type { DashboardResult, Memory } from "@/lib/dashboard/types"
+import { loadGraphNodes } from "@/lib/dashboard/queries"
+import type { DashboardResult, GraphEdge, GraphNode } from "@/lib/dashboard/types"
+
+function NodeCard({ node, connectionCount }: { node: GraphNode; connectionCount: number }) {
+  return (
+    <article className="rounded-xl border bg-[var(--dashboard-surface)] p-5" style={{ fontFamily: "var(--font-ibm-plex-sans)" }}>
+      <div className="flex items-start justify-between">
+        <div>
+          <h3 className="font-semibold text-[var(--dashboard-text-primary)]">{node.label}</h3>
+          <span className="mt-1 inline-block rounded-full bg-[var(--tone-blue-bg)] px-2 py-0.5 text-xs font-medium text-[var(--tone-blue-text)]">
+            {node.type}
+          </span>
+        </div>
+      </div>
+      <p className="text-[var(--dashboard-text-secondary)] mt-2 text-sm">
+        {connectionCount} connection{connectionCount === 1 ? "" : "s"} in graph
+      </p>
+      {node.metadata && Object.keys(node.metadata).filter((k) => node.metadata![k] !== undefined && node.metadata![k] !== null && node.metadata![k] !== "").length > 0 && (
+        <div className="mt-3 space-y-1">
+          {Object.entries(node.metadata)
+            .filter(([, v]) => v !== undefined && v !== null && v !== "")
+            .slice(0, 3)
+            .map(([key, value]) => (
+              <p key={key} className="text-xs text-[var(--dashboard-text-secondary)]">
+                <span className="font-medium">{key}:</span> {typeof value === "object" ? JSON.stringify(value) : String(value)}
+              </p>
+            ))}
+        </div>
+      )}
+    </article>
+  )
+}
 
 export default function AgentsPage() {
-  const [state, setState] = useState<DashboardResult<Memory[]> | null>(null)
-  useEffect(() => { void loadMemories().then(setState) }, [])
-  const agents = useMemo(() => Array.from(new Set((state?.data ?? []).map((memory) => memory.agent))).filter(Boolean), [state?.data])
-  return <div className="space-y-6"><PageHeader title="Agents" description="Agents observed in real Brain memory provenance." />{!state ? <LoadingState /> : state.error ? <ErrorState message={state.error} /> : <><WarningList warnings={state.warnings} />{agents.length === 0 ? <EmptyState title="No agents returned" description="No agent provenance was found in the current Brain data." /> : <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{agents.map((agent) => <div key={agent} className="rounded-xl border bg-card p-5"><h3 className="font-semibold">{agent}</h3><p className="text-muted-foreground mt-1 text-sm">Observed in {state.data!.filter((memory) => memory.agent === agent).length} memories.</p></div>)}</div>}</>}</div>
+  const [state, setState] = useState<DashboardResult<{ nodes: GraphNode[]; edges: GraphEdge[] }> | null>(null)
+  useEffect(() => { void loadGraphNodes("agent").then(setState) }, [])
+
+  const connectionCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+    const edges = state?.data?.edges ?? []
+    const nodes = state?.data?.nodes ?? []
+    for (const node of nodes) counts.set(node.id, 0)
+    for (const edge of edges) {
+      counts.set(edge.source, (counts.get(edge.source) ?? 0) + 1)
+      counts.set(edge.target, (counts.get(edge.target) ?? 0) + 1)
+    }
+    return counts
+  }, [state?.data])
+
+  const nodes = state?.data?.nodes ?? []
+
+  return (
+    <div className="space-y-6" style={{ fontFamily: "var(--font-ibm-plex-sans)" }}>
+      <PageHeader title="Agents" description="Agents observed in real Brain memory provenance and graph relationships." />
+      {!state ? <LoadingState /> : state.error ? <ErrorState message={state.error} /> : (
+        <>
+          <WarningList warnings={state.warnings} />
+          {nodes.length === 0 ? (
+            <EmptyState title="No agents found in graph" description="No agent-type nodes were found in the Neo4j graph for this tenant." />
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {nodes.map((node) => (
+                <NodeCard key={node.id} node={node} connectionCount={connectionCounts.get(node.id) ?? 0} />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
 }
