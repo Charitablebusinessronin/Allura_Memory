@@ -11,7 +11,7 @@ import {
   PageHeader,
   SystemStatusCard,
   WarningList,
-} from "@/components/dashboard/components"
+} from "@/components/dashboard"
 import { loadDashboardOverview } from "@/lib/dashboard/queries"
 import type { DashboardOverview, DashboardResult } from "@/lib/dashboard/types"
 
@@ -33,7 +33,7 @@ export default function DashboardPage() {
   if (!state.data) return <ErrorState message="Dashboard returned no data." />
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" style={{ fontFamily: "var(--font-ibm-plex-sans)" }}>
       <PageHeader title="Overview" description="Mission control for Allura Brain memory governance." />
       <WarningList warnings={state.warnings} />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
