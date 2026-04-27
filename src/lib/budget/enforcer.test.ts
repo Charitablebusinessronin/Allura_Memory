@@ -77,17 +77,17 @@ describe("BudgetEnforcer", () => {
       haltEnforcer.startSession(sessionId);
       const monitor = haltEnforcer.getMonitor();
 
-      // Exceed token limit
+      // Exceed token limit — monitor auto-halts via onBreach callback
       monitor.trackTokens(sessionId, {
         inputTokens: 100000,
         outputTokens: 0,
         model: "gpt-4o",
       });
 
+      // Halt is synchronous from monitor; checkBeforeExecution confirms it
       const result = await haltEnforcer.checkBeforeExecution(sessionId);
       expect(result.allowed).toBe(false);
       expect(result.status).toBe("halted");
-      expect(result.breaches.length).toBeGreaterThan(0);
       expect(haltedReasons.length).toBe(1);
       expect(haltedReasons[0].type).toBe("token_limit");
     });
@@ -252,15 +252,18 @@ describe("BudgetEnforcer", () => {
         model: "gpt-4o",
       });
 
-      // Then exceed
+      // Then exceed — monitor auto-halts via onBreach callback
       monitor.trackTokens(sessionId, {
         inputTokens: 10000,
         outputTokens: 0,
         model: "gpt-4o",
       });
 
+      // Session is halted synchronously by the monitor; checkBeforeExecution confirms
       const result = await enforcer.checkBeforeExecution(sessionId);
-      expect(result.breaches.some((b) => b.category === "tokens" || b.category === "cost_usd")).toBe(true);
+      expect(result.allowed).toBe(false);
+      expect(result.status).toBe("halted");
+      expect(result.haltReason?.type).toBe("token_limit");
     });
   });
 

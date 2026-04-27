@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/postgres/connection";
-import { getDriver } from "@/lib/neo4j/connection";
+import { readTransaction } from "@/lib/neo4j/connection";
 import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
 import { requireRole, forbiddenResponse, unauthorizedResponse } from "@/lib/auth/api-auth";
 
@@ -51,26 +51,20 @@ export async function GET(request: NextRequest) {
       ),
 
       // Neo4j: Get all memory IDs (semantic layer, non-deprecated)
-      (async () => {
-        const driver = getDriver();
-        const session = driver.session();
-        try {
-          const result = await session.run(
-            `MATCH (m:Memory)
-             WHERE m.group_id = $groupId
-               AND ($userId IS NULL OR m.user_id = $userId)
-               AND NOT (m)<-[:SUPERSEDES]-()
-             RETURN m.id AS id`,
-            { groupId, userId: userId ?? null }
-          );
-          return { ids: result.records.map((r: { get: (key: string) => string }) => r.get("id")) };
-        } catch (err) {
-          console.warn("[degraded] Neo4j unavailable in memory count:", err);
-          return { ids: [] as string[] };
-        } finally {
-          await session.close();
-        }
-      })(),
+      readTransaction(async (tx) => {
+        const result = await tx.run(
+          `MATCH (m:Memory)
+           WHERE m.group_id = $groupId
+             AND ($userId IS NULL OR m.user_id = $userId)
+             AND NOT (m)<-[:SUPERSEDES]-()
+           RETURN m.id AS id`,
+          { groupId, userId: userId ?? null }
+        );
+        return { ids: result.records.map((r: { get: (key: string) => string }) => r.get("id")) };
+      }).catch((err) => {
+        console.warn("[degraded] Neo4j unavailable in memory count:", err);
+        return { ids: [] as string[] };
+      }),
     ]);
 
     // Deduplicate: Create a Set of all unique memory IDs
