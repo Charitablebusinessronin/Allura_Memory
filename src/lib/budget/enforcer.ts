@@ -5,6 +5,7 @@
 
 import type {
   BudgetBreach,
+  BudgetCategory,
   BudgetConfig,
   BudgetLimits,
   HaltReason,
@@ -510,8 +511,36 @@ export class BudgetEnforcer {
     consumed: number,
     limit: number,
   ): void {
-    // Log breach - actual halt happens in checkBeforeExecution
-    console.warn(`[BudgetEnforcer] Breach detected for ${this.sessionKey(sessionId)}: ${category} at ${consumed}/${limit}`);
+    const key = this.sessionKey(sessionId);
+    console.warn(`[BudgetEnforcer] Breach detected for ${key}: ${category} at ${consumed}/${limit}`);
+
+    // Auto-halt on breach — prevents ghosted sessions from spamming warnings.
+    // Must be synchronous: this is called from the monitor's synchronous
+    // checkThresholds path. An async halt would create a race where
+    // checkBeforeExecution runs before the halt completes.
+    if (this.config.budgetConfig.haltOnBreach && !this.isHalted(sessionId)) {
+      const state = this.monitor.getSessionState(sessionId);
+      if (state) {
+        const haltReason = this.createHaltReason(
+          {
+            category: category as BudgetCategory,
+            consumed,
+            limit,
+            utilizationPercent: 100,
+            timestamp: new Date(),
+          },
+          state,
+        );
+        // Synchronous halt — no async gaps
+        this.haltedSessions.add(key);
+        state.haltedAt = new Date();
+        state.haltReason = haltReason;
+        // Fire async callback without blocking
+        if (this.config.onHalt) {
+          Promise.resolve(this.config.onHalt(sessionId, haltReason, state)).catch(() => {});
+        }
+      }
+    }
   }
 
   private handleWarning(

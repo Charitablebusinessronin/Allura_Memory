@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { Brain, FileText, Folder, GitBranch, Home, Lightbulb, Search, Settings, Users } from "lucide-react";
-
 import {
   Sidebar,
   SidebarContent,
@@ -17,43 +15,48 @@ import {
 import { cn } from "@/lib/utils";
 
 interface NavItem {
-  title: string
-  url: string
-  icon: React.ComponentType<{ className?: string }>
-  badge?: string
+  title: string;
+  url: string;
+  icon: string; // single-char icon glyph
 }
 
 const navMain: NavItem[] = [
-  { title: "Overview", url: "/dashboard", icon: Home },
-  { title: "Memory Feed", url: "/dashboard/feed", icon: Brain },
-  { title: "Graph", url: "/dashboard/graph", icon: GitBranch },
-  { title: "Insights", url: "/dashboard/insights", icon: Lightbulb },
-  { title: "Evidence", url: "/dashboard/evidence", icon: FileText },
-  { title: "Agents", url: "/dashboard/agents", icon: Users },
-  { title: "Projects", url: "/dashboard/projects", icon: Folder },
-  { title: "Settings", url: "/dashboard/settings", icon: Settings },
+  { title: "Overview", url: "/dashboard", icon: "⌂" },
+  { title: "Memory Feed", url: "/dashboard/feed", icon: "▤" },
+  { title: "Graph", url: "/dashboard/graph", icon: "◎" },
+  { title: "Insights", url: "/dashboard/insights", icon: "✦" },
+  { title: "Evidence", url: "/dashboard/evidence", icon: "▧" },
+  { title: "Agents", url: "/dashboard/agents", icon: "♙" },
+  { title: "Projects", url: "/dashboard/projects", icon: "□" },
+  { title: "Skills", url: "/dashboard/skills", icon: "⚡" },
+  { title: "Settings", url: "/dashboard/settings", icon: "⚙" },
 ];
 
 function AgencyLogo() {
   return (
-    <div className="flex items-center gap-3 px-5 py-4">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--allura-cream)] text-[var(--allura-charcoal)]">
-        <img
-          src="/design/allura-monogram.png"
-          alt="Allura"
-          className="h-6 w-6 object-contain"
-          width="36"
-          height="36"
-        />
-      </div>
-      <span className="text-base font-semibold tracking-tight" style={{ fontFamily: 'var(--font-family-brand)' }}>
-        allura
-      </span>
-    </div>
+    <Link
+      href="/dashboard"
+      prefetch={false}
+      className="flex items-center gap-2.5 px-3 py-3"
+    >
+      <img
+        src="/design/Wordmark.png"
+        alt="Allura"
+        className="h-7 w-auto object-contain"
+        width={98}
+        height={28}
+      />
+    </Link>
   );
 }
 
-function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
+function NavLink({
+  item,
+  isActive,
+}: {
+  item: NavItem;
+  isActive: boolean;
+}) {
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
@@ -61,20 +64,18 @@ function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
         isActive={isActive}
         className={cn(
           "group/menu-item relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
-          "text-[var(--dashboard-text-secondary)] hover:text-[var(--dashboard-text-primary)] hover:bg-[var(--dashboard-surface-muted)]",
-          isActive && "bg-[var(--dashboard-surface-muted)] text-[var(--dashboard-text-primary)] font-semibold"
+          "text-[var(--allura-gray-500)] hover:text-[var(--allura-charcoal)] hover:bg-[var(--allura-gray-100)]",
+          isActive &&
+            "bg-[var(--allura-gray-100)] text-[var(--allura-blue)] font-semibold"
         )}
       >
         <Link prefetch={false} href={item.url}>
-          <item.icon className={cn("size-[18px] shrink-0", isActive ? "text-[var(--allura-blue)]" : "text-[var(--dashboard-text-muted)]")} />
+          <span className="text-base leading-none w-5 text-center shrink-0">
+            {item.icon}
+          </span>
           <span>{item.title}</span>
-          {item.badge && (
-            <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--tone-orange-bg)] px-1.5 text-[10px] font-semibold text-[var(--tone-orange-text)]">
-              {item.badge}
-            </span>
-          )}
           {isActive && (
-            <div className="absolute inset-y-2 -left-0.5 w-0.5 rounded-full bg-[var(--allura-blue)]" />
+            <div className="absolute inset-y-2 -left-0.5 w-[3px] rounded-full bg-[var(--allura-blue)]" />
           )}
         </Link>
       </SidebarMenuButton>
@@ -82,18 +83,27 @@ function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
   );
 }
 
-export function AppSidebar({ className, ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  className,
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
   const path = usePathname();
 
   const isItemActive = (url: string) => {
     if (url === "/dashboard") {
-      return path === url || path.startsWith("/dashboard/");
+      return path === url || (path.startsWith("/dashboard/") && path.split("/").length <= 3);
     }
-    return path === url;
+    return path === url || path.startsWith(url + "/");
   };
 
   return (
-    <Sidebar className={cn("border-r border-[var(--dashboard-border)] bg-white", className)} {...props}>
+    <Sidebar
+      className={cn(
+        "border-r border-[var(--allura-gray-200)] bg-white/86 backdrop-blur-[16px]",
+        className
+      )}
+      {...props}
+    >
       <SidebarHeader className="px-0">
         <AgencyLogo />
       </SidebarHeader>
@@ -101,19 +111,27 @@ export function AppSidebar({ className, ...props }: React.ComponentProps<typeof 
       <SidebarContent className="px-3 py-2">
         <SidebarMenu className="gap-0.5">
           {navMain.map((item) => (
-            <NavLink key={item.url} item={item} isActive={isItemActive(item.url)} />
+            <NavLink
+              key={item.url}
+              item={item}
+              isActive={isItemActive(item.url)}
+            />
           ))}
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-[var(--dashboard-border)] px-3 py-3">
+      <SidebarFooter className="border-t border-[var(--allura-gray-200)] px-3 py-3">
         <div className="flex items-center gap-3 rounded-lg px-3 py-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--allura-blue)] text-white text-xs font-semibold">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--allura-blue)] text-white text-xs font-semibold shrink-0">
             U
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-[var(--dashboard-text-primary)]">User</span>
-            <span className="text-xs text-[var(--dashboard-text-muted)]">admin@allura.ai</span>
+          <div className="flex flex-col min-w-0">
+            <span className="text-sm font-medium text-[var(--allura-charcoal)] truncate">
+              User
+            </span>
+            <span className="text-xs text-[var(--allura-gray-400)] truncate">
+              admin@allura.ai
+            </span>
           </div>
         </div>
       </SidebarFooter>
