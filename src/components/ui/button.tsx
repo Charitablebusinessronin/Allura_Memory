@@ -13,15 +13,15 @@ const buttonVariants = cva(
         default:
           "bg-primary text-primary-foreground hover:bg-primary/80 shadow-[0_1px_2px_0_rgba(15,17,21,0.05)]",
         primary:
-          `bg-[${tokens.color.primary.default}] text-white hover:bg-[${tokens.color.primary.hover}] focus-visible:ring-[${tokens.color.primary.default}] shadow-[0_1px_2px_0_rgba(15,17,21,0.05)]`,
+          `bg-[var(--allura-blue)] text-white hover:bg-[var(--allura-blue-hover)] focus-visible:ring-[var(--allura-blue)] shadow-[0_1px_2px_0_rgba(15,17,21,0.05)]`,
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-[0_1px_2px_0_rgba(15,17,21,0.05)]",
         accent:
-          `bg-[${tokens.color.secondary.default}] text-white hover:bg-[${tokens.color.secondary.hover}] focus-visible:ring-[${tokens.color.secondary.default}] shadow-[0_1px_2px_0_rgba(15,17,21,0.05)]`,
+          `bg-[var(--allura-orange)] text-white hover:bg-[var(--allura-orange-hover)] focus-visible:ring-[var(--allura-orange)] shadow-[0_1px_2px_0_rgba(15,17,21,0.05)]`,
         ghost:
-          `bg-transparent text-[${tokens.color.primary.default}] border-[${tokens.color.border.default}] hover:bg-[${tokens.color.surface.muted}] focus-visible:ring-[${tokens.color.primary.default}]`,
+          `bg-transparent text-[var(--allura-blue)] border-[var(--allura-border-2)] hover:bg-[var(--allura-muted)] focus-visible:ring-[var(--allura-blue)]`,
         danger:
-          `bg-white text-[${tokens.color.secondary.default}] border-[${tokens.color.secondary.default}] hover:bg-[${tokens.color.secondary.hover}]/10 focus-visible:ring-[${tokens.color.secondary.default}]`,
+          `bg-white text-[var(--allura-orange)] border-[var(--allura-orange)] hover:bg-[var(--allura-orange-hover)]/10 focus-visible:ring-[var(--allura-orange)]`,
         outline:
           "border-border bg-background shadow-xs hover:bg-muted hover:text-foreground",
         link: "text-primary underline-offset-4 hover:underline",
@@ -75,10 +75,14 @@ function Button({
       disabled={props.disabled || loading}
       {...props}
     >
-      {loading ? (
-        <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-      ) : null}
-      {children}
+      {asChild ? children : (
+        <>
+          {loading ? (
+            <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          ) : null}
+          {children}
+        </>
+      )}
     </Comp>
   )
 }

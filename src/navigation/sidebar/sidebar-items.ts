@@ -33,9 +33,9 @@ export const sidebarItems: NavGroup[] = [
     items: [
       { title: "Overview", url: "/dashboard", icon: Home },
       { title: "Memory Feed", url: "/dashboard/feed", icon: Brain },
-      { title: "Graph View", url: "/dashboard/graph", icon: GitBranch },
-      { title: "Insight Review", url: "/dashboard/review", icon: Lightbulb },
-      { title: "Evidence Detail", url: "/dashboard/evidence", icon: FileText },
+      { title: "Graph", url: "/dashboard/graph", icon: GitBranch },
+      { title: "Insights", url: "/dashboard/insights", icon: Lightbulb },
+      { title: "Evidence", url: "/dashboard/evidence", icon: FileText },
       { title: "Agents", url: "/dashboard/agents", icon: Users },
       { title: "Projects", url: "/dashboard/projects", icon: Folder },
       { title: "Settings", url: "/dashboard/settings", icon: Settings },

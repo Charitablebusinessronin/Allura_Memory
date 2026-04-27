@@ -50,12 +50,12 @@ export function SearchBar({
   return (
     <div
       className={cn(
-        `relative flex items-center rounded-[${tokens.borderRadius.md}] border border-[${tokens.color.border.default}] bg-white shadow-[${tokens.shadow.sm}] transition-all focus-within:border-[${tokens.color.primary.default}] focus-within:shadow-[${tokens.shadow.md}] hover:border-[${tokens.color.border.subtle}] hover:shadow-[${tokens.shadow.md}]`,
+        `relative flex items-center rounded-[var(--allura-r-md)] border border-[var(--allura-border-2)] bg-white shadow-[var(--allura-sh-sm)] transition-all focus-within:border-[var(--allura-blue)] focus-within:shadow-[var(--allura-sh-md)] hover:border-[var(--allura-border-1)] hover:shadow-[var(--allura-sh-md)]`,
         height,
         className
       )}
     >
-      <Search className={`ml-3 h-4 w-4 shrink-0 text-[${tokens.color.text.muted}]`} />
+      <Search className={`ml-3 h-4 w-4 shrink-0 text-[var(--allura-text-3)]`} />
       <input
         ref={inputRef}
         type="text"
@@ -64,7 +64,7 @@ export function SearchBar({
         onChange={(e) => onChange?.(e.target.value)}
         onFocus={onFocus}
         placeholder={placeholder}
-        className={`h-full w-full bg-transparent px-3 text-sm text-[${tokens.color.text.primary}] placeholder:text-[${tokens.color.text.muted}] focus:outline-none`}
+        className={`h-full w-full bg-transparent px-3 text-sm text-[var(--allura-charcoal)] placeholder:text-[var(--allura-text-3)] focus:outline-none`}
       />
       {value ? (
         <button
@@ -73,12 +73,12 @@ export function SearchBar({
             onChange?.("")
             inputRef.current?.focus()
           }}
-          className={`mr-2 rounded p-0.5 text-[${tokens.color.text.muted}] hover:text-[${tokens.color.text.secondary}]`}
+          className={`mr-2 rounded p-0.5 text-[var(--allura-text-3)] hover:text-[var(--allura-text-2)]`}
         >
           <X className="h-4 w-4" />
         </button>
       ) : shortcut ? (
-        <kbd className={`mr-3 hidden items-center gap-0.5 rounded-[${tokens.borderRadius.sm}] bg-[${tokens.color.surface.muted}] px-1.5 py-0.5 text-[10px] font-medium text-[${tokens.color.text.muted}] sm:inline-flex`}>
+        <kbd className={`mr-3 hidden items-center gap-0.5 rounded-[var(--allura-r-sm)] bg-[var(--allura-muted)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--allura-text-3)] sm:inline-flex`}>
           <span className="text-[10px]">⌘</span>K
         </kbd>
       ) : null}

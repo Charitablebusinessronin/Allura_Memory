@@ -231,9 +231,11 @@ RECOVERY_WINDOW_DAYS=30
 
 ---
 
-### P1-2: Dashboard Is a Stub — Replace with Real v1 Shell
+### ✅ P1-2: Dashboard Is a Stub — RESOLVED (Issue #25, 2026-04-26)
 
-`src/app/(main)/dashboard/page.tsx` contains only `return <>Coming Soon</>;`.
+~~`src/app/(main)/dashboard/page.tsx` contains only `return <>Coming Soon</>;`.~~
+
+**Resolution:** Issue #25 complete. Real-data dashboard shipped. All screens wired to live API endpoints. Mock data removed. Build passing.
 
 **Minimal v1 dashboard** — do not invent new subsystems. Wire directly to existing API routes:
 

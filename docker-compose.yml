@@ -82,8 +82,12 @@ services:
     image: neo4j:5.26.0-community
     container_name: knowledge-neo4j
     restart: unless-stopped
-    env_file:
-      - .env
+    # Do NOT load the full .env file here — any NEO4J_* variable is interpreted
+    # as a Neo4j config key by the official image entrypoint, causing fatal
+    # "Unrecognized setting" errors on startup (e.g. NEO4J_READ_TIMEOUT → READ.TIMEOUT).
+    # Only pass the explicitly whitelisted variables Neo4j actually needs.
+    environment:
+      - NEO4J_AUTH=${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-neo4j}
     ports:
       - "7474:7474"
       - "7687:7687"

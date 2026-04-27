@@ -62,7 +62,7 @@ function JsonSyntaxHighlight({ json }: { json: string }) {
     <pre className="overflow-x-auto p-5 text-xs leading-relaxed" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
       {lines.map(({ num, html }) => (
         <div key={num} className="flex">
-          <span className={`w-10 shrink-0 select-none text-right text-[${tokens.color.text.muted}] pr-4`}>{num}</span>
+          <span className={`w-10 shrink-0 select-none text-right text-[var(--allura-text-3)] pr-4`}>{num}</span>
           <span dangerouslySetInnerHTML={{ __html: html }} />
         </div>
       ))}
@@ -81,7 +81,7 @@ function RawLogTab({ rawLog }: { rawLog: string }) {
 
   return (
     <>
-      <div className={`flex items-center justify-between border-b border-[${tokens.color.border.subtle}] p-5`}>
+      <div className={`flex items-center justify-between border-b border-[var(--allura-border-1)] p-5`}>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => copy(prettyLog)} className="gap-1.5">
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -99,7 +99,7 @@ function RawLogTab({ rawLog }: { rawLog: string }) {
             <Download className="h-3.5 w-3.5" /> Export
           </Button>
         </div>
-        <span className={`text-xs text-[${tokens.color.text.muted}]`}>{prettyLog.split("\n").length} lines</span>
+        <span className={`text-xs text-[var(--allura-text-3)]`}>{prettyLog.split("\n").length} lines</span>
       </div>
       <JsonSyntaxHighlight json={prettyLog} />
     </>
@@ -128,12 +128,12 @@ function MetadataTab({ evidence }: { evidence: Evidence }) {
       <div className="space-y-0">
         {baseEntries.map(({ key, value }) => (
           <div key={key} className="grid items-center gap-4 py-3" style={{ gridTemplateColumns: "30% 1fr 40px" }}>
-            <dt className={`text-sm font-medium text-[${tokens.color.text.secondary}]`}>{key}</dt>
-            <dd className={`text-sm text-[${tokens.color.text.primary}]`}>{value}</dd>
+            <dt className={`text-sm font-medium text-[var(--allura-text-2)]`}>{key}</dt>
+            <dd className={`text-sm text-[var(--allura-charcoal)]`}>{value}</dd>
             <button
               type="button"
               onClick={() => copyRow(String(value))}
-              className={`flex h-8 w-8 items-center justify-center rounded-[${tokens.borderRadius.sm}] text-[${tokens.color.text.muted}] hover:bg-[${tokens.color.surface.muted}] hover:text-[${tokens.color.text.primary}] transition-colors`}
+              className={`flex h-8 w-8 items-center justify-center rounded-[var(--allura-r-sm)] text-[var(--allura-text-3)] hover:bg-[var(--allura-muted)] hover:text-[var(--allura-charcoal)] transition-colors`}
               title="Copy"
             >
               {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -142,21 +142,21 @@ function MetadataTab({ evidence }: { evidence: Evidence }) {
         ))}
       </div>
       {extendedEntries.length > 0 && (
-        <div className={`border-t border-[${tokens.color.border.subtle}] pt-4`}>
-          <h3 className={`text-xs font-semibold uppercase tracking-wider text-[${tokens.color.text.secondary}] mb-3`}>Extended Metadata</h3>
+        <div className={`border-t border-[var(--allura-border-1)] pt-4`}>
+          <h3 className={`text-xs font-semibold uppercase tracking-wider text-[var(--allura-text-2)] mb-3`}>Extended Metadata</h3>
           <div className="space-y-0">
             {extendedEntries.map(([key, value]) => (
               <div key={key} className="grid items-start gap-4 py-3" style={{ gridTemplateColumns: "30% 1fr 40px" }}>
-                <dt className={`text-sm font-medium text-[${tokens.color.text.secondary}]`}>{key}</dt>
-                <dd className={`text-sm text-[${tokens.color.text.primary}] break-all`}>
+                <dt className={`text-sm font-medium text-[var(--allura-text-2)]`}>{key}</dt>
+                <dd className={`text-sm text-[var(--allura-charcoal)] break-all`}>
                   {typeof value === "object" ? (
-                    <pre className={`overflow-x-auto whitespace-pre-wrap rounded-[${tokens.borderRadius.md}] border border-[${tokens.color.border.subtle}] bg-[${tokens.color.surface.subtle}] p-2 text-xs`}>{JSON.stringify(value, null, 2)}</pre>
+                    <pre className={`overflow-x-auto whitespace-pre-wrap rounded-[var(--allura-r-md)] border border-[var(--allura-border-1)] bg-[var(--allura-cream)] p-2 text-xs`}>{JSON.stringify(value, null, 2)}</pre>
                   ) : String(value)}
                 </dd>
                 <button
                   type="button"
                   onClick={() => copyRow(typeof value === "object" ? JSON.stringify(value, null, 2) : String(value))}
-                  className={`flex h-8 w-8 items-center justify-center rounded-[${tokens.borderRadius.sm}] text-[${tokens.color.text.muted}] hover:bg-[${tokens.color.surface.muted}] hover:text-[${tokens.color.text.primary}] transition-colors`}
+                  className={`flex h-8 w-8 items-center justify-center rounded-[var(--allura-r-sm)] text-[var(--allura-text-3)] hover:bg-[var(--allura-muted)] hover:text-[var(--allura-charcoal)] transition-colors`}
                   title="Copy"
                 >
                   {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -201,7 +201,7 @@ function TraceTab({ evidence }: { evidence: Evidence }) {
 
   return (
     <div className="p-5">
-      <ol className="relative border-l border-[${tokens.color.border.subtle}] ml-3 space-y-6">
+      <ol className="relative border-l border-[var(--allura-border-1)] ml-3 space-y-6">
         {traceEvents.map((evt) => (
           <li key={evt.id} className="mb-6 ml-6">
             <span
@@ -209,9 +209,9 @@ function TraceTab({ evidence }: { evidence: Evidence }) {
               style={{ backgroundColor: traceStatusColors[evt.status] }}
             />
             <div className="space-y-1">
-              <h4 className={`text-sm font-medium text-[${tokens.color.text.primary}]`}>{evt.label}</h4>
-              <time className={`text-xs text-[${tokens.color.text.muted}]`}>{relativeTime(evt.timestamp)}</time>
-              {evt.detail && <p className={`text-xs text-[${tokens.color.text.secondary}] mt-1`}>{evt.detail}</p>}
+              <h4 className={`text-sm font-medium text-[var(--allura-charcoal)]`}>{evt.label}</h4>
+              <time className={`text-xs text-[var(--allura-text-3)]`}>{relativeTime(evt.timestamp)}</time>
+              {evt.detail && <p className={`text-xs text-[var(--allura-text-2)] mt-1`}>{evt.detail}</p>}
             </div>
           </li>
         ))}
@@ -250,13 +250,13 @@ export default function EvidenceDetailPage({ params }: { params: Promise<{ id: s
 
       {"confidence" in evidence.metadata && typeof evidence.metadata.confidence === "number" && (
         <div className={`flex items-center gap-2 rounded-xl border bg-[var(--dashboard-surface)] p-4`}>
-          <span className={`text-sm font-medium text-[${tokens.color.text.primary}]`}>Confidence</span>
+          <span className={`text-sm font-medium text-[var(--allura-charcoal)]`}>Confidence</span>
           <ConfidenceBadge value={evidence.metadata.confidence as number} size="md" />
         </div>
       )}
 
       {/* Tab Bar */}
-      <div className={`flex border-b border-[${tokens.color.border.subtle}]`}>
+      <div className={`flex border-b border-[var(--allura-border-1)]`}>
         {detailTabs.map((t) => (
           <button
             key={t.value}
@@ -264,20 +264,20 @@ export default function EvidenceDetailPage({ params }: { params: Promise<{ id: s
             onClick={() => setTab(t.value)}
             className={`relative px-4 py-3 text-sm font-medium transition-colors ${
               tab === t.value
-                ? `text-[${tokens.color.primary.default}]`
-                : `text-[${tokens.color.text.secondary}] hover:text-[${tokens.color.text.primary}]`
+                ? `text-[var(--allura-blue)]`
+                : `text-[var(--allura-text-2)] hover:text-[var(--allura-charcoal)]`
             }`}
           >
             {t.label}
             {tab === t.value && (
-              <span className={`absolute bottom-0 left-0 right-0 h-0.5 bg-[${tokens.color.accent.gold}]`} />
+              <span className={`absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--allura-gold)]`} />
             )}
           </button>
         ))}
       </div>
 
       {/* Tab Content */}
-      <div className={`rounded-xl border border-[${tokens.color.border.subtle}] bg-[var(--dashboard-surface)]`}>
+      <div className={`rounded-xl border border-[var(--allura-border-1)] bg-[var(--dashboard-surface)]`}>
         {tab === "raw" && <RawLogTab rawLog={evidence.rawLog} />}
         {tab === "metadata" && <MetadataTab evidence={evidence} />}
         {tab === "trace" && <TraceTab evidence={evidence} />}

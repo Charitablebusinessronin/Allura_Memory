@@ -149,6 +149,56 @@ Bun's lockfile model + supply chain isolation. Faster than Node for scripts. All
 
 ---
 
+## Decision: Graph Visualization Library — react-force-graph-2d over NVL
+
+**Date:** 2026-04-26  
+**Status:** Decided  
+**Owner:** Brooks
+
+### Context
+The allura dashboard Graph View (screen 03) requires interactive Neo4j graph visualization. Two primary candidates evaluated: `@neo4j-nvl/react` (official Neo4j library, powers Bloom/Aura) and `react-force-graph-2d` (MIT, open source, force-directed).
+
+### Decision
+Use `react-force-graph-2d` for the Graph View. Feed data from `/api/memory/graph` (already live). Dynamic import with `{ ssr: false }` for Next.js App Router compatibility.
+
+### Rationale
+- NVL license restricts commercial use beyond a threshold — Allura's SaaS roadmap makes this a liability
+- `react-force-graph-2d` is MIT, no commercial restrictions
+- Full canvas API control enables exact Allura brand color application per node type
+- Dynamic import (`ssr: false`) is the established Next.js pattern for browser-only graph libs
+
+### Alternatives Considered
+| Alternative | Why Rejected |
+|-------------|-------------|
+| `@neo4j-nvl/react` | Commercial license restriction; upgrade path when/if needed |
+| Cytoscape.js | Heavier, less React-native; no advantage for this use case |
+| D3 force-directed | Lower-level; more custom work for same result |
+
+### Impact
+- **Positive:** MIT license, full brand control, lighter bundle
+- **Negative:** Less out-of-box polish vs NVL; requires custom node canvas rendering
+- **Risk:** Visual gap vs NVL's Bloom-quality styling (mitigated by brand-accurate custom rendering)
+
+---
+
+## Decision: Brand Identity Color Correction
+
+**Date:** 2026-04-26  
+**Status:** Decided  
+**Owner:** Brooks
+
+### Context
+`BRAND-IDENTITY.md` contained an outdated color palette (Deep Navy `#1A2B4A`, Coral `#E85A3C`, etc.) and wrong typography (Outfit/Inter). The finalized brand guide delivered 2026-04-26 specifies entirely different values.
+
+### Decision
+Replace all color and typography values in context files with finalized brand guide values. IBM Plex Sans is the canonical font. Six brand colors are `#1D4ED8`, `#FF5A2E`, `#157A4A`, `#0F1115`, `#C89B3C`, `#F6F4EF`.
+
+### Impact
+- **Positive:** All agents now work from correct brand values; no color drift in generated components
+- **Risk:** Any previously generated CSS using old hex values must be audited
+
+---
+
 ## Deprecated Decisions
 
 | Decision | Date | Replaced By | Why |

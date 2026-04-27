@@ -123,20 +123,20 @@ export function Dropdown({
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          `flex h-10 w-full items-center justify-between rounded-[${tokens.borderRadius.md}] border border-[${tokens.color.border.default}] bg-white px-3 text-sm font-medium transition-colors hover:border-[${tokens.color.text.muted}] focus:outline-none focus-visible:ring-2 focus-visible:ring-[${tokens.color.primary.default}] focus-visible:ring-offset-2 disabled:opacity-50`,
-          open && `border-[${tokens.color.primary.default}]`
+          `flex h-10 w-full items-center justify-between rounded-[var(--allura-r-md)] border border-[var(--allura-border-2)] bg-white px-3 text-sm font-medium transition-colors hover:border-[var(--allura-text-3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--allura-blue)] focus-visible:ring-offset-2 disabled:opacity-50`,
+          open && `border-[var(--allura-blue)]`
         )}
       >
-        <span className={cn("truncate", !selectedSet.size && `text-[${tokens.color.text.muted}]`)}>{triggerLabel}</span>
+        <span className={cn("truncate", !selectedSet.size && `text-[var(--allura-text-3)]`)}>{triggerLabel}</span>
         <ChevronDown
-          className={cn(`ml-2 h-4 w-4 shrink-0 text-[${tokens.color.text.muted}] transition-transform`, open && "rotate-180")}
+          className={cn(`ml-2 h-4 w-4 shrink-0 text-[var(--allura-text-3)] transition-transform`, open && "rotate-180")}
         />
       </button>
 
       {open && (
-        <div className={`absolute z-50 mt-1 w-full overflow-hidden rounded-[${tokens.borderRadius.md}] border border-[${tokens.color.border.subtle}] bg-white shadow-[${tokens.shadow.lg}]`}>
+        <div className={`absolute z-50 mt-1 w-full overflow-hidden rounded-[var(--allura-r-md)] border border-[var(--allura-border-1)] bg-white shadow-[var(--allura-sh-lg)]`}>
           {searchable && (
-            <div className={`border-b border-[${tokens.color.border.subtle}] p-2`}>
+            <div className={`border-b border-[var(--allura-border-1)] p-2`}>
               <input
                 ref={searchInputRef}
                 type="text"
@@ -146,7 +146,7 @@ export function Dropdown({
                   setHighlightedIndex(0)
                 }}
                 placeholder="Search…"
-                className={`h-8 w-full rounded-[${tokens.borderRadius.sm}] border border-[${tokens.color.border.subtle}] bg-[${tokens.color.surface.subtle}] px-2 text-sm text-[${tokens.color.text.primary}] placeholder:text-[${tokens.color.text.muted}] focus:border-[${tokens.color.primary.default}] focus:outline-none`}
+                className={`h-8 w-full rounded-[var(--allura-r-sm)] border border-[var(--allura-border-1)] bg-[var(--allura-cream)] px-2 text-sm text-[var(--allura-charcoal)] placeholder:text-[var(--allura-text-3)] focus:border-[var(--allura-blue)] focus:outline-none`}
                 autoFocus
               />
             </div>
@@ -162,9 +162,9 @@ export function Dropdown({
                     disabled={option.disabled}
                     onClick={() => toggle(option)}
                     className={cn(
-                      `flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-[${tokens.color.surface.muted}] disabled:opacity-40`,
-                      isSelected && `bg-[${tokens.color.surface.muted}]`,
-                      isHighlighted && `ring-1 ring-inset ring-[${tokens.color.accent.gold}]`
+                      `flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-[var(--allura-muted)] disabled:opacity-40`,
+                      isSelected && `bg-[var(--allura-muted)]`,
+                      isHighlighted && `ring-1 ring-inset ring-[var(--allura-gold)]`
                     )}
                   >
                     {multi ? (
@@ -172,15 +172,15 @@ export function Dropdown({
                         className={cn(
                           "flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border",
                           isSelected
-                            ? `border-[${tokens.color.primary.default}] bg-[${tokens.color.primary.default}] text-white`
-                            : `border-[${tokens.color.border.default}] bg-white`
+                            ? `border-[var(--allura-blue)] bg-[var(--allura-blue)] text-white`
+                            : `border-[var(--allura-border-2)] bg-white`
                         )}
                       >
                         {isSelected && <Check className="h-3 w-3" />}
                       </span>
                     ) : (
                       isSelected && (
-                        <span className={`mr-1 h-1 w-1 shrink-0 rounded-full bg-[${tokens.color.primary.default}]`} />
+                        <span className={`mr-1 h-1 w-1 shrink-0 rounded-full bg-[var(--allura-blue)]`} />
                       )
                     )}
                     <span className="truncate">{option.label}</span>
@@ -189,15 +189,15 @@ export function Dropdown({
               )
             })}
             {filtered.length === 0 && (
-              <li className={`px-3 py-2 text-sm text-[${tokens.color.text.muted}]`}>No options found</li>
+              <li className={`px-3 py-2 text-sm text-[var(--allura-text-3)]`}>No options found</li>
             )}
           </ul>
           {multi && selectedSet.size > 0 && (
-            <div className={`border-t border-[${tokens.color.border.subtle}] p-2`}>
+            <div className={`border-t border-[var(--allura-border-1)] p-2`}>
               <button
                 type="button"
                 onClick={() => onChange([])}
-                className={`flex w-full items-center justify-center gap-1 rounded-[${tokens.borderRadius.sm}] py-1.5 text-xs font-medium text-[${tokens.color.text.secondary}] hover:bg-[${tokens.color.surface.muted}]`}
+                className={`flex w-full items-center justify-center gap-1 rounded-[var(--allura-r-sm)] py-1.5 text-xs font-medium text-[var(--allura-text-2)] hover:bg-[var(--allura-muted)]`}
               >
                 <X className="h-3 w-3" /> Clear all
               </button>

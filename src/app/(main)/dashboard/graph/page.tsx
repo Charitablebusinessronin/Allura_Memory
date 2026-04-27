@@ -85,11 +85,11 @@ export default function GraphPage() {
 
   return (
     <div className="flex h-[calc(100vh-7rem)] flex-col gap-4">
-      <PageHeader title="Graph View" description="Visualize real Neo4j relationships between memories, insights, agents, and projects." />
+      <PageHeader title="Graph" description="Visualize real Neo4j relationships between memories, insights, agents, and projects." />
 
       {/* Filter bar */}
-      <div className={`flex flex-wrap items-center gap-2 rounded-lg border border-[${tokens.color.border.subtle}] bg-[${tokens.color.surface.subtle}] px-3 py-2`}>
-        <span className={`text-xs font-medium text-[${tokens.color.text.secondary}]`}>Filter:</span>
+      <div className={`flex flex-wrap items-center gap-2 rounded-lg border border-[var(--allura-border-1)] bg-[var(--allura-cream)] px-3 py-2`}>
+        <span className={`text-xs font-medium text-[var(--allura-text-2)]`}>Filter:</span>
         {allTypes.map((type) => (
           <button
             key={type}
@@ -98,7 +98,7 @@ export default function GraphPage() {
             className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
               activeTypes.has(type)
                 ? "text-white"
-                : `border border-[${tokens.color.border.default}] bg-white text-[${tokens.color.text.secondary}] hover:bg-[${tokens.color.surface.muted}]`
+                : `border border-[var(--allura-border-2)] bg-white text-[var(--allura-text-2)] hover:bg-[var(--allura-muted)]`
             }`}
             style={activeTypes.has(type) ? { backgroundColor: getGraphNodeColor(type) } : undefined}
           >
@@ -109,7 +109,7 @@ export default function GraphPage() {
           <button
             type="button"
             onClick={() => setFilterTypes(new Set())}
-            className={`ml-auto text-xs text-[${tokens.color.primary.default}] hover:underline`}
+            className={`ml-auto text-xs text-[var(--allura-blue)] hover:underline`}
           >
             Clear
           </button>
@@ -123,7 +123,7 @@ export default function GraphPage() {
       ) : (
         <>
           <WarningList warnings={state.warnings} />
-          <div className={`relative flex flex-1 min-h-0 overflow-hidden rounded-xl border border-[${tokens.color.border.subtle}] bg-[${tokens.color.surface.subtle}]`}>
+          <div className={`relative flex flex-1 min-h-0 overflow-hidden rounded-xl border border-[var(--allura-border-1)] bg-[var(--allura-cream)]`}>
             {typeof window !== "undefined" && (
               <ForceGraph2D
                 ref={graphRef}
@@ -184,16 +184,16 @@ export default function GraphPage() {
             )}
 
             {/* Floating toolbar with real zoom controls */}
-            <div className={`absolute bottom-4 left-4 flex items-center gap-1 rounded-lg border border-[${tokens.color.border.subtle}] bg-white p-1.5 shadow-[${tokens.shadow.md}]`}>
-              <button type="button" onClick={zoomIn} className={`rounded p-1.5 text-[${tokens.color.text.secondary}] hover:bg-[${tokens.color.surface.muted}] hover:text-[${tokens.color.text.primary}]`} title="Zoom In">+</button>
-              <button type="button" onClick={zoomOut} className={`rounded p-1.5 text-[${tokens.color.text.secondary}] hover:bg-[${tokens.color.surface.muted}] hover:text-[${tokens.color.text.primary}]`} title="Zoom Out">−</button>
-              <button type="button" onClick={fitView} className={`rounded p-1.5 text-[${tokens.color.text.secondary}] hover:bg-[${tokens.color.surface.muted}] hover:text-[${tokens.color.text.primary}]`} title="Fit View">⟲</button>
+            <div className={`absolute bottom-4 left-4 flex items-center gap-1 rounded-lg border border-[var(--allura-border-1)] bg-white p-1.5 shadow-[var(--allura-sh-md)]`}>
+              <button type="button" onClick={zoomIn} className={`rounded p-1.5 text-[var(--allura-text-2)] hover:bg-[var(--allura-muted)] hover:text-[var(--allura-charcoal)]`} title="Zoom In">+</button>
+              <button type="button" onClick={zoomOut} className={`rounded p-1.5 text-[var(--allura-text-2)] hover:bg-[var(--allura-muted)] hover:text-[var(--allura-charcoal)]`} title="Zoom Out">−</button>
+              <button type="button" onClick={fitView} className={`rounded p-1.5 text-[var(--allura-text-2)] hover:bg-[var(--allura-muted)] hover:text-[var(--allura-charcoal)]`} title="Fit View">⟲</button>
             </div>
 
             {/* Detail sidebar */}
             {selectedNode && (
-              <div className={`absolute right-0 top-0 h-full w-[300px] overflow-y-auto border-l border-[${tokens.color.border.subtle}] bg-white shadow-[${tokens.shadow.md}]`}>
-                <div className={`flex items-center justify-between border-b border-[${tokens.color.border.subtle}] p-4`}>
+              <div className={`absolute right-0 top-0 h-full w-[300px] overflow-y-auto border-l border-[var(--allura-border-1)] bg-white shadow-[var(--allura-sh-md)]`}>
+                <div className={`flex items-center justify-between border-b border-[var(--allura-border-1)] p-4`}>
                   <span
                     className="rounded px-2 py-0.5 text-xs font-medium text-white"
                     style={{ backgroundColor: getGraphNodeColor(selectedNode.type) }}
@@ -203,7 +203,7 @@ export default function GraphPage() {
                   <button
                     type="button"
                     onClick={() => setSelectedNodeId(null)}
-                    className={`text-[${tokens.color.text.muted}] hover:text-[${tokens.color.text.primary}]`}
+                    className={`text-[var(--allura-text-3)] hover:text-[var(--allura-charcoal)]`}
                   >
                     ✕
                   </button>
