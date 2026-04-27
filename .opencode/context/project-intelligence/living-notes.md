@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/notes | Priority: high | Version: 2.0 | Updated: 2026-04-25 -->
+<!-- Context: project-intelligence/notes | Priority: high | Version: 2.1 | Updated: 2026-04-26 -->
 
 # Living Notes — allura Memory
 
@@ -8,11 +8,18 @@
 
 ---
 
-## Current Sprint State (as of 2026-04-25)
+## Current Sprint State (as of 2026-04-26)
 
 **Epic:** 1 — Persistent Knowledge Capture  
 **Active Story:** 1.2 — TraceMiddleware Integration `[IN PROGRESS]`  
-**Last Completed:** Story 1.1 ✅ RuVix Security Hardening (28/28 tests)
+**Last Completed:** Story 1.1 ✅ RuVix Security Hardening (28/28 tests) · Issue #25 ✅ Real-data Dashboard
+
+**Issue #25 — Real-Data Dashboard (COMPLETED 2026-04-26 06:02)**
+- Branch: `feature/real-data-dashboard-25`
+- `/api/memory/graph` wired to live Neo4j data
+- Mock data removed from all runtime paths
+- AI-GUIDELINES.md compliance gate cleared
+- Commits: `93e25582`, `db80a5d4`, `abb5464e`, `c365cf66`, `c91a045a`
 
 **Agent Primitives:**
 - 4/12 green
