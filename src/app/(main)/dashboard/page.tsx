@@ -1,96 +1,82 @@
-import type { Metadata } from "next"
+"use client"
 
-export const metadata: Metadata = {
-  title: "Dashboard",
-  description: "System overview — health, pending approvals, and component status",
-}
+import { useEffect, useState } from "react"
+import { Activity, Brain, GitBranch, Lightbulb } from "lucide-react"
 
-import type { ComponentHealth, HealthResponse } from "@/app/api/health/route"
-import { HealthTable, RefreshButton } from "./_components/health-table"
-import { LiveKPIs } from "./_components/live-kpis"
-import { BudgetCard } from "./_components/budget-card"
+import {
+  ActivityPanel,
+  ErrorState,
+  InsightCard,
+  LoadingState,
+  MetricCard,
+  PageHeader,
+  SystemStatusCard,
+  WarningList,
+} from "@/components/dashboard"
+import { Button } from "@/components/ui/button"
+import { loadDashboardOverview } from "@/lib/dashboard/queries"
+import { tokens } from "@/lib/tokens"
+import type { DashboardOverview, DashboardResult } from "@/lib/dashboard/types"
 
-import { APP_CONFIG } from "@/config/app-config"
+export default function DashboardPage() {
+  const [state, setState] = useState<DashboardResult<DashboardOverview> | null>(null)
 
-const DEFAULT_GROUP_ID = APP_CONFIG.defaultGroupId
-
-// fetchHealth, fetchPendingCount, fetchTotalMemories feed SSR initial props to LiveKPIs.
-// The client component then takes over with live SSE updates.
-
-async function fetchHealth(): Promise<HealthResponse | null> {
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3100"}/api/health?detailed=true`, {
-      cache: "no-store",
+  useEffect(() => {
+    let alive = true
+    void loadDashboardOverview().then((result) => {
+      if (alive) setState(result)
     })
-    if (!res.ok) return null
-    return res.json()
-  } catch {
-    return null
-  }
-}
+    return () => {
+      alive = false
+    }
+  }, [])
 
-async function fetchPendingCount(): Promise<number> {
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3100"}/api/curator/proposals?group_id=${DEFAULT_GROUP_ID}&status=pending&limit=1000`,
-      { cache: "no-store" }
-    )
-    if (!res.ok) return 0
-    const data = await res.json()
-    return (data.proposals as unknown[])?.length ?? 0
-  } catch {
-    return 0
-  }
-}
+  if (!state) return <LoadingState />
+  if (state.error) return <ErrorState message={state.error} />
+  if (!state.data) return <ErrorState message="Dashboard returned no data." />
 
-async function fetchTotalMemories(): Promise<number> {
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3100"}/api/memory/count?group_id=${DEFAULT_GROUP_ID}`,
-      { cache: "no-store" }
-    )
-    if (!res.ok) return 0
-    const data = await res.json()
-    return (data as { count?: number }).count ?? 0
-  } catch {
-    return 0
-  }
-}
-
-export default async function DashboardPage() {
-  const [health, pendingCount, totalMemories] = await Promise.all([
-    fetchHealth(),
-    fetchPendingCount(),
-    fetchTotalMemories(),
-  ])
-
-  const components: ComponentHealth[] = health?.components ?? []
-  const activeComponents = components.filter((c) => c.status === "healthy").length
+  const metrics = state.data.metrics.map((m) => ({
+    ...m,
+    icon:
+      m.id === "pending-insights" ? Lightbulb :
+      m.id === "approved-insights" ? Brain :
+      m.id === "graph-connections" ? GitBranch :
+      Activity,
+  }))
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-1 text-sm">System overview for {DEFAULT_GROUP_ID}</p>
-      </div>
-
-      <LiveKPIs
-        initialHealth={health}
-        initialTotalMemories={totalMemories}
-        initialPendingCount={pendingCount}
-        initialActiveComponents={activeComponents}
-        groupId={DEFAULT_GROUP_ID}
+      <PageHeader
+        title="Overview"
+        description="Activity dashboard for your memory graph"
       />
+      <WarningList warnings={state.warnings} />
 
-      <BudgetCard groupId={DEFAULT_GROUP_ID} />
-
-      <div>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold">Component Status</h2>
-          <RefreshButton />
-        </div>
-        <HealthTable components={components} />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {metrics.map((metric) => (
+          <MetricCard key={metric.id} metric={metric} />
+        ))}
       </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
+        <ActivityPanel items={state.data.activity} />
+        <section className={`rounded-xl border border-[${tokens.color.border.subtle}] bg-white shadow-[${tokens.shadow.md}]`}>
+          <div className={`border-b border-[${tokens.color.border.subtle}] p-5`}>
+            <h2 className={`text-lg font-semibold text-[${tokens.color.text.primary}]`}>Pending Queue</h2>
+          </div>
+          <div className="space-y-3 p-5">
+            {state.data.pendingInsights.length === 0 ? (
+              <p className={`text-sm text-[${tokens.color.text.secondary}]`}>No pending insights in the curator queue.</p>
+            ) : (
+              state.data.pendingInsights.slice(0, 5).map((insight) => (
+                <InsightCard key={insight.id} insight={insight} />
+              ))
+            )}
+          </div>
+        </section>
+      </div>
+
+      <SystemStatusCard status={state.data.systemStatus} />
     </div>
   )
 }
