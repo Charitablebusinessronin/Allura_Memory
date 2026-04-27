@@ -58,7 +58,7 @@ e.source.toLowerCase().includes("memory") ||
   }, [state?.data, tab, search])
 
   return (
-    <div className="space-y-6" style={{ fontFamily: "var(--font-ibm-plex-sans)" }}>
+    <div className="space-y-6" >
       <PageHeader
         title="Evidence Detail"
         description="Raw traces and evidence records returned by Allura Brain."

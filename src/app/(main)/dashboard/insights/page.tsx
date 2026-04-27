@@ -55,7 +55,7 @@ export default function InsightsPage() {
     { value: "superseded", label: "Superseded" },
   ]
 
-  return <div className="space-y-6" style={{ fontFamily: "var(--font-ibm-plex-sans)" }}><PageHeader title="Insight Review Queue" description="Review, approve, reject, or revise candidate insights using real curator data." />
+  return <div className="space-y-6" ><PageHeader title="Insight Review Queue" description="Review, approve, reject, or revise candidate insights using real curator data." />
     <Tabs items={tabItems} value={tab} onChange={setTab} />
     {actionError && <ErrorState message={actionError} />}
     {!state ? <LoadingState /> : state.error ? <ErrorState message={state.error} /> : <><WarningList warnings={state.warnings} /><div className="space-y-3">{(state.data ?? []).length === 0 ? <p className="text-muted-foreground rounded-xl border border-dashed p-8 text-center text-sm">No insights returned for this status.</p> : state.data!.map((insight) => <InsightCard key={insight.id} insight={insight} actions={tab === "pending" ? <InsightActions insight={insight} onApprove={approve} onReject={reject} busy={busyId === insight.id} /> : undefined} />)}</div></>}

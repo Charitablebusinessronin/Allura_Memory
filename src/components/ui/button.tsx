@@ -3,6 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
 
 import { cn } from "@/lib/utils"
+import { tokens } from "@/lib/tokens"
 
 const buttonVariants = cva(
   "group/button inline-flex shrink-0 items-center justify-center border border-transparent bg-clip-padding font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
@@ -12,15 +13,15 @@ const buttonVariants = cva(
         default:
           "bg-primary text-primary-foreground hover:bg-primary/80 shadow-[0_1px_2px_0_rgba(15,17,21,0.05)]",
         primary:
-          "bg-[#1D4ED8] text-white hover:bg-[#1E40AF] focus-visible:ring-[#1D4ED8] shadow-[0_1px_2px_0_rgba(15,17,21,0.05)]",
+          `bg-[${tokens.color.primary.default}] text-white hover:bg-[${tokens.color.primary.hover}] focus-visible:ring-[${tokens.color.primary.default}] shadow-[0_1px_2px_0_rgba(15,17,21,0.05)]`,
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-[0_1px_2px_0_rgba(15,17,21,0.05)]",
         accent:
-          "bg-[#FF5A2E] text-white hover:bg-[#E04D1F] focus-visible:ring-[#FF5A2E] shadow-[0_1px_2px_0_rgba(15,17,21,0.05)]",
+          `bg-[${tokens.color.secondary.default}] text-white hover:bg-[${tokens.color.secondary.hover}] focus-visible:ring-[${tokens.color.secondary.default}] shadow-[0_1px_2px_0_rgba(15,17,21,0.05)]`,
         ghost:
-          "bg-transparent text-[#1D4ED8] border-[#D1D5DB] hover:bg-[#F3F4F6] focus-visible:ring-[#1D4ED8]",
+          `bg-transparent text-[${tokens.color.primary.default}] border-[${tokens.color.border.default}] hover:bg-[${tokens.color.surface.muted}] focus-visible:ring-[${tokens.color.primary.default}]`,
         danger:
-          "bg-white text-[#FF5A2E] border-[#FF5A2E] hover:bg-[#FEF2F0] focus-visible:ring-[#FF5A2E]",
+          `bg-white text-[${tokens.color.secondary.default}] border-[${tokens.color.secondary.default}] hover:bg-[${tokens.color.secondary.hover}]/10 focus-visible:ring-[${tokens.color.secondary.default}]`,
         outline:
           "border-border bg-background shadow-xs hover:bg-muted hover:text-foreground",
         link: "text-primary underline-offset-4 hover:underline",

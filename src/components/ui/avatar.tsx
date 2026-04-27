@@ -3,6 +3,13 @@
 import * as React from "react"
 
 import { cn, getInitials } from "@/lib/utils"
+import { tokens } from "@/lib/tokens"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 /* ─── shadcn/ui compatible Avatar ─── */
 
@@ -40,7 +47,7 @@ const AvatarFallback = React.forwardRef<
   <span
     ref={ref}
     className={cn(
-      "flex h-full w-full items-center justify-center rounded-full bg-[#1D4ED8] font-medium text-white",
+      `flex h-full w-full items-center justify-center rounded-full bg-[${tokens.color.primary.default}] font-medium text-white`,
       className
     )}
     {...props}
@@ -70,14 +77,31 @@ const sizeMap = {
 }
 
 const statusColorMap = {
-  online: "bg-[#157A4A]",
-  offline: "bg-[#9CA3AF]",
-  away: "bg-[#C89B3C]",
-  busy: "bg-[#FF5A2E]",
+  online: `bg-[${tokens.color.success.default}]`,
+  offline: `bg-[${tokens.color.text.muted}]`,
+  away: `bg-[${tokens.color.accent.gold}]`,
+  busy: `bg-[${tokens.color.secondary.default}]`,
+}
+
+/** Deterministic color based on name hash */
+function getNameColor(name: string): string {
+  const colors = [
+    tokens.color.primary.default,
+    tokens.color.secondary.default,
+    tokens.color.success.default,
+    tokens.color.accent.gold,
+    tokens.color.graph.event,
+  ]
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  return colors[Math.abs(hash) % colors.length]
 }
 
 export function UserAvatar({ src, alt, size = "md", status, fallback, className }: DashboardAvatarProps) {
   const initials = fallback ?? getInitials(alt)
+  const fallbackColor = getNameColor(alt)
   return (
     <div className={cn("relative inline-block", className)}>
       {src ? (
@@ -92,9 +116,10 @@ export function UserAvatar({ src, alt, size = "md", status, fallback, className 
       ) : (
         <span
           className={cn(
-            "inline-flex items-center justify-center rounded-full bg-[#1D4ED8] font-semibold text-white ring-2 ring-white",
+            "inline-flex items-center justify-center rounded-full font-semibold text-white ring-2 ring-white",
             sizeMap[size]
           )}
+          style={{ backgroundColor: fallbackColor }}
           aria-label={alt}
         >
           {initials}
@@ -122,25 +147,35 @@ interface AvatarGroupProps {
 export function AvatarGroup({ avatars, max = 3, size = "md", className }: AvatarGroupProps) {
   const visible = avatars.slice(0, max)
   const overflow = avatars.length - max
+  const names = avatars.map((a) => a.alt)
 
   return (
-    <div className={cn("flex items-center", className)}>
-      {visible.map((avatar, i) => (
-        <div key={i} className={cn("relative", i > 0 && "-ml-2")} style={{ zIndex: i + 1 }}>
-          <UserAvatar {...avatar} size={size} className="ring-2 ring-white" />
-        </div>
-      ))}
-      {overflow > 0 && (
-        <div
-          className={cn(
-            "relative -ml-2 inline-flex items-center justify-center rounded-full bg-[#F3F4F6] font-medium text-[#6B7280] ring-2 ring-white",
-            sizeMap[size]
-          )}
-          style={{ zIndex: max + 1 }}
-        >
-          +{overflow}
-        </div>
-      )}
-    </div>
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className={cn("flex items-center", className)}>
+            {visible.map((avatar, i) => (
+              <div key={i} className={cn("relative", i > 0 && "-ml-2")} style={{ zIndex: i + 1 }}>
+                <UserAvatar {...avatar} size={size} className="ring-2 ring-white" />
+              </div>
+            ))}
+            {overflow > 0 && (
+              <div
+                className={cn(
+                  `relative -ml-2 inline-flex items-center justify-center rounded-full bg-[${tokens.color.surface.muted}] font-medium text-[${tokens.color.text.secondary}] ring-2 ring-white`,
+                  sizeMap[size]
+                )}
+                style={{ zIndex: max + 1 }}
+              >
+                +{overflow}
+              </div>
+            )}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top" align="center">
+          {names.join(", ")}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   )
 }

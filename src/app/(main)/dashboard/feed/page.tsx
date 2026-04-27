@@ -16,6 +16,7 @@ import { Dropdown } from "@/components/ui/dropdown"
 import { Pagination } from "@/components/ui/pagination"
 import { SearchBar } from "@/components/ui/search-bar"
 import { loadMemories } from "@/lib/dashboard/queries"
+import { tokens } from "@/lib/tokens"
 import type { DashboardResult, Memory } from "@/lib/dashboard/types"
 
 const PAGE_SIZE = 10
@@ -66,10 +67,10 @@ export default function MemoryFeedPage() {
   const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
-    <div className="space-y-6" style={{ fontFamily: "var(--font-ibm-plex-sans)" }}>
+    <div className="space-y-6">
       <PageHeader title="Memory Feed" description="Search and explore real memories from Allura Brain." />
 
-      <div className="flex flex-col gap-3 rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-[0_1px_2px_0_rgba(15,17,21,0.05)] lg:flex-row lg:items-center lg:justify-between">
+      <div className={`flex flex-col gap-3 rounded-xl border border-[${tokens.color.border.subtle}] bg-white p-3 shadow-[${tokens.shadow.sm}] lg:flex-row lg:items-center lg:justify-between`}>
         <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
           <SearchBar
             placeholder="Search memories…"

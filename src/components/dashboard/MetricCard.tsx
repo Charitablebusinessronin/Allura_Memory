@@ -2,15 +2,16 @@ import { Database } from "lucide-react"
 
 import type { Metric } from "@/lib/dashboard/types"
 import { cn } from "@/lib/utils"
+import { tokens } from "@/lib/tokens"
 
 const toneClasses: Record<Metric["tone"], string> = {
-  blue: "bg-[color-mix(in_srgb,#1D4ED8_10%,white)] text-[#1D4ED8]",
-  orange: "bg-[color-mix(in_srgb,#FF5A2E_10%,white)] text-[#FF5A2E]",
-  green: "bg-[color-mix(in_srgb,#157A4A_10%,white)] text-[#157A4A]",
-  charcoal: "bg-[color-mix(in_srgb,#0F1115_10%,white)] text-[#0F1115]",
-  gold: "bg-[color-mix(in_srgb,#C89B3C_10%,white)] text-[#A87D2B]",
-  red: "bg-[color-mix(in_srgb,#FF5A2E_10%,white)] text-[#E04D1F]",
-  muted: "bg-[#F3F4F6] text-[#6B7280]",
+  blue:     `bg-[color-mix(in_srgb,${tokens.color.primary.default}_10%,white)]     text-[${tokens.color.primary.default}]`,
+  orange:   `bg-[color-mix(in_srgb,${tokens.color.secondary.default}_10%,white)]   text-[${tokens.color.secondary.default}]`,
+  green:    `bg-[color-mix(in_srgb,${tokens.color.success.default}_10%,white)]     text-[${tokens.color.success.default}]`,
+  charcoal: `bg-[color-mix(in_srgb,${tokens.color.text.primary}_10%,white)]       text-[${tokens.color.text.primary}]`,
+  gold:     `bg-[color-mix(in_srgb,${tokens.color.accent.gold}_10%,white)]        text-[${tokens.color.accent.goldHover}]`,
+  red:      `bg-[color-mix(in_srgb,${tokens.color.secondary.hover}_10%,white)]    text-[${tokens.color.secondary.hover}]`,
+  muted:    `bg-[${tokens.color.surface.muted}]                                    text-[${tokens.color.text.secondary}]`,
 }
 
 export function MetricCard({ metric }: { metric: Metric }) {

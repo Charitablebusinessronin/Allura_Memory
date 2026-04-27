@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { Check, ChevronDown, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { tokens } from "@/lib/tokens"
 
 export interface DropdownOption {
   value: string
@@ -34,7 +35,9 @@ export function Dropdown({
 }: DropdownProps) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState("")
+  const [highlightedIndex, setHighlightedIndex] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -45,6 +48,46 @@ export function Dropdown({
     document.addEventListener("mousedown", handleClick)
     return () => document.removeEventListener("mousedown", handleClick)
   }, [])
+
+  useEffect(() => {
+    if (open) {
+      setHighlightedIndex(0)
+      if (searchable) {
+        setTimeout(() => searchInputRef.current?.focus(), 10)
+      }
+    } else {
+      setSearch("")
+    }
+  }, [open, searchable])
+
+  useEffect(() => {
+    if (!open) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const filtered = searchable
+        ? options.filter((o) => o.label.toLowerCase().includes(search.toLowerCase()))
+        : options
+      if (e.key === "ArrowDown") {
+        e.preventDefault()
+        setHighlightedIndex((prev) => (prev + 1) % filtered.length)
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault()
+        setHighlightedIndex((prev) => (prev - 1 + filtered.length) % filtered.length)
+      } else if (e.key === "Enter") {
+        e.preventDefault()
+        const option = filtered[highlightedIndex]
+        if (option && !option.disabled) {
+          toggle(option)
+        }
+      } else if (e.key === "Escape") {
+        e.preventDefault()
+        setOpen(false)
+      } else if (e.key === "Tab") {
+        setOpen(false)
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [open, searchable, search, options, highlightedIndex])
 
   const selectedSet = new Set(Array.isArray(value) ? value : value ? [value] : [])
 
@@ -80,33 +123,38 @@ export function Dropdown({
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "flex h-10 w-full items-center justify-between rounded-[8px] border border-[#D1D5DB] bg-white px-3 text-sm font-medium transition-colors hover:border-[#9CA3AF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8] focus-visible:ring-offset-2 disabled:opacity-50",
-          open && "border-[#1D4ED8]"
+          `flex h-10 w-full items-center justify-between rounded-[${tokens.borderRadius.md}] border border-[${tokens.color.border.default}] bg-white px-3 text-sm font-medium transition-colors hover:border-[${tokens.color.text.muted}] focus:outline-none focus-visible:ring-2 focus-visible:ring-[${tokens.color.primary.default}] focus-visible:ring-offset-2 disabled:opacity-50`,
+          open && `border-[${tokens.color.primary.default}]`
         )}
       >
-        <span className={cn("truncate", !selectedSet.size && "text-[#9CA3AF]")}>{triggerLabel}</span>
+        <span className={cn("truncate", !selectedSet.size && `text-[${tokens.color.text.muted}]`)}>{triggerLabel}</span>
         <ChevronDown
-          className={cn("ml-2 h-4 w-4 shrink-0 text-[#9CA3AF] transition-transform", open && "rotate-180")}
+          className={cn(`ml-2 h-4 w-4 shrink-0 text-[${tokens.color.text.muted}] transition-transform`, open && "rotate-180")}
         />
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-[8px] border border-[#E5E7EB] bg-white shadow-[0_10px_15px_-3px_rgba(15,17,21,0.1),0_4px_6px_-4px_rgba(15,17,21,0.1)]">
+        <div className={`absolute z-50 mt-1 w-full overflow-hidden rounded-[${tokens.borderRadius.md}] border border-[${tokens.color.border.subtle}] bg-white shadow-[${tokens.shadow.lg}]`}>
           {searchable && (
-            <div className="border-b border-[#E5E7EB] p-2">
+            <div className={`border-b border-[${tokens.color.border.subtle}] p-2`}>
               <input
+                ref={searchInputRef}
                 type="text"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value)
+                  setHighlightedIndex(0)
+                }}
                 placeholder="Search…"
-                className="h-8 w-full rounded-[4px] border border-[#E5E7EB] bg-[#F6F4EF] px-2 text-sm text-[#0F1115] placeholder:text-[#9CA3AF] focus:border-[#1D4ED8] focus:outline-none"
+                className={`h-8 w-full rounded-[${tokens.borderRadius.sm}] border border-[${tokens.color.border.subtle}] bg-[${tokens.color.surface.subtle}] px-2 text-sm text-[${tokens.color.text.primary}] placeholder:text-[${tokens.color.text.muted}] focus:border-[${tokens.color.primary.default}] focus:outline-none`}
                 autoFocus
               />
             </div>
           )}
           <ul className="max-h-60 overflow-y-auto py-1">
-            {filtered.map((option) => {
+            {filtered.map((option, idx) => {
               const isSelected = selectedSet.has(option.value)
+              const isHighlighted = idx === highlightedIndex
               return (
                 <li key={option.value}>
                   <button
@@ -114,8 +162,9 @@ export function Dropdown({
                     disabled={option.disabled}
                     onClick={() => toggle(option)}
                     className={cn(
-                      "flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-[#F3F4F6] disabled:opacity-40",
-                      isSelected && "bg-[#F3F4F6]"
+                      `flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-[${tokens.color.surface.muted}] disabled:opacity-40`,
+                      isSelected && `bg-[${tokens.color.surface.muted}]`,
+                      isHighlighted && `ring-1 ring-inset ring-[${tokens.color.accent.gold}]`
                     )}
                   >
                     {multi ? (
@@ -123,15 +172,15 @@ export function Dropdown({
                         className={cn(
                           "flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border",
                           isSelected
-                            ? "border-[#1D4ED8] bg-[#1D4ED8] text-white"
-                            : "border-[#D1D5DB] bg-white"
+                            ? `border-[${tokens.color.primary.default}] bg-[${tokens.color.primary.default}] text-white`
+                            : `border-[${tokens.color.border.default}] bg-white`
                         )}
                       >
                         {isSelected && <Check className="h-3 w-3" />}
                       </span>
                     ) : (
                       isSelected && (
-                        <span className="mr-1 h-1 w-1 shrink-0 rounded-full bg-[#1D4ED8]" />
+                        <span className={`mr-1 h-1 w-1 shrink-0 rounded-full bg-[${tokens.color.primary.default}]`} />
                       )
                     )}
                     <span className="truncate">{option.label}</span>
@@ -140,15 +189,15 @@ export function Dropdown({
               )
             })}
             {filtered.length === 0 && (
-              <li className="px-3 py-2 text-sm text-[#9CA3AF]">No options found</li>
+              <li className={`px-3 py-2 text-sm text-[${tokens.color.text.muted}]`}>No options found</li>
             )}
           </ul>
           {multi && selectedSet.size > 0 && (
-            <div className="border-t border-[#E5E7EB] p-2">
+            <div className={`border-t border-[${tokens.color.border.subtle}] p-2`}>
               <button
                 type="button"
                 onClick={() => onChange([])}
-                className="flex w-full items-center justify-center gap-1 rounded-[4px] py-1.5 text-xs font-medium text-[#6B7280] hover:bg-[#F3F4F6]"
+                className={`flex w-full items-center justify-center gap-1 rounded-[${tokens.borderRadius.sm}] py-1.5 text-xs font-medium text-[${tokens.color.text.secondary}] hover:bg-[${tokens.color.surface.muted}]`}
               >
                 <X className="h-3 w-3" /> Clear all
               </button>

@@ -1,7 +1,7 @@
 :root {
   /* Brand primitives */
   --allura-deep-navy: #1A2B4A;
-  --allura-coral: #E85A3C;
+  --allura-coral: #FF5A2E;  /* Canonical: tokens.json color.secondary.default */
   --allura-trust-green: #4CAF50;
   --allura-clarity-blue: #5B8DB8;
   --allura-pure-white: #F5F5F5;
@@ -14,7 +14,7 @@
   --dashboard-surface: #FFFFFF;
   --dashboard-surface-alt: var(--allura-pure-white);
   --dashboard-border: color-mix(in srgb, var(--allura-deep-navy) 14%, white);
-  --dashboard-accent: var(--allura-coral);
+  --dashboard-accent: var(--allura-coral);  /* Alias to canonical #FF5A2E */
   --dashboard-accent-secondary: var(--allura-deep-navy);
   --dashboard-success: var(--allura-trust-green);
   --dashboard-info: var(--allura-clarity-blue);

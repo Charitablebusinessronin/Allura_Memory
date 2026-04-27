@@ -351,6 +351,8 @@ interface NotificationBadgeProps {
 | Active | `color.surface.muted` | `color.primary.default` | `color.primary.default` |
 | Active indicator | `3px` left border, `color.primary.default` |
 
+> **Deprecation notice (2026-04-26):** Earlier drafts suggested `color.primary.default` for all active indicators including tab bars. That guidance has been superseded by `screen-frames.md` §4. **Sidebar nav items use Blue (`color.primary.default`). Tab bars use Gold (`color.accent.gold`).** See TOKEN-AUTHORITY.md DD-2.
+
 **Icon size:** `20px`, `margin-right: spacing.md` (`12px`)
 **Label:** `typography.fontSize.sm` (`14px`), `typography.fontWeight.medium`
 

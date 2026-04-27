@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { approveProposal, rejectProposal } from "@/lib/dashboard/api"
 import { loadInsights } from "@/lib/dashboard/queries"
+import { tokens } from "@/lib/tokens"
 import type { DashboardResult, Insight } from "@/lib/dashboard/types"
 
 type Tab = "pending" | "approved" | "rejected"
@@ -63,11 +64,11 @@ export default function ReviewPage() {
   }
 
   return (
-    <div className="space-y-6" style={{ fontFamily: "var(--font-ibm-plex-sans)" }}>
+    <div className="space-y-6">
       <PageHeader title="Insight Review" description="Review, approve, reject, or revise candidate insights using real curator data." />
 
-      {/* Tabs */}
-      <div className="flex border-b border-[#E5E7EB]">
+      {/* Tabs — underline uses Gold per design spec CR-3 */}
+      <div className={`flex border-b border-[${tokens.color.border.subtle}]`}>
         {tabs.map((t) => (
           <button
             key={t.value}
@@ -75,13 +76,13 @@ export default function ReviewPage() {
             onClick={() => setTab(t.value)}
             className={`relative px-4 py-3 text-sm font-medium transition-colors ${
               tab === t.value
-                ? "text-[#1D4ED8]"
-                : "text-[#6B7280] hover:text-[#0F1115]"
+                ? `text-[${tokens.color.primary.default}]`
+                : `text-[${tokens.color.text.secondary}] hover:text-[${tokens.color.text.primary}]`
             }`}
           >
             {t.label}
             {tab === t.value && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1D4ED8]" />
+              <span className={`absolute bottom-0 left-0 right-0 h-0.5 bg-[${tokens.color.accent.gold}]`} />
             )}
           </button>
         ))}
@@ -98,8 +99,8 @@ export default function ReviewPage() {
           <WarningList warnings={state.warnings} />
           <div className="space-y-3">
             {(state.data ?? []).length === 0 ? (
-              <div className="rounded-xl border border-dashed border-[#D1D5DB] p-8 text-center">
-                <p className="text-sm text-[#6B7280]">No insights returned for this status.</p>
+              <div className={`rounded-xl border border-dashed border-[${tokens.color.border.default}] p-8 text-center`}>
+                <p className={`text-sm text-[${tokens.color.text.secondary}]`}>No insights returned for this status.</p>
               </div>
             ) : (
               state.data!.map((insight) => (

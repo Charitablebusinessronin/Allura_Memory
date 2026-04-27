@@ -3,7 +3,7 @@ import { DASHBOARD_GROUP_ID } from "@/lib/dashboard/api"
 
 export default function SettingsPage() {
   return (
-    <div className="space-y-6" style={{ fontFamily: "var(--font-ibm-plex-sans)" }}>
+    <div className="space-y-6" >
       <PageHeader title="Settings" description="Dashboard configuration and tenant scope." />
 
       <section className="rounded-xl border bg-[var(--dashboard-surface)] p-5">
