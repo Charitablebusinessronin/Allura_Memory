@@ -4,13 +4,13 @@ import type { Metric } from "@/lib/dashboard/types"
 import { cn } from "@/lib/utils"
 
 const toneClasses: Record<Metric["tone"], string> = {
-  blue: "bg-[var(--tone-blue-bg)] text-[var(--tone-blue-text)]",
-  orange: "bg-[var(--tone-orange-bg)] text-[var(--tone-orange-text)]",
-  green: "bg-[var(--tone-green-bg)] text-[var(--tone-green-text)]",
-  charcoal: "bg-[var(--tone-charcoal-bg)] text-[var(--tone-charcoal-text)]",
-  gold: "bg-[var(--tone-gold-bg)] text-[var(--tone-gold-text)]",
-  red: "bg-[var(--tone-red-bg)] text-[var(--tone-red-text)]",
-  muted: "bg-muted text-muted-foreground",
+  blue: "bg-[color-mix(in_srgb,#1D4ED8_10%,white)] text-[#1D4ED8]",
+  orange: "bg-[color-mix(in_srgb,#FF5A2E_10%,white)] text-[#FF5A2E]",
+  green: "bg-[color-mix(in_srgb,#157A4A_10%,white)] text-[#157A4A]",
+  charcoal: "bg-[color-mix(in_srgb,#0F1115_10%,white)] text-[#0F1115]",
+  gold: "bg-[color-mix(in_srgb,#C89B3C_10%,white)] text-[#A87D2B]",
+  red: "bg-[color-mix(in_srgb,#FF5A2E_10%,white)] text-[#E04D1F]",
+  muted: "bg-[#F3F4F6] text-[#6B7280]",
 }
 
 export function MetricCard({ metric }: { metric: Metric }) {

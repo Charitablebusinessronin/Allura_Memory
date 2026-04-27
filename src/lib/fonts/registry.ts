@@ -3,6 +3,7 @@ import {
   Figtree,
   Geist,
   Geist_Mono,
+  IBM_Plex_Sans,
   Inter,
   JetBrains_Mono,
   Lora,
@@ -22,6 +23,12 @@ import { GeistPixelSquare } from "geist/font/pixel";
 import "@fontsource/ibm-plex-sans/400.css";
 import "@fontsource/ibm-plex-sans/500.css";
 import "@fontsource/ibm-plex-sans/700.css";
+
+const ibmPlexSans = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-ibm-plex-sans",
+});
 
 const inter = Inter({
   subsets: ["latin"],
@@ -111,6 +118,10 @@ const playfairDisplay = Playfair_Display({
 });
 
 export const fontRegistry = {
+  ibmPlexSans: {
+    label: "IBM Plex Sans",
+    font: ibmPlexSans,
+  },
   geist: {
     label: "Geist",
     font: geist,

@@ -1,112 +1,146 @@
 "use client"
 
 import * as React from "react"
-import { Avatar as AvatarPrimitive } from "radix-ui"
 
-import { cn } from "@/lib/utils"
+import { cn, getInitials } from "@/lib/utils"
 
-function Avatar({
-  className,
-  size = "default",
-  ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Root> & {
-  size?: "default" | "sm" | "lg"
-}) {
+/* ─── shadcn/ui compatible Avatar ─── */
+
+const Avatar = React.forwardRef<
+  React.ElementRef<"span">,
+  React.ComponentPropsWithoutRef<"span">
+>(({ className, ...props }, ref) => (
+  <span
+    ref={ref}
+    className={cn(
+      "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
+      className
+    )}
+    {...props}
+  />
+))
+Avatar.displayName = "Avatar"
+
+const AvatarImage = React.forwardRef<
+  React.ElementRef<"img">,
+  React.ComponentPropsWithoutRef<"img">
+>(({ className, ...props }, ref) => (
+  <img
+    ref={ref}
+    className={cn("aspect-square h-full w-full object-cover", className)}
+    {...props}
+  />
+))
+AvatarImage.displayName = "AvatarImage"
+
+const AvatarFallback = React.forwardRef<
+  React.ElementRef<"span">,
+  React.ComponentPropsWithoutRef<"span">
+>(({ className, ...props }, ref) => (
+  <span
+    ref={ref}
+    className={cn(
+      "flex h-full w-full items-center justify-center rounded-full bg-[#1D4ED8] font-medium text-white",
+      className
+    )}
+    {...props}
+  />
+))
+AvatarFallback.displayName = "AvatarFallback"
+
+export { Avatar, AvatarImage, AvatarFallback }
+
+/* ─── Dashboard-specific Avatar utilities ─── */
+
+interface DashboardAvatarProps {
+  src?: string
+  alt: string
+  size?: "xs" | "sm" | "md" | "lg" | "xl"
+  status?: "online" | "offline" | "away" | "busy"
+  fallback?: string
+  className?: string
+}
+
+const sizeMap = {
+  xs: "h-6 w-6 text-[10px]",
+  sm: "h-8 w-8 text-xs",
+  md: "h-10 w-10 text-sm",
+  lg: "h-12 w-12 text-base",
+  xl: "h-16 w-16 text-xl",
+}
+
+const statusColorMap = {
+  online: "bg-[#157A4A]",
+  offline: "bg-[#9CA3AF]",
+  away: "bg-[#C89B3C]",
+  busy: "bg-[#FF5A2E]",
+}
+
+export function UserAvatar({ src, alt, size = "md", status, fallback, className }: DashboardAvatarProps) {
+  const initials = fallback ?? getInitials(alt)
   return (
-    <AvatarPrimitive.Root
-      data-slot="avatar"
-      data-size={size}
-      className={cn(
-        "group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten",
-        className
+    <div className={cn("relative inline-block", className)}>
+      {src ? (
+        <img
+          src={src}
+          alt={alt}
+          className={cn(
+            "inline-block rounded-full object-cover ring-2 ring-white",
+            sizeMap[size]
+          )}
+        />
+      ) : (
+        <span
+          className={cn(
+            "inline-flex items-center justify-center rounded-full bg-[#1D4ED8] font-semibold text-white ring-2 ring-white",
+            sizeMap[size]
+          )}
+          aria-label={alt}
+        >
+          {initials}
+        </span>
       )}
-      {...props}
-    />
+      {status && (
+        <span
+          className={cn(
+            "absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white",
+            statusColorMap[status]
+          )}
+        />
+      )}
+    </div>
   )
 }
 
-function AvatarImage({
-  className,
-  ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Image>) {
-  return (
-    <AvatarPrimitive.Image
-      data-slot="avatar-image"
-      className={cn(
-        "aspect-square size-full rounded-full object-cover",
-        className
-      )}
-      {...props}
-    />
-  )
+interface AvatarGroupProps {
+  avatars: DashboardAvatarProps[]
+  max?: number
+  size?: "xs" | "sm" | "md" | "lg"
+  className?: string
 }
 
-function AvatarFallback({
-  className,
-  ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {
-  return (
-    <AvatarPrimitive.Fallback
-      data-slot="avatar-fallback"
-      className={cn(
-        "flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs",
-        className
-      )}
-      {...props}
-    />
-  )
-}
+export function AvatarGroup({ avatars, max = 3, size = "md", className }: AvatarGroupProps) {
+  const visible = avatars.slice(0, max)
+  const overflow = avatars.length - max
 
-function AvatarBadge({ className, ...props }: React.ComponentProps<"span">) {
   return (
-    <span
-      data-slot="avatar-badge"
-      className={cn(
-        "absolute right-0 bottom-0 z-10 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground bg-blend-color ring-2 ring-background select-none",
-        "group-data-[size=sm]/avatar:size-2 group-data-[size=sm]/avatar:[&>svg]:hidden",
-        "group-data-[size=default]/avatar:size-2.5 group-data-[size=default]/avatar:[&>svg]:size-2",
-        "group-data-[size=lg]/avatar:size-3 group-data-[size=lg]/avatar:[&>svg]:size-2",
-        className
+    <div className={cn("flex items-center", className)}>
+      {visible.map((avatar, i) => (
+        <div key={i} className={cn("relative", i > 0 && "-ml-2")} style={{ zIndex: i + 1 }}>
+          <UserAvatar {...avatar} size={size} className="ring-2 ring-white" />
+        </div>
+      ))}
+      {overflow > 0 && (
+        <div
+          className={cn(
+            "relative -ml-2 inline-flex items-center justify-center rounded-full bg-[#F3F4F6] font-medium text-[#6B7280] ring-2 ring-white",
+            sizeMap[size]
+          )}
+          style={{ zIndex: max + 1 }}
+        >
+          +{overflow}
+        </div>
       )}
-      {...props}
-    />
+    </div>
   )
-}
-
-function AvatarGroup({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="avatar-group"
-      className={cn(
-        "group/avatar-group flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:ring-background",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-function AvatarGroupCount({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="avatar-group-count"
-      className={cn(
-        "relative flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm text-muted-foreground ring-2 ring-background group-has-data-[size=lg]/avatar-group:size-10 group-has-data-[size=sm]/avatar-group:size-6 [&>svg]:size-4 group-has-data-[size=lg]/avatar-group:[&>svg]:size-5 group-has-data-[size=sm]/avatar-group:[&>svg]:size-3",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-export {
-  Avatar,
-  AvatarImage,
-  AvatarFallback,
-  AvatarGroup,
-  AvatarGroupCount,
-  AvatarBadge,
 }
