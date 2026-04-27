@@ -15,6 +15,7 @@ import {
 } from "@/components/dashboard"
 import { Button } from "@/components/ui/button"
 import { loadDashboardOverview } from "@/lib/dashboard/queries"
+import { tokens } from "@/lib/tokens"
 import type { DashboardOverview, DashboardResult } from "@/lib/dashboard/types"
 
 export default function DashboardPage() {
@@ -44,7 +45,7 @@ export default function DashboardPage() {
   }))
 
   return (
-    <div className="space-y-6" style={{ fontFamily: "var(--font-ibm-plex-sans)" }}>
+    <div className="space-y-6">
       <PageHeader
         title="Overview"
         description="Activity dashboard for your memory graph"
@@ -59,13 +60,13 @@ export default function DashboardPage() {
 
       <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
         <ActivityPanel items={state.data.activity} />
-        <section className="rounded-xl border border-[#E5E7EB] bg-white shadow-[0_4px_6px_-1px_rgba(15,17,21,0.1),0_2px_4px_-2px_rgba(15,17,21,0.1)]">
-          <div className="border-b border-[#E5E7EB] p-5">
-            <h2 className="text-lg font-semibold text-[#0F1115]">Pending Queue</h2>
+        <section className={`rounded-xl border border-[${tokens.color.border.subtle}] bg-white shadow-[${tokens.shadow.md}]`}>
+          <div className={`border-b border-[${tokens.color.border.subtle}] p-5`}>
+            <h2 className={`text-lg font-semibold text-[${tokens.color.text.primary}]`}>Pending Queue</h2>
           </div>
           <div className="space-y-3 p-5">
             {state.data.pendingInsights.length === 0 ? (
-              <p className="text-sm text-[#6B7280]">No pending insights in the curator queue.</p>
+              <p className={`text-sm text-[${tokens.color.text.secondary}]`}>No pending insights in the curator queue.</p>
             ) : (
               state.data.pendingInsights.slice(0, 5).map((insight) => (
                 <InsightCard key={insight.id} insight={insight} />

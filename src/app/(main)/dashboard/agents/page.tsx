@@ -8,7 +8,7 @@ import type { DashboardResult, GraphEdge, GraphNode } from "@/lib/dashboard/type
 
 function NodeCard({ node, connectionCount }: { node: GraphNode; connectionCount: number }) {
   return (
-    <article className="rounded-xl border bg-[var(--dashboard-surface)] p-5" style={{ fontFamily: "var(--font-ibm-plex-sans)" }}>
+    <article className="rounded-xl border bg-[var(--dashboard-surface)] p-5" >
       <div className="flex items-start justify-between">
         <div>
           <h3 className="font-semibold text-[var(--dashboard-text-primary)]">{node.label}</h3>
@@ -55,7 +55,7 @@ export default function AgentsPage() {
   const nodes = state?.data?.nodes ?? []
 
   return (
-    <div className="space-y-6" style={{ fontFamily: "var(--font-ibm-plex-sans)" }}>
+    <div className="space-y-6" >
       <PageHeader title="Agents" description="Agents observed in real Brain memory provenance and graph relationships." />
       {!state ? <LoadingState /> : state.error ? <ErrorState message={state.error} /> : (
         <>

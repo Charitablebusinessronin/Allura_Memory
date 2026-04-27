@@ -33,7 +33,7 @@ export default function MemoriesPage() {
   }, [state?.data, tab])
 
   return (
-    <div className="space-y-6" style={{ fontFamily: "var(--font-ibm-plex-sans)" }}>
+    <div className="space-y-6" >
       <PageHeader title="Memory Feed" description="Search and explore real memories from Allura Brain." />
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <SearchInput value={query} onChange={setQuery} placeholder="Search memories..." />

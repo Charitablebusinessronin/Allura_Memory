@@ -315,7 +315,7 @@ Full anatomy in `graph-node-spec.md` §6.
 | **Tab font** | `typography.fontSize.sm`, `typography.fontWeight.medium` |
 | **Default** | `color.text.secondary`, transparent bottom border |
 | **Hover** | `color.text.primary`, `color.surface.muted` background |
-| **Active** | `color.primary.default`, `2px solid color.primary.default` bottom border |
+| **Active** | `color.accent.gold`, `2px solid color.accent.gold` bottom border |
 | **Count badge** | `typography.fontSize.xs`, `color.text.inverse`, `color.primary.default` bg, `borderRadius.full`, `padding: 0 spacing.xs` |
 
 #### Review Card
@@ -388,65 +388,284 @@ Full anatomy in `graph-node-spec.md` §6.
 | **Height** | `48px` |
 | **Background** | `color.surface.default` |
 | **Border bottom** | `1px solid color.border.subtle` |
-| **Tab style** | Same as Insight Review tabs |
-| **Active tab** | `color.primary.default`, bottom border `2px` |
+| **Tab style** | Horizontal flex row, `gap: 0` |
+| **Tab padding** | `spacing.md` (`12px`) horizontal, `spacing.sm` vertical |
+| **Tab font** | `typography.fontSize.sm`, `typography.fontWeight.medium` |
+| **Default** | `color.text.secondary`, transparent bottom border |
+| **Hover** | `color.text.primary`, `color.surface.muted` background |
+| **Active** | `color.accent.gold`, `2px solid color.accent.gold` bottom border |
+| **Count badge** | `typography.fontSize.xs`, `color.text.inverse`, `color.primary.default` bg, `borderRadius.full`, `padding: 0 spacing.xs` |
 
-#### Raw Log Tab
+> **Note:** Tab active indicator uses Gold (`color.accent.gold`) per TOKEN-AUTHORITY.md DD-2. This differs from sidebar nav items which use Blue (`color.primary.default`).
+
+### 5.1 Raw Log Tab
+
+#### Purpose
+Displays the raw, unprocessed evidence content exactly as captured. This is the default active tab when opening an Evidence Detail page.
+
+#### Layout
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  ┌────────────────────────────────────────────────────────────┐      │
+│  │  1  │ {                                      ···········  │      │
+│  │  2  │   "agent": "memory-bot",                 ···········  │      │
+│  │  3  │   "event": "insight-generated",          ···········  │      │
+│  │  4  │   "payload": {                           ···········  │      │
+│  │  5  │     "confidence": 0.87,                  ···········  │      │
+│  │ ... │   }                                      ···········  │      │
+│  └────────────────────────────────────────────────────────────┘      │
+│         ▲── gutter (36px)     ▲── content area (flex: 1)            │
+└──────────────────────────────────────────────────────────────────────┘
+```
 
 | Property | Spec |
 |---|---|
 | **Background** | `color.surface.subtle` (`#F6F4EF`) |
-| **Font** | `IBM Plex Mono` (fallback to `monospace`), `typography.fontSize.sm` (`14px`) |
-| **Padding** | `spacing.lg` (`16px`) |
+| **Font family** | `IBM Plex Mono` (fallback `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`) |
+| **Font size** | `typography.fontSize.sm` (`14px`) desktop, `typography.fontSize.xs` (`12px`) mobile |
 | **Line height** | `typography.lineHeight.relaxed` (`1.625`) |
-| **Overflow** | `auto` horizontal scroll |
-| **Wrap** | `white-space: pre` |
+| **Padding** | `spacing.lg` (`16px`) all around |
+| **Overflow** | `auto` horizontal and vertical scroll |
+| **White-space** | `pre` (preserve formatting) |
+| **Border radius** | `borderRadius.md` (`8px`) |
+| **Min height** | `320px` |
+| **Max height** | `calc(100vh - 280px)` (scrolls if taller) |
 
-#### Metadata Tab
+#### Line Numbers
+- **Gutter width:** `36px` fixed
+- **Gutter background:** `color.surface.muted` (slightly different from content background)
+- **Gutter text:** `color.text.muted`, `typography.fontSize.xs`, right-aligned, `padding-right: spacing.sm`
+- **Line number:** Incremental, `1`-based
+- **Content area:** `padding-left: spacing.md`
+
+#### Syntax Highlighting
+**Decision: YES — basic JSON syntax highlighting only.** (No full Prism.js dependency. Use a lightweight inline approach.)
+
+| Token Type | Color Token | Hex |
+|---|---|---|
+| Strings | `color.success.default` | `#157A4A` |
+| Numbers / Booleans | `color.primary.default` | `#1D4ED8` |
+| Keys (object properties) | `color.text.primary` | `#0F1115` |
+| Null | `color.text.muted` | `#9CA3AF` |
+| Punctuation (braces, brackets, commas) | `color.text.secondary` | `#6B7280` |
+
+> Implementation note: If the raw log is not valid JSON, render as plain text with no syntax highlighting. Do not attempt to highlight non-JSON formats.
+
+#### Copy Behavior
+- Clicking the **Copy** button (top-right of screen) copies the entire raw log content to clipboard.
+- Toast: `color.success.default` background, `color.text.inverse` text, "Copied to clipboard!" — auto-dismiss `2000ms`.
+
+---
+
+### 5.2 Metadata Tab
+
+#### Purpose
+Structured display of all evidence metadata fields. Supports per-row copy for quick sharing of specific values.
+
+#### Layout
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  KEY                            │ VALUE                    │ [📋]    │
+│  ─────────────────────────────────────────────────────────────────  │
+│  Source                         │ memory-bot               │ [📋]    │
+│  Agent                          │ insight-agent-v2         │ [📋]    │
+│  Project                        │ allura-dashboard         │ [📋]    │
+│  Timestamp                      │ 2026-04-26T14:32:00Z     │ [📋]    │
+│  Confidence                     │ 0.87                     │ [📋]    │
+│  Tags                           │ [memory] [insight] [p0]  │ [📋]    │
+│  ─────────────────────────────────────────────────────────────────  │
+│  Extended Metadata                                                   │
+│  ┌────────────────────────────────────────────────────────────────┐  │
+│  │  parent_id        │ mem_abc123                               │  │
+│  │  trace_id         │ trace_xyz789                             │  │
+│  │  ...              │ ...                                      │  │
+│  └────────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+#### Table Spec
 
 | Property | Spec |
 |---|---|
-| **Layout** | Table or key/value grid |
-| **Table header** | `background: color.surface.muted`, `typography.fontSize.xs`, `color.text.secondary`, `text-transform: uppercase`, `letter-spacing: 0.05em` |
-| **Table row** | `border-bottom: 1px solid color.border.subtle` |
+| **Layout** | CSS Grid — `grid-template-columns: 30% 1fr 40px` |
+| **Background** | `color.surface.default` |
+| **Border** | `1px solid color.border.subtle` around table, `border-bottom: 1px solid color.border.subtle` per row |
+| **Border radius** | `borderRadius.md` (`8px`) |
+| **Overflow** | Hidden (clips to border radius) |
+
+#### Table Header
+| Property | Spec |
+|---|---|
+| **Background** | `color.surface.muted` |
+| **Text** | `typography.fontSize.xs`, `color.text.secondary`, `text-transform: uppercase`, `letter-spacing: 0.05em`, `fontWeight.semibold` |
+| **Padding** | `spacing.md` vertical, `spacing.lg` horizontal |
+| **Columns** | "KEY" / "VALUE" / "" (copy column, no label) |
+
+#### Table Row
+| Property | Spec |
+|---|---|
 | **Key column** | `30%` width, `typography.fontSize.sm`, `color.text.secondary`, `fontWeight.medium` |
-| **Value column** | `70%` width, `typography.fontSize.sm`, `color.text.primary` |
-| **Row padding** | `spacing.md` vertical |
-| **Hover** | `background: color.surface.muted` |
+| **Value column** | `flex: 1`, `typography.fontSize.sm`, `color.text.primary` |
+| **Copy button column** | `40px` fixed, centered |
+| **Row padding** | `spacing.md` vertical, `spacing.lg` horizontal |
+| **Row hover** | `background: color.surface.muted` |
+| **Row transition** | `background-color 150ms ease` |
 
-#### Trace Tab
+#### Copy-Per-Row Button
+| Property | Spec |
+|---|---|
+| **Icon** | `📋` (Clipboard), `16px` |
+| **Style** | Ghost button, `color.text.muted` default |
+| **Hover** | `color.primary.default`, `background: color.surface.muted` |
+| **Active** | `transform: scale(0.95)` |
+| **Tooltip** | "Copy value" on hover, `delay: 300ms` |
+| **Behavior** | Copies only the value cell content to clipboard |
+| **Feedback** | Icon momentarily swaps to `✓` (Check), `color.success.default`, `300ms`, then reverts |
+
+#### Extended Metadata Section
+- Appears below the primary metadata table if `metadata` object has additional keys beyond the standard fields.
+- Uses a nested table with the same styling but `background: color.surface.subtle`.
+- Header: "Extended Metadata" — `typography.fontSize.sm`, `color.text.secondary`, `fontWeight.semibold`, `margin-bottom: spacing.md`.
+
+#### Empty State
+- If no metadata: centered message — `typography.fontSize.sm`, `color.text.muted` — "No metadata available for this evidence."
+
+---
+
+### 5.3 Trace Tab
+
+#### Purpose
+Visual timeline of all events that led to the creation or mutation of this evidence. Provides operational context for debugging and auditing.
+
+#### Layout Decision: Vertical Timeline (NOT tree view)
+
+**Rationale:**
+1. Evidence traces are typically linear sequences of agent operations.
+2. Tree views add cognitive load for a primarily linear data structure.
+3. Vertical timeline is more scannable on both desktop and mobile.
+4. If branching is needed in future, we can add "Related Traces" links rather than nesting.
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                                                                      │
+│  14:32:00Z    ┬── Event: insight-generated                           │
+│               │   Agent: memory-bot                                   │
+│               │   Confidence: 0.87                                    │
+│               │   Status: success                                     │
+│               │                                                       │
+│  14:31:45Z    ┼── Event: memory-retrieved                            │
+│               │   Agent: memory-bot                                   │
+│               │   Source: vector-db                                   │
+│               │   Status: success                                     │
+│               │                                                       │
+│  14:31:30Z    ┼── Event: query-received                               │
+│               │   Agent: api-gateway                                  │
+│               │   Query: "find insights about..."                      │
+│               │   Status: success                                     │
+│               │                                                       │
+│  14:31:00Z    ┴── Event: session-initiated                           │
+│                   Agent: api-gateway                                  │
+│                   User: anon_7f3a                                     │
+│                   Status: success                                     │
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+#### Timeline Spec
 
 | Property | Spec |
 |---|---|
-| **Layout** | Vertical timeline |
-| **Timeline line** | `2px` solid `color.border.subtle`, centered |
-| **Node** | `12px` circle, `color.primary.default` fill, `2px solid color.surface.default` border |
-| **Event card** | Left or right of timeline, `background: color.surface.default`, `borderRadius.md`, `padding: spacing.md`, `shadow.sm` |
-| **Timestamp** | `typography.fontSize.xs`, `color.text.muted`, above event card |
-| **Title** | `typography.fontSize.sm`, `color.text.primary`, `fontWeight.semibold` |
-| **Description** | `typography.fontSize.sm`, `color.text.secondary` |
+| **Container** | `padding: spacing.lg`, `background: color.surface.default` |
+| **Timeline line** | `2px` solid `color.border.subtle`, vertically centered, spans full height of event list |
+| **Line position** | `left: 120px` desktop / `left: 0` mobile (line on left edge on mobile) |
 
-#### Action Buttons (top-right)
-
-| Button | Spec |
+#### Event Node (Dot)
+| Property | Spec |
 |---|---|
-| **Copy** | Ghost button, `📋` icon + "Copy", copies content to clipboard, shows `color.success.default` toast |
-| **Export** | Primary button, `⬇` icon + "Export", triggers file download |
+| **Shape** | `12px` circle, `borderRadius.full` |
+| **Fill** | Determined by event type (see Event Colors below) |
+| **Border** | `2px solid color.surface.default` |
+| **Position** | Centered on the timeline line |
 
-### Tablet (`768px`)
+#### Event Card
+| Property | Spec |
+|---|---|
+| **Background** | `color.surface.default` |
+| **Border** | `1px solid color.border.subtle` |
+| **Border radius** | `borderRadius.md` (`8px`) |
+| **Padding** | `spacing.md` |
+| **Shadow** | `shadow.sm` |
+| **Max width** | `calc(100% - 160px)` desktop / `calc(100% - 40px)` mobile |
+| **Position** | To the right of the timeline line, `spacing.lg` gap |
 
-- Tab nav: full width
-- Raw Log: horizontal scroll preserved
-- Metadata table: same layout, slightly narrower value column
-- Trace: timeline centered, cards alternate
+#### Event Card Content
+| Element | Spec |
+|---|---|
+| **Timestamp** | `typography.fontSize.xs`, `color.text.muted`, top of card |
+| **Event type label** | `typography.fontSize.sm`, `color.text.primary`, `fontWeight.semibold` |
+| **Agent name** | `typography.fontSize.sm`, `color.text.secondary` |
+| **Details** | `typography.fontSize.sm`, `color.text.secondary`, max `3` lines |
+| **Status badge** | `borderRadius.sm`, `padding: 2px spacing.sm`, `typography.fontSize.xs` |
 
-### Mobile (`375px`)
+#### Event Colors
+| Event Type | Color Token | Usage |
+|---|---|---|
+| `success` | `color.success.default` (`#157A4A`) | Event completed successfully |
+| `error` | `color.secondary.default` (`#FF5A2E`) | Event failed or errored |
+| `warning` | `color.accent.gold` (`#C89B3C`) | Event completed with warnings |
+| `info` / default | `color.primary.default` (`#1D4ED8`) | Informational / neutral events |
+| `pending` | `color.text.muted` (`#9CA3AF`) | Event in progress |
 
-- Tab nav: scrollable if needed
-- Action buttons: move below tabs, full width stacked
-- Raw Log: smaller font (`12px`), horizontal scroll
-- Metadata: stacked layout (key above value) instead of table
-- Trace: single column, all cards on right of timeline line
+#### Empty State
+- If no trace events: centered message — `typography.fontSize.sm`, `color.text.muted` — "No trace data available for this evidence."
+
+---
+
+### 5.4 Action Buttons (Copy / Export)
+
+#### Placement
+- **Desktop (`≥1024px`):** Top-right of the tab bar area, inline with tabs, `gap: spacing.md`
+- **Tablet (`768–1023px`):** Top-right of tab bar, icon + text on primary, icon-only ghost for copy if space constrained
+- **Mobile (`<768px`):** Below the tab bar, full-width stacked, `margin-top: spacing.md`
+
+#### Copy Button
+| Property | Spec |
+|---|---|
+| **Variant** | Ghost (`variant="ghost"`) |
+| **Size** | `sm` |
+| **Icon** | `📋` (Clipboard), `16px`, left of label |
+| **Label** | "Copy" |
+| **Hover** | `color.primary.default` text, `background: color.surface.muted` |
+| **Behavior** | Copies the **currently active tab's content** to clipboard |
+| **Toast feedback** | `color.success.default` background, `color.text.inverse` text, "Copied to clipboard!", auto-dismiss `2000ms` |
+
+#### Export Button
+| Property | Spec |
+|---|---|
+| **Variant** | Primary (`variant="primary"`) |
+| **Size** | `sm` |
+| **Icon** | `⬇` (Download), `16px`, left of label |
+| **Label** | "Export" |
+| **Behavior** | Downloads the **currently active tab's content** as a file |
+| **Filename format** | `evidence-{id}-{tab}-{timestamp}.{ext}` |
+| **File extensions** | Raw Log → `.json` (or `.txt` if not JSON) / Metadata → `.json` / Trace → `.json` |
+| **Content format** | Pretty-printed JSON where applicable |
+
+#### Action Bar Layout
+```
+Desktop:
+┌──────────────────────────────────────────────────────────────────────┐
+│ [Raw Log] [Metadata] [Trace]                    [📋 Copy] [⬇ Export]│
+└──────────────────────────────────────────────────────────────────────┘
+
+Mobile:
+┌────────────────────────────────────────┐
+│ [Raw Log] [Metadata] [Trace]         │
+├────────────────────────────────────────┤
+│ [         📋 Copy          ]          │
+│ [         ⬇ Export          ]          │
+└────────────────────────────────────────┘
+```
 
 ---
 

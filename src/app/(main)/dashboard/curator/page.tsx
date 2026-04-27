@@ -49,7 +49,7 @@ export default function CuratorPage() {
   const pendingCount = proposals.length
 
   return (
-    <div className="space-y-6" style={{ fontFamily: "var(--font-ibm-plex-sans)" }}>
+    <div className="space-y-6" >
       <PageHeader title="Curator" description="Review and approve or reject pending promotion proposals from real Brain data." />
 
       <div className="grid gap-4 md:grid-cols-3">
