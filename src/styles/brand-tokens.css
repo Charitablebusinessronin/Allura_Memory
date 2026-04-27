@@ -1,0 +1,45 @@
+:root {
+  /* Brand primitives */
+  --allura-deep-navy: #1A2B4A;
+  --allura-coral: #FF5A2E;  /* Canonical: tokens.json color.secondary.default */
+  --allura-trust-green: #4CAF50;
+  --allura-clarity-blue: #5B8DB8;
+  --allura-pure-white: #F5F5F5;
+  --allura-ink-black: #1A1A1A;
+  --allura-warm-gray: #737373;
+
+  /* Dashboard-specific aliases */
+  --dashboard-text-primary: var(--allura-ink-black);
+  --dashboard-text-secondary: var(--allura-warm-gray);
+  --dashboard-surface: #FFFFFF;
+  --dashboard-surface-alt: var(--allura-pure-white);
+  --dashboard-border: color-mix(in srgb, var(--allura-deep-navy) 14%, white);
+  --dashboard-accent: var(--allura-coral);  /* Alias to canonical #FF5A2E */
+  --dashboard-accent-secondary: var(--allura-deep-navy);
+  --dashboard-success: var(--allura-trust-green);
+  --dashboard-info: var(--allura-clarity-blue);
+  --dashboard-warning: var(--allura-coral);
+  --dashboard-danger: #DC2626;
+
+  /* Tone mappings (replace hardcoded hexes) */
+  --tone-blue-bg: color-mix(in srgb, var(--allura-clarity-blue) 10%, white);
+  --tone-blue-text: var(--allura-clarity-blue);
+  --tone-orange-bg: color-mix(in srgb, var(--allura-coral) 10%, white);
+  --tone-orange-text: var(--allura-coral);
+  --tone-green-bg: color-mix(in srgb, var(--allura-trust-green) 10%, white);
+  --tone-green-text: var(--allura-trust-green);
+  --tone-charcoal-bg: color-mix(in srgb, var(--allura-ink-black) 10%, white);
+  --tone-charcoal-text: var(--allura-ink-black);
+  --tone-gold-bg: color-mix(in srgb, #C89B3C 10%, white);
+  --tone-gold-text: #8a651d;
+  --tone-red-bg: color-mix(in srgb, #DC2626 10%, white);
+  --tone-red-text: #DC2626;
+}
+
+.dark {
+  --dashboard-text-primary: var(--allura-pure-white);
+  --dashboard-text-secondary: #A0A0A0;
+  --dashboard-surface: #162035;
+  --dashboard-surface-alt: #0F1A2E;
+  --dashboard-border: rgb(245 245 245 / 0.10);
+}

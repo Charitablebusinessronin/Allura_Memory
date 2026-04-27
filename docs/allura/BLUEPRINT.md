@@ -596,6 +596,7 @@ Before any Neo4j write, search for an existing node with matching `content` + `g
 | `GET`    | `/api/memory/[id]`              | Get memory by ID     |
 | `DELETE` | `/api/memory/[id]`              | Soft-delete a memory |
 | `GET`    | `/api/memory/search?q=&userId=` | Search memories      |
+| `GET`    | `/api/memory/graph?group_id=`   | Read-only tenant-scoped graph view for dashboard; returns real Neo4j nodes/edges and total relationship count |
 | `GET`    | `/api/health`                   | System health check  |
 
 ---

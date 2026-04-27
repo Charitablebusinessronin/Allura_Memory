@@ -10,9 +10,9 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { Pool } from "pg"
-import neo4j from "neo4j-driver"
 import { captureException } from "@/lib/observability/sentry"
+import { getSession } from "@/lib/neo4j/connection"
+import { getPool } from "@/lib/postgres/connection"
 
 /**
  * Health status for a component
@@ -54,17 +54,8 @@ async function checkPostgreSQL(): Promise<ComponentHealth> {
   const start = Date.now()
 
   try {
-    const pool = new Pool({
-      host: process.env.POSTGRES_HOST || "localhost",
-      port: parseInt(process.env.POSTGRES_PORT || "5432", 10),
-      database: process.env.POSTGRES_DB || "memory",
-      user: process.env.POSTGRES_USER || "allura",
-      password: process.env.POSTGRES_PASSWORD,
-      connectionTimeoutMillis: 5000,
-      max: 1,
-    })
+    const pool = getPool()
     await pool.query("SELECT 1")
-    await pool.end()
 
     return {
       name: "postgresql",
@@ -97,14 +88,9 @@ async function checkNeo4j(): Promise<ComponentHealth> {
   const start = Date.now()
 
   try {
-    const driver = neo4j.driver(
-      process.env.NEO4J_URI || "bolt://localhost:7687",
-      neo4j.auth.basic(process.env.NEO4J_USER || "neo4j", process.env.NEO4J_PASSWORD || "password")
-    )
-    const session = driver.session()
+    const session = getSession()
     await session.run("RETURN 1 AS test")
     await session.close()
-    await driver.close()
 
     return {
       name: "neo4j",
