@@ -1,45 +1,123 @@
+/*
+ * Allura Memory — Brand Tokens (v2.0)
+ * Synced to reference: Brand System (2026-04-26)
+ * Typeface: IBM Plex Sans (all UI text)
+ * Never use raw hex in components; import from tokens.ts
+ */
+
 :root {
-  /* Brand primitives */
-  --allura-deep-navy: #1A2B4A;
-  --allura-coral: #FF5A2E;  /* Canonical: tokens.json color.secondary.default */
-  --allura-trust-green: #4CAF50;
-  --allura-clarity-blue: #5B8DB8;
-  --allura-pure-white: #F5F5F5;
-  --allura-ink-black: #1A1A1A;
-  --allura-warm-gray: #737373;
+  /* ── Canonical Brand Primitives (per tokens.json) ── */
+  --allura-blue:        #1D4ED8;
+  --allura-blue-hover:  #1E40AF;
+  --allura-orange:      #FF5A2E;
+  --allura-orange-hover:#E04D1F;
+  --allura-green:       #157A4A;
+  --allura-green-hover: #166534;
+  --allura-gold:        #C89B3C;
+  --allura-gold-hover:  #A87D2B;
+  --allura-charcoal:    #0F1115;
+  --allura-cream:       #F6F4EF;
+  --allura-white:       #FFFFFF;
 
-  /* Dashboard-specific aliases */
-  --dashboard-text-primary: var(--allura-ink-black);
-  --dashboard-text-secondary: var(--allura-warm-gray);
-  --dashboard-surface: #FFFFFF;
-  --dashboard-surface-alt: var(--allura-pure-white);
-  --dashboard-border: color-mix(in srgb, var(--allura-deep-navy) 14%, white);
-  --dashboard-accent: var(--allura-coral);  /* Alias to canonical #FF5A2E */
-  --dashboard-accent-secondary: var(--allura-deep-navy);
-  --dashboard-success: var(--allura-trust-green);
-  --dashboard-info: var(--allura-clarity-blue);
-  --dashboard-warning: var(--allura-coral);
-  --dashboard-danger: #DC2626;
+  /* ── Supporting Neutrals ── */
+  --allura-gray-100:    #F3F4F6;
+  --allura-gray-200:    #E5E7EB;
+  --allura-gray-300:    #D1D5DB;
+  --allura-gray-400:    #9CA3AF;
+  --allura-gray-500:    #6B7280;
+  --allura-gray-600:    #4B5563;
+  --allura-gray-700:    #374151;
+  --allura-gray-800:    #1F2937;
 
-  /* Tone mappings (replace hardcoded hexes) */
-  --tone-blue-bg: color-mix(in srgb, var(--allura-clarity-blue) 10%, white);
-  --tone-blue-text: var(--allura-clarity-blue);
-  --tone-orange-bg: color-mix(in srgb, var(--allura-coral) 10%, white);
-  --tone-orange-text: var(--allura-coral);
-  --tone-green-bg: color-mix(in srgb, var(--allura-trust-green) 10%, white);
-  --tone-green-text: var(--allura-trust-green);
-  --tone-charcoal-bg: color-mix(in srgb, var(--allura-ink-black) 10%, white);
-  --tone-charcoal-text: var(--allura-ink-black);
-  --tone-gold-bg: color-mix(in srgb, #C89B3C 10%, white);
+  /* ── Backward Compatibility Aliases (deprecated, map to new canonical names) ── */
+  /* Legacy color names preserved for existing consumers */
+  --allura-deep-navy:   var(--allura-blue);
+  --allura-coral:       var(--allura-orange);
+  --allura-trust-green: var(--allura-green);
+  --allura-clarity-blue:var(--allura-blue);
+  --allura-pure-white:  var(--allura-white);
+  --allura-ink-black:   var(--allura-charcoal);
+  --allura-warm-gray:   var(--allura-gray-500);
+
+  /* ── Dashboard Semantic Aliases ── */
+  --dashboard-text-primary:   var(--allura-charcoal);
+  --dashboard-text-secondary: var(--allura-gray-500);
+  --dashboard-text-muted:     var(--allura-gray-400);
+  --dashboard-surface:        var(--allura-white);
+  --dashboard-surface-alt:    var(--allura-cream);
+  --dashboard-surface-muted:  var(--allura-gray-100);
+  --dashboard-border:         var(--allura-gray-200);
+  --dashboard-border-default: var(--allura-gray-300);
+  --dashboard-accent:         var(--allura-orange);
+  --dashboard-accent-secondary: var(--allura-blue);
+  --dashboard-success:        var(--allura-green);
+  --dashboard-info:           var(--allura-blue);
+  --dashboard-warning:        var(--allura-orange);
+  --dashboard-danger:         #DC2626;
+
+  /* ── Tone / Badge Mappings ── */
+  --tone-blue-bg:   color-mix(in srgb, var(--allura-blue) 8%, white);
+  --tone-blue-text: var(--allura-blue);
+  --tone-orange-bg: color-mix(in srgb, var(--allura-orange) 8%, white);
+  --tone-orange-text: var(--allura-orange);
+  --tone-green-bg:  color-mix(in srgb, var(--allura-green) 8%, white);
+  --tone-green-text: var(--allura-green);
+  --tone-charcoal-bg: color-mix(in srgb, var(--allura-charcoal) 8%, white);
+  --tone-charcoal-text: var(--allura-charcoal);
+  --tone-gold-bg:   color-mix(in srgb, var(--allura-gold) 10%, white);
   --tone-gold-text: #8a651d;
-  --tone-red-bg: color-mix(in srgb, #DC2626 10%, white);
-  --tone-red-text: #DC2626;
+  --tone-red-bg:    color-mix(in srgb, #DC2626 8%, white);
+  --tone-red-text:  #DC2626;
+
+  /* ── Backward Compatibility: Derived Fills ── */
+  --allura-navy-5:   color-mix(in srgb, var(--allura-deep-navy) 5%, white);
+  --allura-navy-10:  color-mix(in srgb, var(--allura-deep-navy) 10%, white);
+  --allura-coral-10: color-mix(in srgb, var(--allura-coral) 10%, white);
+  --allura-coral-20: color-mix(in srgb, var(--allura-coral) 20%, white);
+
+  /* ── Backward Compatibility: Shadow Tokens ── */
+  --allura-shadow-card: 0 4px 24px rgba(26, 43, 74, 0.08);
+  --allura-shadow-hover: 0 8px 32px rgba(26, 43, 74, 0.12);
+  --allura-shadow-modal: 0 16px 48px rgba(26, 43, 74, 0.16);
+
+  /* ── Backward Compatibility: Radius Tokens ── */
+  --allura-radius-card: 16px;
+  --allura-radius-badge: 6px;
+  --allura-radius-button: 8px;
+  --allura-radius-input: 10px;
+
+  /* ── Backward Compatibility: Status Tokens ── */
+  --allura-status-active: var(--allura-trust-green);
+  --allura-status-proposed: var(--allura-clarity-blue);
+  --allura-status-forgotten: var(--allura-warm-gray);
+  --allura-status-warning: var(--allura-coral);
 }
 
 .dark {
-  --dashboard-text-primary: var(--allura-pure-white);
+  /* ── Dark mode brand primitives ── */
+  --allura-blue:        #60A5FA;
+  --allura-orange:      #FB923C;
+  --allura-green:       #34D399;
+  --allura-gold:        #FBBF24;
+  --allura-charcoal:    #F3F4F6;
+  --allura-cream:       #0F172A;
+  --allura-white:       #1E293B;
+
+  /* ── Backward compatibility aliases (dark mode) ── */
+  --allura-deep-navy:   var(--allura-blue);
+  --allura-coral:       var(--allura-orange);
+  --allura-trust-green: var(--allura-green);
+  --allura-clarity-blue:var(--allura-blue);
+  --allura-pure-white:  var(--allura-white);
+  --allura-ink-black:   var(--allura-charcoal);
+  --allura-warm-gray:   #A0A0A0;
+
+  --dashboard-text-primary:   var(--allura-white);
   --dashboard-text-secondary: #A0A0A0;
-  --dashboard-surface: #162035;
-  --dashboard-surface-alt: #0F1A2E;
-  --dashboard-border: rgb(245 245 245 / 0.10);
+  --dashboard-text-muted:     #737373;
+  --dashboard-surface:        #162035;
+  --dashboard-surface-alt:    #0F1A2E;
+  --dashboard-surface-muted:  #1E2D47;
+  --dashboard-border:         rgb(255 255 255 / 0.08);
+  --dashboard-border-default: rgb(255 255 255 / 0.12);
 }

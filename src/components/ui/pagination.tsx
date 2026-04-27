@@ -49,7 +49,7 @@ export function Pagination({
           disabled={currentPage === 1}
           onClick={() => onPageChange(currentPage - 1)}
           className={cn(
-            `inline-flex h-9 w-9 items-center justify-center rounded-[${tokens.borderRadius.sm}] border border-[${tokens.color.border.subtle}] text-sm font-medium text-[${tokens.color.text.secondary}] transition-colors hover:bg-[${tokens.color.surface.muted}] hover:border-[${tokens.color.border.default}] disabled:cursor-not-allowed disabled:opacity-40`
+            `inline-flex h-9 w-9 items-center justify-center rounded-[var(--allura-r-sm)] border border-[var(--allura-border-1)] text-sm font-medium text-[var(--allura-text-2)] transition-colors hover:bg-[var(--allura-muted)] hover:border-[var(--allura-border-2)] disabled:cursor-not-allowed disabled:opacity-40`
           )}
         >
           <ChevronLeft className="h-4 w-4" />
@@ -57,7 +57,7 @@ export function Pagination({
       )}
       {pages.map((p, i) =>
         typeof p === "string" ? (
-          <span key={`ellipsis-${i}`} className={`inline-flex h-9 w-9 items-center justify-center text-sm text-[${tokens.color.text.muted}]`}>
+          <span key={`ellipsis-${i}`} className={`inline-flex h-9 w-9 items-center justify-center text-sm text-[var(--allura-text-3)]`}>
             …
           </span>
         ) : (
@@ -66,10 +66,10 @@ export function Pagination({
             type="button"
             onClick={() => onPageChange(p)}
             className={cn(
-              `inline-flex h-9 w-9 items-center justify-center rounded-[${tokens.borderRadius.sm}] border text-sm font-medium transition-colors`,
+              `inline-flex h-9 w-9 items-center justify-center rounded-[var(--allura-r-sm)] border text-sm font-medium transition-colors`,
               p === currentPage
-                ? `border-[${tokens.color.primary.default}] bg-[${tokens.color.primary.default}] text-white`
-                : `border-[${tokens.color.border.subtle}] text-[${tokens.color.text.secondary}] hover:bg-[${tokens.color.surface.muted}] hover:border-[${tokens.color.border.default}]`
+                ? `border-[var(--allura-blue)] bg-[var(--allura-blue)] text-white`
+                : `border-[var(--allura-border-1)] text-[var(--allura-text-2)] hover:bg-[var(--allura-muted)] hover:border-[var(--allura-border-2)]`
             )}
           >
             {p}
@@ -82,7 +82,7 @@ export function Pagination({
           disabled={currentPage === totalPages}
           onClick={() => onPageChange(currentPage + 1)}
           className={cn(
-            `inline-flex h-9 w-9 items-center justify-center rounded-[${tokens.borderRadius.sm}] border border-[${tokens.color.border.subtle}] text-sm font-medium text-[${tokens.color.text.secondary}] transition-colors hover:bg-[${tokens.color.surface.muted}] hover:border-[${tokens.color.border.default}] disabled:cursor-not-allowed disabled:opacity-40`
+            `inline-flex h-9 w-9 items-center justify-center rounded-[var(--allura-r-sm)] border border-[var(--allura-border-1)] text-sm font-medium text-[var(--allura-text-2)] transition-colors hover:bg-[var(--allura-muted)] hover:border-[var(--allura-border-2)] disabled:cursor-not-allowed disabled:opacity-40`
           )}
         >
           <ChevronRight className="h-4 w-4" />

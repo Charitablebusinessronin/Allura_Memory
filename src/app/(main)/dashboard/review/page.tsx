@@ -68,7 +68,7 @@ export default function ReviewPage() {
       <PageHeader title="Insight Review" description="Review, approve, reject, or revise candidate insights using real curator data." />
 
       {/* Tabs — underline uses Gold per design spec CR-3 */}
-      <div className={`flex border-b border-[${tokens.color.border.subtle}]`}>
+      <div className={`flex border-b border-[var(--allura-border-1)]`}>
         {tabs.map((t) => (
           <button
             key={t.value}
@@ -76,13 +76,13 @@ export default function ReviewPage() {
             onClick={() => setTab(t.value)}
             className={`relative px-4 py-3 text-sm font-medium transition-colors ${
               tab === t.value
-                ? `text-[${tokens.color.primary.default}]`
-                : `text-[${tokens.color.text.secondary}] hover:text-[${tokens.color.text.primary}]`
+                ? `text-[var(--allura-blue)]`
+                : `text-[var(--allura-text-2)] hover:text-[var(--allura-charcoal)]`
             }`}
           >
             {t.label}
             {tab === t.value && (
-              <span className={`absolute bottom-0 left-0 right-0 h-0.5 bg-[${tokens.color.accent.gold}]`} />
+              <span className={`absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--allura-gold)]`} />
             )}
           </button>
         ))}
@@ -99,8 +99,8 @@ export default function ReviewPage() {
           <WarningList warnings={state.warnings} />
           <div className="space-y-3">
             {(state.data ?? []).length === 0 ? (
-              <div className={`rounded-xl border border-dashed border-[${tokens.color.border.default}] p-8 text-center`}>
-                <p className={`text-sm text-[${tokens.color.text.secondary}]`}>No insights returned for this status.</p>
+              <div className={`rounded-xl border border-dashed border-[var(--allura-border-2)] p-8 text-center`}>
+                <p className={`text-sm text-[var(--allura-text-2)]`}>No insights returned for this status.</p>
               </div>
             ) : (
               state.data!.map((insight) => (

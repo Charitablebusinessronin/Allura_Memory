@@ -70,7 +70,7 @@ export default function MemoryFeedPage() {
     <div className="space-y-6">
       <PageHeader title="Memory Feed" description="Search and explore real memories from Allura Brain." />
 
-      <div className={`flex flex-col gap-3 rounded-xl border border-[${tokens.color.border.subtle}] bg-white p-3 shadow-[${tokens.shadow.sm}] lg:flex-row lg:items-center lg:justify-between`}>
+      <div className={`flex flex-col gap-3 rounded-xl border border-[var(--allura-border-1)] bg-white p-3 shadow-[var(--allura-sh-sm)] lg:flex-row lg:items-center lg:justify-between`}>
         <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
           <SearchBar
             placeholder="Search memories…"

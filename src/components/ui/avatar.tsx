@@ -47,7 +47,7 @@ const AvatarFallback = React.forwardRef<
   <span
     ref={ref}
     className={cn(
-      `flex h-full w-full items-center justify-center rounded-full bg-[${tokens.color.primary.default}] font-medium text-white`,
+      `flex h-full w-full items-center justify-center rounded-full bg-[var(--allura-blue)] font-medium text-white`,
       className
     )}
     {...props}
@@ -77,10 +77,10 @@ const sizeMap = {
 }
 
 const statusColorMap = {
-  online: `bg-[${tokens.color.success.default}]`,
-  offline: `bg-[${tokens.color.text.muted}]`,
-  away: `bg-[${tokens.color.accent.gold}]`,
-  busy: `bg-[${tokens.color.secondary.default}]`,
+  online: `bg-[var(--allura-green)]`,
+  offline: `bg-[var(--allura-text-3)]`,
+  away: `bg-[var(--allura-gold)]`,
+  busy: `bg-[var(--allura-orange)]`,
 }
 
 /** Deterministic color based on name hash */
@@ -162,7 +162,7 @@ export function AvatarGroup({ avatars, max = 3, size = "md", className }: Avatar
             {overflow > 0 && (
               <div
                 className={cn(
-                  `relative -ml-2 inline-flex items-center justify-center rounded-full bg-[${tokens.color.surface.muted}] font-medium text-[${tokens.color.text.secondary}] ring-2 ring-white`,
+                  `relative -ml-2 inline-flex items-center justify-center rounded-full bg-[var(--allura-muted)] font-medium text-[var(--allura-text-2)] ring-2 ring-white`,
                   sizeMap[size]
                 )}
                 style={{ zIndex: max + 1 }}

@@ -60,7 +60,7 @@ e.source.toLowerCase().includes("memory") ||
   return (
     <div className="space-y-6" >
       <PageHeader
-        title="Evidence Detail"
+        title="Evidence"
         description="Raw traces and evidence records returned by Allura Brain."
       />
 

@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/technical | Priority: critical | Version: 1.1 | Updated: 2026-04-11 -->
+<!-- Context: project-intelligence/technical | Priority: critical | Version: 1.2 | Updated: 2026-04-26 -->
 
 # Technical Domain
 
@@ -23,6 +23,8 @@
 | State | Zustand | latest | Client state management |
 | Validation | Zod | latest | Runtime type validation |
 | Agent Framework | OpenCode | 1.4.3 | AI agent runtime |
+| Graph Visualization | react-force-graph-2d | latest | MIT, canvas-based, Neo4j graph view — dynamic import `{ssr:false}` |
+| Font | IBM Plex Sans (@fontsource) | latest | Canonical brand font — replaces Outfit/Inter |
 
 ## Architecture: 5-Layer Agent-OS
 ```

@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Activity, Brain, GitBranch, Lightbulb } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+
+import { Activity, Brain, GitBranch, Lightbulb, Users } from "lucide-react"
 
 import {
   ActivityPanel,
@@ -13,22 +14,15 @@ import {
   SystemStatusCard,
   WarningList,
 } from "@/components/dashboard"
-import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import { loadDashboardOverview } from "@/lib/dashboard/queries"
-import { tokens } from "@/lib/tokens"
 import type { DashboardOverview, DashboardResult } from "@/lib/dashboard/types"
 
 export default function DashboardPage() {
   const [state, setState] = useState<DashboardResult<DashboardOverview> | null>(null)
 
   useEffect(() => {
-    let alive = true
-    void loadDashboardOverview().then((result) => {
-      if (alive) setState(result)
-    })
-    return () => {
-      alive = false
-    }
+    void loadDashboardOverview().then(setState)
   }, [])
 
   if (!state) return <LoadingState />
@@ -38,18 +32,22 @@ export default function DashboardPage() {
   const metrics = state.data.metrics.map((m) => ({
     ...m,
     icon:
-      m.id === "pending-insights" ? Lightbulb :
-      m.id === "approved-insights" ? Brain :
-      m.id === "graph-connections" ? GitBranch :
-      Activity,
+      m.id === "pending-insights"
+        ? Lightbulb
+        : m.id === "approved-insights"
+          ? Brain
+          : m.id === "graph-connections"
+            ? GitBranch
+            : Activity,
   }))
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         title="Overview"
-        description="Activity dashboard for your memory graph"
+        description="Mission control for your system memory"
       />
+
       <WarningList warnings={state.warnings} />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -60,20 +58,27 @@ export default function DashboardPage() {
 
       <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
         <ActivityPanel items={state.data.activity} />
-        <section className={`rounded-xl border border-[${tokens.color.border.subtle}] bg-white shadow-[${tokens.shadow.md}]`}>
-          <div className={`border-b border-[${tokens.color.border.subtle}] p-5`}>
-            <h2 className={`text-lg font-semibold text-[${tokens.color.text.primary}]`}>Pending Queue</h2>
+        <aside className="agency-card">
+          <div className="agency-card-header">
+            <h2 className="text-sm font-semibold text-[var(--dashboard-text-primary)]">
+              Pending Queue
+            </h2>
+            <a href="/dashboard/insights" className="text-xs font-medium text-[var(--allura-blue)] hover:underline">
+              View all →
+            </a>
           </div>
-          <div className="space-y-3 p-5">
+          <div className="agency-card-body space-y-3">
             {state.data.pendingInsights.length === 0 ? (
-              <p className={`text-sm text-[${tokens.color.text.secondary}]`}>No pending insights in the curator queue.</p>
+              <p className="text-sm text-[var(--dashboard-text-muted)]">
+                No pending insights in the curator queue.
+              </p>
             ) : (
               state.data.pendingInsights.slice(0, 5).map((insight) => (
                 <InsightCard key={insight.id} insight={insight} />
               ))
             )}
           </div>
-        </section>
+        </aside>
       </div>
 
       <SystemStatusCard status={state.data.systemStatus} />

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 
 import { forbiddenResponse, requireRole, unauthorizedResponse } from "@/lib/auth/api-auth"
-import { getSession } from "@/lib/neo4j/connection"
+import { readTransaction } from "@/lib/neo4j/connection"
 import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id"
 
 const EDGE_LABELS = new Set(["performed", "resulted_in", "generated", "applies_to", "connected_to", "caused_by"])
@@ -39,23 +39,27 @@ export async function GET(request: NextRequest) {
     throw error
   }
 
-  const session = getSession()
   try {
     const [countResult, result] = await Promise.all([
-      session.run(
-        `MATCH (source)-[relationship]-(target)
-         WHERE source.group_id = $groupId AND target.group_id = $groupId
-         RETURN count(relationship) AS total`,
-        { groupId }
-      ),
-      session.run(
-      `MATCH (source)-[relationship]-(target)
-       WHERE source.group_id = $groupId AND target.group_id = $groupId
-       RETURN source, relationship, target
-       LIMIT 150`,
-      { groupId }
-      ),
+      readTransaction(async (tx) => {
+        return await tx.run(
+          `MATCH (source)-[relationship]-(target)
+           WHERE source.group_id = $groupId AND target.group_id = $groupId
+           RETURN count(relationship) AS total`,
+          { groupId }
+        )
+      }),
+      readTransaction(async (tx) => {
+        return await tx.run(
+          `MATCH (source)-[relationship]-(target)
+           WHERE source.group_id = $groupId AND target.group_id = $groupId
+           RETURN source, relationship, target
+           LIMIT 150`,
+          { groupId }
+        )
+      }),
     ])
+
     const totalEdges = countResult.records[0]?.get("total")?.toNumber?.() ?? 0
 
     const nodeMap = new Map<string, { id: string; label: string; type: string; metadata: Record<string, unknown> }>()
@@ -94,7 +98,5 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Failed to fetch memory graph:", error)
     return NextResponse.json({ error: "Failed to fetch memory graph" }, { status: 500 })
-  } finally {
-    await session.close()
   }
 }

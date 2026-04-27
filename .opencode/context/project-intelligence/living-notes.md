@@ -103,12 +103,22 @@
 | Project | Goal | Owner | Status |
 |---------|------|-------|--------|
 | Story 1.2 TraceMiddleware | Full HTTP request tracing for agent operations | Woz | In Progress |
+| Graph View UI | Implement `/dashboard/graph` with react-force-graph-2d + live Neo4j | Woz | Queued — PRD sent to Team Durham |
+| Design system — Penpot delivery | Token file, component library, 5 screen specs from design team | Design | Waiting on design |
 | Neo4j graph cleanup | Fix dirty entities blocking memory search | Brooks | Queued |
-| Brand docs alignment | Sync all planning/context docs to finalized brand | Brooks | In Progress |
+| Brand docs alignment | Sync all planning/context docs to finalized brand | Brooks | ✅ Done 2026-04-26 |
 
 ---
 
 ## Archive (Resolved)
+
+### Resolved: Issue #25 — Real-Data Dashboard
+- **Resolved:** 2026-04-26
+- **Resolution:** All dashboard screens wired to live API. Mock data removed. `/api/memory/graph` functional. Build passing, typecheck clean.
+
+### Resolved: Brand Identity Docs Alignment
+- **Resolved:** 2026-04-26
+- **Resolution:** `BRAND-IDENTITY.md` updated to finalized brand guide. Colors corrected to `#1D4ED8 / #FF5A2E / #157A4A / #0F1115 / #C89B3C / #F6F4EF`. Typography corrected to IBM Plex Sans. Previous file had wrong Outfit/Inter stack and wrong hex values.
 
 ### Resolved: P0 MCP Validation Cleanup
 - **Resolved:** 2026-04-25

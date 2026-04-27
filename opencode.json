@@ -7,6 +7,12 @@
       "url": "http://localhost:5888/mcp",
       "oauth": false,
       "enabled": true
+    },
+    "penpot-mcp": {
+      "type": "remote",
+      "url": "http://localhost:4401/mcp",
+      "oauth": false,
+      "enabled": true
     }
   }
 }

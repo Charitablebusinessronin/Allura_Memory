@@ -97,9 +97,15 @@ Market Position:   Governed, sovereign alternative to mem0.ai — warm design, s
 
 **Current Focus (Epic 1):** Persistent Knowledge Capture  
 → Story 1.1 ✅ RuVix Security Hardening (28/28 tests)  
+→ Issue #25 ✅ Real-Data Dashboard (completed 2026-04-26)  
 → Story 1.2 🔄 TraceMiddleware Integration (IN PROGRESS)
 
-**Next Milestone:** Consumer memory viewer at `/memory` (search dominant, swipe to forget, provenance on expand)
+**Active Design Work:**
+- PRD sent to Team Durham (2026-04-26): Graph View + Design System delivery
+- Waiting on: Penpot token file, component library (10 components), 5 screen specs, graph node color spec
+- Graph View library decided: react-force-graph-2d (MIT, feeds from `/api/memory/graph`)
+
+**Next Milestone:** Graph View live at `/dashboard/graph` — interactive Neo4j knowledge graph with Allura brand styling
 
 **Long-term Vision:** Personal AI Operating System — allura as the memory layer for any MCP-compatible agent, with warm consumer UI and enterprise HITL governance.
 

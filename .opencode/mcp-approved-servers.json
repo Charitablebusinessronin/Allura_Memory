@@ -56,6 +56,15 @@
       "category": "search",
       "essential": false,
       "rationale": "Self-hosted AI search via Perplexica/Vane. Replaces Tavily — no API key required."
+    },
+    "penpot-mcp": {
+      "status": "approved",
+      "approved_at": "2026-04-27T00:00:00Z",
+      "approved_by": "brooks-architect",
+      "category": "design",
+      "essential": false,
+      "tools": ["execute_code", "high_level_overview", "penpot_api_info", "export_shape", "import_image"],
+      "rationale": "Penpot design tool integration via MCP. Enables design retrieval, modification, CSS generation, and export. Requires Penpot browser plugin connection."
     }
   },
   "allura-graph-debug": {
