@@ -43,6 +43,7 @@ export default defineConfig({
       "src/__tests__/auto-curator*.test.ts",
       "src/__tests__/curator-approve.test.ts",
       "src/__tests__/curator-reject.test.ts",
+      "src/__tests__/sync-contract.test.ts",
       "src/__tests__/memory-search-ruvector.test.ts",
       "src/__tests__/notion-sync*.test.ts",
       "src/__tests__/notion-projection-sync.test.ts",

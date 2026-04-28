@@ -8,7 +8,6 @@ import { ArrowLeft, Check, Copy, Download } from "lucide-react"
 import { ConfidenceBadge, ErrorState, LoadingState, PageHeader, StatusPill, WarningList } from "@/components/dashboard"
 import { Button } from "@/components/ui/button"
 import { loadEvidenceDetail } from "@/lib/dashboard/queries"
-import { tokens } from "@/lib/tokens"
 import type { DashboardResult, Evidence } from "@/lib/dashboard/types"
 
 type DetailTab = "raw" | "metadata" | "trace"
@@ -51,9 +50,9 @@ function JsonSyntaxHighlight({ json }: { json: string }) {
     return pretty.split("\n").map((line, i) => {
       // Simple inline syntax highlight
       const highlighted = line
-        .replace(/(".*?")/g, `<span style="color:${tokens.color.primary.default}">$1</span>`)
-        .replace(/\b(true|false|null)\b/g, `<span style="color:${tokens.color.success.default}">$1</span>`)
-        .replace(/\b(\d+(?:\.\d+)?)\b/g, `<span style="color:${tokens.color.secondary.default}">$1</span>`)
+        .replace(/(".*?")/g, `<span style="color:var(--allura-blue)">$1</span>`)
+        .replace(/\b(true|false|null)\b/g, `<span style="color:var(--allura-green)">$1</span>`)
+        .replace(/\b(\d+(?:\.\d+)?)\b/g, `<span style="color:var(--allura-orange)">$1</span>`)
       return { num: i + 1, html: highlighted }
     })
   }, [json])
@@ -179,19 +178,17 @@ interface TraceEvent {
 }
 
 const traceStatusColors: Record<TraceEvent["status"], string> = {
-  success: tokens.color.success.default,
-  error: tokens.color.secondary.default,
-  warning: tokens.color.accent.gold,
-  info: tokens.color.primary.default,
-  pending: tokens.color.text.muted,
+  success: "var(--allura-green)",
+  error: "var(--allura-orange)",
+  warning: "var(--allura-gold)",
+  info: "var(--allura-blue)",
+  pending: "var(--allura-text-3)",
 }
 
 function TraceTab({ evidence }: { evidence: Evidence }) {
-  // Build trace from metadata.trace if available; otherwise create a basic trace from evidence data
   const traceEvents = useMemo<TraceEvent[]>(() => {
     const fromMeta = evidence.metadata?.trace
     if (Array.isArray(fromMeta)) return fromMeta as TraceEvent[]
-    // Fallback: derive simple trace from evidence lifecycle
     return [
       { id: "1", label: "Evidence recorded", timestamp: evidence.timestamp, status: "success", detail: `Source: ${evidence.source}` },
       { id: "2", label: "Agent submitted", timestamp: evidence.timestamp, status: "info", detail: `Agent: ${evidence.agent}` },

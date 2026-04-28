@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react"
 import { Search, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { tokens } from "@/lib/tokens"
 
 interface SearchBarProps {
   placeholder?: string

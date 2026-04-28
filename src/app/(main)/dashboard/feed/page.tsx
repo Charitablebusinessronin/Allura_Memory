@@ -16,7 +16,6 @@ import { Dropdown } from "@/components/ui/dropdown"
 import { Pagination } from "@/components/ui/pagination"
 import { SearchBar } from "@/components/ui/search-bar"
 import { loadMemories } from "@/lib/dashboard/queries"
-import { tokens } from "@/lib/tokens"
 import type { DashboardResult, Memory } from "@/lib/dashboard/types"
 
 const PAGE_SIZE = 10

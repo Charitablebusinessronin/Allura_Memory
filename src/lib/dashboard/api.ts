@@ -117,8 +117,8 @@ export function getHealthMetrics() {
   }>("/api/health/metrics")
 }
 
-export function getGraph() {
-  return readJson<unknown>(`/api/memory/graph?${withGroupId().toString()}`)
+export function getGraph(params?: Record<string, QueryValue>) {
+  return readJson<unknown>(`/api/memory/graph?${withGroupId(params).toString()}`)
 }
 
 export async function approveProposal(proposalId: string): Promise<void> {

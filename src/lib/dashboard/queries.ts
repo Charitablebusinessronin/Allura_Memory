@@ -33,6 +33,15 @@ function failure<T>(error: unknown): DashboardResult<T> {
   }
 }
 
+function extractGraphCounts(raw: unknown): { nodeCount?: number; edgeCount?: number } {
+  if (!raw || typeof raw !== "object") return {}
+  const payload = raw as { node_count?: unknown; total_edges?: unknown }
+  return {
+    nodeCount: typeof payload.node_count === "number" ? payload.node_count : undefined,
+    edgeCount: typeof payload.total_edges === "number" ? payload.total_edges : undefined,
+  }
+}
+
 export async function loadDashboardOverview(): Promise<DashboardResult<DashboardOverview>> {
   try {
     const [memoryCount, pending, approved, audit, health, healthMetrics, graph] = await Promise.allSettled([
@@ -42,7 +51,7 @@ export async function loadDashboardOverview(): Promise<DashboardResult<Dashboard
       getAuditEvents({ limit: 8 }),
       getHealth(),
       getHealthMetrics(),
-      getGraph(),
+      getGraph({ stats: true }),
     ])
 
     const warnings = []
@@ -65,7 +74,7 @@ export async function loadDashboardOverview(): Promise<DashboardResult<Dashboard
 
     const pendingInsights = pending.status === "fulfilled" ? mapProposalsResponse(pending.value.data) : []
     const approvedInsights = approved.status === "fulfilled" ? mapInsightsResponse(approved.value.data) : []
-    const graphData = graph.status === "fulfilled" ? mapGraph(graph.value.data) : { nodes: [], edges: [], totalEdges: undefined }
+    const graphData = graph.status === "fulfilled" ? extractGraphCounts(graph.value.data) : {}
     const failedPromotions = healthMetrics.status === "fulfilled"
       ? Number((healthMetrics.value.data as { degraded?: { promotion_failures_24h?: number } })?.degraded?.promotion_failures_24h ?? 0)
       : 0
@@ -73,7 +82,7 @@ export async function loadDashboardOverview(): Promise<DashboardResult<Dashboard
 
     return {
       data: {
-        metrics: mapMetrics(totalMemories, pendingInsights.length, approvedInsights.length, graphData.totalEdges ?? "Unavailable", failedPromotions),
+        metrics: mapMetrics(totalMemories, pendingInsights.length, approvedInsights.length, graphData.edgeCount ?? "Unavailable", failedPromotions),
         activity: audit.status === "fulfilled" ? mapAuditResponse(audit.value.data) : [],
         pendingInsights,
         systemStatus: health.status === "fulfilled" ? mapSystemStatus(health.value.data) : { status: "unknown", components: [] },

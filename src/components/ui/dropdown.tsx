@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react"
 import { Check, ChevronDown, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { tokens } from "@/lib/tokens"
 
 export interface DropdownOption {
   value: string

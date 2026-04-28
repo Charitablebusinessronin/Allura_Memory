@@ -233,6 +233,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<MetricsRes
           embedding_failures: 0,
           promotion_failures_24h: 0,
         },
+        skills: [],
       },
       { status: 503 }
     )

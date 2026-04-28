@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url)
   const rawGroupId = searchParams.get("group_id")
+  const statsOnly = searchParams.get("stats") === "true"
   if (!rawGroupId) return NextResponse.json({ error: "group_id is required" }, { status: 400 })
 
   let groupId: string
@@ -40,6 +41,37 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    if (statsOnly) {
+      const [nodeCountResult, edgeCountResult] = await Promise.all([
+        readTransaction(async (tx) => {
+          return await tx.run(
+            `MATCH (node)
+             WHERE node.group_id = $groupId
+             RETURN count(node) AS total`,
+            { groupId }
+          )
+        }),
+        readTransaction(async (tx) => {
+          return await tx.run(
+            `MATCH (source)-[relationship]-(target)
+             WHERE source.group_id = $groupId AND target.group_id = $groupId
+             RETURN count(relationship) AS total`,
+            { groupId }
+          )
+        }),
+      ])
+
+      const totalNodes = nodeCountResult.records[0]?.get("total")?.toNumber?.() ?? 0
+      const totalEdges = edgeCountResult.records[0]?.get("total")?.toNumber?.() ?? 0
+
+      return NextResponse.json({
+        nodes: [],
+        edges: [],
+        node_count: totalNodes,
+        total_edges: totalEdges,
+      })
+    }
+
     const [countResult, result] = await Promise.all([
       readTransaction(async (tx) => {
         return await tx.run(

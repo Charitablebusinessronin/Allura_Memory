@@ -67,3 +67,87 @@ export const ALLURA_STATUS_MAP: Record<AlluraStatus, { bg: string; text: string;
   forgotten: { bg: "var(--allura-gray-500)", text: "#FFFFFF", label: "Forgotten" },
   low_confidence: { bg: "var(--allura-orange)", text: "#FFFFFF", label: "Low Confidence" },
 } as const
+
+// ── CSS Variables mapping (semantic names → CSS var strings) ──
+export const ALLURA_CSS_VARS = {
+  blue: "var(--allura-blue)",
+  blueHover: "var(--allura-blue-hover)",
+  orange: "var(--allura-orange)",
+  orangeHover: "var(--allura-orange-hover)",
+  green: "var(--allura-green)",
+  greenHover: "var(--allura-green-hover)",
+  gold: "var(--allura-gold)",
+  goldHover: "var(--allura-gold-hover)",
+  charcoal: "var(--allura-charcoal)",
+  cream: "var(--allura-cream)",
+  white: "var(--allura-white)",
+  gray100: "var(--allura-gray-100)",
+  gray200: "var(--allura-gray-200)",
+  gray300: "var(--allura-gray-300)",
+  gray400: "var(--allura-gray-400)",
+  gray500: "var(--allura-gray-500)",
+  gray600: "var(--allura-gray-600)",
+  gray700: "var(--allura-gray-700)",
+  gray800: "var(--allura-gray-800)",
+  surfaceDefault: "var(--allura-white)",
+  shadowCard: "var(--allura-shadow-card)",
+  shadowHover: "var(--allura-shadow-hover)",
+  shadowModal: "var(--allura-shadow-modal)",
+  borderDefault: "var(--allura-border-2)",
+  borderSubtle: "var(--allura-border-1)",
+  textPrimary: "var(--allura-charcoal)",
+  textSecondary: "var(--allura-text-2)",
+  textMuted: "var(--allura-text-3)",
+  radiusCard: "var(--allura-radius-card)",
+  radiusBadge: "var(--allura-radius-badge)",
+  radiusButton: "var(--allura-radius-button)",
+  radiusInput: "var(--allura-radius-input)",
+} as const
+
+// ── Graph node colors (migrated from tokens.ts graph.color.graph.*) ──
+const GRAPH_NODE_COLORS: Record<string, string> = {
+  agent: "var(--allura-blue)",
+  project: "var(--allura-gold)",
+  outcome: "var(--allura-green)",
+  event: "var(--allura-charcoal)",
+  insight: "var(--allura-orange)",
+  memory: "var(--allura-gray-500)",
+}
+
+// ── Helper: Resolve CSS var to hex at runtime (SSR-safe fallback) ──
+export function getResolvedColor(name: string): string {
+  if (typeof window === "undefined") {
+    // SSR: return hardcoded fallback
+    return GRAPH_NODE_COLORS[name]?.replace("var(--", "")?.replace(")", "") ?? "#9CA3AF"
+  }
+  try {
+    const el = document.documentElement
+    // Normalize name to match CSS var prefix
+    const varName = name.replace(/^allura-/, "")
+    const cssVar = `--allura-${varName}`
+    const value = window.getComputedStyle(el).getPropertyValue(cssVar).trim()
+    if (value) return value
+  } catch {
+    // Silent fallback
+  }
+  // Fallback to hardcoded hex
+  const fallback = GRAPH_NODE_COLORS[name]
+  if (fallback) return fallback.replace("var(--", "")?.replace(")", "")
+  return "#9CA3AF"
+}
+
+// ── Graph node color by type (runtime resolution) ──
+export function getGraphNodeColor(type: string): string {
+  const key = type.toLowerCase()
+  const cssVar = GRAPH_NODE_COLORS[key]
+  if (!cssVar) return getResolvedColor("memory")
+  return getResolvedColor(key)
+}
+
+// ── Graph node radius by type (keeps existing logic) ──
+export function getGraphNodeRadius(type: string): number {
+  const t = type.toLowerCase()
+  if (t === "agent" || t === "project") return 10
+  if (t === "outcome" || t === "event" || t === "insight") return 7
+  return 5
+}

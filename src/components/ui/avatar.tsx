@@ -3,7 +3,6 @@
 import * as React from "react"
 
 import { cn, getInitials } from "@/lib/utils"
-import { tokens } from "@/lib/tokens"
 import {
   Tooltip,
   TooltipContent,
@@ -86,11 +85,11 @@ const statusColorMap = {
 /** Deterministic color based on name hash */
 function getNameColor(name: string): string {
   const colors = [
-    tokens.color.primary.default,
-    tokens.color.secondary.default,
-    tokens.color.success.default,
-    tokens.color.accent.gold,
-    tokens.color.graph.event,
+    "var(--allura-blue)",
+    "var(--allura-orange)",
+    "var(--allura-green)",
+    "var(--allura-gold)",
+    "var(--allura-charcoal)",
   ]
   let hash = 0
   for (let i = 0; i < name.length; i++) {
@@ -119,7 +118,7 @@ export function UserAvatar({ src, alt, size = "md", status, fallback, className 
             "inline-flex items-center justify-center rounded-full font-semibold text-white ring-2 ring-white",
             sizeMap[size]
           )}
-          style={{ backgroundColor: fallbackColor }}
+          style={{ backgroundColor: getNameColor(alt) }}
           aria-label={alt}
         >
           {initials}

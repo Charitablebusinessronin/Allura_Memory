@@ -11,8 +11,7 @@ import {
   WarningList,
 } from "@/components/dashboard"
 import { loadGraph } from "@/lib/dashboard/queries"
-import { tokens } from "@/lib/tokens"
-import { getGraphNodeColor, getGraphNodeRadius } from "@/lib/tokens"
+import { getGraphNodeColor, getGraphNodeRadius, getResolvedColor } from "@/lib/brand/allura"
 import type { DashboardResult, GraphEdge, GraphNode } from "@/lib/dashboard/types"
 
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), { ssr: false })
@@ -145,26 +144,26 @@ export default function GraphPage() {
                   ctx.fillStyle = nodeColor
                   ctx.fill()
 
-                  // Border
-                  ctx.beginPath()
-                  ctx.arc(node.x, node.y, finalR, 0, 2 * Math.PI)
-                  ctx.strokeStyle = tokens.color.surface.default
-                  ctx.lineWidth = 1 / globalScale
-                  ctx.stroke()
+                   // Border (surface default from CSS var)
+                   ctx.beginPath()
+                   ctx.arc(node.x, node.y, finalR, 0, 2 * Math.PI)
+                   ctx.strokeStyle = getResolvedColor("surfaceDefault")
+                   ctx.lineWidth = 1 / globalScale
+                   ctx.stroke()
 
-                  // Selected ring
-                  if (isSelected) {
-                    ctx.beginPath()
-                    ctx.arc(node.x, node.y, finalR + 4 / globalScale, 0, 2 * Math.PI)
-                    ctx.strokeStyle = tokens.color.accent.gold
-                    ctx.lineWidth = 2 / globalScale
-                    ctx.stroke()
-                  }
+                   // Selected ring (gold from CSS var)
+                   if (isSelected) {
+                     ctx.beginPath()
+                     ctx.arc(node.x, node.y, finalR + 4 / globalScale, 0, 2 * Math.PI)
+                     ctx.strokeStyle = getResolvedColor("gold")
+                     ctx.lineWidth = 2 / globalScale
+                     ctx.stroke()
+                   }
 
-                  // Label
-                  if (globalScale > 0.8 || isSelected || isHovered) {
-                    ctx.font = `${500 / globalScale}px IBM Plex Sans, system-ui, sans-serif`
-                    ctx.fillStyle = tokens.color.text.secondary
+                   // Label (text secondary from CSS var)
+                   if (globalScale > 0.8 || isSelected || isHovered) {
+                     ctx.font = `${500 / globalScale}px IBM Plex Sans, system-ui, sans-serif`
+                     ctx.fillStyle = getResolvedColor("textSecondary")
                     ctx.textAlign = "center"
                     ctx.fillText(node.label, node.x, node.y + finalR + 12 / globalScale)
                   }
