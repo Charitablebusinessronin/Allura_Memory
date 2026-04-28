@@ -9,6 +9,20 @@ import type {
   Metric,
   SystemStatus,
 } from "@/lib/dashboard/types"
+import {
+  validateDashboardShape,
+  validateDashboardArray,
+} from "@/lib/dashboard/schemas"
+import {
+  MemorySchema,
+  InsightSchema,
+  EvidenceSchema,
+  ActivityItemSchema,
+  SystemStatusSchema,
+  MetricSchema,
+  GraphNodeSchema,
+  GraphEdgeSchema,
+} from "@/lib/dashboard/schemas"
 
 function record(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : {}
@@ -82,7 +96,12 @@ export function mapMemoriesResponse(raw: unknown): Memory[] {
       : Array.isArray(payload.data)
         ? payload.data
         : []
-  return candidates.map(mapMemory)
+  const mapped = candidates.map(mapMemory)
+  const { data, driftCount } = validateDashboardArray(MemorySchema, mapped, "Memory")
+  if (driftCount > 0) {
+    console.warn(`[dashboard:shape-drift] Memory response: ${driftCount} schema violations across ${mapped.length} items`)
+  }
+  return data
 }
 
 export function mapProposalToInsight(raw: unknown): Insight {
@@ -128,12 +147,22 @@ export function mapInsight(raw: unknown): Insight {
 
 export function mapInsightsResponse(raw: unknown): Insight[] {
   const payload = record(raw)
-  return (Array.isArray(payload.insights) ? payload.insights : []).map(mapInsight)
+  const mapped = (Array.isArray(payload.insights) ? payload.insights : []).map(mapInsight)
+  const { data, driftCount } = validateDashboardArray(InsightSchema, mapped, "Insight")
+  if (driftCount > 0) {
+    console.warn(`[dashboard:shape-drift] Insight response: ${driftCount} schema violations across ${mapped.length} items`)
+  }
+  return data
 }
 
 export function mapProposalsResponse(raw: unknown): Insight[] {
   const payload = record(raw)
-  return (Array.isArray(payload.proposals) ? payload.proposals : []).map(mapProposalToInsight)
+  const mapped = (Array.isArray(payload.proposals) ? payload.proposals : []).map(mapProposalToInsight)
+  const { data, driftCount } = validateDashboardArray(InsightSchema, mapped, "ProposalInsight")
+  if (driftCount > 0) {
+    console.warn(`[dashboard:shape-drift] Proposal response: ${driftCount} schema violations across ${mapped.length} items`)
+  }
+  return data
 }
 
 export function mapTraceToEvidence(raw: unknown): Evidence {
@@ -158,7 +187,12 @@ export function mapTraceToEvidence(raw: unknown): Evidence {
 
 export function mapTracesResponse(raw: unknown): Evidence[] {
   const payload = record(raw)
-  return (Array.isArray(payload.traces) ? payload.traces : []).map(mapTraceToEvidence)
+  const mapped = (Array.isArray(payload.traces) ? payload.traces : []).map(mapTraceToEvidence)
+  const { data, driftCount } = validateDashboardArray(EvidenceSchema, mapped, "Evidence")
+  if (driftCount > 0) {
+    console.warn(`[dashboard:shape-drift] Trace response: ${driftCount} schema violations across ${mapped.length} items`)
+  }
+  return data
 }
 
 export function mapAuditActivity(raw: unknown): ActivityItem {
@@ -178,7 +212,12 @@ export function mapAuditActivity(raw: unknown): ActivityItem {
 
 export function mapAuditResponse(raw: unknown): ActivityItem[] {
   const payload = record(raw)
-  return (Array.isArray(payload.events) ? payload.events : []).map(mapAuditActivity)
+  const mapped = (Array.isArray(payload.events) ? payload.events : []).map(mapAuditActivity)
+  const { data, driftCount } = validateDashboardArray(ActivityItemSchema, mapped, "Activity")
+  if (driftCount > 0) {
+    console.warn(`[dashboard:shape-drift] Audit response: ${driftCount} schema violations across ${mapped.length} items`)
+  }
+  return data
 }
 
 export function mapSystemStatus(raw: unknown): SystemStatus {
@@ -209,7 +248,7 @@ export function mapMetrics(memoryCount: number, pendingInsights: number, approve
 
 export function mapGraph(raw: unknown): { nodes: GraphNode[]; edges: GraphEdge[]; totalEdges?: number } {
   const payload = record(raw)
-  const nodes = Array.isArray(payload.nodes) ? payload.nodes.map((node) => {
+  const mappedNodes = Array.isArray(payload.nodes) ? payload.nodes.map((node) => {
     const n = record(node)
     return {
       id: str(n.id),
@@ -218,7 +257,7 @@ export function mapGraph(raw: unknown): { nodes: GraphNode[]; edges: GraphEdge[]
       metadata: record(n.metadata),
     }
   }) : []
-  const edges = Array.isArray(payload.edges) ? payload.edges.map((edge) => {
+  const mappedEdges = Array.isArray(payload.edges) ? payload.edges.map((edge) => {
     const e = record(edge)
     return {
       id: str(e.id),
@@ -228,5 +267,10 @@ export function mapGraph(raw: unknown): { nodes: GraphNode[]; edges: GraphEdge[]
       metadata: record(e.metadata),
     }
   }) : []
+
+  // Validate graph shape with drift detection
+  const { data: nodes } = validateDashboardArray(GraphNodeSchema, mappedNodes, "GraphNode")
+  const { data: edges } = validateDashboardArray(GraphEdgeSchema, mappedEdges, "GraphEdge")
+
   return { nodes, edges, totalEdges: typeof payload.total_edges === "number" ? payload.total_edges : undefined }
 }
