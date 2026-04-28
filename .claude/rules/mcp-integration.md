@@ -76,32 +76,61 @@ mcp__MCP_DOCKER__mcp-add("server-name")
 | `mcp__MCP_DOCKER__resolve-library-id` | Library → Context7 ID |
 | `mcp__MCP_DOCKER__get-library-docs` | Fetch live docs |
 
-### Allura Brain (Database)
+### Allura Brain (Canonical Memory)
 | Tool | Use |
 |------|-----|
-| `mcp__MCP_DOCKER__query_database` | NL SQL reads |
-| `mcp__MCP_DOCKER__execute_sql` | Raw SQL reads |
-| `mcp__MCP_DOCKER__insert_data` | Append events only |
-| `mcp__MCP_DOCKER__read_neo4j_cypher` | Neo4j reads |
-| `mcp__MCP_DOCKER__write_neo4j_cypher` | Neo4j writes (SUPERSEDES) |
+| `allura-brain__memory_add` | Governed write — add episodic memory |
+| `allura-brain__memory_search` | Governed search — hybrid PG + Neo4j |
+| `allura-brain__memory_get` | Governed read — single memory by ID |
+| `allura-brain__memory_list` | Governed list — filter by user/group |
+| `allura-brain__memory_update` | Governed update — versioned append-only |
+| `allura-brain__memory_delete` | Governed delete — soft-delete with 30-day recovery |
+| `allura-brain__memory_promote` | Governed promotion — episodic → canonical (SOC2) |
+| `allura-brain__memory_export` | Governed export — canonical or merged |
+| `allura-brain__memory_restore` | Governed restore — recover soft-deleted memory |
+| `MCP_DOCKER__query_database` | NL SQL reads (diagnostics) |
+| `MCP_DOCKER__execute_sql` | Raw SQL reads (diagnostics) |
+| `MCP_DOCKER__insert_data` | Append events only (traces) |
+| `MCP_DOCKER__create_entities` | Neo4j entity creation (seeding) |
+| `MCP_DOCKER__search_memories` | Neo4j fulltext search |
+| `MCP_DOCKER__find_memories_by_name` | Neo4j exact name lookup |
+| `MCP_DOCKER__read_graph` | Neo4j full graph read |
 
-## Boot Policy — Docker Toolkit On-Demand
+### Design (Penpot)
+| Tool | Use |
+|------|-----|
+| `penpot-mcp__execute_code` | Execute JS in Penpot plugin context |
+| `penpot-mcp__export_shape` | Export shape as PNG/SVG |
+| `penpot-mcp__import_image` | Import image into Penpot |
+| `penpot-mcp__high_level_overview` | Penpot API overview |
+| `penpot-mcp__penpot_api_info` | Penpot API type docs |
 
-> **ADR 2026-04-19b:** Local allura-memory MCP usage is retired. Agents use MCP_DOCKER discovery and approved Docker-backed servers only.
+### Notion
+| Tool | Use |
+|------|-----|
+| `MCP_DOCKER__notion-search` | Search Notion workspace |
+| `MCP_DOCKER__notion-fetch` | Fetch page/database content |
+| `MCP_DOCKER__notion-create-pages` | Create pages in Notion |
+| `MCP_DOCKER__notion-update-page` | Update page properties/content |
 
-### Default graph surface
-| Server | Why |
-|--------|-----|
-| Allura Brain | Canonical memory search/write surface for this repo. |
+## Boot Policy — Allura Brain as Canonical Surface
+
+> **AD-2026-04-28:** Allura Brain (`localhost:5888/mcp`) is the canonical memory surface. The previous ADR (2026-04-19b) retired a *local stdio allura-memory MCP server* — not the governed Allura Brain HTTP service. Allura Brain is alive and well.
+
+### Access paths
+
+| Harness | Tool Prefix | Registration |
+|---------|------------|-------------|
+| OpenClaw (Gilliam) | `allura-brain__memory_*` | Pre-registered in `openclaw.json` |
+| OpenCode (Team RAM/Durham) | `allura-brain__memory_*` | Via `.opencode/mcp-client-config.json` |
+| Docker MCP (any) | `MCP_DOCKER__*` | Via `mcp-add` on demand |
 
 ### What loads on-demand (via mcp-find → mcp-add)
 | Server | Trigger |
 |--------|---------|
-| `exa` | Web search needed |
 | `perplexica` | Web search needed |
 | `hyperbrowser` | Browser automation needed |
 | `context7` | Live library docs needed |
-| `notion` | Notion page read/write needed |
 
 ### On-Demand Load Pattern
 ```
@@ -116,4 +145,4 @@ mcp__MCP_DOCKER__perplexica_search("query")
 ```
 
 ## Settings
-`.claude/settings.json` should only define approved Docker-backed MCP servers. No local allura-memory MCP server should be configured.
+`.claude/settings.local.json` defines approved tool permissions. Allura Brain is the canonical memory surface — never bypass it with direct DB writes for memory operations.

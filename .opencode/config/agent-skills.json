@@ -53,6 +53,11 @@
       "allura-memory-skill",
       "context7",
       "multi-search"
+    ],
+    "mizko-ui": [
+      "mcp-docker",
+      "allura-memory-skill",
+      "allura-design"
     ]
   }
 }

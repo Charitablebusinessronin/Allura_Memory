@@ -120,13 +120,20 @@ MCP_DOCKER_mcp-exec --name filesystem --tool read_file --arguments '{
 }'
 ```
 
-### Example 4: Repo Policy Guardrail
+### Example 4: Allura Brain — The Canonical Memory Surface
 
-For this repository, do **not** configure or add a local `allura-memory` MCP server through MCP_DOCKER.
+Allura Brain IS the memory system for this repo. It runs as an HTTP MCP server at `localhost:5888/mcp` and is also available via Docker MCP toolkit.
 
-Use:
-- first-party `allura-brain_*` tools when available
-- `MCP_DOCKER` for approved Docker-backed servers such as Neo4j, PostgreSQL, GitHub, Perplexica, and Context7
+**Two access paths, same backend (PG + Neo4j):**
+
+| Harness | Tool Prefix | How |
+|---------|------------|-----|
+| OpenClaw | `allura-brain__memory_*` | Pre-registered in gateway config |
+| OpenCode/Durham | `MCP_DOCKER__*` (SQL, Neo4j, search) | Via Docker MCP gateway |
+
+**Use `allura-brain__memory_*` tools first** when available — they enforce governance (SOC2 mode, promotion thresholds, trace logging). Fall back to `MCP_DOCKER__*` tools for raw queries that bypass the governance layer.
+
+**Never** create a separate `allura-memory` MCP server entry — the governed surface is Allura Brain.
 
 ## Essential MCP Servers
 
@@ -220,7 +227,7 @@ Remove an MCP server from the session.
 4. **One-time setup**: Configure once per session, reuse multiple times
 5. **Clean up**: Remove servers when done if experiencing context bloat: `MCP_DOCKER_mcp-remove --name unused-server`
 6. **Check documentation**: Some servers have specific configuration requirements
-7. **Respect repo policy**: Avoid local ad hoc memory servers when the repo defines a governed memory surface
+7. **Respect governed surfaces**: Use `allura-brain__memory_*` tools for governed writes (add, promote, update, delete). Use `MCP_DOCKER__*` for raw reads and diagnostics. Never bypass the governance layer with direct DB writes for memory operations.
 
 ## Troubleshooting
 
