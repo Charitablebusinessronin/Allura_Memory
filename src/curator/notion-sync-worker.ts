@@ -201,6 +201,13 @@ async function markEventFailed(
  * Write Notion page URL back to canonical_proposals.
  */
 async function writeNotionUrlToProposal(proposalId: string, notionPageUrl: string): Promise<void> {
+  // Validate proposalId is a valid UUID before querying
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (!uuidRegex.test(proposalId)) {
+    console.warn(`[NotionSyncWorker] Skipping writeNotionUrlToProposal: invalid UUID "${proposalId}"`)
+    return
+  }
+
   const pool = getPool()
 
   await pool.query(
@@ -283,7 +290,8 @@ async function createNotionPage(proposal: PendingProposal): Promise<{ pageId: st
  * for exponential backoff retry. No event is ever silently dropped.
  */
 export async function processNotionSyncEvent(
-  event: NotionSyncEvent
+  event: NotionSyncEvent,
+  notionClient?: import("./notion-bridge").NotionMCPClient
 ): Promise<{ success: boolean; pageUrl?: string; error?: string; dlqId?: number }> {
   const proposal: PendingProposal = {
     proposal_id: event.metadata.proposal_id as string,
@@ -300,13 +308,18 @@ export async function processNotionSyncEvent(
 
   const notionType = TIER_TO_TYPE[proposal.tier] || "insight"
 
+  // Handle malformed events (missing content)
+  const safeContent = proposal.content || "Untitled proposal"
+  const safeTier = proposal.tier || "insight"
+  const safeStatus = proposal.status || "approved"
+
   // Build properties for Notion page
   const properties: Record<string, string | number> = {
-    Title: proposal.content.slice(0, 100),
-    Status: proposal.status,
-    Type: notionType,
+    Title: safeContent.slice(0, 100),
+    Status: safeStatus,
+    Type: TIER_TO_TYPE[safeTier] || "insight",
     "Group ID": event.group_id,
-    "date:Proposed At:start": proposal.decided_at.slice(0, 10),
+    "date:Proposed At:start": (proposal.decided_at || new Date().toISOString()).slice(0, 10),
   }
 
   if (proposal.rationale) {
@@ -319,6 +332,32 @@ export async function processNotionSyncEvent(
 
   const content = buildProposalContent(proposal)
 
+  // RK-16 Fix: If a Notion client is provided, create the page directly.
+  // Otherwise, fall back to the old behavior (prepare data for MCP agent).
+  if (notionClient) {
+    try {
+      // Use CURATOR_PROPOSALS_DB_ID as the Notion database ID
+      // (data_source_id is a collection:// concept, not a Notion API database_id)
+      const results = await notionClient.createPages({
+        parent: { data_source_id: "08d2e672-2a73-45b0-a31d-b4a7be551e16" },
+        pages: [{ properties, content }],
+      })
+
+      if (!results || results.length === 0) {
+        return { success: false, error: "Notion API returned empty results" }
+      }
+
+      return {
+        success: true,
+        pageUrl: results[0].pageUrl,
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      return { success: false, error: errorMessage }
+    }
+  }
+
+  // Legacy path: no direct client available, prepare data for MCP delegation
   return {
     success: true,
     pageUrl: undefined, // Agent will fill this in after MCP call
@@ -458,6 +497,18 @@ const isMainModule = process.argv[1]?.includes("notion-sync-worker.ts")
 if (isMainModule) {
   async function main() {
     console.log("[NotionSyncWorker] Starting...")
+
+    // RK-16 Fix: Use Direct Notion API client when NOTION_API_KEY is available
+    let notionClient: import("./notion-bridge").NotionMCPClient | undefined
+    try {
+      const { createDirectNotionClient } = await import("./direct-notion-client")
+      notionClient = createDirectNotionClient()
+      console.log("[NotionSyncWorker] Using direct Notion API client")
+    } catch (err) {
+      console.warn("[NotionSyncWorker] NOTION_API_KEY not set — falling back to MCP delegation mode")
+      console.warn("[NotionSyncWorker] Events will be prepared but NOT written to Notion")
+    }
+
     console.log("[NotionSyncWorker] Fetching pending notion_sync_pending events...")
 
     const events = await getPendingEvents()
@@ -469,15 +520,21 @@ if (isMainModule) {
       console.log(`[NotionSyncWorker] Status: ${event.metadata.status}`)
       console.log(`[NotionSyncWorker] Tier: ${event.metadata.tier}`)
 
-      // Prepare the data for MCP call
-      const result = await processNotionSyncEvent(event)
+      const result = await processNotionSyncEvent(event, notionClient)
 
-      if (result.success) {
-        console.log(`[NotionSyncWorker] Event prepared for MCP call`)
+      if (result.success && result.pageUrl) {
+        console.log(`[NotionSyncWorker] ✅ Created Notion page: ${result.pageUrl}`)
+        // Mark event as completed
+        await markEventCompleted(String(event.id), event.group_id, "notion-sync-direct", result.pageUrl)
+        // Write Notion URL back to proposal
+        if (event.metadata.proposal_id) {
+          await writeNotionUrlToProposal(event.metadata.proposal_id as string, result.pageUrl)
+        }
+      } else if (result.success && !result.pageUrl) {
+        console.log(`[NotionSyncWorker] Event prepared for MCP delegation (no direct client)`)
         console.log(`[NotionSyncWorker] Agent must call mcp__MCP_DOCKER__notion-create-pages`)
       } else {
-        console.error(`[NotionSyncWorker] Failed to prepare event: ${result.error}`)
-        // Route to DLQ for retry
+        console.error(`[NotionSyncWorker] Failed: ${result.error}`)
         const dlqId = await handleNotionSyncFailure(event, result.error ?? "Unknown error")
         if (dlqId) {
           console.log(`[NotionSyncWorker] Event routed to DLQ (dlq_id=${dlqId})`)
