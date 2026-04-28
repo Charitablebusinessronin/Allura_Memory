@@ -96,11 +96,12 @@ services:
       - neo4j_logs:/logs
     networks:
       - knowledge-network
+    # Healthcheck uses wget — curl is NOT available in neo4j:5.26.0-community
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:7474 >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:7474 || exit 1"]
       interval: 15s
       timeout: 10s
-      retries: 20
+      retries: 5
       start_period: 60s
     deploy:
       resources:
