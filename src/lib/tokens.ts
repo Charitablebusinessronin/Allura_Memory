@@ -1,7 +1,10 @@
 /**
  * Allura Memory Dashboard — Semantic Design Tokens
  * Source: design/tokens.json
- * Never use raw hex in components; import from here.
+ * @deprecated Migrate to `@/lib/brand/allura.ts` for CSS custom property-based tokens.
+ *   - Colors: use `ALLURA_TOKENS` (e.g., `ALLURA_TOKENS.blue`) or Tailwind `text-[var(--allura-blue)]`
+ *   - Graph helpers: use `getGraphNodeColor()` / `getGraphNodeRadius()` from `@/lib/brand/allura.ts`
+ *   - This file is retained for backward compatibility only and will be removed in a future release.
  */
 
 export const tokens = {

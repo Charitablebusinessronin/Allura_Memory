@@ -3,7 +3,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { tokens } from "@/lib/tokens"
 
 interface PaginationProps {
   currentPage: number

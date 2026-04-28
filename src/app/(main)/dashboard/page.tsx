@@ -48,8 +48,7 @@ export default function DashboardPage() {
       {/* Hero */}
       <div className="flex flex-col gap-1">
         <span
-          className="font-mono text-xs font-semibold uppercase tracking-[0.14em]"
-          style={{ color: "var(--allura-gold)", fontFamily: "'IBM Plex Mono', monospace" }}
+          className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[var(--allura-gold)]"
         >
           Allura Memory dashboard
         </span>

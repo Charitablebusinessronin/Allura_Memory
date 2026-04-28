@@ -26,6 +26,8 @@ import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-
 import { requireRole, forbiddenResponse, unauthorizedResponse } from "@/lib/auth/api-auth"
 import { captureException } from "@/lib/observability/sentry"
 
+const DEFAULT_GROUP_ID = process.env.DEFAULT_GROUP_ID || "allura-default"
+
 /**
  * POST /api/curator/approve
  *
@@ -124,8 +126,9 @@ export async function POST(request: NextRequest) {
           },
         })
 
-        // Phase 3 sync contract: wire AUTHORED_BY → Agent and RELATES_TO → Project
+        // Phase 5 sync contract: wire AUTHORED_BY → Agent and CONTRIBUTES_TO → Project
         // relationships to anchor the promoted knowledge in the structural context layer.
+        // Auto-creates Agent/Project nodes if they don't exist (MERGE semantics).
         // Best-effort: failure does not block the approval.
         // TODO: After Insight→Memory label migration, use graphAdapter.createMemory
         // instead of createInsight so we get :Memory nodes directly.
@@ -134,11 +137,15 @@ export async function POST(request: NextRequest) {
           const { Neo4jGraphAdapter } = require("@/lib/graph-adapter/neo4j-adapter")
           const driver = getNeo4jDriver()
           const adapter = new Neo4jGraphAdapter(driver)
+
+          // Resolve project_id from metadata.project or default to group_id
+          const projectId = (body.metadata?.project as string | undefined) ?? validatedGroupId
+
           const linkResult = await adapter.linkMemoryContext({
             memory_id: memoryId as any,
             group_id: validatedGroupId as any,
             agent_id: proposal.created_by ?? curator_id ?? null,
-            project_id: null, // Project not available at approval time — TODO: add to proposal
+            project_id: projectId,
           })
           if (linkResult.authored_by || linkResult.relates_to) {
             console.info(

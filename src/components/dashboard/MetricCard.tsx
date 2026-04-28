@@ -2,16 +2,15 @@ import { Database } from "lucide-react"
 
 import type { Metric } from "@/lib/dashboard/types"
 import { cn } from "@/lib/utils"
-import { tokens } from "@/lib/tokens"
 
 const toneClasses: Record<Metric["tone"], string> = {
-  blue:     `bg-[color-mix(in_srgb,${tokens.color.primary.default}_10%,white)]     text-[var(--allura-blue)]`,
-  orange:   `bg-[color-mix(in_srgb,${tokens.color.secondary.default}_10%,white)]   text-[var(--allura-orange)]`,
-  green:    `bg-[color-mix(in_srgb,${tokens.color.success.default}_10%,white)]     text-[var(--allura-green)]`,
-  charcoal: `bg-[color-mix(in_srgb,${tokens.color.text.primary}_10%,white)]       text-[var(--allura-charcoal)]`,
-  gold:     `bg-[color-mix(in_srgb,${tokens.color.accent.gold}_10%,white)]        text-[var(--allura-gold-hover)]`,
-  red:      `bg-[color-mix(in_srgb,${tokens.color.secondary.hover}_10%,white)]    text-[var(--allura-orange-hover)]`,
-  muted:    `bg-[var(--allura-muted)]                                    text-[var(--allura-text-2)]`,
+  blue:     `bg-[color-mix(in_srgb,var(--allura-blue)_10%,white)]              text-[var(--allura-blue)]`,
+  orange:   `bg-[color-mix(in_srgb,var(--allura-orange)_10%,white)]            text-[var(--allura-orange)]`,
+  green:    `bg-[color-mix(in_srgb,var(--allura-green)_10%,white)]             text-[var(--allura-green)]`,
+  charcoal: `bg-[color-mix(in_srgb,var(--allura-charcoal)_10%,white)]            text-[var(--allura-charcoal)]`,
+  gold:     `bg-[color-mix(in_srgb,var(--allura-gold)_10%,white)]              text-[var(--allura-gold-hover)]`,
+  red:      `bg-[color-mix(in_srgb,var(--allura-orange-hover)_10%,white)]      text-[var(--allura-orange-hover)]`,
+  muted:    `bg-[var(--allura-muted)]                                        text-[var(--allura-text-2)]`,
 }
 
 export function MetricCard({ metric }: { metric: Metric }) {

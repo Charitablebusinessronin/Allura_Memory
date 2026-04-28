@@ -534,15 +534,22 @@ export class Neo4jGraphAdapter implements IGraphAdapter {
       let authoredBy = false
       let relatesTo = false
 
-      // Wire AUTHORED_BY → Agent (best-effort, skips if Agent not found)
+      // Phase 5 sync contract: Wire AUTHORED_BY → Agent (auto-create if missing)
       if (params.agent_id) {
         const result = await session.run(
           `MATCH (m) WHERE m.id = $memoryId AND m.group_id = $groupId AND (m:Memory OR m:Insight)
-           OPTIONAL MATCH (a:Agent {id: $agentId, group_id: $groupId})
-           FOREACH (x IN CASE WHEN a IS NOT NULL THEN [1] ELSE [] END |
-             MERGE (m)-[:AUTHORED_BY]->(a)
-           )
-           RETURN a IS NOT NULL AS linked`,
+           MERGE (a:Agent {id: $agentId, group_id: $groupId})
+           ON CREATE SET a.name = $agentId,
+                         a.role = 'auto-created from promotion',
+                         a.model = 'unknown',
+                         a.created_at = datetime(),
+                         a.last_active = datetime(),
+                         a.confidence = 0.0,
+                         a.contribution_count = 0,
+                         a.learning_count = 0,
+                         a.status = 'active'
+           MERGE (m)-[:AUTHORED_BY]->(a)
+           RETURN true AS linked`,
           {
             memoryId: params.memory_id,
             groupId: params.group_id,
@@ -552,15 +559,18 @@ export class Neo4jGraphAdapter implements IGraphAdapter {
         authoredBy = result.records[0]?.get('linked') ?? false
       }
 
-      // Wire RELATES_TO → Project (best-effort, skips if Project not found)
+      // Phase 5 sync contract: Wire CONTRIBUTES_TO → Project (auto-create if missing)
       if (params.project_id) {
         const result = await session.run(
           `MATCH (m) WHERE m.id = $memoryId AND m.group_id = $groupId AND (m:Memory OR m:Insight)
-           OPTIONAL MATCH (p:Project {id: $projectId, group_id: $groupId})
-           FOREACH (x IN CASE WHEN p IS NOT NULL THEN [1] ELSE [] END |
-             MERGE (m)-[:RELATES_TO]->(p)
-           )
-           RETURN p IS NOT NULL AS linked`,
+           MERGE (p:Project {id: $projectId, group_id: $groupId})
+           ON CREATE SET p.name = $projectId,
+                         p.description = 'auto-created from promotion',
+                         p.created_at = datetime(),
+                         p.updated_at = datetime(),
+                         p.status = 'active'
+           MERGE (m)-[:CONTRIBUTES_TO]->(p)
+           RETURN true AS linked`,
           {
             memoryId: params.memory_id,
             groupId: params.group_id,

@@ -1,7 +1,6 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { tokens } from "@/lib/tokens"
 
 interface NotificationBadgeProps {
   variant: "dot" | "count"
