@@ -80,3 +80,4 @@ memory-bank/index.meta.json
 memory-bank/ingestion.meta.json
 package-lock.json
 .claude/worktrees/
+.worktrees/
