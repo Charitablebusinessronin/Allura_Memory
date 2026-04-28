@@ -91,7 +91,30 @@ export function getHealth() {
 }
 
 export function getHealthMetrics() {
-  return readJson<unknown>("/api/health/metrics")
+  return readJson<{
+    timestamp: string
+    queue: { pending_count: number; oldest_age_hours: number; approved_24h: number; rejected_24h: number }
+    recall: { search_available: boolean; last_latency_ms: number | null }
+    storage: {
+      postgres: { status: string; latency_ms: number; total_memories: number }
+      neo4j: { status: string; latency_ms: number | null; total_nodes: number | null }
+    }
+    degraded: {
+      neo4j_unavailable: number
+      scope_error: number
+      embedding_failures: number
+      promotion_failures_24h: number
+    }
+    skills?: Array<{
+      tool_name: string
+      category: string
+      calls_24h: number
+      success_rate: number
+      avg_latency_ms: number
+      last_used: string | null
+      trend: "up" | "down" | "flat"
+    }>
+  }>("/api/health/metrics")
 }
 
 export function getGraph() {
