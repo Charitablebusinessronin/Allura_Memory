@@ -242,6 +242,9 @@ export interface MemorySearchResult {
 
   /** Tags associated with this memory */
   tags?: string[]
+
+  /** Schema version for compatibility checks */
+  schema_version?: number
 }
 
 export interface MemorySearchResponse {
@@ -312,6 +315,9 @@ export interface MemoryGetResponse {
 
   /** Tags associated with this memory */
   tags?: string[]
+
+  /** Schema version for compatibility checks */
+  schema_version?: number
 
   /** Execution metadata */
   meta?: MemoryResponseMeta

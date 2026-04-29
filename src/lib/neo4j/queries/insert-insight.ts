@@ -1,5 +1,6 @@
 import { writeTransaction, readTransaction, type ManagedTransaction } from "../connection";
 import { Neo4jPromotionError, Neo4jQueryError } from "../../errors/neo4j-errors";
+import { CURRENT_SCHEMA_VERSION } from "../../schema-version";
 
 /**
  * Insight status values
@@ -263,7 +264,8 @@ export async function createInsight(insight: InsightInsert): Promise<InsightReco
           created_at: datetime(),
           created_by: $created_by,
           status: 'active',
-          metadata: $metadata
+          metadata: $metadata,
+          schema_version: $schema_version
         })
         WITH i
         MERGE (h:InsightHead {insight_id: $insight_id, group_id: $group_id})
@@ -289,6 +291,7 @@ export async function createInsight(insight: InsightInsert): Promise<InsightReco
         source_ref: insight.source_ref || null,
         created_by: insight.created_by || null,
         metadata: JSON.stringify(insight.metadata || {}),
+        schema_version: CURRENT_SCHEMA_VERSION,
       };
 
       const queryResult = await tx.run(query, params);
@@ -374,7 +377,8 @@ export async function createInsightVersion(
           created_at: datetime(),
           created_by: null,
           status: 'active',
-          metadata: $metadata
+          metadata: $metadata,
+          schema_version: $schema_version
         })
         CREATE (new)-[:VERSION_OF]->(h)
         CREATE (new)-[:SUPERSEDES]->(prev)
@@ -392,6 +396,7 @@ export async function createInsightVersion(
         confidence,
         topic_key: topicKey,
         metadata: JSON.stringify(metadata || {}),
+        schema_version: CURRENT_SCHEMA_VERSION,
       });
 
       return queryResult;
@@ -534,7 +539,8 @@ export async function revertInsightVersion(
           created_at: datetime(),
           created_by: null,
           status: 'active',
-          metadata: $metadata
+          metadata: $metadata,
+          schema_version: $schema_version
         })
         CREATE (new)-[:VERSION_OF]->(h)
         CREATE (new)-[:SUPERSEDES]->(prev)
@@ -554,6 +560,7 @@ export async function revertInsightVersion(
         confidence,
         topic_key: topicKey,
         metadata,
+        schema_version: CURRENT_SCHEMA_VERSION,
       });
 
       return queryResult;

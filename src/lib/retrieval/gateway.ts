@@ -16,6 +16,7 @@ import {
 } from './contract';
 import { validateStartup, StartupReport } from './startup-validator';
 import { enforcePolicy, PolicyResult } from './policy';
+import { isCompatibleVersion, CURRENT_SCHEMA_VERSION } from '../schema-version';
 
 let startupValidated = false;
 
@@ -61,6 +62,7 @@ export function createRetrievalGateway(
       user_id: r.user_id ?? normalized.user_id,
       metadata: r.metadata,
       created_at: r.created_at,
+      schema_version: r.schema_version ?? CURRENT_SCHEMA_VERSION,
     }));
   }
 
@@ -120,6 +122,19 @@ export function createRetrievalGateway(
         warnings.push(`Search execution failed: ${e.message}`);
       }
 
+      // 4. Schema version compatibility validation on read
+      // Check each result's schema_version — flag incompatible data
+      for (const result of results) {
+        const sv = result.schema_version ?? CURRENT_SCHEMA_VERSION; // default for legacy data
+        const compat = isCompatibleVersion(sv);
+        if (!compat.compatible) {
+          degraded = true;
+          warnings.push(`Memory ${result.id} has incompatible schema version ${sv}: ${compat.reason}`);
+        }
+        // Update the schema_version to the actual value (or default for legacy)
+        result.schema_version = sv;
+      }
+
       const latency_ms = Math.round(performance.now() - start);
       return {
         results,
@@ -128,6 +143,7 @@ export function createRetrievalGateway(
         warnings,
         latency_ms,
         version: config.version,
+        schema_version: CURRENT_SCHEMA_VERSION,
       };
     },
   };

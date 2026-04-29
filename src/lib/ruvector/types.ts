@@ -199,6 +199,7 @@ export interface AlluraMemoryRow {
   trajectory_id: string | null;
   relevance: number;
   deleted_at: string | null;
+  schema_version: number;  // Schema version for compatibility checks (FR-1)
 }
 
 /**

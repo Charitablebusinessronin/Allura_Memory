@@ -57,6 +57,8 @@ export interface GraphMemoryNode {
   deleted_at: string | null
   /** When this node was restored (ISO 8601 or null) */
   restored_at: string | null
+  /** Schema version for compatibility checks */
+  schema_version?: number
 }
 
 /**
@@ -73,6 +75,8 @@ export interface GraphSearchResult {
   tags: string[]
   /** Full-text relevance score from the search engine */
   relevance: number
+  /** Schema version for compatibility checks */
+  schema_version?: number
 }
 
 /**

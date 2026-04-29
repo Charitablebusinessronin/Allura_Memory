@@ -5,6 +5,7 @@
  */
 
 import { SearchRequest, RetrievalConfig, DEFAULT_RETRIEVAL_CONFIG } from './contract';
+import { isCompatibleVersion, CURRENT_SCHEMA_VERSION, type SchemaVersion } from '../schema-version';
 
 export interface PolicyResult {
   allowed: boolean;
@@ -14,6 +15,8 @@ export interface PolicyResult {
   error?: string;
   /** Human-readable rejection reason */
   message?: string;
+  /** Schema version compatibility warning (if present) */
+  schema_version_warning?: string;
   /** Audit trail entry */
   audit: {
     event: string;
@@ -21,6 +24,7 @@ export interface PolicyResult {
     request: SearchRequest;
     allowed: boolean;
     reason?: string;
+    schema_version?: SchemaVersion;
   };
 }
 
@@ -108,13 +112,27 @@ export function enforcePolicy(
     include_global: raw.include_global ?? true,
   };
 
+  // Schema version compatibility check (informational, not blocking)
+  // If a request specifies a schema_version, validate it
+  const requestedVersion = (raw as any).schema_version as SchemaVersion | undefined;
+  let schemaVersionWarning: string | undefined;
+  const auditSchemaVersion = requestedVersion ?? CURRENT_SCHEMA_VERSION;
+
+  if (requestedVersion !== undefined) {
+    const compat = isCompatibleVersion(requestedVersion);
+    if (!compat.compatible) {
+      schemaVersionWarning = `Requested schema version ${requestedVersion} is incompatible: ${compat.reason}`;
+    }
+  }
+
   const audit: PolicyResult['audit'] = {
     event: 'policy_check',
     timestamp,
     request: normalized,
     allowed: true,
+    schema_version: auditSchemaVersion,
   };
   logAudit(audit);
 
-  return { allowed: true, request: normalized, audit };
+  return { allowed: true, request: normalized, schema_version_warning: schemaVersionWarning, audit };
 }

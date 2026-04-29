@@ -581,6 +581,7 @@ describe.skipIf(!shouldRunHydration)("hydrate-session-from-snapshot", () => {
       inserted_at: overrides.inserted_at ?? new Date("2026-03-28T00:00:00.000Z"),
       confidence: overrides.confidence ?? null,
       evidence_ref: overrides.evidence_ref ?? null,
+      schema_version: overrides.schema_version ?? 1,
     } satisfies EventRecord;
   }
 
