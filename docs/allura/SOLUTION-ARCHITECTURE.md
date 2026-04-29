@@ -336,11 +336,15 @@ Brooks / Team RAM
 
 | Phase | Component | Status |
 |-------|-----------|--------|
-| 1 | Skills-first runtime contract | Ready |
-| 2 | Packaged `neo4j-memory` + `database-server` integration | Ready |
-| 3 | Read-only `neo4j-cypher` fallback | Ready |
-| 4 | Brooks staged routing (memory first, evidence second, Cypher last) | Planned |
+| 1 | Skills-first runtime contract | ✅ Complete |
+| 2 | Packaged `neo4j-memory` + `database-server` integration | ✅ Complete |
+| 3 | Read-only `neo4j-cypher` fallback | ✅ Complete |
+| 4 | Brooks staged routing (memory first, evidence second, Cypher last) | In Progress |
 | 5 | Legacy custom MCP removal from runtime docs and config | Planned |
+| 6 | Phase 6 deliverables (DLQ, Notion sync, auth, CSV, Sentry, CORS) | ✅ Complete (AD-25) |
+| 7 | Curator pipeline E2E validation | Planned (RK-14) |
+| 8 | Graph-Notion sync hardening | Planned (RK-16) |
+| 9 | Dashboard API shape validation (Zod + mapper tests) | Planned (RK-17) |
 
 ### 8.4 Success Metrics
 

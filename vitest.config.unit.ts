@@ -58,6 +58,8 @@ export default defineConfig({
       "src/__tests__/sentry-wiring.test.ts",
       "src/__tests__/byok-key-manager.test.ts",
       "src/__tests__/watchdog-sustained.test.ts",
+      // Backup automation (pure logic, mocked deps)
+      "src/__tests__/backup-automation.test.ts",
       // TraceMiddleware (Story 1.2)
       "src/__tests__/trace-middleware.test.ts",
       // Team RAM

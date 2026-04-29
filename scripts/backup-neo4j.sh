@@ -10,6 +10,13 @@ OUTPUT_FILE="${BACKUP_DIR}/neo4j-${NEO4J_DB}-${TIMESTAMP}.dump"
 
 mkdir -p "${BACKUP_DIR}"
 
+echo "================================================================================"
+echo "DEPRECATION WARNING: scripts/backup-neo4j.sh is deprecated."
+echo "Use the new TypeScript backup system instead:"
+echo "  bun run scripts/backup.ts --type neo4j"
+echo "This script will be removed in a future release."
+echo "================================================================================"
+echo ""
 echo "WARNING: backup file may contain sensitive data; avoid committing production dumps."
 
 if ! command -v docker >/dev/null 2>&1; then

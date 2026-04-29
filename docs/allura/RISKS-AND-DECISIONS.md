@@ -29,7 +29,7 @@
 | AD-15 | Unified agent taxonomy (AGENT_MANIFEST as single source of truth) | Decided  | Three conflicting agent taxonomies (.opencode/agent/, scripts/agents/, agent-routing.md) unified into AGENT_MANIFEST (src/lib/agents/agent-manifest.ts). Team RAM persona names (brooks, jobs, pike, fowler, scout, woz, bellard, carmack, knuth, hightower) are canonical. Legacy OmO names (turing, hopper, etc.) removed from active manifest. CI routing driven by manifest data via dynamic-router.ts, replacing static bash case statement.                                                                                                                                                           |
 | AD-16 | Ralph is an installed tool, not a built component                 | Decided  | Ralph (`@th0rgal/ralph-wiggum`) is a CLI tool that wraps any AI coding agent in a self-correcting loop. We install it; we do not implement it. Our `ralph-loop.ts` is a thin harness: resolves the binary, constructs the command with Allura defaults, logs start/end to PostgreSQL, and passes through to the real `ralph` CLI. Previous `github-models` / `GITHUB_TOKEN` references were incorrect and have been removed. What model Ralph's agent uses (OpenCode default, Claude Code, Codex, Copilot) is configured via `--agent` and `--model` flags — not hardcoded. |
 | AD-17 | 13-16-18 youth culture UX validation framework                    | Decided  | Marketing principle: 13-year-olds spot emerging trends, 16-year-olds identify popularity gaps, 18-year-olds confirm mainstream readiness. Applied to Allura consumer UI review. Target score: 0.85+. Framework validates emotional resonance, not just functional correctness.                                                                                                                                                                                                                                                                                              |
-| AD-18 | Merge `/dashboard/traces` into `/dashboard/audit`                 | Proposed | Two UX surfaces over one data source violates conceptual integrity. Audit page strictly dominates traces. See `docs/allura/AD-18-traces-vs-audit.md`.                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| AD-18 | Merge `/dashboard/traces` into `/dashboard/audit`                 | Decided  | Traces merged into audit page in codebase. Doc now matches reality. See `docs/allura/AD-18-traces-vs-audit.md`.                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | AD-19 | Controlled retrieval layer as sole agent read path                | Decided  | Agents MUST NOT query PostgreSQL or Neo4j directly. All reads go through `POST /api/memory/retrieval`. This enforces scoping, audit logging, and policy at the service boundary rather than relying on agent compliance. See [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md#retrieval-layer).                                                                                                                                                                                                                                                                          |
 | AD-20 | Curator marks events as promoted after proposal creation          | Decided  | Without marking events as promoted, the curator re-scores the same traces on every run, creating duplicate proposals. Events with `status = 'promoted'` are excluded from future curator queries. See [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md#insight-curation-and-approval).                                                                                                                                                                                                                                                                                |
 | AD-21 | Single consolidated DESIGN-MEMORY-SYSTEM.md                       | Decided  | One design doc covers the full governed pipeline (F1–F15). Splitting into five thin design docs too early creates maintenance overhead without ownership clarity. Split later only if subsystem complexity forces it. See [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md).                                                                                                                                                                                                                                                                                           |
@@ -63,12 +63,36 @@
 
 ## Risks
 
-| ID    | Risk                                          | Impact | Mitigation                                                                                                             | Status    |
-| ----- | --------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------- | --------- |
+### Risk Summary
+
+| ID | Title | Severity | Status |
+|----|-------|----------|--------|
+| RK-01 | Neo4j graph bloat from duplicate promotions | Medium | Active |
+| RK-02 | Cross-tenant data leakage | High | Mitigated |
+| RK-03 | Auto-mode promotes low-quality memories | Medium | Active |
+| RK-04 | No BYOK — hosted cloud exposes memory data | High | Mitigated |
+| RK-05 | Packaged MCP server coordination failures | Medium | Accepted |
+| RK-06 | Postgres append-only table grows unbounded | Low | Active |
+| RK-07 | Schema drift between Postgres and Neo4j | High | Active |
+| RK-08 | Embedding provider latency spikes | Medium | Active |
+| RK-09 | Neo4j promotion conflicts (concurrent writes) | High | Mitigated |
+| RK-10 | Validation slice false positives | Medium | Active |
+| RK-11 | RalphLoop runaway (infinite loops) | Medium | Mitigated |
+| RK-12 | Retrieval layer bypass — agents query DBs directly | High | Active |
+| RK-13 | Curator re-scores already-promoted traces | Medium | Mitigated |
+| RK-14 | E2E validation gap — pipeline not proven | High | Active |
+| RK-15 | Approve route connection leak | Medium | Active |
+| RK-16 | Graph-Notion sync drift | Medium | 🔴 Open |
+| RK-17 | Dashboard API shape drift hides Brain data gaps | Medium | 🔴 Open |
+
+### Risk Detail
+
+| ID | Risk | Impact | Mitigation | Status |
+| ---- | ------------- | ------ | --------- | -------- |
 | RK-01 | Neo4j graph bloat from duplicate promotions   | Medium | Dedup check before every Neo4j write (`src/lib/dedup/`)                                                                | Active    |
 | RK-02 | Cross-tenant data leakage                     | High   | `group_id` CHECK constraint + scoped queries on every Postgres + Neo4j operation                                       | Mitigated |
 | RK-03 | Auto-mode promotes low-quality memories       | Medium | Tunable `AUTO_APPROVAL_THRESHOLD`. Score logged for observability.                                                     | Active    |
-| RK-04 | No BYOK — hosted cloud exposes memory data    | High   | Self-hosted deployment recommended. BYOK planned for future release.                                                   | Open      |
+| RK-04 | No BYOK — hosted cloud exposes memory data    | High   | Self-hosted deployment makes BYOK unnecessary at infrastructure level — tenants bring their own encryption by definition. | Mitigated |
 | RK-05 | Packaged MCP server coordination failures     | Medium | Use focused packaged MCP servers with memory-first routing: `neo4j-memory` first, `database-server` second, `neo4j-cypher` only when needed. Failure of one inspection server should degrade to remaining available surfaces; Postgres + Neo4j remain the durable stores. | Accepted  |
 | RK-06 | Postgres append-only table grows unbounded    | Low    | `TRACE_RETENTION_DAYS` env var controls retention. TTL cleanup planned.                                                | Active    |
 | RK-07 | Schema drift between Postgres and Neo4j       | High   | Sync validation in health check endpoint. Schema version field in both stores. Alert on mismatch.                      | Active    |

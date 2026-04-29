@@ -11,6 +11,13 @@ OUTPUT_FILE="${BACKUP_DIR}/postgres-${POSTGRES_DB}-${TIMESTAMP}.sql"
 
 mkdir -p "${BACKUP_DIR}"
 
+echo "================================================================================"
+echo "DEPRECATION WARNING: scripts/backup-postgres.sh is deprecated."
+echo "Use the new TypeScript backup system instead:"
+echo "  bun run scripts/backup.ts --type postgres"
+echo "This script will be removed in a future release."
+echo "================================================================================"
+echo ""
 echo "WARNING: backup file is plaintext SQL; avoid committing sensitive production data."
 
 if ! command -v docker >/dev/null 2>&1; then

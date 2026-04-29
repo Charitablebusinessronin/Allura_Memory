@@ -77,6 +77,8 @@ The primary and only append-only log. Every memory operation — add, search, ge
 
 ## PostgreSQL: `canonical_proposals`
 
+**JSON Schema:** [`json-schema/canonical_proposals.schema.json`](../../json-schema/canonical_proposals.schema.json)
+
 The HITL (Human-in-the-Loop) promotion queue. Proposals are scored by the curator engine and stored here pending human approval. Once approved, they are promoted to Neo4j as InsightHead/Insight nodes.
 
 | Field | Type | Required | Description |
