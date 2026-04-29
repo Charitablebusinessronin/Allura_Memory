@@ -204,6 +204,16 @@ This section traces the governed memory pipeline requirements from business goal
 | B5 | Agents must retrieve approved knowledge through a controlled retrieval layer that supports semantic and structured queries with project and global scope. | [F10](#f10), [F11](#f11) | MEM-UC6 |
 | B6 | All reads and writes must pass through controlled APIs that enforce project-level access, agent permissions, and audit logging. | [F12](#f12), [F13](#f13) | MEM-UC7 |
 | B7 | The full loop from agent execution to later knowledge reuse must be demonstrably end-to-end and reversible. | [F14](#f14), [F15](#f15) | MEM-UC8 |
+| B8 | Consumer memory viewer: no sidebar, search dominant, swipe to forget | F5, F22 | — |
+| B9 | Every memory shows provenance: "from conversation" or "added manually" | F3 | — |
+| B10 | Memory usage indicator: "used N times this week" on expand | — | — |
+| B11 | Undo: recently forgotten memories recoverable within 30 days | F5, `memory_restore` | — |
+| B24 | A curator process must turn raw traces into proposed insights without promoting them directly | F4, F5, F29, F30 | MEM-UC3 |
+| B25 | No insight may become active knowledge until approved by a human or policy-controlled flow | F6, F7, F31 | MEM-UC4 |
+| B26 | Approved insights must be stored in Neo4j as immutable, versioned knowledge records | F8, F9, F33, F34 | MEM-UC5 |
+| B27 | Agents must retrieve approved knowledge through a controlled retrieval layer | F10, F11, F35, F36 | MEM-UC6 |
+| B28 | All reads/writes must pass through controlled APIs with project-level access and audit | F12, F13, F37, F38 | MEM-UC7 |
+| B29 | The full loop from agent execution to knowledge reuse must be demonstrably end-to-end | F14, F15, F39, F40 | MEM-UC8 |
 
 ### Section 2: Functional Requirements Detail
 
@@ -258,7 +268,63 @@ This section traces the governed memory pipeline requirements from business goal
 | <a name="f15"></a>F15 | The full lifecycle from trace capture to knowledge reuse must be traceable, auditable, and reversible. | Evidence chain: trace → proposal → approval → Neo4j → retrieval · [VALIDATION-GATE.md](../archive/allura/VALIDATION-GATE.md) · [RISKS-AND-DECISIONS.md](./RISKS-AND-DECISIONS.md) |
 | <a name="f16"></a>F16 | The graph must include Agent, Team, and Project structural context nodes with relationships enabling traversal queries by ownership, project scope, and delegation path. | `scripts/neo4j-seed-agents.cypher` · [BLUEPRINT.md](./BLUEPRINT.md#5-data-model) · [DATA-DICTIONARY.md](./DATA-DICTIONARY.md#neo4j-agent) |
 
-### Section 3: Use Case Index
+### Section 3: Curator Dashboard (F17–F19)
+
+| ID | Requirement | Satisfied by |
+|----|-------------|--------------|
+| <a name="f17"></a>F17 | Tab 1 restricted to authenticated users with `admin` role (engineers only) | `src/app/api/curator/` · Clerk RBAC middleware · [DESIGN-ALLURA.md](./DESIGN-ALLURA.md#dashboard-requirements) |
+| <a name="f18"></a>F18 | Audit log endpoint: `GET /api/audit/events` — returns curator decisions with timestamps | `src/app/api/audit/events/` · [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md#insight-curation-and-approval) |
+| <a name="f19"></a>F19 | Dashboard integrates Clerk for authentication and RBAC (curator, admin, viewer roles) | Clerk auth provider · `src/lib/auth/` · [DESIGN-ALLURA.md](./DESIGN-ALLURA.md#dashboard-requirements) |
+
+### Section 4: Infrastructure (F20–F25)
+
+| ID | Requirement | Satisfied by |
+|----|-------------|--------------|
+| <a name="f20"></a>F20 | Skills route agent work to packaged MCP servers (`neo4j-memory`, `database-server`, optional `neo4j-cypher`) rather than a custom all-in-one MCP runtime | `.opencode/skills/allura-memory-skill/` · `.opencode/skills/mcp-docker-memory-system/` · AD-23 · [SOLUTION-ARCHITECTURE.md](./SOLUTION-ARCHITECTURE.md#3-1-agent-memory-recall-primary-path) |
+| <a name="f21"></a>F21 | `docker compose up` starts core infra and app services; packaged MCP servers are attached as focused external capabilities | `docker-compose.yml` · [SOLUTION-ARCHITECTURE.md](./SOLUTION-ARCHITECTURE.md#8-1-deployment-scenarios) |
+| <a name="f22"></a>F22 | Memory viewer UI at `/memory` lists, searches, and deletes memories | `src/app/memory/page.tsx` · [DESIGN-ALLURA.md](./DESIGN-ALLURA.md#ux-philosophy) |
+| <a name="f23"></a>F23 | Curator dashboard deployed on Vercel; calls backend engine via `CURATOR_ENGINE_URL` env var | `src/app/curator/page.tsx` · Vercel deployment config · [DESIGN-ALLURA.md](./DESIGN-ALLURA.md#dashboard-requirements) |
+| <a name="f24"></a>F24 | Vercel Functions (`/api/curator/*`) call Docker engine in VPC/cloud via HTTPS | `src/app/api/curator/` · [SOLUTION-ARCHITECTURE.md](./SOLUTION-ARCHITECTURE.md#4-interface-catalogue) |
+| <a name="f25"></a>F25 | Error tracking: unhandled exceptions sent to Sentry; curator notified via email/Slack | `src/lib/observability/sentry.ts` · [BLUEPRINT.md](./BLUEPRINT.md#3-architecture) |
+
+### Section 5: Governed Memory Pipeline (F26–F40)
+
+| ID | Requirement | Satisfied by |
+|----|-------------|--------------|
+| <a name="f26"></a>F26 | Agent task lifecycle events, tool calls, outputs, retries, and terminal status are persisted as append-only traces | `insertEvent()` · `src/lib/postgres/queries/insert-trace.ts` · [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md#trace-ingestion) |
+| <a name="f27"></a>F27 | Raw trace storage is append-only; no UPDATE or DELETE on the `events` table | Append-only write policy · `events` table schema · `00-traces.sql` · [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md#trace-ingestion) |
+| <a name="f28"></a>F28 | Raw traces preserve provenance linking downstream insights back to source evidence | `trace_ref` field on proposals · `evidence_refs` in promotion metadata · [DATA-DICTIONARY.md](./DATA-DICTIONARY.md#postgresql-canonical_proposals) |
+| <a name="f29"></a>F29 | Curator reads raw traces and generates proposed insights (not active insights) | `src/curator/index.ts` · `curatorScore()` · `canonical_proposals` table · [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md#insight-curation-and-approval) |
+| <a name="f30"></a>F30 | Each proposed insight includes summary, evidence links, confidence score, timestamp, and status | Proposal schema · `score`, `reasoning`, `tier`, `trace_ref` fields · [DATA-DICTIONARY.md](./DATA-DICTIONARY.md#postgresql-canonical_proposals) |
+| <a name="f31"></a>F31 | Proposed insights enter an approval flow before becoming active knowledge | `POST /api/curator/approve` · `status: pending` gate · [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md#insight-curation-and-approval) |
+| <a name="f32"></a>F32 | Every approval, rejection, or policy decision is recorded as an audit event with actor and timestamp | `proposal_approved` / `proposal_rejected` event types · witness hash · `src/lib/memory/approval-audit.ts` · [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md#insight-curation-and-approval) |
+| <a name="f33"></a>F33 | Approved insights are written to Neo4j as immutable nodes; no in-place updates | `createInsight()` · `src/lib/neo4j/queries/insert-insight.ts` · [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md#knowledge-graph-versioning) |
+| <a name="f34"></a>F34 | Changed insights create new nodes linked with `SUPERSEDES`, `DEPRECATED`, or `REVERTED` relationships | `createInsightVersion()` · `deprecateInsight()` · `revertInsightVersion()` · [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md#knowledge-graph-versioning) |
+| <a name="f35"></a>F35 | Agents retrieve knowledge through a controlled retrieval service, not by querying databases directly | `POST /api/memory/retrieval` · `src/lib/memory/retrieval-layer.ts` · AD-19 · [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md#retrieval-layer) |
+| <a name="f36"></a>F36 | Retrieval supports semantic and structured queries with project and global scope | `searchInsights()` · `getDualContextSemanticMemory()` · `queryTraces()` · [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md#retrieval-layer) |
+| <a name="f37"></a>F37 | All knowledge-system reads/writes pass through controlled endpoints enforcing project-level access | `requireRole()` · `validateGroupId()` · RBAC middleware · [SOLUTION-ARCHITECTURE.md](./SOLUTION-ARCHITECTURE.md#6-key-architectural-constraints) |
+| <a name="f38"></a>F38 | Agent permissions enforced and all access to trace/knowledge resources is audited | Auth middleware · audit event logging · [BLUEPRINT.md](./BLUEPRINT.md#9-logging--audit) |
+| <a name="f39"></a>F39 | A second agent can retrieve approved knowledge and use it correctly in a later task | Retrieval endpoint · validation gate scenario MEM-UC8 · [VALIDATION-GATE.md](../archive/allura/VALIDATION-GATE.md) |
+| <a name="f40"></a>F40 | The full lifecycle from trace capture to knowledge reuse is traceable, auditable, and reversible | Evidence chain: trace → proposal → approval → Neo4j → retrieval · [VALIDATION-GATE.md](../archive/allura/VALIDATION-GATE.md) · [RISKS-AND-DECISIONS.md](./RISKS-AND-DECISIONS.md) |
+
+### Section 6: Admin Requirements (B12–B23)
+
+| ID | Business Requirement | Functional Requirements | Use Cases | Satisfied by |
+|----|----------------------|------------------------|-----------|--------------|
+| B12 | Enterprise admin view: tenant overview, SOC2 pending queue, audit log | F17, F18, F19 | MEM-UC7 | `src/app/api/curator/` · `src/app/api/audit/events/` · Clerk RBAC · [DESIGN-ALLURA.md](./DESIGN-ALLURA.md#dashboard-requirements) |
+| B13 | Audit log exportable as CSV for compliance | F18 | MEM-UC7 | `/admin/approvals` CSV download · [DESIGN-ALLURA.md](./DESIGN-ALLURA.md#dashboard-requirements) |
+| B14 | TypeScript SDK (`@allura/sdk`) | F1–F5 | — | MCP tools are the SDK · AD-05 · 5-tool API surface |
+| B15 | BYOK encryption | — | — | Planned · RK-04 |
+| B16 | Curator dashboard: three-tab approval workflow (Traces, Approved, Pending) | F14, F17, F19 | MEM-UC4 | `src/app/curator/page.tsx` · [DESIGN-ALLURA.md](./DESIGN-ALLURA.md#dashboard-requirements) |
+| B17 | Curator sees confidence scores (60-100%) with one-sentence reasoning for uncertain proposals | F10 | MEM-UC3 | `curatorScore()` · `canonical_proposals.tier` · [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md#insight-curation-and-approval) |
+| B18 | Approve/reject decisions logged to audit trail with curator ID and timestamp | F7, F32 | MEM-UC4 | `src/lib/memory/approval-audit.ts` · witness hash · [DATA-DICTIONARY.md](./DATA-DICTIONARY.md#postgresql-canonical_proposals) |
+| B19 | Auto-promote proposals >85% confidence without curator review (configurable) | F6, F7 | MEM-UC4 | `AUTO_APPROVAL_THRESHOLD` env var · `PROMOTION_MODE=auto` · [BLUEPRINT.md](./BLUEPRINT.md#6-execution-rules) |
+| B20 | Dashboard deployable on Vercel with backend engine in user's VPC/cloud | F23, F24 | — | Vercel deployment config · `CURATOR_ENGINE_URL` env var · [SOLUTION-ARCHITECTURE.md](./SOLUTION-ARCHITECTURE.md#8-1-deployment-scenarios) |
+| B21 | Curator authentication via Clerk (SSO, RBAC) | F19 | MEM-UC7 | Clerk auth provider · `src/lib/auth/` · [DESIGN-ALLURA.md](./DESIGN-ALLURA.md#dashboard-requirements) |
+| B22 | Error tracking via Sentry; curator alerted on engine failures | F25 | — | `src/lib/observability/sentry.ts` · `captureException` in curator approve route |
+| B23 | Agents must persist all task activity as append-only raw traces for auditability | F1, F2, F3, F26, F27 | MEM-UC1, MEM-UC2 | `insertEvent()` · `events` table · [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md#trace-ingestion) |
+
+### Section 7: Use Case Index
 
 | Use Case | Domain Area | Requirements |
 |----------|-------------|-------------|
@@ -271,7 +337,10 @@ This section traces the governed memory pipeline requirements from business goal
 | MEM-UC7 | Access Control | Enforce access and audit on all reads/writes | F12, F13 |
 | MEM-UC8 | E2E Validation | Reuse approved knowledge in a later agent run | F14, F15 |
 | MEM-UC9 | Graph Context | Agent context retrieval (traverse from Agent through AUTHORED_BY to Memory) | F16 |
+| MEM-UC10 | Curator Dashboard | Admin user authenticates, reviews pending proposals, approves or rejects | F10, F11, F12, F13, F14, F17, F19 |
+| MEM-UC11 | Audit Export | Operator exports curator decisions as CSV for compliance | F18 |
+| MEM-UC12 | Infrastructure Deploy | Operator runs `docker compose up` and configures packaged MCP servers | F20, F21 |
 
 ---
 
-*This document was compiled from COMPETITIVE-ANALYSIS.md (archived 2026-04-08). Governed pipeline traceability added 2026-04-19.*
+*This document was compiled from COMPETITIVE-ANALYSIS.md (archived 2026-04-08). Governed pipeline traceability added 2026-04-19. F17–F40 and B12–B23 detail rows added 2026-04-28.*

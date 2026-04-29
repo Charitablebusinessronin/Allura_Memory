@@ -65,6 +65,7 @@ export default defineConfig({
       "src/__tests__/knowledge-hub-bridge.test.ts",
       "src/__tests__/parity-test.test.ts",
       "src/__tests__/schema-versioning.test.ts",
+      "src/__tests__/backup-automation.test.ts",
       "src/__tests__/retrieval-gateway.test.ts",
       "src/integrations/mcp.client.test.ts",
       "src/lib/ruvector/bridge.test.ts",

@@ -614,6 +614,112 @@ Before any Neo4j write, search for an existing node with matching `content` + `g
 
 ---
 
+## 9.5) Event-Driven Architecture
+
+Allura's internal coordination is event-driven: every significant state change emits an event to the PostgreSQL `events` table. Consumers subscribe by querying `event_type`; producers insert rows. This design enables loose coupling between subsystems (curator, Notion sync, audit export, dashboard) while preserving the append-only audit trail.
+
+### Event Types
+
+| Event Type | Producer | Consumer(s) | Description |
+|------------|----------|-------------|-------------|
+| `memory_add` | `memory_add` tool / REST API | Retrieval layer, curator, dashboard | A memory was written to PostgreSQL |
+| `memory_search` | `memory_search` tool / REST API | Dashboard, audit export | A search query was executed |
+| `memory_get` | `memory_get` tool | Dashboard | A single memory was fetched by ID |
+| `memory_list` | `memory_list` tool | Dashboard | All memories for a user were listed |
+| `memory_delete` | `memory_delete` tool / REST API | Dashboard, retrieval layer | A memory was soft-deleted |
+| `memory_promoted` | Memory engine (auto-mode) | Dashboard, Notion sync worker (`notion-projection-sync`) | A memory was promoted to Neo4j |
+| `promotion_failed` | Memory engine | Dashboard, Sentry alert | Neo4j write failed — episodic record retained |
+| `promotion_queued` | Memory engine (SOC2 mode) | Dashboard, curator | Memory queued for human approval |
+| `memory_restore` | `memory_restore` tool | Dashboard, retrieval layer | A soft-deleted memory was restored |
+| `memory_update` | `memory_update` tool | Dashboard, retrieval layer | Append-only versioned update (SUPERSEDES chain) |
+| `proposal_created` | Curator engine (trigger) | Dashboard, Notion sync worker | A canonical proposal was created for HITL review |
+| `proposal_approved` | Curator approve CLI / API | Dashboard, Notion sync worker (`notion-projection-sync`), audit export | A proposal was approved and promoted to Neo4j |
+| `proposal_rejected` | Curator reject CLI / API | Dashboard, Notion sync worker, audit export | A proposal was rejected |
+| `knowledge_promotion` | Knowledge promotion path | Dashboard, audit export | Insight promoted via knowledge-promotion.ts |
+| `notion_sync_pending` | Curator approve flow | Notion sync worker (`notion-sync-worker.ts`) | Proposal queued for Notion page creation |
+| `tool_approved` | MCP catalog governance | Notion sync worker (`notion-projection-sync`) | MCP tool approved through catalog governance |
+| `tool_denied` | MCP catalog governance | Notion sync worker (`notion-projection-sync`) | MCP tool denied through catalog governance |
+| `execution_succeeded` | Agent executor | Notion sync worker (`notion-projection-sync`) | Agent execution succeeded |
+| `execution_failed` | Agent executor | Notion sync worker (`notion-projection-sync`), Sentry | Agent execution failed |
+| `execution_blocked` | Agent executor | Notion sync worker (`notion-projection-sync`) | Agent execution blocked |
+| `session_start` | Agent runtime | Dashboard, audit export | Agent session began |
+| `session_end` | Agent runtime | Dashboard, audit export | Agent session ended |
+| `neo4j_unavailable` | Circuit breaker / health check | Dashboard, Sentry | Neo4j backend was unreachable — system degraded gracefully |
+| `request_trace` | HTTP TraceMiddleware | Dashboard, audit export | HTTP request traced (Story 1.2) |
+| `health_check` | Health endpoint | Dashboard, monitoring | System health check performed |
+
+### Event Flow Diagram
+
+```mermaid
+graph LR
+    subgraph Producers
+        A[memory_add/search/get/list/delete]
+        B[Curator Engine]
+        C[Curator Approve/Reject CLI]
+        D[Knowledge Promotion]
+        E[MCP Catalog Governance]
+        F[Agent Runtime]
+        G[TraceMiddleware]
+    end
+
+    subgraph Bus[(PostgreSQL events table\nappend-only)]
+    end
+
+    subgraph Consumers
+        H[Dashboard UI]
+        I[Notion Sync Worker]
+        J[Retrieval Layer]
+        K[Audit Export / CSV]
+        L[Sentry Alerts]
+    end
+
+    A --> Bus
+    B --> Bus
+    C --> Bus
+    D --> Bus
+    E --> Bus
+    F --> Bus
+    G --> Bus
+
+    Bus --> H
+    Bus --> I
+    Bus --> J
+    Bus --> K
+    Bus --> L
+```
+
+### Producer Reference
+
+| Producer | Event Types Emitted | Source File |
+|----------|-------------------|-------------|
+| MCP tools (`memory_add` etc.) | `memory_add`, `memory_search`, `memory_get`, `memory_list`, `memory_delete` | `src/mcp/canonical-tools.ts` |
+| MCP tools (update/restore) | `memory_update`, `memory_restore` | `src/mcp/canonical-tools.ts` |
+| Memory engine (auto) | `memory_promoted` | `src/mcp/canonical-tools.ts` |
+| Memory engine (SOC2) | `promotion_queued` | `src/mcp/canonical-tools.ts` |
+| Memory engine (failure) | `promotion_failed` | `src/mcp/canonical-tools.ts` |
+| Curator engine | `proposal_created` (via trigger) | `src/curator/index.ts` |
+| Curator approve CLI/API | `proposal_approved` | `src/curator/approve-cli.ts`, `src/app/api/curator/approve/` |
+| Curator reject CLI/API | `proposal_rejected` | `src/app/api/curator/reject/` |
+| Knowledge promotion | `knowledge_promotion` | `src/lib/memory/knowledge-promotion.ts` |
+| Notion sync queue | `notion_sync_pending` | `src/curator/notion-sync.ts` |
+| MCP catalog governance | `tool_approved`, `tool_denied` | `supabase/migrations/20260423_mcp_catalog_governance.sql` |
+| Agent runtime | `session_start`, `session_end`, `execution_succeeded`, `execution_failed`, `execution_blocked` | `src/agents/` |
+| Circuit breaker | `neo4j_unavailable` | `src/lib/circuit-breaker/` |
+| TraceMiddleware | `request_trace` | `src/middleware.ts` |
+| Health endpoint | `health_check` | `src/app/api/health/` |
+
+### Consumer Reference
+
+| Consumer | Event Types Consumed | Source File |
+|----------|---------------------|-------------|
+| Dashboard UI | All `memory_*`, `proposal_*`, `promotion_*` | `src/lib/dashboard/api.ts`, `src/lib/dashboard/queries.ts` |
+| Notion sync worker | `proposal_approved`, `proposal_rejected`, `memory_promoted`, `tool_approved`, `tool_denied`, `execution_*` | `src/curator/notion-projection-sync.ts`, `src/curator/notion-sync-worker.ts` |
+| Retrieval layer | `memory_add` (for search indexing) | `src/lib/memory/retrieval-layer.ts` |
+| Audit CSV export | All event types (filterable) | `src/app/api/audit/events/` |
+| Sentry alerts | `promotion_failed`, `neo4j_unavailable`, `execution_failed` | `src/lib/observability/sentry.ts` |
+
+---
+
 ## 10) Admin Workflow
 
 1. Copy `.env.example` to `.env` and set `POSTGRES_PASSWORD`, `NEO4J_PASSWORD`, `PROMOTION_MODE`
