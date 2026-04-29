@@ -32,6 +32,7 @@ import type {
 } from "./types"
 import { GraphAdapterError, GraphAdapterUnavailableError } from "./types"
 import type { GroupId, MemoryId, MemoryProvenance, ConfidenceScore } from "@/lib/memory/canonical-contracts"
+import { CURRENT_SCHEMA_VERSION } from "@/lib/schema-version"
 
 // ── Helper: Neo4j DateTime → ISO string ──────────────────────────────────────
 
@@ -79,6 +80,7 @@ function recordToNode(record: Record<string, unknown>): GraphMemoryNode {
     deleted_at: get("deleted_at") ? neo4jDateToISO(get("deleted_at")) : null,
     restored_at: get("restored_at") ? neo4jDateToISO(get("restored_at")) : null,
     group_id: get("group_id") as GroupId,
+    schema_version: (get("schema_version") as { toNumber?: () => number })?.toNumber?.() ?? CURRENT_SCHEMA_VERSION,
   }
 }
 
@@ -113,6 +115,7 @@ export class Neo4jGraphAdapter implements IGraphAdapter {
           score: $score,
           provenance: $provenance,
           created_at: datetime($createdAt),
+          schema_version: $schemaVersion,
           deprecated: false
         })`,
         {
@@ -123,6 +126,7 @@ export class Neo4jGraphAdapter implements IGraphAdapter {
           score: params.score,
           provenance: params.provenance,
           createdAt: params.created_at,
+          schemaVersion: neo4j.int(CURRENT_SCHEMA_VERSION),
         }
       )
       return params.id
@@ -183,6 +187,7 @@ export class Neo4jGraphAdapter implements IGraphAdapter {
            provenance: v1.provenance,
            version: $version,
            created_at: datetime($createdAt),
+           schema_version: $schemaVersion,
            deprecated: false
          })
          CREATE (v2)-[:SUPERSEDES]->(v1)
@@ -196,6 +201,7 @@ export class Neo4jGraphAdapter implements IGraphAdapter {
           content: params.content,
           version: neo4j.int(params.version),
           createdAt: params.created_at,
+          schemaVersion: neo4j.int(CURRENT_SCHEMA_VERSION),
         }
       )
       return { newId: params.new_id, newVersion: params.version, success: true }
@@ -276,7 +282,8 @@ export class Neo4jGraphAdapter implements IGraphAdapter {
                 m.created_at AS created_at,
                 m.version AS version,
                 m.tags AS tags,
-                m.deprecated AS deprecated`,
+                m.deprecated AS deprecated,
+                m.schema_version AS schema_version`,
         { id: params.id, groupId: params.group_id }
       )
       if (result.records.length === 0) {
@@ -309,6 +316,7 @@ export class Neo4jGraphAdapter implements IGraphAdapter {
                 m.created_at AS created_at,
                 m.usage_count AS usage_count,
                 m.tags AS tags,
+                m.schema_version AS schema_version,
                 score AS relevance
          ORDER BY relevance DESC, m.score DESC
          LIMIT $limit`,
@@ -323,6 +331,7 @@ export class Neo4jGraphAdapter implements IGraphAdapter {
         usage_count: (record.get("usage_count") as { toNumber?: () => number })?.toNumber?.() ?? 0,
         tags: (record.get("tags") as string[]) || [],
         relevance: record.get("relevance") as number,
+        schema_version: (record.get("schema_version") as { toNumber?: () => number })?.toNumber?.() ?? CURRENT_SCHEMA_VERSION,
       }))
     } catch (error) {
       throw new GraphAdapterError("neo4j", "searchMemories", "Full-text search failed", error instanceof Error ? error : undefined)
@@ -361,7 +370,8 @@ export class Neo4jGraphAdapter implements IGraphAdapter {
                 m.user_id AS user_id,
                 m.created_at AS created_at,
                 m.version AS version,
-                m.tags AS tags
+                m.tags AS tags,
+                m.schema_version AS schema_version
          ORDER BY m.created_at DESC`,
         { groupId: params.group_id, userId: params.user_id ?? null }
       )
@@ -463,7 +473,8 @@ export class Neo4jGraphAdapter implements IGraphAdapter {
                 m.user_id AS user_id,
                 m.created_at AS created_at,
                 m.version AS version,
-                m.tags AS tags
+                m.tags AS tags,
+                m.schema_version AS schema_version
          ORDER BY m.created_at DESC
          SKIP $offset
          LIMIT $limit`,
@@ -502,7 +513,8 @@ export class Neo4jGraphAdapter implements IGraphAdapter {
                 m.user_id AS user_id,
                 m.created_at AS created_at,
                 m.version AS version,
-                m.tags AS tags`,
+                m.tags AS tags,
+                m.schema_version AS schema_version`,
         { groupId: params.group_id, ids: params.ids }
       )
       const map = new Map<string, GraphMemoryNode>()

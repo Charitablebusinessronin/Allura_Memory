@@ -43,6 +43,7 @@ import type {
   RuVectorMemoryType,
   AlluraMemoryRow,
 } from "./types"
+import { CURRENT_SCHEMA_VERSION } from "../schema-version"
 
 // ── Bridge-Specific Errors ───────────────────────────────────────────────────
 
@@ -232,8 +233,8 @@ export async function storeMemory(params: StoreMemoryParams): Promise<StoreMemor
 
     result = await pool.query(
       `INSERT INTO ${MEMORIES_TABLE}
-         (user_id, session_id, content, memory_type, embedding, metadata, group_id)
-       VALUES ($1, $2, $3, $4, $5::vector, $6::jsonb, $7)
+         (user_id, session_id, content, memory_type, embedding, metadata, group_id, schema_version)
+       VALUES ($1, $2, $3, $4, $5::vector, $6::jsonb, $7, $8)
        RETURNING id, created_at`,
       [
         groupId, // user_id — same as group_id per ARCH-001 tenant model
@@ -243,6 +244,7 @@ export async function storeMemory(params: StoreMemoryParams): Promise<StoreMemor
         embeddingValue, // formatted as ruvector literal or null
         JSON.stringify(metadata),
         groupId, // group_id — validated ^allura-[a-z0-9-]+$
+        CURRENT_SCHEMA_VERSION,
       ]
     )
   } catch (error) {

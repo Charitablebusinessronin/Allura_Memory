@@ -1,6 +1,7 @@
 import type { Pool } from "pg"
 import { getPool } from "../connection"
 import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id"
+import { CURRENT_SCHEMA_VERSION } from "@/lib/schema-version"
 
 /**
  * Event status values
@@ -38,6 +39,8 @@ export interface EventInsert {
   confidence?: number
   /** Optional: Evidence reference (file path, URL, document ID) */
   evidence_ref?: string
+  /** Schema version for compatibility checks (defaults to CURRENT_SCHEMA_VERSION) */
+  schema_version?: number
 }
 
 /**
@@ -60,6 +63,7 @@ export interface EventRecord {
   inserted_at: Date
   confidence: number | null
   evidence_ref: string | null
+  schema_version: number
 }
 
 /**
@@ -184,8 +188,9 @@ export async function insertEvent(event: EventInsert): Promise<EventRecord> {
       error_message,
       error_code,
       confidence,
-      evidence_ref
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      evidence_ref,
+      schema_version
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
     RETURNING *
   `
 
@@ -203,6 +208,7 @@ export async function insertEvent(event: EventInsert): Promise<EventRecord> {
     event.error_code ?? null,
     event.confidence ?? null,
     event.evidence_ref ?? null,
+    event.schema_version ?? CURRENT_SCHEMA_VERSION,
   ]
 
   const result = await pool.query<EventRecord>(query, values)
@@ -285,8 +291,9 @@ export async function insertEvents(events: EventInsert[]): Promise<EventRecord[]
           outcome,
           status,
           error_message,
-          error_code
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          error_code,
+          schema_version
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING *
       `
 
@@ -302,6 +309,7 @@ export async function insertEvents(events: EventInsert[]): Promise<EventRecord[]
         event.status ?? "pending",
         event.error_message ?? null,
         event.error_code ?? null,
+        event.schema_version ?? CURRENT_SCHEMA_VERSION,
       ]
 
       const result = await client.query<EventRecord>(query, values)

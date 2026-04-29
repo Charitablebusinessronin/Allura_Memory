@@ -38,6 +38,8 @@ export interface MemoryResult {
   metadata?: Record<string, unknown>;
   /** ISO 8601 creation timestamp */
   created_at?: string;
+  /** Schema version of this memory (for compatibility checks) */
+  schema_version?: number;
 }
 
 export interface SearchResponse {
@@ -53,6 +55,8 @@ export interface SearchResponse {
   latency_ms: number;
   /** Contract version for compatibility */
   version: string;
+  /** Schema version of the response data */
+  schema_version?: number;
 }
 
 export interface RetrievalConfig {
