@@ -16,7 +16,7 @@
  *   pnpm test:curator      → curator only
  *   pnpm test:integration  → integration only (mocked services)
  *   pnpm test:e2e          → e2e only (requires live stack)
- *   pnpm test:mcp          → MCP browser checks
+ *   pnpm test:mcp          — MCP browser checks
  *   pnpm test:all          → typecheck + lint + all lanes + e2e + mcp
  */
 import { defineConfig } from "vitest/config"
@@ -67,6 +67,7 @@ export default defineConfig({
       "src/__tests__/schema-versioning.test.ts",
       "src/__tests__/backup-automation.test.ts",
       "src/__tests__/retrieval-gateway.test.ts",
+      "src/__tests__/workspace-isolation.test.ts",
       "src/integrations/mcp.client.test.ts",
       "src/lib/ruvector/bridge.test.ts",
       "src/lib/ruvector/retrieval-adapter.test.ts",
@@ -86,6 +87,8 @@ export default defineConfig({
       "src/lib/neo4j/queries/*.test.ts",
       "src/lib/postgres/queries/*.test.ts",
       "src/lib/postgres/trace-logger.test.ts",
+      // group-governance tests are E2E-gated (RUN_E2E_TESTS=true). Keep excluded from default lane.
+      // They are included in the e2e lane via vitest.config.e2e.ts.
       "src/lib/validation/group-governance.test.ts",
       "src/lib/validation/trace-ref.test.ts",
       "src/lib/agents/agent-manifest.test.ts",
