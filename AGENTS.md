@@ -1,1 +1,1 @@
-.opencode/rules/AGENTS.md
+.opencode/AGENTS.md
