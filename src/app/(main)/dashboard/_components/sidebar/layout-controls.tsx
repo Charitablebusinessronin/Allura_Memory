@@ -107,8 +107,8 @@ export function LayoutControls() {
         <div className="flex flex-col gap-5">
           <div className="space-y-1.5">
             <h4 className="font-medium text-sm leading-none">Preferences</h4>
-            <p className="text-muted-foreground text-xs">Customize your dashboard layout preferences.</p>
-            <p className="font-medium text-muted-foreground text-xs">
+            <p className="text-xs text-[var(--dashboard-text-secondary)]">Customize your dashboard layout preferences.</p>
+            <p className="text-xs font-medium text-[var(--dashboard-text-secondary)]">
               *Preferences use cookies by default. You can switch between cookies, localStorage, or no storage in code.
             </p>
           </div>

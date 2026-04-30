@@ -17,11 +17,11 @@ export function ActivityPanel({ items }: { items: ActivityItem[] }) {
         ) : (
           items.map((item) => (
             <div key={item.id} className="flex gap-3 p-4">
-              <Clock className="mt-0.5 size-4 text-muted-foreground" />
+              <Clock className="mt-0.5 size-4 text-[var(--dashboard-text-secondary)]" />
               <div>
                 <p className="text-sm font-medium capitalize">{item.title}</p>
-                <p className="text-muted-foreground text-xs">{item.description}</p>
-                <p className="text-muted-foreground mt-1 text-xs">{new Date(item.timestamp).toLocaleString()}</p>
+                <p className="text-xs text-[var(--dashboard-text-secondary)]">{item.description}</p>
+                <p className="mt-1 text-xs text-[var(--dashboard-text-secondary)]">{new Date(item.timestamp).toLocaleString()}</p>
               </div>
             </div>
           ))

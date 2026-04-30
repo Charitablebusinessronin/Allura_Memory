@@ -18,9 +18,9 @@ export function MetricCard({ metric }: { metric: Metric }) {
     <div className="rounded-xl border bg-card p-5 shadow-xs">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-medium text-muted-foreground">{metric.label}</p>
+          <p className="text-sm font-medium text-[var(--dashboard-text-secondary)]">{metric.label}</p>
           <p className="mt-2 text-3xl font-semibold">{metric.value}</p>
-          <p className="text-muted-foreground mt-1 text-xs">{metric.description}</p>
+          <p className="mt-1 text-xs text-[var(--dashboard-text-secondary)]">{metric.description}</p>
         </div>
         <div className={cn("rounded-full p-3", toneClasses[metric.tone])}>
           <Database className="size-5" />

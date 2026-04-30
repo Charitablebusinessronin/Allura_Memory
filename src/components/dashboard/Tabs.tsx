@@ -20,7 +20,7 @@ export function Tabs<T extends string>({ items, value, onChange }: TabsProps<T>)
             "rounded-md px-3 py-2 text-sm font-medium transition-colors",
             value === item.value
               ? "bg-[var(--dashboard-accent-secondary)] text-white"
-              : "bg-muted text-muted-foreground hover:bg-muted/80"
+              : "bg-[var(--allura-gray-100)] text-[var(--allura-gray-500)] hover:bg-[var(--allura-gray-200)]"
           )}
         >
           {item.label}

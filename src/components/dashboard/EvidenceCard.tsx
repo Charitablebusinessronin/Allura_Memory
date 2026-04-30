@@ -13,8 +13,8 @@ export function EvidenceCard({ evidence }: { evidence: Evidence }) {
         <h3 className="font-semibold">{evidence.title}</h3>
         <StatusPill value={evidence.status} />
       </div>
-      <p className="text-muted-foreground mt-2 line-clamp-2 text-sm">{evidence.rawLog}</p>
-      <div className="text-muted-foreground mt-3 flex flex-wrap gap-3 text-xs">
+      <p className="mt-2 line-clamp-2 text-sm text-[var(--dashboard-text-secondary)]">{evidence.rawLog}</p>
+      <div className="mt-3 flex flex-wrap gap-3 text-xs text-[var(--dashboard-text-secondary)]">
         <span>{evidence.source}</span>
         <span>{evidence.agent}</span>
         <span>{new Date(evidence.timestamp).toLocaleString()}</span>

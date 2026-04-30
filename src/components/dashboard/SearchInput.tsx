@@ -11,7 +11,7 @@ interface SearchInputProps {
 export function SearchInput({ value, onChange, placeholder = "Search..." }: SearchInputProps) {
   return (
     <div className="relative flex-1">
-      <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+      <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[var(--dashboard-text-secondary)]" />
       <input
         type="text"
         value={value}

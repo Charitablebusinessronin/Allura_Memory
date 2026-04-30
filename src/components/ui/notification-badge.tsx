@@ -22,7 +22,7 @@ export function NotificationBadge({
       <span
         className={cn(
           `absolute -right-1 -top-1 block h-2 w-2 rounded-full bg-[var(--allura-orange)]`,
-          pulse && "animate-pulse",
+          pulse && "motion-safe:animate-pulse",
           className
         )}
       />

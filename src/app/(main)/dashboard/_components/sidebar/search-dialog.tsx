@@ -48,7 +48,7 @@ export function SearchDialog() {
       <Button
         onClick={() => setOpen(true)}
         variant="link"
-        className="px-0! font-normal text-muted-foreground hover:no-underline"
+        className="px-0! font-normal text-[var(--dashboard-text-secondary)] hover:no-underline"
       >
         <Search data-icon="inline-start" />
         Search

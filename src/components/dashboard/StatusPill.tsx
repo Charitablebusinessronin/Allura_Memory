@@ -9,7 +9,7 @@ export function StatusPill({ value }: { value: string }) {
         ? "bg-[var(--tone-orange-bg)] text-[var(--tone-orange-text)]"
         : lower.includes("reject") || lower.includes("fail") || lower.includes("unhealthy")
           ? "bg-[var(--tone-red-bg)] text-[var(--tone-red-text)]"
-          : "bg-muted text-muted-foreground"
+          : "bg-[var(--dashboard-surface-muted)] text-[var(--dashboard-text-secondary)]"
 
   return (
     <span className={cn("inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium", cls)}>

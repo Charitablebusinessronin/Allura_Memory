@@ -24,11 +24,11 @@ export default function DashboardError({
           <CardTitle className="text-destructive">Something went wrong</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-[var(--dashboard-text-secondary)]">
             {error.message || "An unexpected error occurred in the dashboard."}
           </p>
           {error.digest && (
-            <p className="font-mono text-xs text-muted-foreground">
+            <p className="font-mono text-xs text-[var(--dashboard-text-secondary)]">
               Error ID: {error.digest}
             </p>
           )}

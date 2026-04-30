@@ -19,7 +19,7 @@ export function SystemStatusCard({ status }: { status: SystemStatus }) {
             <div key={component.name} className="flex items-center justify-between gap-3 p-4">
               <div>
                 <p className="text-sm font-medium">{component.name}</p>
-                <p className="text-muted-foreground text-xs">{component.message ?? "No message"}</p>
+                <p className="text-xs text-[var(--dashboard-text-secondary)]">{component.message ?? "No message"}</p>
               </div>
               <StatusPill value={component.status} />
             </div>

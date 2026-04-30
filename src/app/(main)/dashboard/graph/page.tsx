@@ -12,6 +12,7 @@ import {
 } from "@/components/dashboard"
 import { loadGraph } from "@/lib/dashboard/queries"
 import { getGraphNodeColor, getGraphNodeRadius, getResolvedColor } from "@/lib/brand/allura"
+import { tokens } from "@/lib/tokens"
 import type { DashboardResult, GraphEdge, GraphNode } from "@/lib/dashboard/types"
 
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), { ssr: false })
@@ -131,10 +132,13 @@ export default function GraphPage() {
                 nodeColor={(node: any) => getGraphNodeColor(node.type)}
                 nodeRelSize={1}
                 nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
+                  const prefersReducedMotion = typeof window !== 'undefined'
+                    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                    : false
                   const r = getGraphNodeRadius(node.type) / globalScale
                   const isSelected = selectedNodeId === node.id
                   const isHovered = hoverNodeId === node.id
-                  const scale = isHovered ? 1.3 : 1
+                  const scale = isHovered && !prefersReducedMotion ? 1.3 : 1
                   const finalR = r * scale
                   const nodeColor = getGraphNodeColor(node.type)
 
@@ -168,7 +172,14 @@ export default function GraphPage() {
                     ctx.fillText(node.label, node.x, node.y + finalR + 12 / globalScale)
                   }
                 }}
-                linkColor={() => "rgba(156,163,175,0.6)"}
+                linkColor={() => {
+                  // Use tokens.color.graph.edge with edgeAlpha for visual hierarchy
+                  const hex = tokens.color.graph.edge
+                  const r = parseInt(hex.slice(1,3), 16)
+                  const g = parseInt(hex.slice(3,5), 16)
+                  const b = parseInt(hex.slice(5,7), 16)
+                  return `rgba(${r},${g},${b},${tokens.color.graph.edgeAlpha})`
+                }}
                 linkWidth={() => 1}
                 linkDirectionalArrowLength={0}
                 backgroundColor="transparent"
