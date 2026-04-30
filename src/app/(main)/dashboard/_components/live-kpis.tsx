@@ -127,9 +127,9 @@ export function LiveKPIs({
       {/* Live indicator */}
       <div className="flex items-center justify-end gap-1.5">
         <span
-          className={`size-2 rounded-full ${connected ? "animate-pulse bg-green-500" : "bg-muted-foreground/40"}`}
+          className={`size-2 rounded-full ${connected ? "motion-safe:animate-pulse bg-green-500" : "bg-[color-mix(in_srgb,var(--dashboard-text-muted)_40%,transparent)]"}`}
         />
-        <span className="text-muted-foreground text-xs">
+        <span className="text-xs text-[var(--dashboard-text-secondary)]">
           {connected ? "live" : "reconnecting"}
           {lastUpdated && connected && (
             <span className="ml-1 opacity-60">
@@ -143,15 +143,15 @@ export function LiveKPIs({
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-muted-foreground text-sm font-medium">System Health</CardTitle>
+            <CardTitle className="text-sm font-medium text-[var(--dashboard-text-secondary)]">System Health</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Activity className="text-muted-foreground size-4" />
+              <Activity className="size-4 text-[var(--dashboard-text-secondary)]" />
               {health ? <StatusBadge status={health.status} /> : <Badge variant="outline">unknown</Badge>}
             </div>
             {health && (
-              <p className="text-muted-foreground mt-2 text-xs">
+              <p className="mt-2 text-xs text-[var(--dashboard-text-secondary)]">
                 Uptime: {formatUptime(health.uptime)}
               </p>
             )}
@@ -160,7 +160,7 @@ export function LiveKPIs({
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-muted-foreground text-sm font-medium">Pending Approvals</CardTitle>
+            <CardTitle className="text-sm font-medium text-[var(--dashboard-text-secondary)]">Pending Approvals</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -171,30 +171,30 @@ export function LiveKPIs({
                 </Button>
               )}
             </div>
-            <p className="text-muted-foreground mt-1 text-xs">proposals awaiting review</p>
+            <p className="mt-1 text-xs text-[var(--dashboard-text-secondary)]">proposals awaiting review</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-muted-foreground text-sm font-medium">Total Memories</CardTitle>
+            <CardTitle className="text-sm font-medium text-[var(--dashboard-text-secondary)]">Total Memories</CardTitle>
           </CardHeader>
           <CardContent>
             <span className="text-2xl font-bold">{totalMemories}</span>
-            <p className="text-muted-foreground mt-1 text-xs">stored in {groupId}</p>
+            <p className="mt-1 text-xs text-[var(--dashboard-text-secondary)]">stored in {groupId}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-muted-foreground text-sm font-medium">Active Components</CardTitle>
+            <CardTitle className="text-sm font-medium text-[var(--dashboard-text-secondary)]">Active Components</CardTitle>
           </CardHeader>
           <CardContent>
             <span className="text-2xl font-bold">
               {activeComponents}
-              <span className="text-muted-foreground text-base font-normal">/{components.length}</span>
+              <span className="text-base font-normal text-[var(--dashboard-text-secondary)]">/{components.length}</span>
             </span>
-            <p className="text-muted-foreground mt-1 text-xs">healthy components</p>
+            <p className="mt-1 text-xs text-[var(--dashboard-text-secondary)]">healthy components</p>
           </CardContent>
         </Card>
       </div>
@@ -205,7 +205,7 @@ export function LiveKPIs({
           <AlertTriangle className="mt-0.5 size-4 shrink-0 text-yellow-600 dark:text-yellow-400" />
           <div className="flex-1">
             <p className="text-sm font-medium">Needs Attention</p>
-            <p className="text-muted-foreground mt-0.5 text-sm">
+            <p className="mt-0.5 text-sm text-[var(--dashboard-text-secondary)]">
               {pendingCount} curator proposal{pendingCount > 1 ? "s" : ""} pending human review.{" "}
               <Link href="/dashboard/curator" className="hover:text-foreground underline underline-offset-2">
                 Review now

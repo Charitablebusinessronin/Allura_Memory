@@ -9,28 +9,28 @@ export function InsightCard({ insight, actions }: { insight: Insight; actions?: 
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="font-semibold">{insight.title}</h3>
-          <div className="text-muted-foreground mt-2 flex flex-wrap gap-3 text-xs">
+          <div className="mt-2 flex flex-wrap gap-3 text-xs text-[var(--dashboard-text-secondary)]">
             <span>Agent: {insight.agent}</span>
             <span>Project: {insight.project}</span>
             <span>{new Date(insight.createdAt).toLocaleString()}</span>
           </div>
         </div>
         <div className="text-right">
-          <p className="text-xs text-muted-foreground">Confidence</p>
+          <p className="text-xs text-[var(--dashboard-text-secondary)]">Confidence</p>
           <ConfidenceBadge value={insight.confidence} size="sm" />
         </div>
       </div>
       <div className="mt-4 grid gap-3 md:grid-cols-3">
         <div className="rounded-lg border p-3">
-          <p className="text-xs text-muted-foreground">Event</p>
+          <p className="text-xs text-[var(--dashboard-text-secondary)]">Event</p>
           <p className="mt-1 text-sm">{insight.event}</p>
         </div>
         <div className="rounded-lg border p-3">
-          <p className="text-xs text-muted-foreground">Outcome</p>
+          <p className="text-xs text-[var(--dashboard-text-secondary)]">Outcome</p>
           <p className="mt-1 text-sm">{insight.outcome}</p>
         </div>
         <div className="rounded-lg border p-3">
-          <p className="text-xs text-muted-foreground">Evidence</p>
+          <p className="text-xs text-[var(--dashboard-text-secondary)]">Evidence</p>
           <p className="mt-1 text-sm">{insight.evidence}</p>
         </div>
       </div>

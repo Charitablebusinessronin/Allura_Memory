@@ -167,6 +167,33 @@ None. All changes from commit `11e98d28` landed cleanly within the remediation s
 
 ---
 
+## Post-Audit Polish Sprint — Token Drift Closure
+
+**Date:** 2026-04-30  
+**Sprint:** Token Drift Polish Sprint  
+**Scope:** Active Allura dashboard components only; `dashboard-legacy/` remains excluded.
+
+### Closed Items
+
+1. **Canvas edge tokenization** — `graph/page.tsx` now derives link color from `tokens.color.graph.edge` plus `edgeAlpha`, and graph hover scale respects `prefers-reduced-motion`.
+2. **Shared Tabs tokenization** — `Tabs.tsx` no longer uses generic `bg-muted` / `text-muted-foreground`; inactive tabs now use Allura CSS custom properties.
+3. **Reduced motion** — global `prefers-reduced-motion` override added; active `animate-pulse` instances use `motion-safe:`.
+4. **Raw hex drift** — `graph-tab.tsx` `#FFFFFF` values replaced with `var(--allura-white)`; `confidence-bar.tsx` `#E2E6EA` replaced with `var(--allura-border-1)`.
+5. **Generic shadcn muted text drift** — active dashboard `text-muted-foreground` usages replaced with `text-[var(--dashboard-text-secondary)]`.
+
+### Documented Exceptions
+
+- `NodeDetailPanel.tsx` CSS custom property usage is now documented as the correct Token Authority path for Tailwind/HTML contexts.
+- `button.tsx` shadow rgba literals remain documented as DD-004, a Tailwind+cva build-tool limitation matching `tokens.shadow.sm`.
+
+### Validation Intent
+
+- Active dashboard scope should contain no raw `#RRGGBB` values outside token definition files and documented build-tool exceptions.
+- Active dashboard scope should contain no generic `text-muted-foreground` utilities.
+- TypeScript validation may still report the pre-existing `@types/bun` configuration issue.
+
+---
+
 ## Recommendation
 
 **MERGE** ✅

@@ -2,7 +2,7 @@ export function EmptyState({ title, description }: { title: string; description:
   return (
     <div className="rounded-xl border border-dashed p-10 text-center">
       <p className="font-medium">{title}</p>
-      <p className="text-muted-foreground mt-1 text-sm">{description}</p>
+      <p className="mt-1 text-sm text-[var(--dashboard-text-secondary)]">{description}</p>
     </div>
   )
 }

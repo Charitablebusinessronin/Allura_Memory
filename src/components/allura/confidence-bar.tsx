@@ -11,7 +11,7 @@ export function ConfidenceBar({ value, className }: ConfidenceBarProps) {
   return (
     <div className={className} style={{ width: 120 }}>
       <div
-        className="relative h-2 overflow-hidden rounded bg-[#E2E6EA]"
+        className="relative h-2 overflow-hidden rounded bg-[var(--allura-border-1)]"
         style={{ borderRadius: 4 }}
       >
         <div

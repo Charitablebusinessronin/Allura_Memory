@@ -106,7 +106,7 @@ export function NavUser({
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{displayName}</span>
-                <span className="text-muted-foreground truncate text-xs">{displayEmail}</span>
+                <span className="truncate text-xs text-[var(--dashboard-text-secondary)]">{displayEmail}</span>
               </div>
               <EllipsisVertical className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -125,7 +125,7 @@ export function NavUser({
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{displayName}</span>
-                  <span className="text-muted-foreground truncate text-xs">{displayEmail}</span>
+                  <span className="truncate text-xs text-[var(--dashboard-text-secondary)]">{displayEmail}</span>
                 </div>
               </div>
             </DropdownMenuLabel>

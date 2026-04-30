@@ -58,6 +58,6 @@ export default function InsightsPage() {
   return <div className="space-y-6" ><PageHeader title="Insights" description="Review, approve, reject, or revise candidate insights using real curator data." />
     <Tabs items={tabItems} value={tab} onChange={setTab} />
     {actionError && <ErrorState message={actionError} />}
-    {!state ? <LoadingState /> : state.error ? <ErrorState message={state.error} /> : <><WarningList warnings={state.warnings} /><div className="space-y-3">{(state.data ?? []).length === 0 ? <p className="text-muted-foreground rounded-xl border border-dashed p-8 text-center text-sm">No insights returned for this status.</p> : state.data!.map((insight) => <InsightCard key={insight.id} insight={insight} actions={tab === "pending" ? <InsightActions insight={insight} onApprove={approve} onReject={reject} busy={busyId === insight.id} /> : undefined} />)}</div></>}
+    {!state ? <LoadingState /> : state.error ? <ErrorState message={state.error} /> : <><WarningList warnings={state.warnings} /><div className="space-y-3">{(state.data ?? []).length === 0 ? <p className="rounded-xl border border-dashed p-8 text-center text-sm text-[var(--dashboard-text-secondary)]">No insights returned for this status.</p> : state.data!.map((insight) => <InsightCard key={insight.id} insight={insight} actions={tab === "pending" ? <InsightActions insight={insight} onApprove={approve} onReject={reject} busy={busyId === insight.id} /> : undefined} />)}</div></>}
   </div>
 }

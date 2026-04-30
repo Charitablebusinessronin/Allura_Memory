@@ -50,6 +50,7 @@ export const tokens = {
       memory: "#9CA3AF",
       edge: "#9CA3AF",
       edgeHover: "#1D4ED8",
+      edgeAlpha: 0.6,
     },
   },
   spacing: {

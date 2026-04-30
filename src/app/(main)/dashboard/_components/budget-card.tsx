@@ -108,13 +108,13 @@ export function BudgetCard({ groupId }: BudgetCardProps) {
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium">Store Health</CardTitle>
           <span
-            className={`size-2 rounded-full ${connected ? "animate-pulse bg-green-500" : "bg-muted-foreground/40"}`}
+            className={`size-2 rounded-full ${connected ? "motion-safe:animate-pulse bg-green-500" : "bg-[color-mix(in_srgb,var(--dashboard-text-muted)_40%,transparent)]"}`}
           />
         </div>
       </CardHeader>
       <CardContent>
         {breakerStates.length === 0 ? (
-          <p className="text-muted-foreground text-xs">No circuit data</p>
+          <p className="text-xs text-[var(--dashboard-text-secondary)]">No circuit data</p>
         ) : (
           <ul className="space-y-2">
             {breakerStates.map((entry) => (

@@ -36,7 +36,7 @@ export function GraphSummary({ nodes, edges, totalEdges, selectedNodeId, onNodeC
                 >
                   <GitBranch className="mx-auto mb-1 size-4 text-[var(--tone-blue-text)]" />
                   <p className="text-sm font-medium">{node.label}</p>
-                  <p className="text-muted-foreground text-xs">{node.type}</p>
+                  <p className="text-xs text-[var(--dashboard-text-secondary)]">{node.type}</p>
                 </button>
               ))}
             </div>
@@ -45,17 +45,17 @@ export function GraphSummary({ nodes, edges, totalEdges, selectedNodeId, onNodeC
       </div>
       <aside className="rounded-xl border bg-card p-5">
         <h2 className="font-semibold">Graph Truth</h2>
-        <p className="text-muted-foreground mt-1 text-sm">
+        <p className="mt-1 text-sm text-[var(--dashboard-text-secondary)]">
           {nodes.length} visible nodes &middot; {edges.length} visible edges
         </p>
-        <p className="text-muted-foreground mt-1 text-xs">
+        <p className="mt-1 text-xs text-[var(--dashboard-text-secondary)]">
           Total tenant relationships: {totalEdges ?? "Unavailable"}
         </p>
         <div className="mt-4 space-y-2">
           {edges.slice(0, 12).map((edge) => (
             <div key={edge.id} className="rounded-lg border p-2 text-xs">
               <p className="font-medium">{edge.label}</p>
-              <p className="text-muted-foreground truncate">
+              <p className="truncate text-[var(--dashboard-text-secondary)]">
                 {edge.source} → {edge.target}
               </p>
             </div>

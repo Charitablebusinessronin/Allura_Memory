@@ -7,11 +7,11 @@ export function MemoryCard({ memory }: { memory: Memory }) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="font-semibold">{memory.title}</h3>
-          <p className="text-muted-foreground mt-2 line-clamp-2 text-sm">{memory.content}</p>
+          <p className="mt-2 line-clamp-2 text-sm text-[var(--dashboard-text-secondary)]">{memory.content}</p>
         </div>
         <StatusPill value={memory.status} />
       </div>
-      <div className="text-muted-foreground mt-4 flex flex-wrap gap-3 text-xs">
+      <div className="mt-4 flex flex-wrap gap-3 text-xs text-[var(--dashboard-text-secondary)]">
         <span>Agent: {memory.agent}</span>
         <span>Project: {memory.project}</span>
         <span>{new Date(memory.timestamp).toLocaleString()}</span>

@@ -30,10 +30,10 @@ const CATEGORY_COLORS: Record<NodeCategory, string> = {
 }
 
 const CATEGORY_TEXT: Record<NodeCategory, string> = {
-  people: "#FFFFFF",
-  topics: "#FFFFFF",
-  decisions: "#FFFFFF",
-  traces: "#FFFFFF",
+  people: "var(--allura-white)",
+  topics: "var(--allura-white)",
+  decisions: "var(--allura-white)",
+  traces: "var(--allura-white)",
 }
 
 const EDGE_STYLES: Record<string, { stroke: string; strokeDasharray?: string; markerEnd?: boolean }> = {

@@ -47,7 +47,7 @@ export function RefreshButton() {
 export function HealthTable({ components }: { components: ComponentHealth[] }) {
   if (components.length === 0) {
     return (
-      <div className="bg-card text-muted-foreground rounded-lg border p-8 text-center text-sm">
+      <div className="rounded-lg border bg-card p-8 text-center text-sm text-[var(--dashboard-text-secondary)]">
         No component data available. The health endpoint may be unreachable.
       </div>
     )
@@ -74,7 +74,7 @@ export function HealthTable({ components }: { components: ComponentHealth[] }) {
               <TableCell className="text-right font-mono text-xs">
                 {component.latency != null ? `${component.latency}ms` : "—"}
               </TableCell>
-              <TableCell className="text-muted-foreground max-w-xs truncate text-xs">
+              <TableCell className="max-w-xs truncate text-xs text-[var(--dashboard-text-secondary)]">
                 {component.message ?? "—"}
               </TableCell>
             </TableRow>

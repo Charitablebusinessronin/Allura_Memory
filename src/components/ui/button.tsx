@@ -4,6 +4,15 @@ import { Slot } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Known build-tool limitation (DD-004):
+ * Shadow values use hardcoded rgba(15,17,21,0.05) in cva template literals.
+ * This matches tokens.shadow.sm exactly, but Tailwind cva requires literal strings —
+ * dynamic token interpolation is not supported in template position.
+ * tokens.ts defines: shadow.sm = "0 1px 2px 0 rgba(15, 17, 21, 0.05)"
+ * If cva supports dynamic values in the future, replace shadow strings with tokens.
+ */
+
 const buttonVariants = cva(
   "group/button inline-flex shrink-0 items-center justify-center border border-transparent bg-clip-padding font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
   {

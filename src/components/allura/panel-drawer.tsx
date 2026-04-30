@@ -43,15 +43,15 @@ function getTraces(memory: Memory): TraceEntry[] {
 function SkeletonRow() {
   return (
     <div className="space-y-3 p-6">
-      <div className="h-4 w-24 animate-pulse rounded bg-[var(--allura-coral-10)]" />
-      <div className="h-6 w-40 animate-pulse rounded bg-[var(--allura-navy-5)]" />
-      <div className="mt-6 h-4 w-24 animate-pulse rounded bg-[var(--allura-coral-10)]" />
-      <div className="h-20 w-full animate-pulse rounded bg-[var(--allura-navy-5)]" />
-      <div className="mt-6 h-4 w-24 animate-pulse rounded bg-[var(--allura-coral-10)]" />
+      <div className="h-4 w-24 motion-safe:animate-pulse rounded bg-[var(--allura-coral-10)]" />
+      <div className="h-6 w-40 motion-safe:animate-pulse rounded bg-[var(--allura-navy-5)]" />
+      <div className="mt-6 h-4 w-24 motion-safe:animate-pulse rounded bg-[var(--allura-coral-10)]" />
+      <div className="h-20 w-full motion-safe:animate-pulse rounded bg-[var(--allura-navy-5)]" />
+      <div className="mt-6 h-4 w-24 motion-safe:animate-pulse rounded bg-[var(--allura-coral-10)]" />
       <div className="flex gap-3">
-        <div className="h-10 w-28 animate-pulse rounded bg-[var(--allura-navy-5)]" />
-        <div className="h-10 w-20 animate-pulse rounded bg-[var(--allura-navy-5)]" />
-        <div className="h-10 w-24 animate-pulse rounded bg-[var(--allura-navy-5)]" />
+        <div className="h-10 w-28 motion-safe:animate-pulse rounded bg-[var(--allura-navy-5)]" />
+        <div className="h-10 w-20 motion-safe:animate-pulse rounded bg-[var(--allura-navy-5)]" />
+        <div className="h-10 w-24 motion-safe:animate-pulse rounded bg-[var(--allura-navy-5)]" />
       </div>
     </div>
   )
