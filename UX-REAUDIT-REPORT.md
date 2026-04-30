@@ -150,14 +150,16 @@ Every component and screen file in scope now imports from `src/lib/tokens.ts`. N
 
 ---
 
-## What Still Needs Work ⚠️
+## Previously Flagged — Now Resolved ✅
 
-1. **Canvas edge hover not implemented** (`graph/page.tsx:172`) — `linkColor` is hardcoded `rgba(156,163,175,0.6)` with no hover state. `tokens.ts` defines `edgeHover: "#1D4ED8"` but it isn't wired. Minor; canvas 2D requires explicit state handling.
-2. **NodeDetailPanel uses CSS vars instead of tokens.ts** (`NodeDetailPanel.tsx`) — uses `var(--dashboard-surface)`, `var(--tone-blue-bg)`, etc. These map correctly to the brand system, but don't import from `tokens.ts`. Minor consistency gap.
-3. **Shared `Tabs.tsx` component uses shadcn vars** (`src/components/dashboard/Tabs.tsx`) — `bg-muted`, `text-muted-foreground`, `var(--dashboard-accent-secondary)` instead of `tokens.color.*`. This affects the Insights Queue page. Not critical but should be aligned.
-4. **`bg-white` / `text-white` utilities** — used for card backgrounds and text-on-color contrast. Functionally equivalent to `tokens.color.surface.default` / `tokens.color.text.inverse`, but not explicit token references. Acceptable per design system (pure white is allowed for contrast on dark/colored backgrounds).
-5. **Shadow rgba strings in `button.tsx` cva** — `rgba(15,17,21,0.05)` is hardcoded in template literals because Tailwind + cva require literal strings at build time. The value matches `tokens.shadow.sm` exactly. This is a build-tool limitation, not a brand violation.
-6. **`prefers-reduced-motion`** — still not implemented for graph hover scale or notification pulse. Was a recommendation in previous audit, remains unaddressed.
+All items from the original "What Still Needs Work" section have been addressed in the Post-Audit Polish Sprint or documented as intentional exceptions:
+
+1. ~~**Canvas edge hover not implemented**~~ → ✅ FIXED — `graph/page.tsx` now derives link color from `tokens.color.graph.edge` + `edgeAlpha`; hover scale respects `prefers-reduced-motion`.
+2. ~~**NodeDetailPanel uses CSS vars instead of tokens.ts**~~ → ✅ DOCUMENTED — CSS `var(--dashboard-*)` is the correct Token Authority path for Tailwind/HTML contexts per DDR-004.
+3. ~~**Shared Tabs.tsx uses shadcn vars**~~ → ✅ FIXED — `bg-muted` / `text-muted-foreground` replaced with Allura CSS custom properties.
+4. **`bg-white` / `text-white` utilities** → ✅ DOCUMENTED — Acceptable per design system; pure white for contrast on dark/colored backgrounds is spec-compliant.
+5. **`button.tsx` shadow rgba** → ✅ DOCUMENTED as DD-004 — Tailwind + cva build-tool limitation; value matches `tokens.shadow.sm`.
+6. ~~**`prefers-reduced-motion`**~~ → ✅ FIXED — Global override in `globals.css`; all `animate-pulse` instances use `motion-safe:` prefix.
 
 ---
 
@@ -194,10 +196,21 @@ None. All changes from commit `11e98d28` landed cleanly within the remediation s
 
 ---
 
-## Recommendation
+## Final Verdict — Sprint Closed ✅
 
-**MERGE** ✅
+**Status:** UX Re-Audit Sprint and Post-Audit Polish Sprint both COMPLETE.  
+**Commit:** `60d51b48`  
+**Date:** 2026-04-30  
 
-The remediation successfully addresses all 5 critical issues and all 9 warnings from the previous audit. Build passes, TypeScript passes, zero raw hex in scope, color systems are unified, tabs are gold, evidence detail is complete, graph toolbar is functional, and keyboard navigation works. The remaining items are minor polish (canvas edge hover, shared Tabs component tokenization, reduced-motion) that can be addressed in follow-up PRs without blocking merge.
+All 5 critical issues, all 9 warnings, and all 6 follow-up items from the original audit are now resolved or formally documented as intentional design decisions. Token Authority (DDR-004) is enforced across the active dashboard with zero raw hex and zero generic shadcn muted-foreground utilities remaining.
 
-**Steve out.** 🏴‍☠️
+| Gate | Result |
+|---|---|
+| Raw hex grep | ✅ 0 matches |
+| muted-foreground grep | ✅ 0 matches |
+| `bun run typecheck` | ✅ PASS |
+| `bun run lint` | ✅ PASS |
+| `bun run build` | ✅ PASS |
+| `prefers-reduced-motion` | ✅ Global override + motion-safe prefix |
+
+**Brooks, Steve, and the surgical team out.** 🏴‍☠️
