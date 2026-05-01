@@ -11,6 +11,7 @@ import {
   LoadingState,
   PageHeader,
   SearchInput,
+  SearchResultsSkeleton,
   Tabs,
   WarningList,
 } from "@/components/dashboard"
@@ -74,7 +75,7 @@ e.source.toLowerCase().includes("memory") ||
       </div>
 
       {!state ? (
-        <LoadingState />
+        <SearchResultsSkeleton />
       ) : state.error ? (
         <ErrorState message={state.error} />
       ) : (
@@ -82,11 +83,11 @@ e.source.toLowerCase().includes("memory") ||
           <WarningList warnings={state.warnings} />
           {filtered.length === 0 ? (
             <EmptyState
-              title="No evidence returned"
+              title="No evidence found"
               description={
                 search
                   ? "No evidence matches your search. Try different keywords."
-                  : "The traces endpoint returned no evidence for this tenant."
+                  : "No evidence records found for this tenant. Evidence will appear when traces are ingested."
               }
             />
           ) : (

@@ -13,6 +13,9 @@
 | P4 | Strip old custom MCP | ✅ COMPLETE | Remove session/routing/direct-DB logic from old MCP, update docs |
 | P5 | MCP_DOCKER skill runtime | ✅ COMPLETE | Final config, discovery/add workflow |
 | P6 | Neo4j Graph Population | ✅ COMPLETE | Agent/Team/Project nodes, Memory seeding, 133 relationships, seed script |
+| P7 | Quality Benchmarking | 🔵 PLANNED | Precision/Recall/MRR benchmarks, UX 13-16-18 validation, retrieval quality metrics, competitive scoring |
+| P8 | Hardening | 🔵 PLANNED | API schema validation, security audit, load testing, circuit breaker edge cases, error recovery hardening |
+| P9 | Polish | 🔵 PLANNED | Dashboard UX refinements, token system WCAG fixes, documentation completeness, operational runbook validation |
 
 ## P1 — Brain Readiness ✅
 
@@ -90,7 +93,36 @@
 - [ ] Backfill 46,714 historical events into allura_memories
 - [ ] Qwen3 embedding upgrade (768d→4096d schema migration)
 - [ ] Neo4j healthcheck creds mismatch (container unhealthy but cypher-shell works)
-- [ ] Retrieval Gateway implementation (typed contract, startup validation)
 - [ ] WhatsApp 499 reconnect loop
-- [ ] Graph-Notion sync automation (currently manual — see RK-06)
 - [ ] Memory viewer UI: Agent/Team/Project graph visualization
+
+## P7 — Quality Benchmarking 🔵 PLANNED
+
+**Scope:** FR-1.2, FR-7, FR-8, FR-9.1
+
+- [ ] Precision@5 / Recall@5 / MRR benchmark suite (target: P@5 ≥ 0.85, R@5 ≥ 0.90, MRR ≥ 0.80)
+- [ ] Cross-group isolation verification (target: 100%)
+- [ ] 13-16-18 UX validation framework scoring (target: ≥ 0.85)
+- [ ] Retrieval gateway contract compliance tests (startup validator)
+- [ ] Competitive benchmark comparison (mem0, Zep, Anthropic dual-DB)
+
+## P8 — Hardening 🔵 PLANNED
+
+**Scope:** FR-1.3, FR-11, FR-12
+
+- [ ] API schema validation (Zod schemas for all endpoints)
+- [ ] Budget enforcer edge cases (concurrent sessions, TTL auto-expiry, reset verification)
+- [ ] Circuit breaker failure/recovery scenarios
+- [ ] Load testing (k6 or equivalent, target: 100 req/s sustained)
+- [ ] Security audit (auth bypass, injection, CORS validation)
+- [ ] Error recovery hardening (Neo4j failover, PG connection loss, partial promotion rollback)
+
+## P9 — Polish 🔵 PLANNED
+
+**Scope:** FR-9.2, FR-10
+
+- [ ] Dashboard UX refinements (responsive, accessibility)
+- [ ] Token system WCAG contrast fixes (5 failing pairings — RK-18)
+- [ ] Documentation completeness audit (all 6 canonical docs current)
+- [ ] Operational runbook validation (new team member execution test)
+- [ ] Sync contract automation (eliminate manual Graph-Notion sync)

@@ -15,19 +15,19 @@ export function EmptyState({ title, description, cta, className }: EmptyStatePro
     <div
       className={`flex flex-col items-center justify-center px-6 py-16 text-center ${className ?? ""}`}
     >
-      <BrainCircuit className="mb-4 size-12 text-[var(--allura-warm-gray)]" />
-      <h3 className="text-lg font-semibold text-[var(--allura-ink-black)]">
+      <BrainCircuit className="mb-4 size-12 text-[var(--dashboard-text-muted)]" />
+      <h3 className="text-lg font-semibold text-[var(--dashboard-text-primary)]">
         {title}
       </h3>
       {description && (
-        <p className="mt-2 max-w-sm text-sm text-[var(--allura-warm-gray)]">
+        <p className="mt-2 max-w-sm text-sm text-[var(--dashboard-text-secondary)]">
           {description}
         </p>
       )}
       {cta && (
         <Button
           onClick={cta.onClick}
-          className="mt-6 bg-[var(--allura-deep-navy)] text-[var(--allura-pure-white)] hover:bg-[var(--allura-deep-navy)]/90"
+          className="mt-6 bg-[var(--allura-blue)] text-white hover:bg-[var(--allura-blue-hover)]"
           style={{ borderRadius: "var(--allura-radius-button)" }}
         >
           {cta.label}

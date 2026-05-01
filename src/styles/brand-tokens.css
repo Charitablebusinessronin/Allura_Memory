@@ -91,6 +91,16 @@
   --allura-status-proposed: var(--allura-clarity-blue);
   --allura-status-forgotten: var(--allura-warm-gray);
   --allura-status-warning: var(--allura-coral);
+
+  /* ── WCAG-compliant text variants ── */
+  /* Brand tokens are kept as-is (Kotler-locked). These darker variants
+     are for text/readable use only, where the canonical token fails WCAG. */
+  --allura-gold-text:       #8a651d;   /* gold #C89B3C fails on white (2.56:1); this passes 4.5:1 */
+  --allura-gray-400-text:    #6B7280;   /* gray-400 #9CA3AF fails on white (2.54:1); use gray-500 for text */
+  --allura-orange-on-text:   #7C2D12;   /* white on orange #FF5A2E fails (3.11:1); dark text on orange bg */
+
+  /* ── Montserrat (Kotler spec: weight 900 display headings) ── */
+  --font-family-display: 'Montserrat', 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
 }
 
 .dark {
@@ -120,4 +130,12 @@
   --dashboard-surface-muted:  #1E2D47;
   --dashboard-border:         rgb(255 255 255 / 0.08);
   --dashboard-border-default: rgb(255 255 255 / 0.12);
+
+  /* ── WCAG-compliant text variants (dark mode) ── */
+  --allura-gold-text:       #FBBF24;   /* dark mode gold text: passes 4.5:1 on dark bg */
+  --allura-gray-400-text:    #9CA3AF;   /* dark mode: gray-400 is readable on dark bg */
+  --allura-orange-on-text:   #FFCDB2;   /* dark text on dark-mode orange bg */
+
+  /* ── Montserrat (dark mode) ── */
+  --font-family-display: 'Montserrat', 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
 }

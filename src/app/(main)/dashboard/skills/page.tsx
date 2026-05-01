@@ -92,7 +92,7 @@ export default function SkillsPage() {
       <div className="flex flex-col gap-1">
         <span
           className="font-mono text-xs font-semibold uppercase tracking-[0.14em]"
-          style={{ color: "var(--allura-gold)", fontFamily: "'IBM Plex Mono', monospace" }}
+          style={{ color: "var(--allura-gold-text)", fontFamily: "'IBM Plex Mono', monospace" }}
         >
           Allura Memory dashboard
         </span>

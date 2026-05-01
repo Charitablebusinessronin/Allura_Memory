@@ -39,6 +39,8 @@ The primary and only append-only log. Every memory operation — add, search, ge
 | `status` | varchar(50) | Yes | Default: `completed`. See values below |
 | `metadata` | jsonb | No | Event-specific payload — see Metadata Payloads section |
 | `created_at` | timestamptz | Yes | Write timestamp. DEFAULT NOW(). Immutable. |
+| `halted_at` | timestamptz | No | When a budget session was halted. Present only when `event_type` relates to budget enforcement. |
+| `halt_ttl_ms` | integer | No | Budget enforcer auto-expiry TTL in milliseconds. Default: 3600000 (1 hour). See AD-27. |
 
 **`event_type` values**
 
@@ -64,6 +66,10 @@ The primary and only append-only log. Every memory operation — add, search, ge
 | `request_trace` | HTTP request traced by TraceMiddleware (Story 1.2) |
 | `session_start` | Agent session began |
 | `health_check` | System health check performed |
+| `memory_restore` | A soft-deleted memory was restored within the recovery window |
+| `memory_update` | Append-only versioned update (SUPERSEDES chain created) |
+| `memory_promote` | Request promotion to Neo4j (creates proposal) |
+| `sync_contract` | Sync contract mapping applied on curator approve or auto-promote — user_id→Agent, group_id→Project relationships wired |
 
 **`status` values**
 
@@ -477,3 +483,84 @@ Emitted after approval to queue Notion page creation. Picked up by the notion-sy
 ```
 
 **Redacted fields:** passwords, API keys, tokens, and any PII beyond `user_id` MUST NOT appear in `metadata`.
+
+---
+
+## Retrieval Gateway Contract
+
+The retrieval gateway enforces typed contracts at the boundary between agent reads and the dual stores. All agent reads MUST pass through `POST /api/memory/retrieval` (AD-19). Source: `src/lib/retrieval/contract.ts`.
+
+### SearchRequest
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `query` | string | Yes | Semantic query string |
+| `group_id` | string | Yes | Tenant namespace — REQUIRED, enforced by policy |
+| `user_id` | string | Yes | User identifier — must match agent identity |
+| `limit` | integer | No | Maximum results (capped by config) |
+| `min_score` | float | No | Minimum relevance score threshold (0–1) |
+| `filters` | Record<string, string \| number \| boolean> | No | Optional key-value filters (e.g., source, conversation_id) |
+| `include_global` | boolean | No | Whether to include global/shared memories |
+
+### MemoryResult
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | Yes | Unique memory identifier |
+| `content` | string | Yes | Raw content text |
+| `score` | float | Yes | Relevance score (0–1) |
+| `source` | string | Yes | Source store: `'episodic'` \| `'semantic'` \| `'merged'` |
+| `group_id` | string | Yes | Tenant namespace |
+| `user_id` | string | Yes | User identifier |
+| `metadata` | Record<string, unknown> | No | Optional metadata payload |
+| `created_at` | string | No | ISO 8601 creation timestamp |
+
+### Validation
+
+- Startup validator (`src/lib/retrieval/startup-validator.ts`) verifies contract integrity on service boot
+- Policy layer (`src/lib/retrieval/policy.ts`) enforces group_id requirement and tenant scoping
+- JSON Schema validation available via `json-schema/` directory for both `SearchRequest` and `MemoryResult`
+
+---
+
+## Budget Session Fields
+
+Budget enforcement tracks session state for agent write operations. Halted sessions auto-expire after `haltTtlMs` (AD-27).
+
+### Session State Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `halted_at` | Date | No | Timestamp when session was halted due to budget breach |
+| `halt_ttl_ms` | integer | No | Auto-expiry TTL for halted sessions. Default: 3,600,000 (1 hour). Configurable via `EnforcerConfig.haltTtlMs` |
+| `halt_reason` | HaltReason | No | Reason for halt: `budget_exhausted` \| `step_limit` \| `time_limit` \| `cost_limit` \| `manual` |
+
+### Admin Reset
+
+`POST /api/admin/reset-budget` — resets halted sessions for a specific `group_id` (or all if no group_id provided). Requires bearer auth.
+
+---
+
+## Sync Contract Mapping Table
+
+The sync contract (`src/lib/graph-adapter/sync-contract-mappings.ts`) provides deterministic mappings for relationship wiring during memory promotion (AD-28).
+
+### Mapping Tables
+
+| Mapping | Source Key | Target Node | Used By |
+|---------|-----------|------------|----------|
+| `user_id → Agent` | `user_id` (e.g., `fowler`, `woz-builder`) | Agent node `name` property | Curator approve, auto-promote |
+| `group_id → Project` | `group_id` (e.g., `allura-system`) | Project node `name` property | Curator approve, auto-promote |
+
+### Event Log
+
+When the sync contract applies mappings, an event with `event_type = 'sync_contract'` is written to PostgreSQL `events` table with metadata containing:
+
+```jsonc
+{
+  "memory_id": "uuid",
+  "agent_name": "Fowler",
+  "project_name": "Allura Memory",
+  "relationships_wired": ["AUTHORED_BY", "CONTRIBUTES_TO"]
+}
+```

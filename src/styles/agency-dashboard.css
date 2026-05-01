@@ -4,6 +4,20 @@
  * thin borders, restrained radius, high editorial spacing.
  */
 
+/* ── Theme transition: smooth color changes on theme switch ── */
+@layer base {
+  html {
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  html *, html *::before, html *::after {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease, box-shadow 0.2s ease;
+  }
+  /* Exclude animations from this blanket transition */
+  html *:where([class*=animate-], [class*=motion-]) {
+    transition: none !important;
+  }
+}
+
 @layer components {
   /* ── Page Shell ── */
   .dashboard-page {
@@ -76,6 +90,7 @@
   .metric-card .metric-icon.green  { background-color: var(--tone-green-bg);  color: var(--tone-green-text); }
   .metric-card .metric-icon.gold   { background-color: var(--tone-gold-bg);   color: var(--tone-gold-text); }
   .metric-card .metric-icon.red    { background-color: var(--tone-red-bg);    color: var(--tone-red-text); }
+  .metric-card .metric-icon.charcoal { background-color: var(--tone-charcoal-bg); color: var(--tone-charcoal-text); }
 
   /* ── Badges ── */
   .agency-badge {
@@ -215,9 +230,33 @@
     font-family: var(--font-ibm-plex-sans), 'IBM Plex Sans', system-ui, sans-serif;
   }
   .agency-btn.primary { background: var(--allura-blue); color: white; }
-  .agency-btn.primary:hover { background: #1E40AF; }
-  .agency-btn.secondary { background: white; color: var(--allura-charcoal); border-color: var(--dashboard-border-default); }
+  .agency-btn.primary:hover { background: var(--allura-blue-hover); }
+  .agency-btn.secondary { background: var(--dashboard-surface); color: var(--allura-charcoal); border-color: var(--dashboard-border-default); }
   .agency-btn.secondary:hover { background: var(--dashboard-surface-muted); }
   .agency-btn.ghost { background: transparent; color: var(--dashboard-text-secondary); }
   .agency-btn.ghost:hover { color: var(--dashboard-text-primary); }
+
+  /* ── Focus indicators for keyboard navigation (WCAG 2.4.7) ── */
+  .agency-btn:focus-visible,
+  .agency-tabs .tab-btn:focus-visible,
+  .agency-search:focus-within {
+    outline: 2px solid var(--allura-blue);
+    outline-offset: 2px;
+  }
+  .metric-card:focus-visible,
+  .agency-card:focus-visible {
+    outline: 2px solid var(--allura-blue);
+    outline-offset: 2px;
+  }
+
+  /* ── Hover states on interactive elements ── */
+  .metric-card:hover {
+    box-shadow: 0 4px 16px -10px rgba(15, 17, 21, 0.10);
+  }
+  .agency-badge {
+    transition: filter 0.15s ease;
+  }
+  .agency-badge:hover {
+    filter: brightness(0.95);
+  }
 }

@@ -8,6 +8,7 @@ import {
   ErrorState,
   InsightCard,
   LoadingState,
+  MetricCardsSkeleton,
   MetricCard,
   PageHeader,
   SystemStatusCard,
@@ -30,7 +31,7 @@ export default function DashboardPage() {
     }
   }, [])
 
-  if (!state) return <LoadingState />
+  if (!state) return <div className="space-y-8"><MetricCardsSkeleton /></div>
   if (state.error) return <ErrorState message={state.error} />
   if (!state.data) return <ErrorState message="Dashboard returned no data." />
 
@@ -48,7 +49,7 @@ export default function DashboardPage() {
       {/* Hero */}
       <div className="flex flex-col gap-1">
         <span
-          className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[var(--allura-gold)]"
+          className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[var(--allura-gold-text)]"
         >
           Allura Memory dashboard
         </span>

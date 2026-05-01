@@ -9,6 +9,7 @@ import {
   ErrorState,
   LoadingState,
   PageHeader,
+  MetricCardsSkeleton,
   WarningList,
 } from "@/components/dashboard"
 import { cn } from "@/lib/utils"
@@ -206,7 +207,10 @@ export default function AgentsPage() {
   return (
     <div>
       {!state ? (
-        <LoadingState />
+        <div className="space-y-8">
+          <PageHeader title="Agents" description="Agents observed in real Brain memory provenance and graph relationships." />
+          <MetricCardsSkeleton />
+        </div>
       ) : state.error ? (
         <ErrorState message={state.error} />
       ) : (

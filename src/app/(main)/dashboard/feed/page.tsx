@@ -9,6 +9,7 @@ import {
   LoadingState,
   MemoryCard,
   PageHeader,
+  SearchResultsSkeleton,
   WarningList,
 } from "@/components/dashboard"
 import { Button } from "@/components/ui/button"
@@ -104,7 +105,7 @@ export default function MemoryFeedPage() {
       </div>
 
       {!state ? (
-        <LoadingState />
+        <SearchResultsSkeleton />
       ) : state.error ? (
         <ErrorState message={state.error} />
       ) : (
@@ -112,8 +113,8 @@ export default function MemoryFeedPage() {
           <WarningList warnings={state.warnings} />
           {pageItems.length === 0 ? (
             <EmptyState
-              title="No memories returned"
-              description={query ? "No memories match your search. Try different keywords." : "The Brain returned no memories for the current filter."}
+              title="No memories found"
+              description={query ? "No memories match your search. Try different keywords." : "No memories available for the current filter."}
             />
           ) : (
             <div className="space-y-3">
