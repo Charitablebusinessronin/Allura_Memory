@@ -143,6 +143,7 @@ services:
       - "${PAPERCLIP_PORT:-3100}:3100"
     env_file:
       - .env
+      - .env.local
     environment:
       - PORT=3100
       - NODE_ENV=production

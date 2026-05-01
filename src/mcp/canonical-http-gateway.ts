@@ -332,6 +332,12 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
   }
 
   // ── Apply Rate Limiting ───────────────────────────────────────────────────
+  // Start a Sentry performance transaction for all requests
+  const transaction = startTransaction({
+    name: `${req.method ?? "GET"} ${url.pathname ?? "/"}`,
+    op: "http.server",
+  });
+
   // Sliding-window per-IP rate limit. Default: 100 req/min.
   // Configurable via ALLURA_RATE_LIMIT_MAX, ALLURA_RATE_LIMIT_WINDOW_MS, ALLURA_RATE_LIMIT_ENABLED.
   if (!applyRateLimit(req, res)) {
@@ -339,12 +345,6 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     transaction.finish();
     return;
   }
-
-  // Start a Sentry performance transaction for all requests
-  const transaction = startTransaction({
-    name: `${req.method ?? "GET"} ${url.pathname ?? "/"}`,
-    op: "http.server",
-  });
 
   // Record request start time for metrics
   const requestStartTime = Date.now();
