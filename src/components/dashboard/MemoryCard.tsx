@@ -1,3 +1,6 @@
+import Link from "next/link"
+import { Lightbulb } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import type { Memory } from "@/lib/dashboard/types"
 import { StatusPill } from "./StatusPill"
 
@@ -26,6 +29,14 @@ export function MemoryCard({ memory }: { memory: Memory }) {
           ))}
         </div>
       )}
+      <div className="mt-3 flex gap-2">
+        <Button size="xs" variant="ghost" asChild>
+          <Link href={`/dashboard/insights?promote=${memory.id}`}>
+            <Lightbulb className="mr-1 size-3" />
+            Promote
+          </Link>
+        </Button>
+      </div>
     </article>
   )
 }

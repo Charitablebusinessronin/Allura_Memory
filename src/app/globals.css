@@ -106,9 +106,9 @@ These serve as the fallback; there is no separate default.css file. */
    --brand-blue: #1D4ED8;
    --brand-orange: #FF5A2E;
    --brand-green: #157A4A;
-   --brand-charcoal: #111827;
+   --brand-charcoal: #0F1115;
    --brand-gold: #C89B3C;
-   --brand-cream: #F5F1E6;
+   --brand-cream: #F6F4EF;
 }
 
 .dark {
@@ -156,9 +156,9 @@ These serve as the fallback; there is no separate default.css file. */
    --brand-blue: #1D4ED8;
    --brand-orange: #FF5A2E;
    --brand-green: #157A4A;
-   --brand-charcoal: #111827;
+   --brand-charcoal: #0F1115;
    --brand-gold: #C89B3C;
-   --brand-cream: #F5F1E6;
+   --brand-cream: #F6F4EF;
 }
 
 @layer base {

@@ -152,7 +152,7 @@ export default function SkillsPage() {
             className={`rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${
               filter === cat
                 ? "bg-[var(--allura-blue)] text-white border-[var(--allura-blue)]"
-                : "bg-white text-[var(--allura-gray-500)] border-[var(--allura-gray-200)] hover:bg-[var(--allura-gray-100)]"
+                : "bg-[var(--dashboard-surface)] text-[var(--allura-gray-500)] border-[var(--allura-gray-200)] hover:bg-[var(--allura-gray-100)]"
             }`}
           >
             {cat === "all" ? "All Skills" : categoryLabel(cat)}

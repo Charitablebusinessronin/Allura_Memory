@@ -5,9 +5,9 @@
  * - Blue #1D4ED8 (primary, action, trust)
  * - Orange #FF5A2E (secondary, emphasis, urgency)
  * - Green #157A4A (success, approval, positive)
- * - Charcoal #111827 (accent, text, depth)
+ * - Charcoal #0F1115 (accent, text, depth)
  * - Gold #C89B3C (insight, high-value, achievement)
- * - Cream #F5F1E6 (background, neutral, soft contrast)
+ * - Cream #F6F4EF (background, neutral, soft contrast)
  */
 
 // Brand color tokens (hex)
@@ -15,9 +15,9 @@ export const BRAND = {
   blue: "#1D4ED8",
   orange: "#FF5A2E",
   green: "#157A4A",
-  charcoal: "#111827",
+  charcoal: "#0F1115",
   gold: "#C89B3C",
-  cream: "#F5F1E6",
+  cream: "#F6F4EF",
 } as const;
 
 // Brand color CSS variables

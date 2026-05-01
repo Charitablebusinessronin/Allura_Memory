@@ -99,7 +99,7 @@ export function AppSidebar({
   return (
     <Sidebar
       className={cn(
-        "border-r border-[var(--allura-gray-200)] bg-white/86 backdrop-blur-[16px]",
+        "border-r border-[var(--allura-gray-200)] bg-[var(--dashboard-surface)]/86 backdrop-blur-[16px]",
         className
       )}
       {...props}
