@@ -8,7 +8,7 @@ const toneClasses: Record<Metric["tone"], string> = {
   orange:   `bg-[color-mix(in_srgb,var(--allura-orange)_10%,white)]            text-[var(--allura-orange)]`,
   green:    `bg-[color-mix(in_srgb,var(--allura-green)_10%,white)]             text-[var(--allura-green)]`,
   charcoal: `bg-[color-mix(in_srgb,var(--allura-charcoal)_10%,white)]            text-[var(--allura-charcoal)]`,
-  gold:     `bg-[color-mix(in_srgb,var(--allura-gold)_10%,white)]              text-[var(--allura-gold-hover)]`,
+  gold:     `bg-[color-mix(in_srgb,var(--allura-gold)_10%,white)]              text-[var(--allura-gold-text)]`,
   red:      `bg-[color-mix(in_srgb,var(--allura-orange-hover)_10%,white)]      text-[var(--allura-orange-hover)]`,
   muted:    `bg-[var(--allura-muted)]                                        text-[var(--allura-text-2)]`,
 }
