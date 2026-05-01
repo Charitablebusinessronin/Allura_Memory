@@ -56,6 +56,14 @@ value: allura
   --allura-orange-8: color-mix(in srgb, var(--allura-orange) 8%, white);
   --allura-gold-10:  color-mix(in srgb, var(--allura-gold) 10%, white);
 
+  /* ── WCAG-compliant text variants (light mode) ── */
+  --allura-gold-text:       #8a651d;   /* gold #C89B3C fails on white (2.56:1); this passes 4.5:1 */
+  --allura-gray-400-text:    #6B7280;   /* gray-400 #9CA3AF fails on white (2.54:1); use gray-500 for text */
+  --allura-orange-on-text:   #7C2D12;   /* white on orange #FF5A2E fails (3.11:1); dark text on orange bg */
+
+  /* ── Montserrat (Kotler spec: weight 900 display headings) ── */
+  --font-family-display: 'Montserrat', 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+
   /* ── Semantic tokens → shadcn mapping ── */
   --radius: 0.625rem;
   --background: var(--allura-white);
@@ -131,11 +139,11 @@ value: allura
   --shadow-2xl: var(--allura-sh-lg);
 }
 
-/* ── Font display utility (IBM Plex Sans) ── */
+/* ── Font display utility (Montserrat 900 per Kotler brand spec) ── */
 [data-theme-preset="allura"] .font-display,
 .font-display {
-  font-family: var(--font-family-brand), var(--font-ibm-plex-sans), system-ui, sans-serif;
-  font-weight: 700;
+  font-family: var(--font-family-display), var(--font-montserrat), var(--font-ibm-plex-sans), system-ui, sans-serif;
+  font-weight: 900;
 }
 
 .dark:root[data-theme-preset="allura"] {
@@ -156,6 +164,14 @@ value: allura
   --allura-border-2:    #4B5563;
   --allura-text-2:      #9CA3AF;
   --allura-text-3:      #6B7280;
+
+  /* ── WCAG-compliant text variants (dark mode) ── */
+  --allura-gold-text:       #FBBF24;   /* dark mode: readable on dark bg */
+  --allura-gray-400-text:    #9CA3AF;   /* dark mode: gray-400 is readable on dark bg */
+  --allura-orange-on-text:   #FFCDB2;   /* light text on orange bg in dark mode */
+
+  /* ── Montserrat (dark mode) ── */
+  --font-family-display: 'Montserrat', 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
 
   /* ── Semantic tokens → shadcn mapping (dark mode) ── */
   --background: var(--allura-cream);

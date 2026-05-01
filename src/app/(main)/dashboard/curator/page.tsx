@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 
-import { ErrorState, InsightActions, InsightCard, LoadingState, PageHeader, WarningList } from "@/components/dashboard"
+import { EmptyState, ErrorState, InsightActions, InsightCard, LoadingState, PageHeader, SearchResultsSkeleton, WarningList } from "@/components/dashboard"
 import { approveProposal, rejectProposal } from "@/lib/dashboard/api"
 import { loadInsights } from "@/lib/dashboard/queries"
 import type { DashboardResult, Insight } from "@/lib/dashboard/types"
@@ -71,14 +71,11 @@ export default function CuratorPage() {
 
       {actionError && <ErrorState message={actionError} />}
 
-      {!state ? <LoadingState /> : state.error ? <ErrorState message={state.error} /> : (
+      {!state ? <SearchResultsSkeleton /> : state.error ? <ErrorState message={state.error} /> : (
         <>
           <WarningList warnings={state.warnings} />
           {proposals.length === 0 ? (
-            <div className="rounded-xl border border-dashed p-10 text-center">
-              <p className="font-medium text-[var(--dashboard-text-primary)]">No pending proposals</p>
-              <p className="text-[var(--dashboard-text-secondary)] mt-1 text-sm">The curator queue is empty. New proposals will appear here when the scoring pipeline generates them.</p>
-            </div>
+            <EmptyState title="No pending promotions" description="The curator queue is empty. New proposals will appear here when the scoring pipeline generates them." />
           ) : (
             <div className="space-y-3">
               {proposals.map((insight) => (

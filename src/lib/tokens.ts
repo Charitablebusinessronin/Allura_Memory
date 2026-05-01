@@ -76,12 +76,14 @@ export const tokens = {
   typography: {
     fontFamily: {
       sans: "'IBM Plex Sans', system-ui, -apple-system, sans-serif",
+      display: "'Montserrat', 'IBM Plex Sans', system-ui, -apple-system, sans-serif",
     },
     fontWeight: {
       normal: 400,
       medium: 500,
       semibold: 600,
       bold: 700,
+      black: 900,
     },
     fontSize: {
       xs: "12px",

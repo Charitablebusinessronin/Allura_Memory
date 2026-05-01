@@ -38,6 +38,8 @@
 | AD-24 | Agent/Project/Team graph model as structural context layer          | Decided  | A graph without structure is just a list. Agent, Team, and Project nodes provide the structural context that makes Memory nodes retrievable by ownership, project, and delegation path. Eliminates the shadow Memory Framework agent hierarchy in favor of the existing surgical team pattern. Alternatives: (1) Memory-only graph with metadata properties — rejected because flat metadata doesn't support traversal queries across team structure. (2) Separate knowledge base for agents — rejected because it creates sync burden between two surfaces. |
 | AD-25 | Phase 6 Closure — all deliverables shipped | Decided  | See Phase 6 Closure Decision Detail section below. |
 | AD-26 | Real-data dashboard uses query/mapper boundary and read-only graph endpoint | Decided | Issue #25 makes `/dashboard` a trust surface over real Allura Brain data, not a mock UI. Dashboard components consume mapped UI contracts from `src/lib/dashboard/`; raw Brain API shapes stay behind `api.ts`, `queries.ts`, and `mappers.ts`. `/api/memory/graph` is read-only, tenant-scoped by `group_id`, returns a capped display sample plus `total_edges`, and performs no Neo4j mutations. Alternatives rejected: mock data, frontend-inferred relationships, and raw API responses in components. |
+| AD-27 | Budget enforcer TTL auto-expiry for halted sessions | Decided | Halted budget sessions auto-expire after `haltTtlMs` (default: 1 hour). `DEFAULT_HALT_TTL_MS = 60 * 60 * 1000` in `src/lib/budget/enforcer.ts`. Admin can reset manually via `POST /api/admin/reset-budget`. Auto-expiry prevents indefinite lockout of agents after a budget breach. Alternatives: (1) No auto-expiry — rejected because agents would require manual reset after every breach. (2) Immediate reset — rejected because it defeats the purpose of budget enforcement. |
+| AD-28 | Sync contract mapping table for relationship wiring | Decided | `src/lib/graph-adapter/sync-contract-mappings.ts` provides deterministic user_id→Agent and group_id→Project mappings. Used by curator approve and auto-promote paths to wire AUTHORED_BY and CONTRIBUTES_TO relationships on promoted memories. Alternatives: (1) Dynamic agent/project discovery from Neo4j — rejected because it adds latency and requires graph queries during promotion. (2) Convention-based naming (user_id = agent name) — rejected because it's fragile and breaks when names diverge. |
 | DDR-004 | Token Authority — Two-path design system | Enforced | CSS custom properties (`var(--allura-*)`, `var(--dashboard-*)`) for Tailwind/HTML contexts; `tokens.ts` for Canvas/JS runtime. Raw hex and generic shadcn utilities (`text-muted-foreground`, `bg-muted`) are prohibited in active dashboard scope. `button.tsx` shadow rgba documented as DD-004 build-tool exception. Committed 2026-04-30. |
 
 ---
@@ -83,9 +85,9 @@
 | RK-13 | Curator re-scores already-promoted traces | Medium | Mitigated |
 | RK-14 | E2E validation gap — pipeline not proven | High | Active |
 | RK-15 | Approve route connection leak | Medium | Active |
-| RK-16 | Graph-Notion sync drift | Medium | 🔴 Open |
-| RK-17 | Dashboard API shape drift hides Brain data gaps | Medium | 🔴 Open |
-| RK-18 | dashboard-legacy parallel UI — dual-system second effect | Medium | ✅ Resolved — 2026-04-30 |
+| RK-16 | Graph-Notion sync drift | Medium | ✅ Resolved — 2026-04-30 |
+| RK-17 | Dashboard API shape drift hides Brain data gaps | Medium | ✅ Resolved — 2026-04-30 |
+| RK-18 | WCAG contrast failures in token system | Medium | 🔴 Open |
 
 ### Risk Detail
 
@@ -106,9 +108,9 @@
 | RK-13 | Curator re-scores already-promoted traces      | Medium | AD-20: Events marked as `status = 'promoted'` after proposal creation. Curator query excludes promoted events. | Mitigated |
 | RK-14 | E2E validation gap — pipeline not proven       | High | VALIDATION-GATE.md defines 12 acceptance checks with hard gates. E2E validation script (`scripts/e2e-validation-gate.ts`) runs all checks. | Active |
 | RK-15 | Approve route connection leak                  | Medium | Route creates its own `Pool` instead of using `getPool()` singleton. Fix: replace with shared pool from `src/lib/postgres/connection.ts`. | Active |
-| RK-16 | Graph-Notion sync drift | Medium | Agent roster and project definitions maintained in Notion may drift from Neo4j seed data if not synced. Currently manual. | 🔴 Open |
-| RK-17 | Dashboard API shape drift hides Brain data gaps | Medium | Issue #25 routes Brain responses through `src/lib/dashboard/mappers.ts` so components never consume raw transport shapes. Remaining mitigation: add Zod validation and mapper tests for dashboard responses. | 🔴 Open |
-| RK-18 | dashboard-legacy parallel UI — dual-system second effect | Medium | **RESOLVED Option B**: Removed from repo (commit e433ba01), archived under git tag `archive/dashboard-legacy`. DDR-004 now covers the entire active surface with no exceptions. Recovery: `git checkout archive/dashboard-legacy -- src/app/(main)/dashboard-legacy/` | ✅ Resolved — 2026-04-30 |
+| RK-16 | Graph-Notion sync drift | Medium | Sync contract mapping table (`src/lib/graph-adapter/sync-contract-mappings.ts`) now resolves user_id→Agent and group_id→Project relationships automatically. Notion sync worker uses mappings on approve/promote. | ✅ Resolved — 2026-04-30 |
+| RK-17 | Dashboard API shape drift hides Brain data gaps | Medium | `src/lib/dashboard/mappers.ts` now maps all Brain responses through typed UI contracts. Zod validation added. Mapper tests cover dashboard responses. DDR-004 token authority eliminates shadow utility classes. | ✅ Resolved — 2026-04-30 |
+| RK-18 | WCAG contrast failures in token system | Medium | 5 token pairings fail WCAG AA contrast ratio (4.5:1) — primarily light-background/low-contrast text combinations in `var(--allura-*)` and `var(--dashboard-*)` tokens. Audit needed across both token namespaces. | 🔴 Open |
 
 | AD-25 | Phase 6 Closure — all deliverables shipped | Decided | DLQ shipped (curator watchdog). Knowledge Hub Bridge shipped (Notion sync worker). Auth layer shipped (dev-auth + config). CSV Export shipped (/admin/approvals CSV download). SDK not separately shipped — MCP tools are the SDK. CORS shipped (next.config). Sentry shipped (captureException in curator approve). Phase 6 scope is complete. Decision: close Phase 6 and record it. Alternatives rejected: (1) Continue tracking as open — rejected because all deliverables exist in code and pass tests. (2) Extend Phase 6 for k6 load testing — rejected because load testing is a separate concern (tracked as RK-14). Consequences: Phase 6 ADR is now closed. Next phases focus on Curator pipeline E2E (Sprint 1), Skills layer (Sprint 2), and MCP Catalog governance (Sprint 3). |
 

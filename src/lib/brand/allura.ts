@@ -65,7 +65,7 @@ export const ALLURA_STATUS_MAP: Record<AlluraStatus, { bg: string; text: string;
   active: { bg: "var(--allura-green)", text: "#FFFFFF", label: "Active" },
   proposed: { bg: "var(--allura-blue)", text: "#FFFFFF", label: "Proposed" },
   forgotten: { bg: "var(--allura-gray-500)", text: "#FFFFFF", label: "Forgotten" },
-  low_confidence: { bg: "var(--allura-orange)", text: "#FFFFFF", label: "Low Confidence" },
+  low_confidence: { bg: "var(--allura-orange)", text: "var(--allura-orange-on-text)", label: "Low Confidence" },
 } as const
 
 // ── CSS Variables mapping (semantic names → CSS var strings) ──

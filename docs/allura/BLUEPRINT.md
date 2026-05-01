@@ -248,7 +248,10 @@ The hard isolation boundary. Every read and write MUST include a valid `group_id
 | Memory Engine            | Core read/write/score/route logic              | `src/lib/memory/`                                 |
 | Curator Scorer           | Computes confidence (60-100%) + reasoning      | `src/lib/curator/score.ts` (rule-based or Claude) |
 | Dedup Engine             | Prevents duplicate Neo4j promotions            | `src/lib/dedup/`                                  |
-| Budget + Circuit Breaker | Prevents runaway agent writes                  | `src/lib/budget/`, `src/lib/circuit-breaker/`     |
+| Budget + Circuit Breaker | Prevents runaway agent writes, enforces Kmax limits, auto-expires halted sessions | `src/lib/budget/`, `src/lib/circuit-breaker/` |
+| Retrieval Gateway | Typed contract enforcement at the retrieval boundary — all agent reads pass through `SearchRequest`/`MemoryResult` typed contract | `src/lib/retrieval/contract.ts`, `src/lib/retrieval/policy.ts`, `src/lib/retrieval/startup-validator.ts` |
+| Sync Contract Mappings | Resolves user_id→Agent and group_id→Project for relationship wiring on promoted memories | `src/lib/graph-adapter/sync-contract-mappings.ts` |
+| Budget Admin API | `POST /api/admin/reset-budget` — reset halted sessions per group or globally | `src/mcp/canonical-http-gateway.ts` |
 | PostgreSQL 16            | Episodic memory + audit trail + proposals      | Docker service                                    |
 | Neo4j 5.26               | Semantic memory — versioned knowledge graph    | Docker service                                    |
 | Memory Viewer            | `/memory` page — list, search, delete          | `src/app/memory/page.tsx`                         |
@@ -598,6 +601,8 @@ Before any Neo4j write, search for an existing node with matching `content` + `g
 | `GET`    | `/api/memory/search?q=&userId=` | Search memories      |
 | `GET`    | `/api/memory/graph?group_id=`   | Read-only tenant-scoped graph view for dashboard; returns real Neo4j nodes/edges and total relationship count |
 | `GET`    | `/api/health`                   | System health check  |
+| `POST`   | `/api/admin/reset-budget`       | Reset halted budget sessions (auth required; body: `{group_id?}`) |
+| `POST`   | `/api/memory/retrieval`         | Governed retrieval gateway — sole agent read path (AD-19) |
 
 ---
 
@@ -639,6 +644,7 @@ Allura's internal coordination is event-driven: every significant state change e
 | `notion_sync_pending` | Curator approve flow | Notion sync worker (`notion-sync-worker.ts`) | Proposal queued for Notion page creation |
 | `tool_approved` | MCP catalog governance | Notion sync worker (`notion-projection-sync`) | MCP tool approved through catalog governance |
 | `tool_denied` | MCP catalog governance | Notion sync worker (`notion-projection-sync`) | MCP tool denied through catalog governance |
+| `sync_contract` | Curator approve / auto-promote | Notion sync worker, audit export | Sync contract mapping applied — user_id→Agent, group_id→Project relationships wired on promoted memory |
 | `execution_succeeded` | Agent executor | Notion sync worker (`notion-projection-sync`) | Agent execution succeeded |
 | `execution_failed` | Agent executor | Notion sync worker (`notion-projection-sync`), Sentry | Agent execution failed |
 | `execution_blocked` | Agent executor | Notion sync worker (`notion-projection-sync`) | Agent execution blocked |

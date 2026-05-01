@@ -3,7 +3,9 @@
 import dynamic from "next/dynamic"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
+  EmptyState,
   ErrorState,
+  GraphSkeleton,
   GraphSummary,
   LoadingState,
   NodeDetailPanel,
@@ -12,7 +14,6 @@ import {
 } from "@/components/dashboard"
 import { loadGraph } from "@/lib/dashboard/queries"
 import { getGraphNodeColor, getGraphNodeRadius, getResolvedColor } from "@/lib/brand/allura"
-import { tokens } from "@/lib/tokens"
 import type { DashboardResult, GraphEdge, GraphNode } from "@/lib/dashboard/types"
 
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), { ssr: false })
@@ -98,7 +99,7 @@ export default function GraphPage() {
             className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
               activeTypes.has(type)
                 ? "text-white"
-                : `border border-[var(--allura-border-2)] bg-white text-[var(--allura-text-2)] hover:bg-[var(--allura-muted)]`
+                : `border border-[var(--allura-border-2)] bg-[var(--dashboard-surface)] text-[var(--allura-text-2)] hover:bg-[var(--allura-muted)]`
             }`}
             style={activeTypes.has(type) ? { backgroundColor: getGraphNodeColor(type) } : undefined}
           >
@@ -117,12 +118,15 @@ export default function GraphPage() {
       </div>
 
       {!state ? (
-        <LoadingState />
+        <GraphSkeleton />
       ) : state.error ? (
         <ErrorState message={state.error} />
       ) : (
         <>
           <WarningList warnings={state.warnings} />
+          {nodes.length === 0 ? (
+            <EmptyState title="No graph data available" description="No nodes found in the graph for this tenant. Memory data will populate the graph as it is added." />
+          ) : (
           <div className={`relative flex flex-1 min-h-0 overflow-hidden rounded-xl border border-[var(--allura-border-1)] bg-[var(--allura-cream)]`}>
             {typeof window !== "undefined" && (
               <ForceGraph2D
@@ -173,12 +177,16 @@ export default function GraphPage() {
                   }
                 }}
                 linkColor={() => {
-                  // Use tokens.color.graph.edge with edgeAlpha for visual hierarchy
-                  const hex = tokens.color.graph.edge
-                  const r = parseInt(hex.slice(1,3), 16)
-                  const g = parseInt(hex.slice(3,5), 16)
-                  const b = parseInt(hex.slice(5,7), 16)
-                  return `rgba(${r},${g},${b},${tokens.color.graph.edgeAlpha})`
+                  // Use gray-500 token for edges with alpha for visual hierarchy
+                  const style = getComputedStyle(document.documentElement)
+                  const hex = style.getPropertyValue('--allura-gray-500').trim()
+                  if (hex.startsWith('#') && hex.length === 7) {
+                    const r = parseInt(hex.slice(1,3), 16)
+                    const g = parseInt(hex.slice(3,5), 16)
+                    const b = parseInt(hex.slice(5,7), 16)
+                    return `rgba(${r},${g},${b},0.6)`
+                  }
+                  return 'rgba(107,114,128,0.6)'
                 }}
                 linkWidth={() => 1}
                 linkDirectionalArrowLength={0}
@@ -194,7 +202,7 @@ export default function GraphPage() {
             )}
 
             {/* Floating toolbar with real zoom controls */}
-            <div className={`absolute bottom-4 left-4 flex items-center gap-1 rounded-lg border border-[var(--allura-border-1)] bg-white p-1.5 shadow-[var(--allura-sh-md)]`}>
+            <div className={`absolute bottom-4 left-4 flex items-center gap-1 rounded-lg border border-[var(--allura-border-1)] bg-[var(--dashboard-surface)] p-1.5 shadow-[var(--allura-sh-md)]`}>
               <button type="button" onClick={zoomIn} className={`rounded p-1.5 text-[var(--allura-text-2)] hover:bg-[var(--allura-muted)] hover:text-[var(--allura-charcoal)]`} title="Zoom In">+</button>
               <button type="button" onClick={zoomOut} className={`rounded p-1.5 text-[var(--allura-text-2)] hover:bg-[var(--allura-muted)] hover:text-[var(--allura-charcoal)]`} title="Zoom Out">−</button>
               <button type="button" onClick={fitView} className={`rounded p-1.5 text-[var(--allura-text-2)] hover:bg-[var(--allura-muted)] hover:text-[var(--allura-charcoal)]`} title="Fit View">⟲</button>
@@ -202,7 +210,7 @@ export default function GraphPage() {
 
             {/* Detail sidebar */}
             {selectedNode && (
-              <div className={`absolute right-0 top-0 h-full w-[300px] overflow-y-auto border-l border-[var(--allura-border-1)] bg-white shadow-[var(--allura-sh-md)]`}>
+              <div className={`absolute right-0 top-0 h-full w-[300px] overflow-y-auto border-l border-[var(--allura-border-1)] bg-[var(--dashboard-surface)] shadow-[var(--allura-sh-md)]`}>
                 <div className={`flex items-center justify-between border-b border-[var(--allura-border-1)] p-4`}>
                   <span
                     className="rounded px-2 py-0.5 text-xs font-medium text-white"
@@ -222,6 +230,7 @@ export default function GraphPage() {
               </div>
             )}
           </div>
+          )}
 
           <GraphSummary
             nodes={state.data?.nodes ?? []}

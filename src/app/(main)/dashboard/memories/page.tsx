@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 
-import { EmptyState, ErrorState, LoadingState, MemoryCard, PageHeader, SearchInput, Tabs, WarningList } from "@/components/dashboard"
+import { EmptyState, ErrorState, LoadingState, MemoryCard, PageHeader, SearchInput, Tabs, WarningList, SearchResultsSkeleton } from "@/components/dashboard"
 import { loadMemories } from "@/lib/dashboard/queries"
 import type { DashboardResult, Memory } from "@/lib/dashboard/types"
 
@@ -39,9 +39,9 @@ export default function MemoriesPage() {
         <SearchInput value={query} onChange={setQuery} placeholder="Search memories..." />
         <Tabs items={tabItems} value={tab} onChange={setTab} />
       </div>
-      {!state ? <LoadingState /> : state.error ? <ErrorState message={state.error} /> : <>
+      {!state ? <SearchResultsSkeleton /> : state.error ? <ErrorState message={state.error} /> : <>
         <WarningList warnings={state.warnings} />
-        {memories.length === 0 ? <EmptyState title="No memories returned" description="The Brain returned no memories for the current filter. No fake rows are shown." /> : <div className="space-y-3">{memories.map((memory) => <MemoryCard key={memory.id} memory={memory} />)}</div>}
+        {memories.length === 0 ? <EmptyState title="No memories found" description={query ? "No memories match your search. Try a different search term." : "No memories available for the current filter. Try adjusting your selection."} /> : <div className="space-y-3">{memories.map((memory) => <MemoryCard key={memory.id} memory={memory} />)}</div>}
       </>}
     </div>
   )

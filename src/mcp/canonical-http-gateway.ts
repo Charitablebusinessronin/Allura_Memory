@@ -24,6 +24,7 @@ import { initSentry, captureException, extractRequestContext, startTransaction }
 import { checkReadiness, markMcpInitialized } from "@/lib/health/probes";
 import { collectMetrics, recordHttpRequest, ensureMetricsInitialized } from "@/lib/health/metrics";
 import { resetHaltedGroup, getHaltedSessions } from "@/mcp/canonical-tools/budget-circuit";
+import { applyRateLimit, getRateLimitConfig } from "@/lib/health/rate-limiter";
 
 // MCP SDK imports for Streamable HTTP transport
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -330,6 +331,15 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     return;
   }
 
+  // ── Apply Rate Limiting ───────────────────────────────────────────────────
+  // Sliding-window per-IP rate limit. Default: 100 req/min.
+  // Configurable via ALLURA_RATE_LIMIT_MAX, ALLURA_RATE_LIMIT_WINDOW_MS, ALLURA_RATE_LIMIT_ENABLED.
+  if (!applyRateLimit(req, res)) {
+    // 429 response already sent by rate limiter
+    transaction.finish();
+    return;
+  }
+
   // Start a Sentry performance transaction for all requests
   const transaction = startTransaction({
     name: `${req.method ?? "GET"} ${url.pathname ?? "/"}`,
@@ -481,6 +491,7 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
         port_source: HTTP_PORT.source,
         auth_enabled: !!AUTH_TOKEN,
         cors_mode: getCorsConfig().isDevelopment ? "development" : "production",
+        rate_limit: getRateLimitConfig(),
         warnings: HTTP_PORT.warnings,
         timestamp: new Date().toISOString(),
       })

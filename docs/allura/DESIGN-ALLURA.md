@@ -379,6 +379,36 @@ Full audit trail with pagination, filtering, and CSV export.
 
 ---
 
+### Budget Admin
+
+#### `POST /api/admin/reset-budget`
+
+Reset halted budget sessions for a tenant group or globally. Requires bearer auth.
+
+**Request body:**
+
+```json
+{
+  "group_id": "allura-system"
+}
+```
+
+`group_id` is optional — if omitted, all halted sessions across all groups are reset.
+
+**Response** (`200 OK`):
+
+```json
+{
+  "cleared": 3,
+  "before": 5,
+  "after": 2
+}
+```
+
+**Auth:** Requires valid bearer token (same as other admin endpoints).
+
+---
+
 ### Governed Retrieval
 
 #### `POST /api/memory/retrieval`
@@ -716,6 +746,8 @@ stateDiagram-v2
 | `EmptyState` | Zero-data placeholder |
 | `LoadingState` | Skeleton loading placeholder |
 | `ErrorState` | Error display with retry |
+| `BudgetCard` | Budget enforcement status (active sessions, halted sessions, TTL auto-expiry countdown) |
+| `TokenPreview` | Token system visualizer (DDR-004 compliant, surfaces WCAG contrast warnings for failing pairings) |
 | `Tabs` | Tab navigation (Curator: Traces / Approved / Pending) |
 
 ### Types

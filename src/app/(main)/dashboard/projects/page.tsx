@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 
-import { EmptyState, ErrorState, LoadingState, PageHeader, WarningList } from "@/components/dashboard"
+import { EmptyState, ErrorState, LoadingState, MetricCardsSkeleton, PageHeader, WarningList } from "@/components/dashboard"
 import { loadGraphNodes } from "@/lib/dashboard/queries"
 import type { DashboardResult, GraphEdge, GraphNode } from "@/lib/dashboard/types"
 
@@ -57,7 +57,7 @@ export default function ProjectsPage() {
   return (
     <div className="space-y-6" >
       <PageHeader title="Projects" description="Projects observed in real Brain memory metadata and graph relationships." />
-      {!state ? <LoadingState /> : state.error ? <ErrorState message={state.error} /> : (
+      {!state ? <MetricCardsSkeleton /> : state.error ? <ErrorState message={state.error} /> : (
         <>
           <WarningList warnings={state.warnings} />
           {nodes.length === 0 ? (

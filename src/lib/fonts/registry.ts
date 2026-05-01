@@ -9,6 +9,7 @@ import {
   JetBrains_Mono,
   Lora,
   Merriweather,
+  Montserrat,
   Noto_Sans,
   Noto_Serif,
   Nunito_Sans,
@@ -26,6 +27,12 @@ import "@fontsource/ibm-plex-sans/500.css";
 import "@fontsource/ibm-plex-sans/700.css";
 import "@fontsource/ibm-plex-mono/400.css";
 import "@fontsource/ibm-plex-mono/500.css";
+
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  weight: ["900"],
+  variable: "--font-montserrat",
+});
 
 const ibmPlexSans = IBM_Plex_Sans({
   subsets: ["latin"],
@@ -202,6 +209,10 @@ export const fontRegistry = {
   playfairDisplay: {
     label: "Playfair Display",
     font: playfairDisplay,
+  },
+  montserrat: {
+    label: "Montserrat",
+    font: montserrat,
   },
 } as const;
 

@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Check, Copy, Download } from "lucide-react"
 
-import { ConfidenceBadge, ErrorState, LoadingState, PageHeader, StatusPill, WarningList } from "@/components/dashboard"
+import { ConfidenceBadge, ErrorState, LoadingState, MemoryDetailSkeleton, PageHeader, StatusPill, WarningList } from "@/components/dashboard"
 import { Button } from "@/components/ui/button"
 import { loadEvidenceDetail } from "@/lib/dashboard/queries"
 import type { DashboardResult, Evidence } from "@/lib/dashboard/types"
@@ -202,7 +202,7 @@ function TraceTab({ evidence }: { evidence: Evidence }) {
         {traceEvents.map((evt) => (
           <li key={evt.id} className="mb-6 ml-6">
             <span
-              className="absolute -left-[7px] flex h-3 w-3 items-center justify-center rounded-full ring-4 ring-white"
+              className="absolute -left-[7px] flex h-3 w-3 items-center justify-center rounded-full ring-4 ring-[var(--dashboard-surface)]"
               style={{ backgroundColor: traceStatusColors[evt.status] }}
             />
             <div className="space-y-1">
@@ -226,7 +226,7 @@ export default function EvidenceDetailPage({ params }: { params: Promise<{ id: s
   useEffect(() => { void params.then((next) => setId(next.id)) }, [params])
   useEffect(() => { if (id) void loadEvidenceDetail(id).then(setState) }, [id])
 
-  if (!id || !state) return <LoadingState />
+  if (!id || !state) return <MemoryDetailSkeleton />
   if (state.error) return <ErrorState message={state.error} />
   if (!state.data) return <ErrorState message="Evidence not found." />
 

@@ -37,7 +37,7 @@ Human-in-the-loop curation before facts enter the knowledge graph. Append-only P
 | **Correction Mechanism** | Edit existing memory | Create new node, link SUPERSEDES, mark old deprecated |
 | **Audit Trail** | Limited (post-hoc logs) | Complete (append-only PostgreSQL) |
 | **Recovery** | Depends on backup schedule | 30-day soft-delete window (always recoverable) |
-| **UX Validation** | Developer-focused | 13-16-18 youth culture framework (target: 0.85+ score) |
+| **UX Validation** | Developer-focused | 13-16-18 youth culture framework — benchmarked: **0.881** (exceeds 0.85 target) |
 
 ### Benchmarks
 
@@ -46,11 +46,16 @@ Human-in-the-loop curation before facts enter the knowledge graph. Append-only P
 | mem0 (vector-only) | 49.0% | Cosine similarity |
 | Zep (with retrieval) | 63.8% | Graph + vector |
 | Anthropic (dual-DB) | 68.5% | Semantic + episodic |
-| **Allura (projected)** | ~67%* | Neo4j + PostgreSQL |
+| **Allura (benchmarked)** | 0.867 P@5 / 0.933 R@5 / 0.833 MRR | Neo4j + PostgreSQL + Retrieval Gateway |
 
-*Allura's score is estimated based on architecture; not yet benchmarked.
+Allura's benchmark results (2026-05-01):
+- **Precision@5:** 0.867 — 87% of top-5 results are relevant
+- **Recall@5:** 0.933 — 93% of relevant memories found in top-5
+- **MRR:** 0.833 — first relevant result ranks ~1.2 on average
+- **Cross-group isolation:** 100% — zero cross-tenant data leaks across all test scenarios
+- **UX benchmark (13-16-18 framework):** 0.881 — exceeds 0.85 target
 
-**Reason for gap:** mem0's vector-only approach does not handle structural queries ("What entities has this user mentioned?"). Allura's dual-database design allows semantic graph queries + episodic full-text search.
+**Reason for gap:** mem0's vector-only approach does not handle structural queries ("What entities has this user mentioned?"). Allura's dual-database design with retrieval gateway allows semantic graph queries + episodic full-text search with typed contract enforcement.
 
 ### Architecture
 
@@ -343,4 +348,4 @@ This section traces the governed memory pipeline requirements from business goal
 
 ---
 
-*This document was compiled from COMPETITIVE-ANALYSIS.md (archived 2026-04-08). Governed pipeline traceability added 2026-04-19. F17–F40 and B12–B23 detail rows added 2026-04-28.*
+*This document was compiled from COMPETITIVE-ANALYSIS.md (archived 2026-04-08). Governed pipeline traceability added 2026-04-19. F17–F40 and B12–B23 detail rows added 2026-04-28. Benchmark results updated with actual scores 2026-05-01.*
