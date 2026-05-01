@@ -4,7 +4,8 @@ import type { GraphEdge, GraphNode } from "@/lib/dashboard/types"
 
 /**
  * Token Authority for this component:
- * - CSS var() usage via `var(--allura-*)`, `var(--dashboard-*)`, and `var(--tone-*)`
+ * - CSS var() usage via Allura design tokens (allura, dashboard, tone prefixes)
+ *   e.g. var(--allura-blue), var(--dashboard-text-primary), var(--tone-blue-bg)
  *   is the CORRECT pattern for Tailwind/HTML contexts.
  * - The `tokens.ts` file is for Canvas 2D and JS-only contexts where CSS vars cannot be used.
  * - This component correctly uses the Allura CSS custom property token system.
