@@ -29,7 +29,7 @@ const buttonVariants = cva(
         ghost:
           `bg-transparent text-[var(--allura-blue)] border-[var(--allura-border-2)] hover:bg-[var(--allura-muted)] focus-visible:ring-[var(--allura-blue)]`,
         danger:
-          `bg-white text-[var(--allura-orange)] border-[var(--allura-orange)] hover:bg-[var(--allura-orange-hover)]/10 focus-visible:ring-[var(--allura-orange)]`,
+          `bg-white text-orange-700 border-[var(--allura-orange)] hover:bg-orange-50 focus-visible:ring-[var(--allura-orange)]`,
         outline:
           "border-border bg-background shadow-xs hover:bg-muted hover:text-foreground",
         link: "text-primary underline-offset-4 hover:underline",
