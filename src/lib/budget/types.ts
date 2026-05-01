@@ -276,10 +276,10 @@ export interface BudgetConfig {
  */
 export const DEFAULT_BUDGET_LIMITS: BudgetLimits = {
   maxTokens: 100000,
-  maxToolCalls: 100,
-  maxTimeMs: 300000,
-  maxCostUsd: 10.0,
-  maxSteps: 50,
+  maxToolCalls: 60,
+  maxTimeMs: 86400000, // 24 hours — agents doing real work need time
+  maxCostUsd: 50.0,
+  maxSteps: 1000,
 };
 
 /**

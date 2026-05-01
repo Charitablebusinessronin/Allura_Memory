@@ -1,16 +1,15 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { Activity, Brain, GitBranch, Lightbulb } from "lucide-react"
 
 import {
   ActivityPanel,
   ErrorState,
   InsightCard,
-  LoadingState,
-  MetricCardsSkeleton,
   MetricCard,
-  PageHeader,
+  OverviewSkeleton,
   SystemStatusCard,
   WarningList,
 } from "@/components/dashboard"
@@ -31,8 +30,8 @@ export default function DashboardPage() {
     }
   }, [])
 
-  if (!state) return <div className="space-y-8"><MetricCardsSkeleton /></div>
-  if (state.error) return <ErrorState message={state.error} />
+  if (!state) return <OverviewSkeleton />
+  if (state.error) return <ErrorState message={state.error} action={<Button size="sm" variant="outline" onClick={() => window.location.reload()}>Retry</Button>} />
   if (!state.data) return <ErrorState message="Dashboard returned no data." />
 
   const metrics = state.data.metrics.map((m) => ({
@@ -47,24 +46,37 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Hero */}
-      <div className="flex flex-col gap-1">
-        <span
-          className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[var(--allura-gold-text)]"
-        >
-          Allura Memory dashboard
-        </span>
-        <h1 className="text-[44px] font-bold leading-[1.05] tracking-[-0.05em]">
-          Overview
-        </h1>
-        <p className="text-base text-[var(--allura-gray-500)] max-w-[760px]">
-          Activity dashboard for your memory graph
-        </p>
+      <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+        <div className="flex flex-col gap-1">
+          <span
+            className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[var(--allura-gold-text)]"
+          >
+            Memory that shows its work
+          </span>
+          <h1 className="text-[44px] font-bold leading-[1.05] tracking-[-0.05em]">
+            Overview
+          </h1>
+          <p className="max-w-[760px] text-base text-[var(--dashboard-text-secondary)]">
+            Review what the Brain knows, what needs curator attention, and which evidence supports every promoted insight.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="primary" size="md">
+            <Link href="/dashboard/insights">Review insights</Link>
+          </Button>
+          <Button asChild variant="ghost" size="md">
+            <Link href="/dashboard/evidence">Open evidence</Link>
+          </Button>
+          <Button asChild variant="ghost" size="md">
+            <Link href="/dashboard/graph">Explore graph</Link>
+          </Button>
+        </div>
       </div>
 
       {/* Stat Cards */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric) => (
-          <MetricCard key={metric.id} metric={metric} />
+          <MetricCard key={metric.id} metric={metric} icon={metric.icon} />
         ))}
       </div>
 
@@ -76,7 +88,10 @@ export default function DashboardPage() {
 
         <section className="agency-card">
           <div className="agency-card-header">
-            <h2 className="text-lg font-semibold text-[var(--allura-charcoal)]">Pending Queue</h2>
+            <div>
+              <h2 className="text-lg font-semibold text-[var(--allura-charcoal)]">Needs Review</h2>
+              <p className="mt-1 text-sm text-[var(--dashboard-text-secondary)]">High-confidence proposals waiting for human approval.</p>
+            </div>
           </div>
           <div className="agency-card-body space-y-3">
             {state.data.pendingInsights.length === 0 ? (
@@ -85,7 +100,23 @@ export default function DashboardPage() {
               </p>
             ) : (
               state.data.pendingInsights.slice(0, 5).map((insight) => (
-                <InsightCard key={insight.id} insight={insight} />
+                <InsightCard
+                  key={insight.id}
+                  insight={insight}
+                  compact
+                  actions={
+                    <>
+                      <Button asChild size="sm" variant="primary">
+                        <Link href={`/dashboard/insights?promote=${encodeURIComponent(insight.id)}`}>Review</Link>
+                      </Button>
+                      {insight.evidenceId && (
+                        <Button asChild size="sm" variant="ghost">
+                          <Link href={`/dashboard/evidence/${encodeURIComponent(insight.evidenceId)}`}>Evidence</Link>
+                        </Button>
+                      )}
+                    </>
+                  }
+                />
               ))
             )}
           </div>

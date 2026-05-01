@@ -77,3 +77,30 @@ export function MetricCardsSkeleton() {
     </div>
   )
 }
+
+export function OverviewSkeleton() {
+  return (
+    <div className="space-y-8" role="status" aria-live="polite" aria-busy="true">
+      <span className="sr-only">Loading Allura Memory dashboard</span>
+      <div className="space-y-3">
+        <Skeleton className="h-3 w-56 rounded bg-[var(--dashboard-surface-muted)]" />
+        <Skeleton className="h-12 w-64 rounded bg-[var(--dashboard-surface-muted)]" />
+        <Skeleton className="h-5 w-full max-w-xl rounded bg-[var(--dashboard-surface-muted)]" />
+      </div>
+      <MetricCardsSkeleton />
+      <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+        <div className="rounded-xl border border-[var(--dashboard-border)] bg-[var(--dashboard-surface)] p-5">
+          <Skeleton className="h-6 w-40 rounded bg-[var(--dashboard-surface-muted)]" />
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="mt-5 h-10 w-full rounded bg-[var(--dashboard-surface-muted)]" />
+          ))}
+        </div>
+        <div className="rounded-xl border border-[var(--dashboard-border)] bg-[var(--dashboard-surface)] p-5">
+          <Skeleton className="h-6 w-36 rounded bg-[var(--dashboard-surface-muted)]" />
+          <Skeleton className="mt-5 h-40 w-full rounded bg-[var(--dashboard-surface-muted)]" />
+          <Skeleton className="mt-4 h-40 w-full rounded bg-[var(--dashboard-surface-muted)]" />
+        </div>
+      </div>
+    </div>
+  )
+}

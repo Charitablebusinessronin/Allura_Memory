@@ -508,7 +508,7 @@ function SidebarMenuButton({
       data-slot="sidebar-menu-button"
       data-sidebar="menu-button"
       data-size={size}
-      data-active={isActive}
+      {...(isActive ? { "data-active": true, "aria-current": "page" as const } : {})}
       className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
       // TooltipTrigger asChild adds aria-describedby via useId() whose format
       // changed in React 19.2. Suppress the attribute-level mismatch on this

@@ -1,4 +1,4 @@
-import { Database } from "lucide-react"
+import { Database, type LucideIcon } from "lucide-react"
 
 import type { Metric } from "@/lib/dashboard/types"
 import { cn } from "@/lib/utils"
@@ -13,7 +13,7 @@ const toneClasses: Record<Metric["tone"], string> = {
   muted:    `bg-[var(--allura-muted)]                                        text-[var(--allura-text-2)]`,
 }
 
-export function MetricCard({ metric }: { metric: Metric }) {
+export function MetricCard({ metric, icon: Icon = Database }: { metric: Metric; icon?: LucideIcon }) {
   return (
     <div className="rounded-xl border bg-card p-5 shadow-xs">
       <div className="flex items-start justify-between">
@@ -23,7 +23,7 @@ export function MetricCard({ metric }: { metric: Metric }) {
           <p className="mt-1 text-xs text-[var(--dashboard-text-secondary)]">{metric.description}</p>
         </div>
         <div className={cn("rounded-full p-3", toneClasses[metric.tone])}>
-          <Database className="size-5" />
+          <Icon className="size-5" aria-hidden="true" />
         </div>
       </div>
     </div>

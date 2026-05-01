@@ -14,6 +14,9 @@ import { BreakerManager } from "@/lib/circuit-breaker/manager"
 const BUDGET_ENABLED = process.env.BUDGET_ENABLED !== "false"
 const BUDGET_MAX_RPM = parseInt(process.env.BUDGET_MAX_RPM || "60", 10)
 const BUDGET_MAX_TOKENS_PER_HOUR = parseInt(process.env.BUDGET_MAX_TOKENS_PER_HOUR || "100000", 10)
+const BUDGET_MAX_TIME_MS = parseInt(process.env.BUDGET_MAX_TIME_MS || "86400000", 10) // 24h default
+const BUDGET_MAX_COST_USD = parseFloat(process.env.BUDGET_MAX_COST_USD || "50.0")
+const BUDGET_MAX_STEPS = parseInt(process.env.BUDGET_MAX_STEPS || "1000", 10)
 const CIRCUIT_BREAKER_FAILURE_THRESHOLD = parseInt(process.env.CIRCUIT_BREAKER_FAILURE_THRESHOLD || "5", 10)
 const CIRCUIT_BREAKER_RESET_TIMEOUT = parseInt(process.env.CIRCUIT_BREAKER_RESET_TIMEOUT || "30000", 10)
 
@@ -31,6 +34,9 @@ export function getBudgetEnforcer(): BudgetEnforcer | null {
             ...DEFAULT_BUDGET_CONFIG.defaults,
             maxTokens: BUDGET_MAX_TOKENS_PER_HOUR,
             maxToolCalls: BUDGET_MAX_RPM,
+            maxTimeMs: BUDGET_MAX_TIME_MS,
+            maxCostUsd: BUDGET_MAX_COST_USD,
+            maxSteps: BUDGET_MAX_STEPS,
           },
         },
         enabled: true,

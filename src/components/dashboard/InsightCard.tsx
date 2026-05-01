@@ -3,9 +3,9 @@ import type { ReactNode } from "react"
 import type { Insight } from "@/lib/dashboard/types"
 import { ConfidenceBadge } from "./ConfidenceBadge"
 
-export function InsightCard({ insight, actions }: { insight: Insight; actions?: ReactNode }) {
+export function InsightCard({ insight, actions, compact = false }: { insight: Insight; actions?: ReactNode; compact?: boolean }) {
   return (
-    <article className="rounded-xl border bg-card p-5">
+    <article className="rounded-xl border border-[var(--dashboard-border)] bg-card p-5 shadow-xs">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="font-semibold">{insight.title}</h3>
@@ -20,7 +20,7 @@ export function InsightCard({ insight, actions }: { insight: Insight; actions?: 
           <ConfidenceBadge value={insight.confidence} size="sm" />
         </div>
       </div>
-      <div className="mt-4 grid gap-3 md:grid-cols-3">
+      <div className={compact ? "mt-4 grid gap-3" : "mt-4 grid gap-3 lg:grid-cols-3"}>
         <div className="rounded-lg border p-3">
           <p className="text-xs text-[var(--dashboard-text-secondary)]">Event</p>
           <p className="mt-1 text-sm">{insight.event}</p>
