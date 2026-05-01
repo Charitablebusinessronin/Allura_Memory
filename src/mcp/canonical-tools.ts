@@ -57,6 +57,8 @@ import {
   checkBudget,
   recordToolCall,
   withCircuitBreaker,
+  resetHaltedGroup,
+  getHaltedSessions,
 } from "./canonical-tools/budget-circuit"
 
 // ── External imports ──────────────────────────────────────────────────────
@@ -286,6 +288,7 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
 
         // Phase 3 sync contract: wire AUTHORED_BY and RELATES_TO relationships
         // to anchor the new Memory in the structural context layer.
+        // FR-3: Uses mapping tables to resolve user_id→Agent name and group_id→Project name.
         // Best-effort: failure here does not block promotion.
         try {
           const linkResult = await graphAdapter.linkMemoryContext({
@@ -303,6 +306,29 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
         } catch (linkErr) {
           // Best-effort — don't fail the promotion over relationship wiring
           console.warn(`[sync-contract] linkMemoryContext failed in memory_add:`, linkErr)
+        }
+
+        // FR-3: Write PG audit event for sync contract
+        try {
+          await pg.query(
+            `INSERT INTO events (group_id, event_type, agent_id, status, metadata, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [
+              groupId,
+              "sync_contract",
+              "system",
+              "completed",
+              JSON.stringify({
+                action: "auto_link",
+                memory_id: memoryId,
+                agent_id: request.metadata?.agent_id ?? request.scope?.agent_id ?? null,
+                project_id: request.scope?.project_id ?? groupId,
+              }),
+              createdAt,
+            ]
+          )
+        } catch (auditErr) {
+          console.warn(`[sync-contract] PG audit event failed in memory_add:`, auditErr)
         }
 
         // Log promotion event — circuit-breaker wrapped
@@ -1747,6 +1773,6 @@ export const canonicalMemoryTools = {
   memory_list_deleted,
 }
 
-export { getBudgetEnforcer, getBreakerManager, ensureSession, checkBudget, recordToolCall, withCircuitBreaker }
+export { getBudgetEnforcer, getBreakerManager, ensureSession, checkBudget, recordToolCall, withCircuitBreaker, resetHaltedGroup, getHaltedSessions }
 
 export { resetConnections }

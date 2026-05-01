@@ -174,3 +174,41 @@ export function resetBudgetState(): void {
   breakerManager = null
   activeSessions.clear()
 }
+
+/**
+ * Admin: Reset halted sessions for a specific group.
+ * If groupId is provided, only sessions matching that group prefix are reset.
+ * If omitted, ALL halted sessions are reset.
+ * Returns count of sessions that were un-halted.
+ */
+export function resetHaltedGroup(groupId?: string): number {
+  const enforcer = getBudgetEnforcer()
+  if (!enforcer) return 0
+
+  if (!groupId) {
+    return enforcer.resetAllHaltedSessions()
+  }
+
+  // Halted session keys are formatted as "groupId:agentId:sessionId"
+  const haltedKeys = enforcer.getHaltedSessionKeys()
+  let count = 0
+  for (const key of haltedKeys) {
+    if (key.startsWith(`${groupId}:`)) {
+      // Reconstruct a SessionId-like object to reset this specific session
+      const parts = key.split(':')
+      const fakeSessionId = { groupId: parts[0] ?? '', agentId: parts[1] ?? '', sessionId: parts.slice(2).join(':') }
+      enforcer.resetHaltedSession(fakeSessionId)
+      count++
+    }
+  }
+  return count
+}
+
+/**
+ * Admin: Get list of currently halted session keys.
+ */
+export function getHaltedSessions(): string[] {
+  const enforcer = getBudgetEnforcer()
+  if (!enforcer) return []
+  return enforcer.getHaltedSessionKeys()
+}

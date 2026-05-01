@@ -23,6 +23,7 @@ import { applyCors, corsHeaders, isPreflightRequest, getCorsConfig } from "@/lib
 import { initSentry, captureException, extractRequestContext, startTransaction } from "@/lib/observability/index.js";
 import { checkReadiness, markMcpInitialized } from "@/lib/health/probes";
 import { collectMetrics, recordHttpRequest, ensureMetricsInitialized } from "@/lib/health/metrics";
+import { resetHaltedGroup, getHaltedSessions } from "@/mcp/canonical-tools/budget-circuit";
 
 // MCP SDK imports for Streamable HTTP transport
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -400,6 +401,70 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     return;
   }
 
+  // ── Admin: Budget reset endpoint ───────────────────────────────────────
+  // POST /api/admin/reset-budget  { group_id?: string }
+  // Resets halted sessions for a group (or all if no group_id)
+  if (url.pathname === "/api/admin/reset-budget" && req.method === "POST") {
+    if (!validateBearerAuth(req)) {
+      res.writeHead(401, { ...corsHeaders(req.headers["origin"]), "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Unauthorized" }));
+      transaction.finish();
+      return;
+    }
+
+    try {
+      let body: { group_id?: string } = {};
+      const chunks: Buffer[] = [];
+      for await (const chunk of req) chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+      if (chunks.length > 0) {
+        try { body = JSON.parse(Buffer.concat(chunks).toString()); } catch { body = {}; }
+      }
+
+      const before = getHaltedSessions();
+      const count = resetHaltedGroup(body.group_id);
+      const after = getHaltedSessions();
+
+      console.log(`[admin] Budget reset: group_id=${body.group_id || "ALL"}, cleared=${count}, before=${before.length}, after=${after.length}`);
+
+      res.writeHead(200, { ...corsHeaders(req.headers["origin"]), "Content-Type": "application/json" });
+      res.end(JSON.stringify({
+        ok: true,
+        group_id: body.group_id || null,
+        sessions_cleared: count,
+        halted_before: before,
+        halted_after: after,
+        timestamp: new Date().toISOString(),
+      }));
+    } catch (error) {
+      console.error("[admin] Budget reset failed:", error);
+      res.writeHead(500, { ...corsHeaders(req.headers["origin"]), "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Budget reset failed", details: String(error) }));
+    }
+    transaction.finish();
+    return;
+  }
+
+  // ── Admin: Budget status endpoint ──────────────────────────────────────
+  // GET /api/admin/budget-status
+  if (url.pathname === "/api/admin/budget-status" && req.method === "GET") {
+    if (!validateBearerAuth(req)) {
+      res.writeHead(401, { ...corsHeaders(req.headers["origin"]), "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Unauthorized" }));
+      transaction.finish();
+      return;
+    }
+
+    const halted = getHaltedSessions();
+    res.writeHead(200, { ...corsHeaders(req.headers["origin"]), "Content-Type": "application/json" });
+      res.end(JSON.stringify({
+        halted_sessions: halted,
+        count: halted.length,
+        timestamp: new Date().toISOString(),
+      }));
+    transaction.finish();
+    return;
+  }
+
   // ── Health endpoint (advertising only streamable-http transport) ───────────
   const requestOrigin = req.headers["origin"];
   if (url.pathname === "/health" || url.pathname === "/api/health") {
@@ -485,6 +550,8 @@ server.listen(PORT, () => {
   console.log("  Readiness:            GET /ready  (checks PostgreSQL, Neo4j, MCP)");
   console.log("  Liveness:             GET /live   (process heartbeat)");
   console.log("  Metrics:              GET /metrics (Prometheus format, auth required)");
+  console.log("  Admin Reset Budget:   POST /api/admin/reset-budget (auth required, body: {group_id?})");
+  console.log("  Admin Budget Status:  GET /api/admin/budget-status (auth required)");
   console.log("");
   console.log(`Auth: ${AUTH_TOKEN ? "Bearer token required" : "No auth token set (development mode)"}`);
   console.log("");
