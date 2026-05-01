@@ -205,6 +205,9 @@ These serve as the fallback; there is no separate default.css file. */
     box-shadow: var(--shadow-2xl);
   }
 
+  html[data-font="ibmPlexSans"] body {
+    --font-sans: var(--font-ibm-plex-sans);
+  }
   html[data-font="inter"] body {
     --font-sans: var(--font-inter);
   }

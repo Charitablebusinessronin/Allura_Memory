@@ -11,6 +11,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { ThemeSwitcher } from "./theme-switcher";
@@ -34,19 +35,35 @@ const navMain: NavItem[] = [
 ];
 
 function AgencyLogo() {
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
+
   return (
     <Link
       href="/dashboard"
       prefetch={false}
       className="flex items-center gap-2.5 px-3 py-3"
+      data-testid="allura-logo"
     >
-      <img
-        src="/design/Wordmark.png"
-        alt="Allura"
-        className="h-7 w-auto object-contain"
-        width={98}
-        height={28}
-      />
+      {isCollapsed ? (
+        /* Collapsed: Show the Allura mark icon */
+        <img
+          src="/design/mark-icon-128.png"
+          alt="A"
+          className="h-8 w-8 object-contain rounded-md"
+          width={32}
+          height={32}
+        />
+      ) : (
+        /* Expanded: Show the full Allura wordmark */
+        <img
+          src="/design/Wordmark.png"
+          alt="Allura"
+          className="h-9 w-auto object-contain"
+          width={120}
+          height={36}
+        />
+      )}
     </Link>
   );
 }
