@@ -21,6 +21,8 @@ export default defineConfig({
     include: [
       // Search with mocked services
       "src/__tests__/memory-search-ruvector.test.ts",
+      // Retrieval benchmark (FR-1.2)
+      "src/__tests__/retrieval-benchmark.test.ts",
       // Notion sync (mocked Notion API)
       "src/__tests__/notion-sync*.test.ts",
       "src/__tests__/notion-projection-sync.test.ts",
