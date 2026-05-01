@@ -40,7 +40,7 @@ function relativeTime(ts: string): string {
 function trendArrow(trend: SkillMetric["trend"]) {
   if (trend === "up") return <span className="text-[var(--allura-green)]">↑</span>
   if (trend === "down") return <span className="text-[var(--allura-orange)]">↓</span>
-  return <span className="text-[var(--allura-gray-400)]">→</span>
+  return <span className="text-[var(--allura-gray-400-text)]">→</span>
 }
 
 function categoryIcon(cat: SkillMetric["category"]) {

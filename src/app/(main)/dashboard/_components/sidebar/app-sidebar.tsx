@@ -13,6 +13,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { ThemeSwitcher } from "./theme-switcher";
 
 interface NavItem {
   title: string;
@@ -121,18 +122,21 @@ export function AppSidebar({
       </SidebarContent>
 
       <SidebarFooter className="border-t border-[var(--allura-gray-200)] px-3 py-3">
-        <div className="flex items-center gap-3 rounded-lg px-3 py-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--allura-blue)] text-white text-xs font-semibold shrink-0">
-            U
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3 rounded-lg px-3 py-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--allura-blue)] text-white text-xs font-semibold shrink-0">
+              U
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-sm font-medium text-[var(--allura-charcoal)] truncate">
+                User
+              </span>
+              <span className="text-xs text-[var(--allura-gray-400-text)] truncate">
+                admin@allura.ai
+              </span>
+            </div>
           </div>
-          <div className="flex flex-col min-w-0">
-            <span className="text-sm font-medium text-[var(--allura-charcoal)] truncate">
-              User
-            </span>
-            <span className="text-xs text-[var(--allura-gray-400)] truncate">
-              admin@allura.ai
-            </span>
-          </div>
+          <ThemeSwitcher />
         </div>
       </SidebarFooter>
     </Sidebar>

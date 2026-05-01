@@ -31,7 +31,7 @@ export function MemoryCard({ memory }: { memory: Memory }) {
       )}
       <div className="mt-3 flex gap-2">
         <Button size="xs" variant="ghost" asChild>
-          <Link href={`/dashboard/insights?promote=${memory.id}`}>
+          <Link href={`/dashboard/insights?promote=${memory.id}`} data-testid="promote-link">
             <Lightbulb className="mr-1 size-3" />
             Promote
           </Link>
