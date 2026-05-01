@@ -203,7 +203,7 @@ Before any block or page is marked done:
 All token consumption must use the Allura token system — never raw hex values or generic shadcn color utilities. Two paths are authoritative:
 
 **Path 1 — HTML/JSX + Tailwind (preferred for component styling):**
-- Use `bg-[var(--allura-*)]`, `text-[var(--dashboard-*)]`, `border-[var(--tone-*)]` in Tailwind className strings
+- Use `bg-[var(--allura-blue) etc.]`, `text-[var(--dashboard-text-primary) etc.]`, `border-[var(--tone-blue-bg) etc.]` in Tailwind className strings
 - CSS custom properties are the token system for Tailwind contexts
 - ✅ CORRECT: `className="bg-[var(--allura-cream)] text-[var(--allura-charcoal)]"`
 - ❌ WRONG: `style={{ backgroundColor: 'var(--allura-cream)' }}` — inline `var()` in `style={{}}` is prohibited
@@ -217,7 +217,7 @@ All token consumption must use the Allura token system — never raw hex values 
 **Prohibitions (automatic audit fail):**
 - **NO raw hex values** in component code — `#FF5A2E`, `#1D4ED8`, etc. are blocked
 - **NO generic shadcn color utilities** — `bg-muted`, `text-muted-foreground` without Allura token mapping
-- **NO inline `style={{ var() }}`** — use Tailwind `bg-[var(--allura-*)]` class syntax instead
+- **NO inline `style={{ var() }}`** — use Tailwind `bg-[var(--allura-blue) etc.]` class syntax instead
 - **Known exception:** Shadow rgba in cva template literals (`button.tsx`) — DD-004
 
 ### Example Pattern (CORRECT)
