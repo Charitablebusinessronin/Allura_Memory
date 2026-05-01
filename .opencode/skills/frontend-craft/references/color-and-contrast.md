@@ -177,7 +177,7 @@ The palette should look inevitable, not assembled from a model's memory of SaaS 
 
 ## Token Authority
 
-**In HTML/JSX+Tailwind**: Use `var(--allura-*)` CSS custom properties.
+**In HTML/JSX+Tailwind**: Use `var(--allura-blue) etc.` CSS custom properties.
 
 **In Canvas 2D/JS**: Use `tokens.ts` imports.
 

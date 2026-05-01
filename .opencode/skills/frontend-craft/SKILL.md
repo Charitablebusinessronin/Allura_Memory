@@ -131,8 +131,8 @@ Frontend Craft is not a UI library. It is a **process membrane** enforcing Fred 
 **All token consumption must use the Allura token system — never raw hex values or generic shadcn color utilities. Two paths are authoritative:**
 
 **Path 1 — HTML/JSX + Tailwind (preferred for component styling):**
-- Use `bg-[var(--allura-*)]`, `text-[var(--dashboard-*)]`, `border-[var(--tone-*)]` in Tailwind className strings
-- CSS custom properties (`var(--allura-*)`, `var(--dashboard-*)`, `var(--tone-*)`) defined in `brand-tokens.css` and `allura.css` ARE the token system for Tailwind contexts
+- Use `bg-[var(--allura-blue) etc.]`, `text-[var(--dashboard-text-primary) etc.]`, `border-[var(--tone-blue-bg) etc.]` in Tailwind className strings
+- CSS custom properties (`var(--allura-blue) etc.`, `var(--dashboard-text-primary) etc.`, `var(--tone-blue-bg) etc.`) defined in `brand-tokens.css` and `allura.css` ARE the token system for Tailwind contexts
 - ✅ CORRECT: `className="bg-[var(--allura-cream)] text-[var(--allura-charcoal)]"`
 - ❌ WRONG: `style={{ backgroundColor: 'var(--allura-cream)' }}` — inline `var()` in `style={{}}` is prohibited
 
@@ -145,7 +145,7 @@ Frontend Craft is not a UI library. It is a **process membrane** enforcing Fred 
 **Prohibitions (automatic audit fail):**
 - No raw hex values in component code (`#FF5A2E`, `#1D4ED8`, etc.) — neither in JSX nor in JS
 - No generic shadcn color utilities (`bg-muted`, `text-muted-foreground`) without Allura token mapping
-- No inline `style={{ backgroundColor: 'var(--...)' }}` — use Tailwind `bg-[var(--allura-*)]` class syntax instead
+- No inline `style={{ backgroundColor: 'var(--...)' }}` — use Tailwind `bg-[var(--allura-blue) etc.]` class syntax instead
 
 **Known exception:** Shadow rgba values in cva template literals (`button.tsx`) require literal strings due to Tailwind+cva build constraints. Documented as DD-004.
 
@@ -157,7 +157,7 @@ Frontend Craft is not a UI library. It is a **process membrane** enforcing Fred 
 ### Output: `.frontend-craft/tokens.md` with:
 ```markdown
 ## Allura Token Authority
-- Path 1 (Tailwind/HTML): `bg-[var(--allura-*)]` class syntax
+- Path 1 (Tailwind/HTML): `bg-[var(--allura-blue) etc.]` class syntax
 - Path 2 (Canvas/JS): `import { tokens } from '@/lib/tokens'`
 - No hardcoded hex colors in component code
 - No inline `style={{ var() }}` — use Tailwind class syntax
@@ -465,7 +465,7 @@ hardened/
 1. **Shape first** — No build without clarity of intent
 2. **One direction only** — No "try both" allowed; choose A, B, or C
 3. **Tokens before code** — No hardcoded colors; no inline `style={{ var() }}` without Tailwind class
-4. **Token Authority** — Two paths: `bg-[var(--allura-*)]` for Tailwind/HTML, `tokens.ts` for Canvas/JS; no raw hex, no generic shadcn colors without mapping
+4. **Token Authority** — Two paths: `bg-[var(--allura-blue) etc.]` for Tailwind/HTML, `tokens.ts` for Canvas/JS; no raw hex, no generic shadcn colors without mapping
 5. **Audit before polish** — 5-phase audit must pass before polish
 6. **Polish before harden** — Quick wins + critical fixes must be in before production handoff
 7. **No smart quotes in code** — Use `&quot;` or template literals for HTML attributes
