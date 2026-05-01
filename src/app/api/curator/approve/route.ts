@@ -128,23 +128,25 @@ export async function POST(request: NextRequest) {
 
         // Phase 5 sync contract: wire AUTHORED_BY → Agent and CONTRIBUTES_TO → Project
         // relationships to anchor the promoted knowledge in the structural context layer.
-        // Auto-creates Agent/Project nodes if they don't exist (MERGE semantics).
+        // FR-3: Uses mapping tables to resolve user_id→Agent name and group_id→Project name.
         // Best-effort: failure does not block the approval.
         // TODO: After Insight→Memory label migration, use graphAdapter.createMemory
         // instead of createInsight so we get :Memory nodes directly.
         try {
-          const { getNeo4jDriver } = require("@/lib/neo4j/connection")
+          const { getDriver } = require("@/lib/neo4j/connection")
           const { Neo4jGraphAdapter } = require("@/lib/graph-adapter/neo4j-adapter")
-          const driver = getNeo4jDriver()
+          const driver = getDriver()
           const adapter = new Neo4jGraphAdapter(driver)
 
           // Resolve project_id from metadata.project or default to group_id
           const projectId = (body.metadata?.project as string | undefined) ?? validatedGroupId
+          // Resolve agent_id from proposal's created_by (who submitted it)
+          const agentId = proposal.created_by ?? curator_id ?? null
 
           const linkResult = await adapter.linkMemoryContext({
             memory_id: memoryId as any,
             group_id: validatedGroupId as any,
-            agent_id: proposal.created_by ?? curator_id ?? null,
+            agent_id: agentId,
             project_id: projectId,
           })
           if (linkResult.authored_by || linkResult.relates_to) {
@@ -156,6 +158,29 @@ export async function POST(request: NextRequest) {
           await adapter.close()
         } catch (linkErr) {
           console.warn(`[sync-contract] linkMemoryContext failed in curator-approve:`, linkErr)
+        }
+
+        // FR-3: Write PG audit event for sync contract
+        try {
+          await pg.query(
+            `INSERT INTO events (group_id, event_type, agent_id, status, metadata, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [
+              validatedGroupId,
+              "sync_contract",
+              curator_id,
+              "completed",
+              JSON.stringify({
+                action: "auto_link",
+                memory_id: memoryId,
+                agent_id: proposal.created_by ?? curator_id ?? null,
+                project_id: (body.metadata?.project as string | undefined) ?? validatedGroupId,
+              }),
+              decidedAt,
+            ]
+          )
+        } catch (auditErr) {
+          console.warn(`[sync-contract] PG audit event failed in curator-approve:`, auditErr)
         }
       } catch (err) {
         if (err instanceof InsightConflictError) {

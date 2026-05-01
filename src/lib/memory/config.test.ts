@@ -53,6 +53,8 @@ describe("Allura Memory Configuration", () => {
       delete process.env.NEO4J_USER;
       delete process.env.DEFAULT_GROUP_ID;
       delete process.env.EMBEDDING_PROVIDER;
+      delete process.env.EMBEDDING_MODEL;
+      delete process.env.EMBEDDING_BASE_URL;
       
       const { getConfig } = await import("./config");
       const config = getConfig();

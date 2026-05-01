@@ -32,6 +32,7 @@ vi.mock("neo4j-driver", () => {
 // ── Imports (after mocks) ─────────────────────────────────────────────────
 
 import { Neo4jGraphAdapter } from "@/lib/graph-adapter/neo4j-adapter"
+import { resolveAgentName, resolveProjectName } from "@/lib/graph-adapter/sync-contract-mappings"
 import type { Driver } from "neo4j-driver"
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -147,7 +148,7 @@ describe("Phase 5 Sync Contract — linkMemoryContext", () => {
     // Verify MERGE creates Agent with ON CREATE SET properties
     expect(query).toContain("MERGE (a:Agent {id: $agentId, group_id: $groupId})")
     expect(query).toContain("ON CREATE SET")
-    expect(query).toContain("a.name = $agentId")
+    expect(query).toContain("a.name = $agentName")
     expect(query).toContain("a.role = 'auto-created from promotion'")
     expect(query).toContain("a.model = 'unknown'")
     expect(query).toContain("a.confidence = 0.0")
@@ -174,7 +175,7 @@ describe("Phase 5 Sync Contract — linkMemoryContext", () => {
     // Verify MERGE creates Project with ON CREATE SET properties
     expect(query).toContain("MERGE (p:Project {id: $projectId, group_id: $groupId})")
     expect(query).toContain("ON CREATE SET")
-    expect(query).toContain("p.name = $projectId")
+    expect(query).toContain("p.name = $projectName")
     expect(query).toContain("p.description = 'auto-created from promotion'")
     expect(query).toContain("p.status = 'active'")
   })
@@ -288,5 +289,59 @@ describe("Phase 5 Sync Contract — Approve Route", () => {
 
     expect(resolveProjectId(bodyWithProject)).toBe("proj-custom-project")
     expect(resolveProjectId(bodyWithoutProject)).toBe("allura-test-group")
+  })
+})
+
+// ── FR-3 Mapping Resolution Tests ──────────────────────────────────────────
+
+describe("FR-3 Sync Contract — Mapping Resolution", () => {
+  it("should resolve known user_id to Agent name", () => {
+    expect(resolveAgentName("bellard")).toBe("Bellard")
+    expect(resolveAgentName("bellard-diagnostics")).toBe("Bellard")
+    expect(resolveAgentName("knuth")).toBe("Knuth")
+    expect(resolveAgentName("knuth-data")).toBe("Knuth")
+    expect(resolveAgentName("gilliam")).toBe("Gilliam")
+    expect(resolveAgentName("carmack-performance")).toBe("Carmack")
+  })
+
+  it("should resolve known group_id to Project name", () => {
+    expect(resolveProjectName("allura-system")).toBe("Allura Memory")
+    expect(resolveProjectName("allura-team-durham")).toBe("Creative Studio")
+    expect(resolveProjectName("allura-default")).toBe("Allura Memory")
+  })
+
+  it("should fall back to raw ID when mapping not found", () => {
+    expect(resolveAgentName("unknown-agent")).toBe("unknown-agent")
+    expect(resolveProjectName("allura-unknown")).toBe("allura-unknown")
+  })
+
+  it("should resolve user_id through linkMemoryContext (end-to-end)", async () => {
+    const mockSession = {
+      run: vi.fn().mockResolvedValue({
+        records: [{ get: (key: string) => (key === "linked" ? true : null) }],
+      }),
+      close: vi.fn().mockResolvedValue(undefined),
+    }
+    const neo4j = require("neo4j-driver").default
+    const driver = neo4j.driver("bolt://localhost:7687", neo4j.auth.basic("test", "test")) as Driver
+    ;(driver as any).session = vi.fn().mockReturnValue(mockSession)
+    const adapter = new Neo4jGraphAdapter(driver)
+
+    await adapter.linkMemoryContext({
+      memory_id: TEST_MEMORY_ID,
+      group_id: TEST_GROUP,
+      agent_id: "bellard-diagnostics",
+      project_id: "allura-system",
+    })
+
+    // Agent should be resolved to "Bellard" via mapping
+    const agentCall = mockSession.run.mock.calls[0]
+    expect(agentCall[1].agentId).toBe("Bellard")
+    expect(agentCall[1].agentName).toBe("Bellard")
+
+    // Project should be resolved to "Allura Memory" via mapping
+    const projectCall = mockSession.run.mock.calls[1]
+    expect(projectCall[1].projectId).toBe("Allura Memory")
+    expect(projectCall[1].projectName).toBe("Allura Memory")
   })
 })

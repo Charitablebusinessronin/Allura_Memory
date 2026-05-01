@@ -33,6 +33,7 @@ import type {
 import { GraphAdapterError, GraphAdapterUnavailableError } from "./types"
 import type { GroupId, MemoryId, MemoryProvenance, ConfidenceScore } from "@/lib/memory/canonical-contracts"
 import { CURRENT_SCHEMA_VERSION } from "@/lib/schema-version"
+import { resolveAgentName, resolveProjectName } from "./sync-contract-mappings"
 
 // ── Helper: Neo4j DateTime → ISO string ──────────────────────────────────────
 
@@ -541,17 +542,22 @@ export class Neo4jGraphAdapter implements IGraphAdapter {
       return { authored_by: false, relates_to: false }
     }
 
+    // FR-3 Sync Contract: Resolve user_id → Agent name, group_id → Project name
+    // using mapping tables from BRIEF-FR3-SYNC-CONTRACT.md
+    const resolvedAgentId = params.agent_id ? resolveAgentName(params.agent_id) : null
+    const resolvedProjectId = params.project_id ? resolveProjectName(params.project_id) : null
+
     const session = this.driver.session()
     try {
       let authoredBy = false
       let relatesTo = false
 
-      // Phase 5 sync contract: Wire AUTHORED_BY → Agent (auto-create if missing)
-      if (params.agent_id) {
+      // FR-3: Wire AUTHORED_BY → Agent (MERGE for idempotency, auto-create if missing)
+      if (resolvedAgentId) {
         const result = await session.run(
           `MATCH (m) WHERE m.id = $memoryId AND m.group_id = $groupId AND (m:Memory OR m:Insight)
            MERGE (a:Agent {id: $agentId, group_id: $groupId})
-           ON CREATE SET a.name = $agentId,
+           ON CREATE SET a.name = $agentName,
                          a.role = 'auto-created from promotion',
                          a.model = 'unknown',
                          a.created_at = datetime(),
@@ -565,18 +571,19 @@ export class Neo4jGraphAdapter implements IGraphAdapter {
           {
             memoryId: params.memory_id,
             groupId: params.group_id,
-            agentId: params.agent_id,
+            agentId: resolvedAgentId,
+            agentName: resolvedAgentId,
           }
         )
         authoredBy = result.records[0]?.get('linked') ?? false
       }
 
-      // Phase 5 sync contract: Wire CONTRIBUTES_TO → Project (auto-create if missing)
-      if (params.project_id) {
+      // FR-3: Wire CONTRIBUTES_TO → Project (MERGE for idempotency, auto-create if missing)
+      if (resolvedProjectId) {
         const result = await session.run(
           `MATCH (m) WHERE m.id = $memoryId AND m.group_id = $groupId AND (m:Memory OR m:Insight)
            MERGE (p:Project {id: $projectId, group_id: $groupId})
-           ON CREATE SET p.name = $projectId,
+           ON CREATE SET p.name = $projectName,
                          p.description = 'auto-created from promotion',
                          p.created_at = datetime(),
                          p.updated_at = datetime(),
@@ -586,7 +593,8 @@ export class Neo4jGraphAdapter implements IGraphAdapter {
           {
             memoryId: params.memory_id,
             groupId: params.group_id,
-            projectId: params.project_id,
+            projectId: resolvedProjectId,
+            projectName: resolvedProjectId,
           }
         )
         relatesTo = result.records[0]?.get('linked') ?? false

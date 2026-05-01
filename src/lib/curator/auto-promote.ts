@@ -22,6 +22,8 @@ import { createInsight } from "@/lib/neo4j/queries/insert-insight"
 import { InsightConflictError } from "@/lib/neo4j/queries/insert-insight"
 import { Neo4jConnectionError, Neo4jPromotionError } from "@/lib/errors/neo4j-errors"
 import { validateGroupId } from "@/lib/validation/group-id"
+import { getDriver as getNeo4jDriver } from "@/lib/neo4j/connection"
+import { Neo4jGraphAdapter } from "@/lib/graph-adapter/neo4j-adapter"
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -105,6 +107,54 @@ export async function autoPromoteProposal(
       auto_promoted: true,
     },
   })
+
+  // FR-3 Sync Contract: Wire AUTHORED_BY → Agent and CONTRIBUTES_TO → Project
+  // after promotion to anchor the promoted knowledge in the structural context layer.
+  // Best-effort: failure does not block the promotion.
+  try {
+    const driver = getNeo4jDriver()
+    const adapter = new Neo4jGraphAdapter(driver)
+
+    // Resolve agent_id from proposal's created_by; project_id defaults to group_id
+    const linkResult = await adapter.linkMemoryContext({
+      memory_id: memoryId as any,
+      group_id: validatedGroupId as any,
+      agent_id: proposal.created_by ?? curator_id ?? null,
+      project_id: validatedGroupId,
+    })
+    if (linkResult.authored_by || linkResult.relates_to) {
+      console.info(
+        `[sync-contract] auto-promote: linked memory=${memoryId} ` +
+        `authored_by=${linkResult.authored_by} relates_to=${linkResult.relates_to}`
+      )
+    }
+    await adapter.close()
+  } catch (linkErr) {
+    console.warn(`[sync-contract] linkMemoryContext failed in auto-promote:`, linkErr)
+  }
+
+  // FR-3: Write PG audit event for sync contract
+  try {
+    await pg.query(
+      `INSERT INTO events (group_id, event_type, agent_id, status, metadata, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        validatedGroupId,
+        "sync_contract",
+        curator_id,
+        "completed",
+        JSON.stringify({
+          action: "auto_link",
+          memory_id: memoryId,
+          agent_id: proposal.created_by ?? curator_id ?? null,
+          project_id: validatedGroupId,
+        }),
+        decidedAt,
+      ]
+    )
+  } catch (auditErr) {
+    console.warn(`[sync-contract] PG audit event failed in auto-promote:`, auditErr)
+  }
 
   await pg.query(
     `UPDATE canonical_proposals

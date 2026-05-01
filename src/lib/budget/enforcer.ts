@@ -70,18 +70,28 @@ export interface EnforcementResult {
  * Budget Enforcer - Ensures hard limits are enforced
  * This is the ENFORCEMENT layer - halts execution immediately on breach
  */
+/**
+ * Default TTL for halted sessions (1 hour)
+ * After this time, halted sessions auto-expire and can resume.
+ */
+const DEFAULT_HALT_TTL_MS = 60 * 60 * 1000; // 1 hour
+
 export class BudgetEnforcer {
   private monitor: BudgetMonitor;
   private config: EnforcerConfig;
-  private haltedSessions: Set<string> = new Set();
+  /** Halted session keys mapped to their halt timestamp for TTL expiry */
+  private haltedSessions: Map<string, Date> = new Map();
+  /** TTL in ms after which halted sessions auto-expire (default: 1 hour) */
+  private haltTtlMs: number;
 
-  constructor(config?: Partial<EnforcerConfig>) {
+  constructor(config?: Partial<EnforcerConfig> & { haltTtlMs?: number }) {
     this.config = {
       budgetConfig: config?.budgetConfig ?? DEFAULT_BUDGET_CONFIG,
       onHalt: config?.onHalt,
       onPreCheck: config?.onPreCheck,
       enabled: config?.enabled ?? true,
     };
+    this.haltTtlMs = config?.haltTtlMs ?? DEFAULT_HALT_TTL_MS;
 
     this.monitor = createBudgetMonitor({
       budgetConfig: this.config.budgetConfig,
@@ -101,6 +111,56 @@ export class BudgetEnforcer {
     const key = this.sessionKey(sessionId);
     this.haltedSessions.delete(key);
     return this.monitor.startSession(sessionId, limits);
+  }
+
+  /**
+   * Reset a specific halted session so it can resume operations.
+   * Returns true if the session was halted and has been un-halted.
+   */
+  resetHaltedSession(sessionId: SessionId): boolean {
+    const key = this.sessionKey(sessionId);
+    const wasHalted = this.haltedSessions.has(key);
+    if (wasHalted) {
+      this.haltedSessions.delete(key);
+      const state = this.monitor.getSessionState(sessionId);
+      if (state) {
+        state.haltedAt = undefined as any;
+        state.haltReason = undefined;
+      }
+    }
+    return wasHalted;
+  }
+
+  /**
+   * Reset all halted sessions. Returns count of sessions that were un-halted.
+   */
+  resetAllHaltedSessions(): number {
+    const count = this.haltedSessions.size;
+    this.haltedSessions.clear();
+    return count;
+  }
+
+  /**
+   * Get all currently halted session keys.
+   */
+  getHaltedSessionKeys(): string[] {
+    return Array.from(this.haltedSessions.keys());
+  }
+
+  /**
+   * Remove halted sessions that have exceeded the TTL.
+   * Returns count of expired sessions removed.
+   */
+  cleanupExpiredHalts(): number {
+    const now = Date.now();
+    let expired = 0;
+    for (const [key, haltedAt] of this.haltedSessions) {
+      if (now - haltedAt.getTime() >= this.haltTtlMs) {
+        this.haltedSessions.delete(key);
+        expired++;
+      }
+    }
+    return expired;
   }
 
   /**
@@ -247,7 +307,7 @@ export class BudgetEnforcer {
    */
   async haltSession(sessionId: SessionId, reason: HaltReason): Promise<void> {
     const key = this.sessionKey(sessionId);
-    this.haltedSessions.add(key);
+    this.haltedSessions.set(key, new Date());
 
     const state = this.monitor.getSessionState(sessionId);
     if (state) {
@@ -265,7 +325,14 @@ export class BudgetEnforcer {
    * Check if session is halted
    */
   isHalted(sessionId: SessionId): boolean {
-    return this.haltedSessions.has(this.sessionKey(sessionId));
+    // Auto-expiry: if the halt has exceeded TTL, clear it lazily
+    const key = this.sessionKey(sessionId);
+    const haltedAt = this.haltedSessions.get(key);
+    if (haltedAt && Date.now() - haltedAt.getTime() >= this.haltTtlMs) {
+      this.haltedSessions.delete(key);
+      return false;
+    }
+    return this.haltedSessions.has(key);
   }
 
   /**
@@ -532,7 +599,7 @@ export class BudgetEnforcer {
           state,
         );
         // Synchronous halt — no async gaps
-        this.haltedSessions.add(key);
+        this.haltedSessions.set(key, new Date());
         state.haltedAt = new Date();
         state.haltReason = haltReason;
         // Fire async callback without blocking
