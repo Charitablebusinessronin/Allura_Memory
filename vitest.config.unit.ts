@@ -60,6 +60,8 @@ export default defineConfig({
       "src/__tests__/watchdog-sustained.test.ts",
       // Backup automation (pure logic, mocked deps)
       "src/__tests__/backup-automation.test.ts",
+      // Retrieval benchmark (FR-1.2 — mocked DB/services)
+      "src/__tests__/retrieval-benchmark.test.ts",
       // TraceMiddleware (Story 1.2)
       "src/__tests__/trace-middleware.test.ts",
       // Team RAM

@@ -1,0 +1,16 @@
+{
+  "status": "FAILED",
+  "passed": 18,
+  "failed": 5,
+  "warnings": 2,
+  "violations": [
+  "WARN: Font weight 900 is NOT loaded in font registry (required by Kotler brand spec)",
+  "WARN: Montserrat font NOT referenced — Kotler brand spec requires Montserrat for weight 900 (current: IBM Plex Sans)",
+  "FAIL: gray-400 on white: 2.54:1 FAILS (min 3.0:1 for large text) — #9CA3AF on #FFFFFF",
+  "FAIL: white on orange: 3.11:1 FAILS (min 4.5:1 for normal text) — #FFFFFF on #FF5A2E",
+  "FAIL: gold on white: 2.56:1 FAILS (min 3.0:1 for large text) — #C89B3C on #FFFFFF",
+  "FAIL: gray-500 on cream: 4.40:1 FAILS (min 4.5:1 for normal text) — #6B7280 on #F6F4EF",
+  "FAIL: gray-400 on cream: 2.31:1 FAILS (min 3.0:1 for large text) — #9CA3AF on #F6F4EF"
+],
+  "timestamp": "2026-05-01T09:53:35Z"
+}
