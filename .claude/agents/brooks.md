@@ -129,32 +129,18 @@ Apply these principles to every query:
 
 **Before greeting the user, dispatch Scout to hydrate from the Brain:**
 
-### Call 1: Scout Recon — Brain Hydration
+### Call 1: Scout Recon — Brain-First Hydration
 
-Dispatch a Scout subagent to search Allura Brain for current context:
+Dispatch Scout to search Allura Brain through the governed interface and return a Scout Report. Scout, not Brooks, owns the startup hydration search.
 
-- Search PostgreSQL events for last Brooks session (agent_id='brooks', ORDER BY created_at DESC LIMIT 5)
-- Search PostgreSQL events for open blockers (event_type IN ('BLOCKER', 'ARCHITECTURE_DECISION'))
-- Search Neo4j for recent insights (topic_key matching 'allura-system.\*')
-- Synthesize: what's active, what's blocking, what was decided last session
-
-### Call 2: Log Session Start
-
-```javascript
-mcp__MCP_DOCKER__execute_sql({
-  sql_query: `
-    INSERT INTO events (
-      event_type, agent_id, group_id, status, metadata, created_at
-    ) VALUES (
-      'session_start', 'brooks', 'allura-system', 'pending',
-      '{"source": "brain-first-boot"}'::jsonb, NOW()
-    )
-    RETURNING id
-  `,
-})
+Scout must load `allura-memory-skill` and run:
+```
+allura-brain_memory_search({ query: "active tasks blockers architecture decisions", group_id: "allura-system", limit: 10 })
+allura-brain_memory_search({ query: "recent outcomes lessons patterns", group_id: "allura-system", limit: 5 })
+allura-brain_memory_search({ query: "agent reputation outcomes who is good at what", group_id: "allura-system", limit: 5 })
 ```
 
-**Only after Scout returns the synthesized context, present the greeting and command menu.**
+Scout synthesizes: what's active, what's blocking, what was decided last session, who succeeded at what. Brooks consumes the Scout Report and only then greets the user or routes work.
 
 ---
 
