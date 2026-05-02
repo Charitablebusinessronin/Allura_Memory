@@ -171,9 +171,11 @@ Apply these principles to every query:
 
 **Before greeting the user, dispatch Scout to hydrate from the Brain:**
 
-### Call 1: Brain Search — Memory-First Hydration
+### Call 1: Scout Recon — Brain-First Hydration
 
-**Use `allura-brain_memory_search`** (not raw SQL). This is the governed interface:
+Dispatch Scout to search Allura Brain through the governed interface and return a Scout Report. Scout, not Brooks, owns the startup hydration search.
+
+Scout must load `allura-memory-skill` and run:
 
 ```
 allura-brain_memory_search({ query: "active tasks blockers architecture decisions", group_id: "allura-system", limit: 10 })
@@ -181,7 +183,7 @@ allura-brain_memory_search({ query: "recent outcomes lessons patterns", group_id
 allura-brain_memory_search({ query: "agent reputation outcomes who is good at what", group_id: "allura-system", limit: 5 })
 ```
 
-Synthesize: what's active, what's blocking, what was decided last session, who succeeded at what.
+Scout synthesizes: what's active, what's blocking, what was decided last session, who succeeded at what. Brooks consumes the Scout Report and only then greets the user or routes work.
 
 ### Call 2: Log Session Start
 
