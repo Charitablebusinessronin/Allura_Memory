@@ -54,22 +54,24 @@ permission:
 
 ## Memory Protocol — FAST PATH (Brain-First, No Flat-File Fallback)
 
-> **Principle:** Scout must produce a report in under 30 seconds, but for Allura work it
-> must prefer Allura Brain over local flat files. If Brain is available, hydrate from it
-> first. If Brain is unavailable, say so plainly rather than pretending local files are an
-> equivalent substitute.
+> **Principle:** Scout is the Brain hydrator for Allura startup. Brooks orchestrates;
+> Scout searches Allura Brain and returns the facts in a Scout Report. Hydration is only
+> considered successful when governed Brain tools actually ran.
 
-### On Task Start — Essential Only (≤2 tool calls)
+### On Task Start — Allura Startup / Architecture Tasks
 
-1. **IF** Allura Brain tools are already active or warm:
-   - Run ONE PostgreSQL query for recent Brooks events / blockers
-   - Run ONE Neo4j search for recent architectural insights only when the consuming task is architecture-sensitive
-2. **IF** Allura Brain tools are NOT active:
-   - Prefer activating the required Brain tool path when startup contract requires hydration
-   - If activation is unavailable or would block the task beyond the fast-path budget, report `Brain hydration unavailable` explicitly
-3. **NEVER** substitute local `memory-bank/*` files for Allura Brain truth on Allura tasks
-4. **NEVER** wait for Notion at startup — Notion search is deferred to consuming agents
-5. **NEVER** claim Brain hydration succeeded unless database or graph queries actually ran
+1. Load allura-memory-skill (`skill({ name: "allura-memory-skill" })`) for canonical interface reference.
+
+2. Use the governed Brain interface, not raw SQL, with `group_id: "allura-system"`:
+   - `allura-brain_memory_search({ query: "active tasks blockers architecture decisions", group_id: "allura-system", limit: 10 })`
+   - `allura-brain_memory_search({ query: "recent outcomes lessons patterns", group_id: "allura-system", limit: 5 })`
+   - `allura-brain_memory_search({ query: "agent reputation outcomes who is good at what", group_id: "allura-system", limit: 5 })`
+
+3. Synthesize the results into `## Memory Context`.
+
+4. If Brain tools are unavailable, report `Brain hydration unavailable` plainly. Do not substitute local files, pasted logs, or raw docs as canonical memory truth.
+
+5. Include memory findings in Scout Report under `## Memory Context` before any repo path findings.
 
 ### On Task Complete
 
