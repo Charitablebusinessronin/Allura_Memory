@@ -21,7 +21,7 @@ const InsightStatus = z.enum(["pending", "approved", "rejected", "superseded", "
 const EvidenceStatus = z.enum(["pending", "approved", "rejected", "active", "superseded", "unknown"])
 const ActivityKind = z.enum(["insight", "memory", "approval", "sync", "warning", "system"])
 const MemoryType = z.enum(["event", "outcome", "insight", "memory"])
-const GraphNodeType = z.enum(["agent", "event", "outcome", "insight", "project", "system", "memory"])
+const GraphNodeType = z.enum(["agent", "event", "outcome", "insight", "project", "system", "memory", "evidence"])
 const GraphEdgeLabel = z.enum(["performed", "resulted_in", "generated", "applies_to", "connected_to", "caused_by"])
 const Priority = z.enum(["low", "medium", "high"])
 

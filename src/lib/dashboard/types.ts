@@ -65,7 +65,7 @@ export interface ActivityItem {
   agent: string
 }
 
-export type GraphNodeType = "agent" | "event" | "outcome" | "insight" | "project" | "system" | "memory"
+export type GraphNodeType = "agent" | "event" | "outcome" | "insight" | "project" | "system" | "memory" | "evidence"
 
 export interface GraphNode {
   id: string
@@ -117,4 +117,19 @@ export interface DashboardResult<T> {
   error: string | null
   degraded: boolean
   warnings: DashboardWarning[]
+}
+
+export type DecisionStatus = "decided" | "proposed" | "superseded" | "deferred" | "unknown"
+
+export interface DecisionRecord {
+  id: string
+  title: string
+  summary: string
+  rationale: string
+  status: DecisionStatus
+  agentId: string
+  groupId: string
+  createdAt: string
+  eventType: string
+  metadata: Record<string, unknown>
 }
