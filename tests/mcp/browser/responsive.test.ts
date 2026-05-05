@@ -18,9 +18,9 @@ import { getPort } from "../../../src/lib/config/ports";
 const shouldRunBrowser = process.env.RUN_BROWSER_TESTS === "true";
 
 describe.skipIf(!shouldRunBrowser)("Responsive Design Tests", () => {
-  const PAPERCLIP_PORT = getPort("paperclip", "PAPERCLIP_PORT");
-  const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || `http://localhost:${PAPERCLIP_PORT}`;
-  const DASHBOARD_URL = `${BASE_URL}/dashboard/paperclip`;
+  const DASHBOARD_PORT = getPort("dashboard", "ALLURA_DASHBOARD_PORT");
+  const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || `http://localhost:${DASHBOARD_PORT}`;
+  const DASHBOARD_URL = `${BASE_URL}/dashboard`;
 
   interface Viewport {
     name: string;

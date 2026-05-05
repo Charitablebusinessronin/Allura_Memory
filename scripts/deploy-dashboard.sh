@@ -1,26 +1,26 @@
 #!/bin/bash
-# Deploy Paperclip Dashboard to Docker
+# Deploy Allura Dashboard to Docker
 
 set -e
 
-echo "🚀 Deploying Paperclip Dashboard to Docker..."
+echo "🚀 Deploying Allura Dashboard to Docker..."
 
-# Navigate to paperclip directory
-cd "$(dirname "$0")/paperclip"
+# Navigate to project root
+cd "$(dirname "$0")/.."
 
 # Build the Docker image
 echo "📦 Building Docker image..."
-docker build -t paperclip-dashboard:latest .
+docker build -t allura-dashboard:latest .
 
 # Create network if it doesn't exist
 docker network create allura-network 2>/dev/null || true
 
 # Run the container
-echo "🏃 Starting Paperclip container..."
+echo "🏃 Starting Allura Dashboard container..."
 docker run -d \
-  --name paperclip-dashboard \
+  --name allura-dashboard \
   --network allura-network \
-  -p 3001:3000 \
+  -p 3100:3100 \
   -e OPENCLAW_URL=http://host.docker.internal:3200 \
   -e POSTGRES_HOST=knowledge-postgres \
   -e POSTGRES_PORT=5432 \
@@ -31,12 +31,12 @@ docker run -d \
   -e NEO4J_USER=neo4j \
   -e NEO4J_PASSWORD=test1234 \
   --restart unless-stopped \
-  paperclip-dashboard:latest
+  allura-dashboard:latest
 
-echo "✅ Paperclip Dashboard deployed!"
+echo "✅ Allura Dashboard deployed!"
 echo ""
-echo "📍 Access: http://localhost:3001"
+echo "📍 Access: http://localhost:3100"
 echo "🔗 Connected to OpenClaw: http://localhost:3200"
 echo ""
 echo "Test connection:"
-echo "  curl http://localhost:3001"
+echo "  curl http://localhost:3100"

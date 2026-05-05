@@ -196,7 +196,7 @@ on:
 
 ### P1-1: `.env.example` Is Missing Critical Variables
 
-`DATABASE_URL`, `OPENCLAW_PORT`, and `PAPERCLIP_PORT` are used in runtime code but absent from `.env.example`.
+`DATABASE_URL`, `OPENCLAW_PORT`, and `ALLURA_DASHBOARD_PORT` are used in runtime code but absent from `.env.example`.
 
 **Add to `.env.example`:**
 ```bash
@@ -214,7 +214,7 @@ NEO4J_USER=neo4j
 NEO4J_PASSWORD=
 
 # ── Port Config ───────────────────────────────────
-PAPERCLIP_PORT=3100      # Next.js dev/start port
+ALLURA_DASHBOARD_PORT=3100  # Next.js dashboard dev/start port
 OPENCLAW_PORT=3200       # MCP HTTP gateway port
 
 # ── Memory Engine ─────────────────────────────────
@@ -399,7 +399,7 @@ The following items must be added to the GOAL DONE PROMPT checklist as new hard 
 [LAYER 9 — RUNTIME ADDITIONS]
 ❌ 9.11  ci.yml triggers on new-main branch
 ❌ 9.12  mcp-testing.yml triggers on new-main branch
-❌ 9.13  .env.example includes DATABASE_URL, OPENCLAW_PORT, PAPERCLIP_PORT
+❌ 9.13  .env.example includes DATABASE_URL, OPENCLAW_PORT, ALLURA_DASHBOARD_PORT
 ❌ 9.14  Fresh docker compose down -v → up completes without migration errors
 ❌ 9.15  canonical-memory.test.ts exists and passes on live stack
 ```

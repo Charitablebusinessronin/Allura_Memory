@@ -790,7 +790,7 @@ neo4j-memory database-server neo4j-cypher
              │
     ┌────────┴────────┐
     ↓                 ↓
-Paperclip UI    Memory Dashboard
+Allura Dashboard    Memory Dashboard
 (Approval)      (Browse + Search)
 (Optional)      (Always)
 ```

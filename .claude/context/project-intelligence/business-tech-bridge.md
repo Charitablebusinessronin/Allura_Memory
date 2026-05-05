@@ -92,7 +92,7 @@
 | Agent writes directly to Neo4j (bypass HITL) | `write_neo4j_cypher` called without curator flow | Route through `curator:approve`; never write Neo4j from agent context in SOC2 mode |
 | Consumer UI exposes `group_id`/`user_id` | Template fields visible in memory cards | Server Components inject these; never surface in consumer-facing markup |
 | Treating Postgres events as mutable | UPDATE/DELETE on events table | Hard blocked by schema; if it appears in code, it's a bug |
-| New dashboard path at `/dashboard/paperclip` | Paperclip references in dashboard routes | Real dashboard is `src/app/(main)/dashboard` on port 3100 |
+| Dashboard routes with `/dashboard/paperclip` | Old Paperclip naming in routes | Real dashboard is `src/app/(main)/dashboard` on port 3100 — no `/paperclip` path exists |
 
 ---
 

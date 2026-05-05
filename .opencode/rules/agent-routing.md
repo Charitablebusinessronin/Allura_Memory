@@ -35,16 +35,16 @@ We don't hire 10 surgeons. We hire one surgeon and a team of specialists who own
 
 | Agent | Persona | Role | Model | Use When |
 |-------|---------|------|-------|----------|
-| **Brooks** | Frederick Brooks | Architect + Orchestrator | Claude Opus 4.6 / GLM-5 | Task planning, architecture, delegation |
-| **Jobs** | Steve Jobs | Intent Gate | Claude Sonnet 4.6 | Scope control, acceptance criteria |
-| **Woz** | Steve Wozniak | Builder | GPT-5.4 | Autonomous implementation, ships working code |
-| **Pike** | Rob Pike | Interface Gate | GPT-5.4 (high) | Read-only architecture consultation |
-| **Bellard** | Fabrice Bellard | Diagnostics + Perf | GPT-5.4 | Performance, measurement, low-level fixes |
-| **Fowler** | Martin Fowler | Refactor Gate | Claude Opus 4.6 | Maintainability, incremental change |
-| **Scout** | (none) | Recon + Discovery | Claude Haiku 4.5 | Fast codebase search, pattern discovery |
-| **Carmack** | John Carmack | Performance Specialist | GPT-5.4 | Optimization, API design, latency |
-| **Knuth** | Donald Knuth | Data Architect | GPT-5.4 | Schema design, query optimization |
-| **Hightower** | Kelsey Hightower | DevOps Specialist | GPT-5.4 | CI/CD, IaC, deployment, observability |
+| **Brooks** | Frederick Brooks | Architect + Orchestrator | GPT-5.5 | Task planning, architecture, delegation |
+| **Jobs** | Steve Jobs | Intent Gate | DeepSeek V4 Pro | Scope control, acceptance criteria |
+| **Woz** | Steve Wozniak | Builder | Qwen3 Coder Next | Autonomous implementation, ships working code |
+| **Pike** | Rob Pike | Interface Gate | GPT-5.4 Mini | Read-only architecture consultation |
+| **Bellard** | Fabrice Bellard | Diagnostics + Perf | GPT-5.4 Mini | Performance, measurement, low-level fixes |
+| **Fowler** | Martin Fowler | Refactor Gate | GPT-5.5 | Maintainability, incremental change |
+| **Scout** | (none) | Recon + Discovery | Nemotron 3 Super | Fast codebase search, pattern discovery |
+| **Carmack** | John Carmack | Performance Specialist | GPT-5.4 Mini | Optimization, API design, latency |
+| **Knuth** | Donald Knuth | Data Architect | Qwen3 Coder Next | Schema design, query optimization |
+| **Hightower** | Kelsey Hightower | DevOps Specialist | GPT-5.5 | CI/CD, IaC, deployment, observability |
 
 ## Category Routing
 
@@ -53,9 +53,9 @@ Intent-based routing, not model-based. The agent says what kind of work; the har
 | Category | Routes To | Use Case |
 |----------|-----------|----------|
 | `visual-engineering` | Gemini 3.1 Pro | Frontend, UI, design |
-| `deep` | GPT-5.4 | Autonomous research + execution |
-| `quick` | GPT-5.4 Mini | Single-file changes, typos |
-| `ultrabrain` | GPT-5.4 xhigh | Hard logic, architecture decisions |
+| `deep` | Qwen3 Coder Next | Autonomous research + execution |
+| `quick` | GPT-5.4 Mini / Nemotron 3 Super | Single-file changes, typos, recon |
+| `ultrabrain` | GPT-5.5 / DeepSeek V4 Pro | Hard logic, architecture decisions |
 | `ux-design` | Gemini 3.1 Pro | Accessibility review, design patterns |
 
 ## Routing Rules
@@ -106,14 +106,15 @@ The category system reduces this further:
 
 | Agent | Primary | Fallback 1 | Fallback 2 | Fallback 3 |
 |-------|---------|------------|------------|------------|
-| Brooks | Claude Opus 4.6 (max) | Kimi K2.5 | GPT-5.4 (medium) | GLM-5 |
-| Woz | GPT-5.4 (medium) | — | — | — |
-| Pike | GPT-5.4 (high) | Gemini 3.1 Pro (high) | Claude Opus 4.6 (max) | — |
-| Scout | Claude Haiku 4.5 | GPT-5 Nano | Minimax M2.7 (highspeed) | — |
-| Fowler | Claude Opus 4.6 (max) | GPT-5.4 (high) | GLM-5 | Gemini 3.1 Pro |
-| Bellard | GPT-5.4 (medium) | Claude Opus 4.6 | — | — |
-| Carmack | GPT-5.4 (high) | GPT-5.4 (medium) | — | — |
-| Hightower | GPT-5.4 (medium) | Claude Sonnet 4.6 | — | — |
+| Brooks | GPT-5.5 | DeepSeek V4 Pro | GPT-5.4 Mini | — |
+| Woz | Qwen3 Coder Next | GPT-5.5 | — | — |
+| Pike | GPT-5.4 Mini | GPT-5.5 | Qwen3 Coder Next | — |
+| Scout | Nemotron 3 Super | GPT-5.4 Mini | Minimax M2.7 (highspeed) | — |
+| Fowler | GPT-5.5 | DeepSeek V4 Pro | GPT-5.4 Mini | — |
+| Bellard | GPT-5.4 Mini | GPT-5.5 | — | — |
+| Carmack | GPT-5.4 Mini | GPT-5.5 | — | — |
+| Knuth | Qwen3 Coder Next | GPT-5.5 | DeepSeek V4 Pro | — |
+| Hightower | GPT-5.5 | GPT-5.4 Mini | DeepSeek V4 Pro | — |
 
 ## The Brooksian Principles
 

@@ -8,7 +8,7 @@ type: specialist
 scope: harness
 platform: Both
 status: active
-model: ollama-cloud/qwen3-coder-next
+model: openai/gpt-5.4-mini
 permission:
   edit: deny
   bash:

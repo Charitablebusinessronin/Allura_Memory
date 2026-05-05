@@ -57,8 +57,8 @@ const FALLBACK_EDGES = [
   { id: "e11", source: "n1",  target: "n3", label: "triggered"   },
 ]
 
-// Brand color per node type
-const NODE_COLORS: Record<string, string> = {
+// Brand color per node type — light theme
+const NODE_COLORS_LIGHT: Record<string, string> = {
   memory:   "#1D4ED8",  // blue
   insight:  "#157A44",  // green
   evidence: "#C89B3C",  // gold
@@ -67,8 +67,20 @@ const NODE_COLORS: Record<string, string> = {
   system:   "#111827",  // charcoal
 }
 
+// Brand color per node type — dark theme
+const NODE_COLORS_DARK: Record<string, string> = {
+  memory:   "#60A5FA",  // light blue
+  insight:  "#34D399",  // light green
+  evidence: "#FBBF24",  // light gold
+  agent:    "#FB923C",  // light orange
+  project:  "#34D399",  // light green
+  system:   "#9CA3AF",  // light gray for visibility
+}
+
 function nodeColor(type: string) {
-  return NODE_COLORS[type] ?? "#6B7280"
+  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  const colors = isDark ? NODE_COLORS_DARK : NODE_COLORS_LIGHT
+  return colors[type] ?? "#6B7280"
 }
 
 const NODE_RADII: Record<string, number> = {
@@ -176,6 +188,14 @@ export default function MemoryExplorerPage() {
     nodes: visibleNodes.map((n) => ({ ...n, val: NODE_RADII[n.type] ?? 5 })),
     links: visibleEdges.map((e) => ({ source: e.source, target: e.target })),
   }), [visibleNodes, visibleEdges])
+
+  // Reheat simulation when visible nodes change (search/filter changes)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      graphRef.current?.d3ReheatSimulation()
+    }, 50)
+    return () => clearTimeout(timer)
+  }, [visibleNodes.length, filterType, query, graphRef])
 
   const selectedNode = selectedId ? nodes.find((n) => n.id === selectedId) ?? null : null
 
@@ -290,7 +310,8 @@ export default function MemoryExplorerPage() {
                   // Label
                   if (gs > 0.7 || isSelected || isHovered) {
                     ctx.font = `${Math.min(11, 500 / gs)}px IBM Plex Sans, system-ui, sans-serif`
-                    ctx.fillStyle = "#374151"
+                    const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+                    ctx.fillStyle = isDark ? '#E5E7EB' : '#374151'
                     ctx.textAlign = "center"
                     ctx.fillText(node.label, node.x, node.y + fr + 10 / gs)
                   }
@@ -308,17 +329,17 @@ export default function MemoryExplorerPage() {
             )}
 
             {/* Zoom controls */}
-            <div className="absolute bottom-4 left-4 flex items-center gap-0.5 rounded-lg border border-[var(--allura-border-1)] bg-white/90 p-1 shadow-sm backdrop-blur">
+            <div className="absolute bottom-4 left-4 flex items-center gap-0.5 rounded-lg border border-[var(--allura-border-1)] bg-[var(--allura-white)]/90 p-1 shadow-sm backdrop-blur">
               <button onClick={zoomIn}  className="rounded px-2 py-1 text-sm text-[var(--allura-gray-500)] hover:bg-[var(--allura-gray-100)] hover:text-[var(--allura-charcoal)]">+</button>
               <button onClick={zoomOut} className="rounded px-2 py-1 text-sm text-[var(--allura-gray-500)] hover:bg-[var(--allura-gray-100)] hover:text-[var(--allura-charcoal)]">−</button>
               <button onClick={fitView} className="rounded px-2 py-1 text-sm text-[var(--allura-gray-500)] hover:bg-[var(--allura-gray-100)] hover:text-[var(--allura-charcoal)]">⟲</button>
             </div>
 
             {/* Color legend */}
-            <div className="absolute bottom-4 right-4 flex flex-col gap-1 rounded-lg border border-[var(--allura-border-1)] bg-white/90 p-2.5 shadow-sm backdrop-blur">
-              {Object.entries(NODE_COLORS).map(([type, color]) => (
+            <div className="absolute bottom-4 right-4 flex flex-col gap-1 rounded-lg border border-[var(--allura-border-1)] bg-[var(--allura-white)]/90 p-2.5 shadow-sm backdrop-blur">
+              {Object.keys(NODE_COLORS_LIGHT).map((type) => (
                 <div key={type} className="flex items-center gap-1.5">
-                  <span className="size-2 rounded-full" style={{ backgroundColor: color }} />
+                  <span className="size-2 rounded-full" style={{ backgroundColor: nodeColor(type) }} />
                   <span className="text-[9px] capitalize text-[var(--allura-gray-500)]">{type}</span>
                 </div>
               ))}
@@ -326,7 +347,7 @@ export default function MemoryExplorerPage() {
 
             {/* Node detail panel */}
             {selectedNode && (
-              <div className="absolute right-0 top-0 h-full w-[280px] overflow-y-auto border-l border-[var(--allura-border-1)] bg-white shadow-lg">
+              <div className="absolute right-0 top-0 h-full w-[280px] overflow-y-auto border-l border-[var(--allura-border-1)] bg-[var(--allura-white)] shadow-lg">
                 <div className="flex items-center justify-between border-b border-[var(--allura-border-1)] p-3">
                   <span
                     className="rounded px-2 py-0.5 text-[10px] font-semibold text-white capitalize"

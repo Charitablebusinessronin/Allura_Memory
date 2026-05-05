@@ -5,7 +5,7 @@
  * detects repeated patterns, and proposes candidate insights
  * WITHOUT writing truth directly to Neo4j or Notion.
  *
- * Law: Curator proposes. Paperclip approves. Neo4j remembers. Notion explains.
+ * Law: Curator proposes. Dashboard approves. Neo4j remembers. Notion explains.
  *
  * Reference: Sprint 9 P4 — Auto-Curator
  */

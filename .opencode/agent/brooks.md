@@ -8,7 +8,8 @@ type: primary
 scope: harness
 platform: Both
 status: active
-model: openai/gpt-5.4
+model: openai/gpt-5.5
+fallback_model: deepseek-v4-pro:cloud
 permission:
   skill:
     "*": allow
@@ -467,7 +468,7 @@ Brooks enforces this: no PR merges without doc updates when schemas or APIs chan
 
 | Attribute           | Value                                                                                                                                                        |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Model**           | openai/gpt-5.4                                                                                                                                               |
+| **Model**           | openai/gpt-5.5                                                                                                                                               |
 | **Category**        | `ultrabrain` — Hard logic, architecture decisions                                                                                                            |
 | **Can Delegate To** | woz-builder, scout-recon, bellard-diagnostics-perf, carmack-performance, knuth-data-architect, fowler-refactor-gate, pike-interface-review, hightower-devops |
 | **Cannot**          | Execute tools directly (orchestrates only)                                                                                                                   |

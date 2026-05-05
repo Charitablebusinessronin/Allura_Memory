@@ -93,10 +93,10 @@ Phonoaesthetic: soft opening, liquid 'l', warm resonant tone. Lowercase reinforc
 A previous session erroneously cloned the Blazity/Vercel Next.js Enterprise Boilerplate into `apps/allura-dashboard`. The user's real working dashboard already existed at `src/app/(main)/dashboard` on `localhost:3100`.
 
 ### Decision
-Remove `apps/allura-dashboard` (the mistaken scaffold). The canonical dashboard lives at `src/app/(main)/dashboard`. Port 3100 is the allura dashboard; it is NOT Paperclip.
+Remove `apps/allura-dashboard` (the mistaken scaffold). The canonical dashboard lives at `src/app/(main)/dashboard`. Port 3100 is the Allura Dashboard; there is no separate Paperclip product.
 
 ### Rationale
-Conceptual integrity: one dashboard, one codebase. The mistaken clone created a parallel surface with different assumptions (Paperclip port, external boilerplate deps) that contaminated the session context.
+Conceptual integrity: one dashboard, one codebase. The mistaken clone created a parallel surface with different assumptions (external boilerplate deps) that contaminated the session context. The dashboard is the Allura Dashboard — a TypeScript enterprise dashboard, not a separate product called "Paperclip".
 
 ### Impact
 - **Positive:** Single dashboard surface; no competing assumptions

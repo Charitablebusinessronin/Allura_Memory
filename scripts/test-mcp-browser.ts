@@ -21,7 +21,7 @@ import { existsSync } from "fs";
 import { join } from "path";
 import { getPort } from "../src/lib/config/ports";
 
-const PAPERCLIP_PORT = getPort("paperclip", "PAPERCLIP_PORT");
+const DASHBOARD_PORT = getPort("dashboard", "ALLURA_DASHBOARD_PORT");
 const TEST_TIMEOUT = 300000; // 5 minutes
 const SCREENSHOT_DIR = "tests/mcp/fixtures/screenshots";
 
@@ -100,18 +100,18 @@ async function checkMcpServers(): Promise<boolean> {
 
 async function checkDevServer(): Promise<boolean> {
   console.log("🔍 Checking Next.js dev server...");
-  console.log(`   Using port: ${PAPERCLIP_PORT}`);
+  console.log(`   Using port: ${DASHBOARD_PORT}`);
   
   try {
-    const response = await fetch(`http://localhost:${PAPERCLIP_PORT}/api/health`, {
+    const response = await fetch(`http://localhost:${DASHBOARD_PORT}/api/health`, {
       method: "GET",
       signal: AbortSignal.timeout(5000)
     });
     return response.ok;
   } catch {
-    console.warn(`⚠️  Dev server not responding at http://localhost:${PAPERCLIP_PORT}`);
+    console.warn(`⚠️  Dev server not responding at http://localhost:${DASHBOARD_PORT}`);
     console.log("   Make sure to run: bun run dev");
-    console.log(`   Or set PAPERCLIP_PORT environment variable`);
+    console.log(`   Or set ALLURA_DASHBOARD_PORT environment variable`);
     return false;
   }
 }
@@ -239,8 +239,8 @@ async function main(): Promise<void> {
   if (!devServerRunning) {
     console.error("\n❌ Next.js dev server is not running!");
     console.log("   This is a browser/dev validation precondition, not a /mcp protocol failure.");
-    console.log(`   Please start it with: PAPERCLIP_PORT=${PAPERCLIP_PORT} bun run dev`);
-    console.log(`   Expected health endpoint: http://localhost:${PAPERCLIP_PORT}/api/health\n`);
+    console.log(`   Please start it with: ALLURA_DASHBOARD_PORT=${DASHBOARD_PORT} bun run dev`);
+    console.log(`   Expected health endpoint: http://localhost:${DASHBOARD_PORT}/api/health\n`);
     process.exit(1);
   }
 

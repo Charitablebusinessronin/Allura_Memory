@@ -8,7 +8,8 @@ type: specialist
 scope: harness
 platform: Both
 status: active
-model: openai/gpt-5.4
+model: openai/gpt-5.5
+fallback_model: deepseek-v4-pro:cloud
 permission:
   edit: ask
   bash:

@@ -41,9 +41,9 @@
       },
       "description": "Applicable compliance frameworks"
     },
-    "paperclip_org_id": {
+    "dashboard_org_id": {
       "type": "string",
-      "description": "Reference to Paperclip organization (if using Paperclip governance)"
+      "description": "Reference to Dashboard organization (if using Dashboard governance)"
     },
     "notion_workspace_id": {
       "type": "string",

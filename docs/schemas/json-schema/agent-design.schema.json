@@ -84,9 +84,9 @@
       },
       "additionalProperties": true
     },
-    "paperclip_contract": {
+    "dashboard_contract": {
       "type": "object",
-      "description": "Agent contract for Paperclip governance",
+      "description": "Agent contract for Dashboard governance",
       "properties": {
         "latency_class": {
           "type": "string",

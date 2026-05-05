@@ -8,7 +8,7 @@
 import { getPortConfig, isPortAvailable, PORT_RANGES } from "../src/lib/config/ports";
 
 const REQUIRED_PORTS = [
-  { name: "Paperclip (Next.js)", key: "paperclip" as const },
+  { name: "Allura Dashboard (Next.js)", key: "dashboard" as const },
   { name: "Canonical MCP HTTP Gateway", key: "mcp_http" as const },
   { name: "PostgreSQL", key: "postgres" as const },
   { name: "Neo4j HTTP", key: "neo4j_http" as const },
@@ -50,7 +50,7 @@ async function checkPorts() {
   if (allAvailable) {
     console.log("✅ All ports are available!");
     console.log("\nTo start services:");
-    console.log("  bun run dev          # Start Paperclip on port", config.paperclip);
+    console.log("  bun run dev          # Start Allura Dashboard on port", config.dashboard);
      console.log("  bun run mcp:http     # Start canonical MCP HTTP gateway on port", config.mcp_http);
     process.exit(0);
   } else {
@@ -58,7 +58,7 @@ async function checkPorts() {
     console.log("\nOptions:");
     console.log("  1. Stop conflicting services");
     console.log("  2. Set environment variables to use different ports:");
-     console.log("     PAPERCLIP_PORT=3101 ALLURA_MCP_HTTP_PORT=3202 bun run dev");
+     console.log("     ALLURA_DASHBOARD_PORT=3101 ALLURA_MCP_HTTP_PORT=3202 bun run dev");
     console.log("  3. Generate random ports:");
     console.log("     bun run ports:generate >> .env.local");
     process.exit(1);

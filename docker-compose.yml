@@ -140,7 +140,7 @@ services:
     container_name: allura-web
     restart: unless-stopped
     ports:
-      - "${PAPERCLIP_PORT:-3100}:3100"
+      - "${ALLURA_DASHBOARD_PORT:-3100}:3100"
     env_file:
       - .env
       - .env.local

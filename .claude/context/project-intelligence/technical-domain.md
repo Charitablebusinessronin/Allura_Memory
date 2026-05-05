@@ -30,7 +30,7 @@
 
 ```
 ┌─────────────────────────────────────────────┐
-│ Layer 5: Paperclip + OpenClaw (Human UI)     │
+│ Layer 5: Allura Dashboard (Human UI)          │
 ├─────────────────────────────────────────────┤
 │ Layer 4: Workflow / DAGs / A2A Bus           │
 ├─────────────────────────────────────────────┤

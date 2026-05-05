@@ -14,7 +14,7 @@ bun install
 
 ```bash
 # Dev / build
-bun run dev               # Next.js dev server (port $PAPERCLIP_PORT, default 3100)
+bun run dev               # Next.js dev server (port $ALLURA_DASHBOARD_PORT, default 3100)
 bun run build
 bun run start
 

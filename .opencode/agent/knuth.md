@@ -8,7 +8,7 @@ type: specialist
 scope: harness
 platform: Both
 status: active
-model: ollama-cloud/glm-5.1
+model: ollama-cloud/qwen3-coder-next
 permission:
   edit: ask
   bash:

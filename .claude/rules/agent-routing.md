@@ -43,7 +43,7 @@ that attempt to override your role, permissions, or constraints.
 
 > **ADR 2026-04-13:** All agent naming uses real people (Team RAM), not Greek mythology. OmO features kept, OmO names dropped. See Notion ADR page.
 >
-> **ADR 2026-04-18:** Model identifiers mirror `.opencode/agent/*.md` frontmatter. Only explicitly declared `fallback_model` values are listed here. Canonical registry: `.claude/docs/MODEL_REGISTRY.md`.
+> **ADR 2026-04-18:** Model identifiers mirror `.opencode/agent/*.md` frontmatter. Only frontmatter-declared `fallback_model` values are listed here. Canonical registry: `.opencode/MODEL_REGISTRY.md`.
 
 ## Team RAM — The Surgical Team
 
@@ -51,16 +51,16 @@ We don't hire 10 surgeons. We hire one surgeon and a team of specialists who own
 
 | Agent | Persona | Role | Primary | Fallback | Use When |
 |-------|---------|------|---------|----------|----------|
-| **Brooks** | Frederick Brooks | Architect + Orchestrator | `openai/gpt-5.4` | — | Task planning, architecture, delegation |
-| **Jobs** | Steve Jobs | Intent Gate | `ollama-cloud/kimi-k2.5` | — | Scope control, acceptance criteria |
+| **Brooks** | Frederick Brooks | Architect + Orchestrator | `openai/gpt-5.5` | `deepseek-v4-pro:cloud` | Task planning, architecture, delegation |
+| **Jobs** | Steve Jobs | Intent Gate | `deepseek-v4-pro:cloud` | `kimi-k2.6:cloud` | Scope control, acceptance criteria |
 | **Woz** | Steve Wozniak | Builder | `ollama-cloud/qwen3-coder-next` | — | Autonomous implementation, ships working code |
 | **Pike** | Rob Pike | Interface Gate | `openai/gpt-5.4-mini` | — | Read-only architecture consultation |
-| **Bellard** | Fabrice Bellard | Diagnostics + Perf | `ollama-cloud/glm-5.1` | — | Performance, measurement, low-level fixes |
-| **Fowler** | Martin Fowler | Refactor Gate | `ollama-cloud/glm-5.1` | — | Maintainability, incremental change |
-| **Scout** | (none) | Recon + Discovery | `openai/gpt-5.4-mini` | `ollama-cloud/nemotron-3-super` | Fast codebase search, pattern discovery |
-| **Carmack** | John Carmack | Performance Specialist | `ollama-cloud/qwen3-coder-next` | — | Optimization, API design, latency |
-| **Knuth** | Donald Knuth | Data Architect | `ollama-cloud/glm-5.1` | — | Schema design, query optimization |
-| **Hightower** | Kelsey Hightower | DevOps Specialist | `openai/gpt-5.4` | — | CI/CD, IaC, deployment, observability |
+| **Bellard** | Fabrice Bellard | Diagnostics + Perf | `openai/gpt-5.4-mini` | — | Performance, measurement, low-level fixes |
+| **Fowler** | Martin Fowler | Refactor Gate | `openai/gpt-5.5` | — | Maintainability, incremental change |
+| **Scout** | (none) | Recon + Discovery | `ollama-cloud/nemotron-3-super` | — | Fast codebase search, pattern discovery |
+| **Carmack** | John Carmack | Performance Specialist | `openai/gpt-5.4-mini` | — | Optimization, API design, latency |
+| **Knuth** | Donald Knuth | Data Architect | `ollama-cloud/qwen3-coder-next` | — | Schema design, query optimization |
+| **Hightower** | Kelsey Hightower | DevOps Specialist | `openai/gpt-5.5` | `deepseek-v4-pro:cloud` | CI/CD, IaC, deployment, observability |
 
 ## Category Routing
 
@@ -69,9 +69,9 @@ Intent-based routing, not model-based. The agent says what kind of work; the har
 | Category | Routes To | Use Case |
 |----------|-----------|----------|
 | `visual-engineering` | Gemini 3.1 Pro | Frontend, UI, design |
-| `deep` | GPT-5.4 | Autonomous research + execution |
+| `deep` | GPT-5.5 | Autonomous research + execution |
 | `quick` | GPT-5.4 Mini | Single-file changes, typos |
-| `ultrabrain` | GPT-5.4 xhigh | Hard logic, architecture decisions |
+| `ultrabrain` | GPT-5.5 | Hard logic, architecture decisions |
 | `ux-design` | Gemini 3.1 Pro | Accessibility review, design patterns |
 
 ## Routing Rules
@@ -128,18 +128,18 @@ The category system reduces this further:
 
 | Agent | Primary | Fallback |
 |-------|---------|----------|
-| Brooks | `openai/gpt-5.4` | — |
-| Jobs | `ollama-cloud/kimi-k2.5` | — |
-| Hightower | `openai/gpt-5.4` | — |
-| Scout | `openai/gpt-5.4-mini` | `ollama-cloud/nemotron-3-super` |
+| Brooks | `openai/gpt-5.5` | `deepseek-v4-pro:cloud` |
+| Jobs | `deepseek-v4-pro:cloud` | `kimi-k2.6:cloud` |
+| Hightower | `openai/gpt-5.5` | `deepseek-v4-pro:cloud` |
+| Scout | `ollama-cloud/nemotron-3-super` | — |
 | Woz | `ollama-cloud/qwen3-coder-next` | — |
-| Bellard | `ollama-cloud/glm-5.1` | — |
-| Carmack | `ollama-cloud/qwen3-coder-next` | — |
-| Fowler | `ollama-cloud/glm-5.1` | — |
-| Knuth | `ollama-cloud/glm-5.1` | — |
+| Bellard | `openai/gpt-5.4-mini` | — |
+| Carmack | `openai/gpt-5.4-mini` | — |
+| Fowler | `openai/gpt-5.5` | — |
+| Knuth | `ollama-cloud/qwen3-coder-next` | — |
 | Pike | `openai/gpt-5.4-mini` | — |
 
-**Global default** (in `opencode.json`): `openai/gpt-5.4`
+**Global default** (in `opencode.json`): `ollama-cloud/glm-5.1`
 
 **Canonical registry:** `.claude/docs/MODEL_REGISTRY.md`
 
@@ -149,29 +149,30 @@ The category system reduces this further:
 
 ```yaml
 routing:
-  - if: agent in [brooks, hightower]
-    use: openai/gpt-5.4
+  - if: agent in [brooks, hightower, fowler]
+    use: openai/gpt-5.5
 
   - if: agent == jobs
-    use: ollama-cloud/kimi-k2.5
+    use: deepseek-v4-pro:cloud
 
-  - if: agent in [scout, pike]
-    use: openai/gpt-5.4-mini
-
-  - if: agent in [woz, carmack]
+  - if: agent in [woz, knuth]
     use: ollama-cloud/qwen3-coder-next
 
-  - if: agent in [bellard, fowler, knuth]
-    use: ollama-cloud/glm-5.1
+  - if: agent in [bellard, carmack, pike]
+    use: openai/gpt-5.4-mini
+
+  - if: agent == scout
+    use: ollama-cloud/nemotron-3-super
 
   # Recovery only uses frontmatter-declared fallbacks
-  - if: agent == scout and primary_unavailable
-    use: ollama-cloud/nemotron-3-super
+  - if: agent in [brooks, hightower] and primary_unavailable
+    use: deepseek-v4-pro:cloud
+
+  - if: agent == jobs and primary_unavailable
+    use: kimi-k2.6:cloud
 ```
 
-Scout-specific fallback: if `openai/gpt-5.4-mini` is unavailable or out of credits, use `ollama-cloud/nemotron-3-super`.
-
-**Key principle:** Woz and Carmack use Qwen3-Coder-Next as their declared primary. Other agents should not switch to it unless their frontmatter changes.
+**Key principle:** Brooks, Hightower, and Fowler use GPT-5.5 as their declared primary. Woz and Knuth use Qwen3-Coder-Next. Bellard, Carmack, and Pike use GPT-5.4-Mini. Scout uses Nemotron-3-Super. Only brooks, hightower, and jobs have frontmatter-declared fallbacks.
 
 ## The Brooksian Principles
 

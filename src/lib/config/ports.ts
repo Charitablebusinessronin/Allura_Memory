@@ -10,7 +10,7 @@ import { randomInt } from "crypto";
 /**
  * Port ranges for different services
  * 
- * - Paperclip (Next.js): 3100-3199
+ * - Allura Dashboard (Next.js): 3100-3199
  * - Allura MCP HTTP Gateway: 3200-3299
  * - PostgreSQL: 5432 (standard, configurable)
  * - Neo4j HTTP: 7474 (standard, configurable)
@@ -18,7 +18,7 @@ import { randomInt } from "crypto";
  * - Dozzle (logs): 8088 (standard, configurable)
  */
 export const PORT_RANGES = {
-  paperclip: { min: 3100, max: 3199, default: 3100 },
+  dashboard: { min: 3100, max: 3199, default: 3100 },
   openclaw: { min: 3200, max: 3299, default: 3200 },
   mcp_http: { min: 3200, max: 3299, default: 3201 },
   postgres: { min: 5400, max: 5499, default: 5432 },
@@ -52,8 +52,8 @@ export function getPort(
     }
   }
 
-  // Check NEXT_PUBLIC_APP_URL for Paperclip
-  if (serviceName === "paperclip") {
+  // Check NEXT_PUBLIC_APP_URL for Allura Dashboard
+  if (serviceName === "dashboard") {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
     if (appUrl) {
       const urlPort = new URL(appUrl).port;
@@ -81,7 +81,7 @@ export function getPort(
  * Port configuration object
  */
 export interface PortConfig {
-  paperclip: number;
+  dashboard: number;
   openclaw: number;
   mcp_http: number;
   postgres: number;
@@ -95,9 +95,9 @@ export interface PortConfig {
  */
 export function getPortConfig(randomize: boolean = false): PortConfig {
   return {
-    paperclip: randomize 
-      ? getRandomPort(PORT_RANGES.paperclip.min, PORT_RANGES.paperclip.max)
-      : getPort("paperclip", "PAPERCLIP_PORT"),
+    dashboard: randomize 
+      ? getRandomPort(PORT_RANGES.dashboard.min, PORT_RANGES.dashboard.max)
+      : getPort("dashboard", "ALLURA_DASHBOARD_PORT"),
     openclaw: randomize
       ? getRandomPort(PORT_RANGES.openclaw.min, PORT_RANGES.openclaw.max)
       : getPort("openclaw", "OPENCLAW_PORT"),
@@ -115,7 +115,7 @@ export function getPortConfig(randomize: boolean = false): PortConfig {
  * Get URLs for services
  */
 export function getServiceUrls(ports?: Partial<PortConfig>): {
-  paperclip: string;
+  dashboard: string;
   openclaw: string;
   mcp_http: string;
   postgres: string;
@@ -126,7 +126,7 @@ export function getServiceUrls(ports?: Partial<PortConfig>): {
   const config = ports ? { ...getPortConfig(), ...ports } : getPortConfig();
   
   return {
-    paperclip: `http://localhost:${config.paperclip}`,
+    dashboard: `http://localhost:${config.dashboard}`,
     openclaw: `http://localhost:${config.openclaw}`,
     mcp_http: `http://localhost:${config.mcp_http}`,
     postgres: `postgresql://${process.env.POSTGRES_USER || "allura"}:${process.env.POSTGRES_PASSWORD || "password"}@localhost:${config.postgres}/${process.env.POSTGRES_DB || "memory"}`,
@@ -140,7 +140,7 @@ export function getServiceUrls(ports?: Partial<PortConfig>): {
  * Environment variable names for ports
  */
 export const PORT_ENV_VARS = {
-  paperclip: "PAPERCLIP_PORT",
+  dashboard: "ALLURA_DASHBOARD_PORT",
   openclaw: "OPENCLAW_PORT",
   mcp_http: "ALLURA_MCP_HTTP_PORT",
   postgres: "POSTGRES_PORT",
@@ -159,7 +159,7 @@ export function generateEnvEntries(randomize: boolean = false): string {
 # =============================================================================
 # Service Ports (auto-generated)
 # =============================================================================
-PAPERCLIP_PORT=${config.paperclip}
+ALLURA_DASHBOARD_PORT=${config.dashboard}
 OPENCLAW_PORT=${config.openclaw}
 ALLURA_MCP_HTTP_PORT=${config.mcp_http}
 POSTGRES_PORT=${config.postgres}
@@ -168,7 +168,7 @@ NEO4J_BOLT_PORT=${config.neo4j_bolt}
 DOZZLE_PORT=${config.dozzle}
 
 # Derived URLs
-NEXT_PUBLIC_APP_URL=http://localhost:${config.paperclip}
+NEXT_PUBLIC_APP_URL=http://localhost:${config.dashboard}
 OPENCLAW_GATEWAY_URL=http://localhost:${config.openclaw}
 ALLURA_MCP_HTTP_URL=http://localhost:${config.mcp_http}
 `.trim();

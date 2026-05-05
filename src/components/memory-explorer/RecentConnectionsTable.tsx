@@ -1,5 +1,7 @@
 "use client"
 
+import { useState } from "react"
+
 const connections = [
   { type: "Evidence",           rel: "supports",    target: "Insight",             firstSeen: "Just now", confidence: 98.4 },
   { type: "Agent Brooks",       rel: "created",     target: "Memory",              firstSeen: "2m ago",   confidence: 94.7 },
@@ -14,17 +16,22 @@ function confidenceColor(v: number) {
   return "var(--allura-orange)"
 }
 
+const TABS = ["LEGEND", "PRESETS", "RECORDS", "CONNECTIONS"] as const
+type Tab = typeof TABS[number]
+
 export function RecentConnectionsTable() {
+  const [activeTab, setActiveTab] = useState<Tab>("CONNECTIONS")
   return (
     <div className="h-full overflow-hidden flex flex-col">
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--allura-border-1)] shrink-0">
         <div className="flex items-center gap-4">
-          {["LEGEND", "PRESETS", "RECORDS", "CONNECTIONS"].map((tab, i) => (
+          {TABS.map((tab) => (
             <button
               key={tab}
-              className={`text-[10px] font-semibold uppercase tracking-widest pb-0.5 ${
-                i === 3
-                  ? "text-[var(--allura-blue)] border-b border-[var(--allura-blue)]"
+              onClick={() => setActiveTab(tab)}
+              className={`text-[10px] font-semibold uppercase tracking-widest pb-0.5 transition-colors duration-150 ${
+                activeTab === tab
+                  ? "text-[var(--allura-blue)] border-b-2 border-[var(--allura-blue)]"
                   : "text-[var(--allura-gray-400)] hover:text-[var(--allura-gray-600)]"
               }`}
             >
@@ -36,7 +43,8 @@ export function RecentConnectionsTable() {
       </div>
 
       <div className="overflow-auto flex-1">
-        <table className="w-full">
+        {activeTab === "CONNECTIONS" && (
+          <table className="w-full">
           <thead>
             <tr className="border-b border-[var(--allura-border-1)]">
               {["Type", "Relationship", "First Seen", "Confidence"].map((h) => (
@@ -67,6 +75,20 @@ export function RecentConnectionsTable() {
             ))}
           </tbody>
         </table>
+        )}
+
+        {activeTab !== "CONNECTIONS" && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--allura-gray-400)]">
+                {activeTab}
+              </p>
+              <p className="text-[10px] text-[var(--allura-gray-400)] mt-1">
+                Coming soon
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
