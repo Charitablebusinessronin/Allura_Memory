@@ -1,11 +1,5 @@
 # Data Dictionary: Allura Data Models
 
-> [!NOTE]
-> **AI-Assisted Documentation**
-> Portions of this document were drafted with the assistance of an AI language model.
-> Content has not yet been fully reviewed — this is a working design reference, not a final specification.
-> When in doubt, defer to the source code, schemas, and team consensus.
-
 This document describes every table and node type in Allura's dual-database data model. PostgreSQL holds episodic memory (append-only event log). Neo4j holds semantic memory (versioned knowledge graph).
 
 ---

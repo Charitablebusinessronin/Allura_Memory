@@ -8,11 +8,21 @@
 
 ---
 
-## Current Sprint State (as of 2026-04-26)
+## Current Sprint State (as of 2026-05-05)
 
 **Epic:** 1 — Persistent Knowledge Capture  
 **Active Story:** 1.2 — TraceMiddleware Integration `[IN PROGRESS]`  
 **Last Completed:** Story 1.1 ✅ RuVix Security Hardening (28/28 tests) · Issue #25 ✅ Real-data Dashboard
+
+### Story → Requirements Traceability Bridge
+
+| Story | Description | F# Satisfied | B# Satisfied | Use Cases |
+|-------|-------------|-------------|-------------|-----------|
+| **1.1** — RuVix Security Hardening | Proof-gated mutation layer; 28/28 tests | F12 · F13 | B6 · B28 | MEM-UC7 |
+| **1.2** — TraceMiddleware Integration | Full HTTP request tracing for agent operations | F1 · F2 · F3 · F26 · F27 · F28 | B1 · B23 | MEM-UC1 · MEM-UC2 |
+| **Issue #25** — Real-data Dashboard | Live Neo4j wired, mock removed | F10 · F11 · F35 · F36 | B5 · B27 | MEM-UC6 · MEM-UC10 |
+
+**Canonical source:** [`docs/allura/REQUIREMENTS-MATRIX.md`](../../../../docs/allura/REQUIREMENTS-MATRIX.md#governed-memory-pipeline-–-business-→-functional-traceability) — B1–B29, F1–F40 with full Satisfied-by evidence.
 
 **Issue #25 — Real-Data Dashboard (COMPLETED 2026-04-26 06:02)**
 - Branch: `feature/real-data-dashboard-25`

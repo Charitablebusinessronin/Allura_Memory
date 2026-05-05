@@ -114,3 +114,48 @@ jobs:
           else
             echo "✅ $HARNESS_COUNT/3 harnesses synchronized"
           fi
+
+      - name: Check for stale documentation
+        run: |
+          echo "🔍 Checking for stale documentation (> 90 days since last update)..."
+          echo "Policy: AI-GUIDELINES.md §8 — flag docs > 90 days old for retrospective review."
+          echo ""
+          
+          STALE_COUNT=0
+          CUTOFF_DATE=$(date -d "90 days ago" +%s)
+          TODAY=$(date +%s)
+          
+          # Check all canonical docs in docs/allura/
+          for doc in docs/allura/*.md; do
+            [ -f "$doc" ] || continue
+            
+            # Extract the last-update date from document footers or git
+            LAST_UPDATED=$(grep -oP "(?:Last updated|Updated|F17–F40.*added)\s*(?:\:\s*)?\K\d{4}-\d{2}-\d{2}" "$doc" 2>/dev/null | tail -1)
+            
+            if [ -z "$LAST_UPDATED" ]; then
+              # Fallback: use git log for last modification date of the file
+              LAST_UPDATED=$(git log -1 --format="%ad" --date=short -- "$doc" 2>/dev/null || echo "unknown")
+            fi
+            
+            if [ "$LAST_UPDATED" != "unknown" ]; then
+              DOC_EPOCH=$(date -d "$LAST_UPDATED" +%s 2>/dev/null || echo 0)
+              DAYS_OLD=$(( (TODAY - DOC_EPOCH) / 86400 ))
+              
+              if [ $DOC_EPOCH -lt $CUTOFF_DATE ]; then
+                echo "⚠️  STALE ($DAYS_OLD days): $doc (last: $LAST_UPDATED)"
+                STALE_COUNT=$((STALE_COUNT + 1))
+              else
+                echo "✅ Fresh ($DAYS_OLD days): $doc (last: $LAST_UPDATED)"
+              fi
+            else
+              echo "❓ Unknown age: $doc"
+            fi
+          done
+          
+          echo ""
+          if [ $STALE_COUNT -gt 0 ]; then
+            echo "📋 $STALE_COUNT stale document(s) found — flagged for next team retrospective."
+            echo "   Non-blocking: this does not fail the build. Review at your convenience."
+          else
+            echo "✅ All canonical documents within 90-day freshness window"
+          fi
