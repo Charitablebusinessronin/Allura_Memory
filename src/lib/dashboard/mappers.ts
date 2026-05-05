@@ -1,6 +1,7 @@
 import type {
   ActivityItem,
   DashboardWarning,
+  DecisionRecord,
   Evidence,
   GraphEdge,
   GraphNode,
@@ -244,6 +245,54 @@ export function mapMetrics(memoryCount: number, pendingInsights: number, approve
     { id: "graph-connections", label: "Graph Connections", value: graphConnections, description: `${memoryCount} memories in tenant scope`, tone: "blue" },
     { id: "failed-promotions", label: "Failed Promotions", value: failedPromotions, description: "Promotion failures in audit trail", tone: failedPromotions > 0 ? "red" : "gold" },
   ]
+}
+
+export function mapDecisionEvent(raw: unknown): DecisionRecord {
+  const event = record(raw)
+  const metadata = record(event.metadata)
+  const eventType = str(event.event_type, "ARCHITECTURE_DECISION")
+
+  // Decision title: prefer metadata.title, then metadata.decision, then format event_type
+  const title = str(
+    metadata.title,
+    str(metadata.decision, eventType.replace(/[_-]+/g, " "))
+  )
+
+  // Summary: prefer metadata.summary, then metadata.description, then metadata.content
+  const summary = str(
+    metadata.summary,
+    str(metadata.description, str(metadata.content, "No summary captured."))
+  )
+
+  // Rationale: prefer metadata.rationale, then metadata.reasoning, then empty
+  const rationale = str(metadata.rationale, str(metadata.reasoning, ""))
+
+  // Status: prefer metadata.status with normalisation, fall back to "decided"
+  const rawStatus = str(metadata.status, "decided").toLowerCase()
+  const status: DecisionRecord["status"] =
+    rawStatus === "proposed" ? "proposed" :
+    rawStatus === "superseded" ? "superseded" :
+    rawStatus === "deferred" ? "deferred" :
+    rawStatus === "decided" ? "decided" :
+    "unknown"
+
+  return {
+    id: String(event.id ?? crypto.randomUUID()),
+    title,
+    summary,
+    rationale,
+    status,
+    agentId: str(event.agent_id, str(metadata.agent_id, "system")),
+    groupId: str(event.group_id, "allura-system"),
+    createdAt: iso(event.created_at),
+    eventType,
+    metadata,
+  }
+}
+
+export function mapDecisionsResponse(raw: unknown): DecisionRecord[] {
+  const payload = record(raw)
+  return (Array.isArray(payload.events) ? payload.events : []).map(mapDecisionEvent)
 }
 
 export function mapGraph(raw: unknown): { nodes: GraphNode[]; edges: GraphEdge[]; totalEdges?: number } {

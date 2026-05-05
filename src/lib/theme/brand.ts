@@ -4,20 +4,20 @@
  * Design system based on the prescribed color palette:
  * - Blue #1D4ED8 (primary, action, trust)
  * - Orange #FF5A2E (secondary, emphasis, urgency)
- * - Green #157A4A (success, approval, positive)
- * - Charcoal #0F1115 (accent, text, depth)
+ * - Green #157A44 (success, approval, positive)
+ * - Charcoal #111827 (accent, text, depth)
  * - Gold #C89B3C (insight, high-value, achievement)
- * - Cream #F6F4EF (background, neutral, soft contrast)
+ * - Cream #F5F1E6 (background, neutral, soft contrast)
  */
 
 // Brand color tokens (hex)
 export const BRAND = {
   blue: "#1D4ED8",
   orange: "#FF5A2E",
-  green: "#157A4A",
-  charcoal: "#0F1115",
+  green: "#157A44",
+  charcoal: "#111827",
   gold: "#C89B3C",
-  cream: "#F6F4EF",
+  cream: "#F5F1E6",
 } as const;
 
 // Brand color CSS variables

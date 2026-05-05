@@ -1,6 +1,7 @@
 "use client"
 
-import type { GraphEdge, GraphNode } from "@/lib/dashboard/types"
+import { Database } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 /**
  * Token Authority for this component:
@@ -12,106 +13,247 @@ import type { GraphEdge, GraphNode } from "@/lib/dashboard/types"
  * - Never use raw hex values or generic shadcn color utilities.
  */
 
-interface NodeDetailPanelProps {
-  node: GraphNode | null
-  edges: GraphEdge[]
-  nodes: GraphNode[]
+export interface NodeData {
+  id: string
+  type: "memory" | "insight" | "evidence" | "agent" | "project"
+  title: string
+  content: string
+  confidence?: number
+  source?: string
+  project?: string
+  agent?: string
+  timestamp?: string
+  evidenceLinks?: Array<{ url: string; label: string }>
+  relatedInsights?: Array<{ id: string; title: string }>
+  graphConnections?: Array<{ nodeId: string; relation: string }>
 }
 
-function formatMetadata(metadata: Record<string, unknown>): Array<[string, string]> {
-  return Object.entries(metadata)
-    .filter(([, v]) => v !== undefined && v !== null && v !== "")
-    .map(([k, v]) => [k, typeof v === "object" ? JSON.stringify(v) : String(v)])
+export interface NodeDetailPanelProps {
+  node?: NodeData | null
+  onViewEvidence?: () => void
+  onPromote?: () => void
+  onSupersede?: () => void
+  onOpenDR?: () => void
+  className?: string
 }
 
-function relativeTime(timestamp: string): string {
-  const now = Date.now()
-  const then = new Date(timestamp).getTime()
-  const diff = now - then
-  if (diff < 60_000) return "just now"
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`
-  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`
-  return `${Math.floor(diff / 86_400_000)}d ago`
+const TYPE_CONFIG: Record<
+  NodeData["type"],
+  { label: string; bgClass: string }
+> = {
+  memory:   { label: "MEMORY",   bgClass: "bg-[var(--allura-blue)] text-white" },
+  insight:  { label: "INSIGHT",  bgClass: "bg-[var(--allura-green)] text-white" },
+  evidence: { label: "EVIDENCE", bgClass: "bg-[var(--allura-gold)] text-white" },
+  agent:    { label: "AGENT",    bgClass: "bg-[var(--allura-orange)] text-white" },
+  project:  { label: "PROJECT",  bgClass: "bg-[var(--dashboard-text-secondary)] text-white" },
 }
 
-export function NodeDetailPanel({ node, edges, nodes }: NodeDetailPanelProps) {
+function formatTimestamp(iso: string): string {
+  try {
+    const d = new Date(iso)
+    const pad = (n: number) => String(n).padStart(2, "0")
+    return (
+      `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ` +
+      `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`
+    )
+  } catch {
+    return iso
+  }
+}
+
+function Divider() {
+  return <div className="h-px w-full bg-[var(--dashboard-border)]" />
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[13px] font-semibold text-[var(--dashboard-text-muted)]">
+      {children}
+    </p>
+  )
+}
+
+export function NodeDetailPanel({
+  node,
+  onViewEvidence,
+  onPromote,
+  onSupersede,
+  onOpenDR,
+  className = "",
+}: NodeDetailPanelProps) {
+  // ── Empty state ──────────────────────────────────────────────────────────
   if (!node) {
     return (
-      <div className="rounded-xl border bg-[var(--dashboard-surface)] p-5 text-center">
-        <p className="text-sm text-[var(--dashboard-text-secondary)]">Select a node to see its relationships.</p>
+      <div
+        className={`flex w-[380px] shrink-0 flex-col items-center justify-center gap-3 rounded-xl border border-[var(--dashboard-border)] bg-[var(--dashboard-surface)] p-8 text-center ${className}`}
+      >
+        <Database
+          size={32}
+          className="text-[var(--dashboard-text-muted)]"
+          strokeWidth={1.5}
+        />
+        <p className="text-[18px] font-semibold text-[var(--dashboard-text-primary)]">
+          Select a node
+        </p>
+        <p className="text-[13px] text-[var(--dashboard-text-muted)]">
+          Click any node in the graph to view details
+        </p>
       </div>
     )
   }
 
-  const nodeMap = new Map(nodes.map((n) => [n.id, n]))
-  const connectedEdges = edges.filter((e) => e.source === node.id || e.target === node.id)
-  const metadata = node.metadata ?? {}
+  const { label: typeLabel, bgClass } = TYPE_CONFIG[node.type]
+
+  const metaRows: Array<{ label: string; value: string }> = [
+    ...(node.confidence !== undefined
+      ? [{ label: "Confidence", value: `${node.confidence}%` }]
+      : []),
+    ...(node.source ? [{ label: "Source", value: node.source }] : []),
+    ...(node.project ? [{ label: "Project", value: node.project }] : []),
+    ...(node.agent ? [{ label: "Agent", value: node.agent }] : []),
+    ...(node.timestamp
+      ? [{ label: "Timestamp", value: formatTimestamp(node.timestamp) }]
+      : []),
+  ]
 
   return (
-    <div className="rounded-xl border bg-[var(--dashboard-surface)] p-5 space-y-5" style={{ fontFamily: "var(--font-ibm-plex-sans)" }}>
-      <div>
-        <h2 className="font-semibold text-[var(--dashboard-text-primary)]">{node.label}</h2>
-        <span className="mt-1 inline-block rounded-full bg-[var(--tone-blue-bg)] px-2 py-0.5 text-xs font-medium text-[var(--tone-blue-text)]">
-          {node.type}
+    <div
+      className={`flex w-[380px] shrink-0 flex-col rounded-xl border border-[var(--dashboard-border)] bg-[var(--dashboard-surface)] overflow-hidden ${className}`}
+    >
+      {/* ── Header (80px) ──────────────────────────────────────────────── */}
+      <div className="flex h-20 shrink-0 flex-col justify-center gap-1.5 px-5">
+        <span
+          className={`inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-wider ${bgClass}`}
+        >
+          {typeLabel}
         </span>
+        <p className="truncate text-[18px] font-semibold leading-snug text-[var(--dashboard-text-primary)]">
+          {node.title}
+        </p>
       </div>
 
-      {Object.keys(metadata).length > 0 && (
-        <div>
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--dashboard-text-secondary)]">Metadata</h3>
-          <dl className="mt-2 space-y-2 text-sm">
-            {formatMetadata(metadata).map(([key, value]) => (
-              <div key={key}>
-                <dt className="text-[var(--dashboard-text-secondary)]">{key}</dt>
-                <dd className="mt-0.5 text-[var(--dashboard-text-primary)]">
-                  {value.length > 200 ? `${value.slice(0, 197)}...` : value}
-                </dd>
+      <Divider />
+
+      {/* ── Metadata rows ──────────────────────────────────────────────── */}
+      {metaRows.length > 0 && (
+        <>
+          <div className="flex flex-col gap-2 px-5 py-4">
+            {metaRows.map(({ label, value }) => (
+              <div key={label} className="flex items-start gap-2 text-[12px]">
+                <span className="w-[120px] shrink-0 text-[var(--dashboard-text-muted)]">
+                  {label}
+                </span>
+                <span className="text-[var(--dashboard-text-primary)]">{value}</span>
               </div>
             ))}
-          </dl>
-        </div>
+          </div>
+          <Divider />
+        </>
       )}
 
-      <div>
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--dashboard-text-secondary)]">
-          Connected To ({connectedEdges.length})
-        </h3>
-        {connectedEdges.length === 0 ? (
-          <p className="mt-2 text-sm text-[var(--dashboard-text-secondary)]">No relationships found for this node.</p>
-        ) : (
-          <div className="mt-2 space-y-2">
-            {connectedEdges.map((edge) => {
-              const isSource = edge.source === node.id
-              const otherId = isSource ? edge.target : edge.source
-              const otherNode = nodeMap.get(otherId)
-              return (
-                <div key={edge.id} className="flex items-center gap-2 rounded-lg border border-[var(--dashboard-border)] p-2 text-sm">
-                  <span className="rounded bg-[var(--tone-blue-bg)] px-1.5 py-0.5 text-[10px] font-semibold uppercase text-[var(--tone-blue-text)]">
-                    {edge.label}
-                  </span>
-                  <span className="text-[var(--dashboard-text-primary)]">
-                    {isSource ? "→" : "←"} {otherNode?.label ?? otherId}
-                  </span>
-                  {otherNode && (
-                    <span className="text-[var(--dashboard-text-secondary)] text-xs">({otherNode.type})</span>
-                  )}
-                  {typeof edge.metadata?.relationship_type === "string" && edge.metadata.relationship_type !== edge.label && (
-                    <span className="text-[var(--dashboard-text-secondary)] text-xs">
-                      [{edge.metadata.relationship_type}]
-                    </span>
-                  )}
-                </div>
-              )
-            })}
+      {/* ── Scrollable body ────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-5 overflow-y-auto px-5 py-4" style={{ scrollbarWidth: "thin" }}>
+
+        {/* Content */}
+        <div className="flex flex-col gap-1.5">
+          <SectionLabel>Content</SectionLabel>
+          <p className="text-[13px] leading-relaxed text-[var(--dashboard-text-primary)]">
+            {node.content}
+          </p>
+        </div>
+
+        {/* Evidence Links */}
+        {node.evidenceLinks && node.evidenceLinks.length > 0 && (
+          <div className="flex flex-col gap-1.5">
+            <SectionLabel>Evidence Links</SectionLabel>
+            <div className="flex flex-col gap-1">
+              {node.evidenceLinks.map((link) => (
+                <a
+                  key={link.url}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[12px] text-[var(--allura-blue)] hover:underline"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Related Insights */}
+        {node.relatedInsights && node.relatedInsights.length > 0 && (
+          <div className="flex flex-col gap-1.5">
+            <SectionLabel>Related Insights</SectionLabel>
+            <div className="flex flex-col gap-1">
+              {node.relatedInsights.map((insight) => (
+                <span
+                  key={insight.id}
+                  className="text-[12px] text-[var(--dashboard-text-muted)]"
+                >
+                  {insight.title}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Graph Connections */}
+        {node.graphConnections && node.graphConnections.length > 0 && (
+          <div className="flex flex-col gap-1.5">
+            <SectionLabel>Graph Connections</SectionLabel>
+            <div className="flex flex-col gap-1">
+              {node.graphConnections.map((conn) => (
+                <span
+                  key={conn.nodeId}
+                  className="text-[12px] text-[var(--dashboard-text-muted)]"
+                >
+                  {conn.relation} → {conn.nodeId}
+                </span>
+              ))}
+            </div>
           </div>
         )}
       </div>
 
-      {"created_at" in metadata && typeof metadata.created_at === "string" && (
-        <p className="text-xs text-[var(--dashboard-text-secondary)]">
-          Created {relativeTime(metadata.created_at)}
-        </p>
-      )}
+      <Divider />
+
+      {/* ── Actions ────────────────────────────────────────────────────── */}
+      <div className="flex flex-wrap gap-2 px-5 py-3">
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={onViewEvidence}
+          className="bg-[var(--dashboard-surface-muted)] text-[var(--dashboard-text-primary)]"
+        >
+          View Evidence
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={onPromote}
+          className="bg-[var(--dashboard-surface-muted)] text-[var(--dashboard-text-primary)]"
+        >
+          Promote
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={onSupersede}
+          className="bg-[var(--dashboard-surface-muted)] text-[var(--dashboard-text-primary)]"
+        >
+          Supersede
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={onOpenDR}
+          className="bg-[var(--dashboard-surface-muted)] text-[var(--dashboard-text-primary)]"
+        >
+          Open DR
+        </Button>
+      </div>
     </div>
   )
 }

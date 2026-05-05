@@ -18,6 +18,7 @@ import { Pagination } from "@/components/ui/pagination"
 import { SearchBar } from "@/components/ui/search-bar"
 import { loadMemories } from "@/lib/dashboard/queries"
 import type { DashboardResult, Memory } from "@/lib/dashboard/types"
+import { useSearchStore } from "@/stores/search/search-store-provider"
 
 const PAGE_SIZE = 10
 
@@ -37,10 +38,13 @@ const sortOptions = [
 
 export default function MemoryFeedPage() {
   const router = useRouter()
-  const [query, setQuery] = useState("")
-  const [typeFilter, setTypeFilter] = useState("all")
+  const query = useSearchStore((s) => s.query)
+  const typeFilter = useSearchStore((s) => s.activeFilter)
+  const page = useSearchStore((s) => s.page)
+  const setQuery = useSearchStore((s) => s.setQuery)
+  const setTypeFilter = useSearchStore((s) => s.setActiveFilter)
+  const setPage = useSearchStore((s) => s.setPage)
   const [sort, setSort] = useState("newest")
-  const [page, setPage] = useState(1)
   const [state, setState] = useState<DashboardResult<Memory[]> | null>(null)
 
   useEffect(() => {

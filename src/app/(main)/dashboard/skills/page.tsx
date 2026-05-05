@@ -1,35 +1,51 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
-import { ArrowUpRight, Brain, CheckCircle2, Clock, Zap } from "lucide-react"
+import { ArrowUpRight, Brain, CheckCircle2, Clock, RefreshCw, Zap } from "lucide-react"
 
-import { PageHeader } from "@/components/dashboard"
+import { ErrorState, LoadingState, PageHeader, WarningList } from "@/components/dashboard"
+import { getHealthMetrics } from "@/lib/dashboard/api"
+import type { DashboardWarning } from "@/lib/dashboard/types"
 
-/* ── Mock skill tracking data ── */
 interface SkillMetric {
-  id: string
-  name: string
-  category: "memory" | "insight" | "graph" | "curator" | "agent"
-  totalCalls: number
-  successRate: number // 0–1
-  avgLatencyMs: number
-  lastUsed: string
+  tool_name: string
+  category: string
+  calls_24h: number
+  success_rate: number
+  avg_latency_ms: number
+  last_used: string | null
   trend: "up" | "down" | "flat"
 }
 
-const skills: SkillMetric[] = [
-  { id: "memory-search", name: "memory_search", category: "memory", totalCalls: 12470, successRate: 0.987, avgLatencyMs: 42, lastUsed: "2026-04-27T12:45:00Z", trend: "up" },
-  { id: "memory-add", name: "memory_add", category: "memory", totalCalls: 8321, successRate: 0.994, avgLatencyMs: 68, lastUsed: "2026-04-27T13:10:00Z", trend: "flat" },
-  { id: "insight-generate", name: "insight_generate", category: "insight", totalCalls: 3450, successRate: 0.912, avgLatencyMs: 1240, lastUsed: "2026-04-27T11:30:00Z", trend: "up" },
-  { id: "graph-query", name: "graph_query", category: "graph", totalCalls: 6780, successRate: 0.965, avgLatencyMs: 156, lastUsed: "2026-04-27T12:58:00Z", trend: "up" },
-  { id: "curator-approve", name: "curator_approve", category: "curator", totalCalls: 1203, successRate: 0.998, avgLatencyMs: 89, lastUsed: "2026-04-27T10:15:00Z", trend: "flat" },
-  { id: "agent-create", name: "agent_create", category: "agent", totalCalls: 452, successRate: 0.876, avgLatencyMs: 320, lastUsed: "2026-04-26T18:22:00Z", trend: "down" },
-  { id: "memory-export", name: "memory_export", category: "memory", totalCalls: 1890, successRate: 0.982, avgLatencyMs: 210, lastUsed: "2026-04-27T09:45:00Z", trend: "up" },
-  { id: "trace-ingest", name: "trace_ingest", category: "insight", totalCalls: 5670, successRate: 0.991, avgLatencyMs: 55, lastUsed: "2026-04-27T13:18:00Z", trend: "flat" },
+type Category = "memory" | "insight" | "graph" | "curator" | "agent"
+
+const categoryMap: Record<string, Category> = {
+  memory_search: "memory",
+  memory_add: "memory",
+  memory_update: "memory",
+  memory_delete: "memory",
+  memory_export: "memory",
+  memory_list: "memory",
+  memory_get: "memory",
+  memory_promote: "memory",
+  insight_generate: "insight",
+  graph_query: "graph",
+  graph_create_relations: "graph",
+  curator_approve: "curator",
+  curator_reject: "curator",
+  agent_create: "agent",
+  agent_update: "agent",
+  trace_ingest: "insight",
+}
+
+const fallbackSkills: SkillMetric[] = [
+  { tool_name: "memory_search", category: "memory", calls_24h: 0, success_rate: 0, avg_latency_ms: 0, last_used: null, trend: "flat" },
+  { tool_name: "memory_add", category: "memory", calls_24h: 0, success_rate: 0, avg_latency_ms: 0, last_used: null, trend: "flat" },
 ]
 
-function relativeTime(ts: string): string {
+function relativeTime(ts: string | null): string {
+  if (!ts) return "—"
   const diff = Date.now() - new Date(ts).getTime()
   if (diff < 60_000) return "just now"
   if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`
@@ -43,7 +59,7 @@ function trendArrow(trend: SkillMetric["trend"]) {
   return <span className="text-[var(--allura-gray-400-text)]">→</span>
 }
 
-function categoryIcon(cat: SkillMetric["category"]) {
+function categoryIcon(cat: Category) {
   switch (cat) {
     case "memory": return <Brain className="size-4" />
     case "insight": return <Zap className="size-4" />
@@ -54,7 +70,7 @@ function categoryIcon(cat: SkillMetric["category"]) {
   }
 }
 
-function categoryLabel(cat: SkillMetric["category"]) {
+function categoryLabel(cat: string): string {
   const map: Record<string, string> = {
     memory: "Memory",
     insight: "Insight",
@@ -65,7 +81,7 @@ function categoryLabel(cat: SkillMetric["category"]) {
   return map[cat] ?? cat
 }
 
-function categoryBadgeClass(cat: SkillMetric["category"]) {
+function categoryBadgeClass(cat: string) {
   switch (cat) {
     case "memory": return "bg-[var(--tone-blue-bg)] text-[var(--tone-blue-text)] border-[var(--allura-blue)]/20"
     case "insight": return "bg-[var(--tone-orange-bg)] text-[var(--tone-orange-text)] border-[var(--allura-orange)]/20"
@@ -77,11 +93,40 @@ function categoryBadgeClass(cat: SkillMetric["category"]) {
 }
 
 export default function SkillsPage() {
-  const [filter, setFilter] = useState<"all" | SkillMetric["category"]>("all")
+  const [skills, setSkills] = useState<SkillMetric[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [warnings, setWarnings] = useState<DashboardWarning[]>([])
+  const [filter, setFilter] = useState<"all" | Category>("all")
 
-  const totalCalls = skills.reduce((sum, s) => sum + s.totalCalls, 0)
-  const avgSuccess = skills.reduce((sum, s) => sum + s.successRate, 0) / skills.length
-  const avgLatency = Math.round(skills.reduce((sum, s) => sum + s.avgLatencyMs, 0) / skills.length)
+  useEffect(() => {
+    let alive = true
+    void (async () => {
+      try {
+        const result = await getHealthMetrics()
+        if (!alive) return
+        const data = result.data as { skills?: SkillMetric[] } | null
+        const rawSkills = data?.skills ?? []
+        const mapped: SkillMetric[] = rawSkills.map((s) => ({
+          ...s,
+          category: categoryMap[s.tool_name] ?? s.category ?? "memory",
+        }))
+        setSkills(mapped.length > 0 ? mapped : fallbackSkills)
+        setWarnings(result.warning ? [{ id: "metrics-warning", source: "metrics", message: result.warning }] : [])
+      } catch (err) {
+        if (!alive) return
+        setError(err instanceof Error ? err.message : "Failed to load skill metrics")
+        setSkills(fallbackSkills)
+      } finally {
+        if (alive) setLoading(false)
+      }
+    })()
+    return () => { alive = false }
+  }, [])
+
+  const totalCalls = skills.reduce((sum, s) => sum + s.calls_24h, 0)
+  const avgSuccess = skills.length > 0 ? skills.reduce((sum, s) => sum + s.success_rate, 0) / skills.length : 0
+  const avgLatency = skills.length > 0 ? Math.round(skills.reduce((sum, s) => sum + s.avg_latency_ms, 0) / skills.length) : 0
   const totalSkills = skills.length
 
   const filtered = filter === "all" ? skills : skills.filter((s) => s.category === filter)
@@ -180,13 +225,13 @@ export default function SkillsPage() {
             </thead>
             <tbody>
               {filtered.map((skill) => (
-                <tr key={skill.id}>
+                <tr key={skill.tool_name}>
                   <td>
                     <div className="flex items-center gap-3">
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--allura-gray-100)] text-[var(--allura-gray-500)]">
-                        {categoryIcon(skill.category)}
+                        {categoryIcon(skill.category as Category)}
                       </div>
-                      <span className="font-medium text-[var(--allura-charcoal)]">{skill.name}</span>
+                      <span className="font-medium text-[var(--allura-charcoal)]">{skill.tool_name}</span>
                     </div>
                   </td>
                   <td>
@@ -195,7 +240,7 @@ export default function SkillsPage() {
                     </span>
                   </td>
                   <td className="text-right font-mono text-sm">
-                    {skill.totalCalls.toLocaleString()}
+                    {skill.calls_24h.toLocaleString()}
                   </td>
                   <td className="text-right">
                     <div className="flex items-center justify-end gap-2">
@@ -203,26 +248,26 @@ export default function SkillsPage() {
                         <div
                           className="h-full rounded-full"
                           style={{
-                            width: `${skill.successRate * 100}%`,
+                            width: `${skill.success_rate * 100}%`,
                             backgroundColor:
-                              skill.successRate >= 0.95
+                              skill.success_rate >= 0.95
                                 ? "var(--allura-green)"
-                                : skill.successRate >= 0.85
+                                : skill.success_rate >= 0.85
                                   ? "var(--allura-gold)"
                                   : "var(--allura-orange)",
                           }}
                         />
                       </div>
                       <span className="font-mono text-xs text-[var(--allura-gray-500)]">
-                        {(skill.successRate * 100).toFixed(1)}%
+                        {(skill.success_rate * 100).toFixed(1)}%
                       </span>
                     </div>
                   </td>
                   <td className="text-right font-mono text-sm text-[var(--allura-gray-500)]">
-                    {skill.avgLatencyMs}ms
+                    {skill.avg_latency_ms}ms
                   </td>
                   <td className="text-right text-sm">{trendArrow(skill.trend)}</td>
-                  <td className="text-sm text-[var(--allura-gray-500)]">{relativeTime(skill.lastUsed)}</td>
+                  <td className="text-sm text-[var(--allura-gray-500)]">{relativeTime(skill.last_used)}</td>
                 </tr>
               ))}
             </tbody>

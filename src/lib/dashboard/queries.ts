@@ -1,6 +1,7 @@
 import {
   getAuditEvents,
   getCuratorProposals,
+  getDecisionEvents,
   getGraph,
   getHealth,
   getHealthMetrics,
@@ -12,6 +13,7 @@ import {
 } from "@/lib/dashboard/api"
 import {
   mapAuditResponse,
+  mapDecisionsResponse,
   mapGraph,
   mapInsightsResponse,
   mapMemoriesResponse,
@@ -22,7 +24,7 @@ import {
   mapTracesResponse,
   warningFrom,
 } from "@/lib/dashboard/mappers"
-import type { DashboardOverview, DashboardResult, Evidence, GraphEdge, GraphNode, Insight, Memory } from "@/lib/dashboard/types"
+import type { DecisionRecord, DashboardOverview, DashboardResult, Evidence, GraphEdge, GraphNode, Insight, Memory } from "@/lib/dashboard/types"
 
 function failure<T>(error: unknown): DashboardResult<T> {
   return {
@@ -165,6 +167,50 @@ export async function loadEvidenceDetail(id: string): Promise<DashboardResult<Ev
     })
     if (!match) return { data: null, error: "Evidence was not found in memory or trace stores.", degraded: false, warnings: [] }
     return { data: mapTraceToEvidence(match), error: null, degraded: traces.degraded, warnings: warningFrom("evidence-traces", traces.warning) }
+  } catch (error) {
+    return failure(error)
+  }
+}
+
+export async function loadDecisions(agentId?: string): Promise<DashboardResult<DecisionRecord[]>> {
+  try {
+    const result = await getDecisionEvents(agentId ? { agent_id: agentId } : undefined)
+    return {
+      data: mapDecisionsResponse(result.data),
+      error: null,
+      degraded: result.degraded,
+      warnings: warningFrom("decisions", result.warning),
+    }
+  } catch (error) {
+    return failure(error)
+  }
+}
+
+export async function loadCuratorQueue(status = "pending"): Promise<DashboardResult<Insight[]>> {
+  try {
+    const [proposals, approved] = await Promise.allSettled([
+      getCuratorProposals({ status: "pending", limit: 50 }),
+      getCuratorProposals({ status: "approved", limit: 20 }),
+    ])
+    const warnings: DashboardResult<Insight[]>["warnings"] = []
+    if (proposals.status === "fulfilled") warnings.push(...warningFrom("proposals", proposals.value.warning))
+    else warnings.push({ id: "proposals-error", source: "proposals", message: proposals.reason instanceof Error ? proposals.reason.message : "Request failed" })
+    if (approved.status === "fulfilled") warnings.push(...warningFrom("approved", approved.value.warning))
+
+    if (status === "pending") {
+      return {
+        data: proposals.status === "fulfilled" ? mapProposalsResponse(proposals.value.data) : [],
+        error: null,
+        degraded: proposals.status === "fulfilled" ? proposals.value.degraded : false,
+        warnings,
+      }
+    }
+    return {
+      data: approved.status === "fulfilled" ? mapProposalsResponse(approved.value.data) : [],
+      error: null,
+      degraded: approved.status === "fulfilled" ? approved.value.degraded : false,
+      warnings,
+    }
   } catch (error) {
     return failure(error)
   }

@@ -49,6 +49,29 @@ Parse the arguments. Default mode is **build**.
 1. Run `ralph --status` via Bash to show current loop status
 2. Read `ralph/IMPLEMENTATION_PLAN.md` and summarize progress
 
+## ContextScout + Skill Gate (MANDATORY)
+
+Ralph MUST NOT execute any build task unless this gate passes:
+
+```json
+{
+  "context_loaded": true,
+  "context_files": [],
+  "brain_memories_checked": true,
+  "required_skills": [],
+  "skills_loaded": [],
+  "validation_commands": []
+}
+```
+
+**Failure conditions — Ralph MUST refuse:**
+- No Scout context loaded (steps ①+② not completed)
+- Missing required skill (step ③ not resolved)
+- Stale context without acknowledgment
+- Missing validation command (step ⑤ not identified)
+
+**On gate failure:** Ralph reports which gate failed and stops. Do not proceed.
+
 ## Allura Rules (NON-NEGOTIABLE)
 
 These rules apply in ALL modes:
@@ -60,6 +83,7 @@ These rules apply in ALL modes:
 5. **Neo4j versioning** — use SUPERSEDES, never edit existing nodes
 6. **HITL required** — never autonomously promote to Neo4j without curator flow
 7. **MCP_DOCKER tools only** — never docker exec for database operations
+8. **Scout-first** — no implementation without Scout context loaded first
 
 ## Key Principles
 

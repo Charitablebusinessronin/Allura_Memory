@@ -86,6 +86,12 @@ export function getAuditEvents(params?: Record<string, QueryValue>) {
   )
 }
 
+export function getDecisionEvents(params?: Record<string, QueryValue>) {
+  return readJson<{ events?: unknown[]; pagination?: { total?: number; has_more?: boolean } }>(
+    `/api/audit/events?${withGroupId({ event_type: "ARCHITECTURE_DECISION", limit: 50, ...params }).toString()}`
+  )
+}
+
 export function getHealth() {
   return readJson<unknown>("/api/health?detailed=true")
 }

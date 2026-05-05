@@ -1,6 +1,13 @@
 # Agent Directory
 
-This file defines the **live agent surface** for the Team RAM OpenCode Harness.
+This file defines the **live agent surface** for the Team RAM OpenCode Harness,
+restored on the **OAC Core + Allura Overlay** architecture.
+
+## Architecture Principle
+
+> **OAC Core:** Context-first, plan-first, validation-first.
+> **Allura Overlay:** Team RAM personas, Brain memory, governance, HITL, Brooks orchestration.
+> **Memory supplements context; it does not replace it.**
 
 ## Canonical Rule
 
@@ -20,6 +27,48 @@ The flat files in `.opencode/agent/` are the only live agent definitions in this
 └── hightower.md
 ```
 
+## ContextScout First Gate (MANDATORY)
+
+Every implementation task must follow this execution sequence:
+
+```
+User task
+  ↓
+① Scout loads local .opencode/context files
+  ↓
+② Scout searches Allura Brain for prior decisions/blockers
+  ↓
+③ Skill resolver identifies required skills
+  ↓
+④ Builder executes with loaded context + skills
+  ↓
+⑤ Validation passes before done
+```
+
+**No agent may skip step ①.** Ralph, Woz, and all builders must have Scout context
+loaded before writing implementation code.
+
+## Ralph Skill Gate (MANDATORY)
+
+Ralph may not execute unless this gate passes:
+
+```json
+{
+  "context_loaded": true,
+  "context_files": [],
+  "brain_memories_checked": true,
+  "required_skills": [],
+  "skills_loaded": [],
+  "validation_commands": []
+}
+```
+
+**Failure conditions (Ralph MUST refuse):**
+- No Scout context loaded
+- Missing required skill
+- Stale context without acknowledgment
+- Missing validation command
+
 ## Team RAM
 
 | Agent | Persona | Role |
@@ -27,7 +76,7 @@ The flat files in `.opencode/agent/` are the only live agent definitions in this
 | Brooks | Frederick P. Brooks Jr. | Architecture and orchestration |
 | Jobs | Steve Jobs | Intent gate and scope owner |
 | Woz | Steve Wozniak | Primary builder |
-| Scout | Utility role | Discovery and recon |
+| Scout | Utility role | Discovery and recon (ContextScout) |
 | Pike | Rob Pike | Interface simplicity |
 | Fowler | Martin Fowler | Refactor safety |
 | Bellard | Fabrice Bellard | Deep diagnostics |
@@ -35,16 +84,40 @@ The flat files in `.opencode/agent/` are the only live agent definitions in this
 | Knuth | Donald Knuth | Data and schema |
 | Hightower | Kelsey Hightower | Infra and deployment |
 
-## Legacy Rule
+## Team RAM as Overlay
 
-Nested agent files under `agent/core/` and `agent/subagents/` are legacy reference material unless explicitly revived.
+Team RAM personas consume OAC context — they do not replace it.
 
-They are **not** the active harness surface.
+- **Brooks** = architecture/orchestration (consumes context/system/, context/workflows/)
+- **Scout** = ContextScout + Brain retrieval (consumes context/core/, Brain search)
+- **Woz** = builder (consumes context/development/, standards/)
+- **Pike** = interface review (consumes context/ui/, design-systems/)
+- **Fowler** = refactor gate (consumes context/core/workflows/code-review/)
+- **Knuth** = data/schema (consumes context/development/data/)
+- **Hightower** = infra (consumes context/development/infrastructure/)
+- **Bellard/Carmack** = diagnostics/performance (consumes context/core/standards/)
 
-## Editing Rules
+## Skill Assignment Matrix
 
-1. Edit live agent behavior in `.opencode/agent/*.md`.
-2. Do not treat nested legacy agent files as active.
-3. Do not create a second live naming scheme.
-4. Team RAM names are the public surface of the harness.
-5. Every live agent file must include an instruction boundary.
+| Owner / Path | Required skills | Optional / routed skills | Notes |
+| --- | --- | --- | --- |
+| All agents | `allura-memory-skill` | `systematic-debugging`, `code-review` | Memory governance is mandatory. |
+| Brooks | `party-mode`, `skill-creator`, `mcp-harness` | `task-creator`, UI/design skills for routing | Brooks orchestrates; he routes, doesn't hoard. |
+| Scout | `allura-memory-skill`, `multi-search`, `perplexica-mcp`, `mcp-docker` | `context7` via MCP Docker | Scout owns Brain/search recon and context discovery. |
+| Woz | `frontend-craft`, `shadcn`, `task-management`, `varlock`, `code-review` | `frontend-design` when implementing approved UI | Woz builds with loaded context. |
+| Design/UI path | `frontend-design`, `frontend-craft`, `allura-design`, `huashu-design`, `shadcn` | `allura-memory-skill` for brand/context | Applies to UI/design agents. |
+| Hightower | `mcp-docker`, `mcp-harness`, `varlock` | `perplexica-mcp` for infra research | Hightower owns deployability and secrets. |
+
+## Execution Rule
+
+**Scout before build. Skills before Ralph. Validate before done.**
+
+## Source of Truth
+
+- `.opencode/manifest.json` — Machine-readable architecture manifest
+- `.opencode/SKILL-OWNERSHIP.md` — Skill ownership matrix
+- `.opencode/config.json` — Top-level OpenCode configuration
+- `.opencode/agent/` — Active Team RAM agent definitions
+- `.opencode/command/` — Reusable workflow commands
+- `.opencode/skills/` — Skill definitions and supporting assets
+- `.opencode/config/` — Registry and harness metadata

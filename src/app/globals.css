@@ -105,10 +105,10 @@ These serve as the fallback; there is no separate default.css file. */
    /* Allura brand tokens */
    --brand-blue: #1D4ED8;
    --brand-orange: #FF5A2E;
-   --brand-green: #157A4A;
-   --brand-charcoal: #0F1115;
+   --brand-green: #157A44;
+   --brand-charcoal: #111827;
    --brand-gold: #C89B3C;
-   --brand-cream: #F6F4EF;
+   --brand-cream: #F5F1E6;
 }
 
 .dark {
@@ -155,10 +155,10 @@ These serve as the fallback; there is no separate default.css file. */
    /* Allura brand tokens */
    --brand-blue: #1D4ED8;
    --brand-orange: #FF5A2E;
-   --brand-green: #157A4A;
-   --brand-charcoal: #0F1115;
+   --brand-green: #157A44;
+   --brand-charcoal: #111827;
    --brand-gold: #C89B3C;
-   --brand-cream: #F6F4EF;
+   --brand-cream: #F5F1E6;
 }
 
 @layer base {

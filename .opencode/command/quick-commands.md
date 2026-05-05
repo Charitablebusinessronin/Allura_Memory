@@ -30,6 +30,30 @@ Type these directly in your IDE for fast access to common Team RAM harness workf
 | `/query <term>` | Search memory (Allura Brain, if enabled) | `query` |
 | `/update <target>` | Log a short update | `quick-update` |
 | `/party <task>` | Parallel specialist collaboration | `party-mode` |
+| `/intent-gate <request>` | Classify intent before routing | `intent-gate` |
+| `/ulw <request>` | Governed ultrawork execution | `ulw` |
+| `/ralph <mode>` | Ralph gated loop iteration | `ralph` |
+
+## Vertical Brooks Menu
+
+```text
+WS      Status
+ST      Start
+CH      Chat
+DG      Define Goal
+SK      Skill Create
+VA      Validate Architecture
+CA      Create Architecture
+NX      Next Steps
+NX→R    Ralph Loop
+NX→S    Structure Intent
+PM      Party Mode
+GO      Execute
+DA      Exit
+MH      Menu
+```
+
+`NX→R` means Ralph Loop execution path. If only drafting a command, label it **Ralph Preview**.
 
 ## Team RAM Agent Shortcuts
 

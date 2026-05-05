@@ -78,6 +78,32 @@ export function MetricCardsSkeleton() {
   )
 }
 
+export function SystemStatusSkeleton() {
+  return (
+    <div className="space-y-3" role="status" aria-live="polite" aria-busy="true">
+      <span className="sr-only">Loading system status</span>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div
+          key={i}
+          className="rounded-xl border border-[var(--dashboard-border)] bg-[var(--dashboard-surface)] p-5"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-8 w-8 rounded-full bg-[var(--dashboard-surface-muted)]" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-32 rounded bg-[var(--dashboard-surface-muted)]" />
+                <Skeleton className="h-3 w-48 rounded bg-[var(--dashboard-surface-muted)]" />
+              </div>
+            </div>
+            <Skeleton className="h-6 w-20 rounded-full bg-[var(--dashboard-surface-muted)]" />
+          </div>
+          <Skeleton className="mt-4 h-2 w-full rounded-full bg-[var(--dashboard-surface-muted)]" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function OverviewSkeleton() {
   return (
     <div className="space-y-8" role="status" aria-live="polite" aria-busy="true">

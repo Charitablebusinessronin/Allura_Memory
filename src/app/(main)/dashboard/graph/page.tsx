@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useNodeStore } from "@/stores/node/node-store-provider"
 import {
   EmptyState,
   ErrorState,
@@ -20,8 +21,10 @@ const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), { ssr: false 
 
 export default function GraphPage() {
   const [state, setState] = useState<DashboardResult<{ nodes: GraphNode[]; edges: GraphEdge[]; totalEdges?: number }> | null>(null)
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
-  const [hoverNodeId, setHoverNodeId] = useState<string | null>(null)
+  const selectedNodeId = useNodeStore(s => s.selectedNodeId)
+  const hoverNodeId = useNodeStore(s => s.hoverNodeId)
+  const setSelectedNodeId = useNodeStore(s => s.setSelectedNodeId)
+  const setHoverNodeId = useNodeStore(s => s.setHoverNodeId)
   const [filterTypes, setFilterTypes] = useState<Set<string>>(new Set())
   const graphRef = useRef<any>(null)
 
@@ -191,7 +194,7 @@ export default function GraphPage() {
                 linkWidth={() => 1}
                 linkDirectionalArrowLength={0}
                 backgroundColor="transparent"
-                onNodeClick={(node: any) => setSelectedNodeId((prev) => (prev === node.id ? null : node.id))}
+                onNodeClick={(node: any) => setSelectedNodeId(selectedNodeId === node.id ? null : node.id)}
                 onNodeHover={(node: any) => setHoverNodeId(node?.id ?? null)}
                 warmupTicks={20}
                 cooldownTicks={50}
@@ -226,7 +229,25 @@ export default function GraphPage() {
                     ✕
                   </button>
                 </div>
-                <NodeDetailPanel node={selectedNode} edges={state.data?.edges ?? []} nodes={state.data?.nodes ?? []} />
+                <NodeDetailPanel
+                    node={
+                      (selectedNode.type === "memory" ||
+                       selectedNode.type === "insight" ||
+                       selectedNode.type === "agent" ||
+                       selectedNode.type === "project")
+                        ? {
+                            id: selectedNode.id,
+                            type: selectedNode.type as "memory" | "insight" | "agent" | "project",
+                            title: selectedNode.label,
+                            content: typeof selectedNode.metadata?.content === "string" ? selectedNode.metadata.content : "",
+                            source: typeof selectedNode.metadata?.source === "string" ? selectedNode.metadata.source : undefined,
+                            project: typeof selectedNode.metadata?.project === "string" ? selectedNode.metadata.project : undefined,
+                            agent: typeof selectedNode.metadata?.agent === "string" ? selectedNode.metadata.agent : undefined,
+                            timestamp: typeof selectedNode.metadata?.created_at === "string" ? selectedNode.metadata.created_at : undefined,
+                          }
+                        : null
+                    }
+                  />
               </div>
             )}
           </div>

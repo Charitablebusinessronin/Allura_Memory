@@ -11,14 +11,22 @@
 ```
 core/
 ├── navigation.md
+├── architecture.md
 ├── context-system.md
 ├── essential-patterns.md
+├── security.md
+├── standards.md
+├── testing.md
 │
 ├── standards/
 │   ├── navigation.md
+│   ├── code.md
 │   ├── code-quality.md
+│   ├── docs.md
+│   ├── tests.md
 │   ├── test-coverage.md
 │   ├── documentation.md
+│   ├── typescript.md
 │   ├── security-patterns.md
 │   └── code-analysis.md
 │
@@ -64,9 +72,14 @@ core/
 
 | Task | Path |
 |------|------|
-| **Write code** | `standards/code-quality.md` |
-| **Write tests** | `standards/test-coverage.md` |
-| **Write docs** | `standards/documentation.md` |
+| **Architecture** | `architecture.md` |
+| **Security** | `security.md` |
+| **Testing** | `testing.md` |
+| **Standards** | `standards.md` |
+| **Write code** | `standards/code.md` → `standards/code-quality.md` |
+| **Write tests** | `standards/tests.md` → `standards/test-coverage.md` |
+| **Write docs** | `standards/docs.md` → `standards/documentation.md` |
+| **TypeScript** | `standards/typescript.md` |
 | **Security patterns** | `standards/security-patterns.md` |
 | **Review code** | `workflows/code-review.md` |
 | **Delegate task** | `workflows/task-delegation-basics.md` |

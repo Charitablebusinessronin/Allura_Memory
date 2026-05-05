@@ -14,25 +14,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { sidebarItems, type NavMainItem } from "@/navigation/sidebar/sidebar-items";
 import { ThemeSwitcher } from "./theme-switcher";
-
-interface NavItem {
-  title: string;
-  url: string;
-  icon: string; // single-char icon glyph
-}
-
-const navMain: NavItem[] = [
-  { title: "Overview", url: "/dashboard", icon: "⌂" },
-  { title: "Memory Feed", url: "/dashboard/feed", icon: "▤" },
-  { title: "Graph", url: "/dashboard/graph", icon: "◎" },
-  { title: "Insights", url: "/dashboard/insights", icon: "✦" },
-  { title: "Evidence", url: "/dashboard/evidence", icon: "▧" },
-  { title: "Agents", url: "/dashboard/agents", icon: "♙" },
-  { title: "Projects", url: "/dashboard/projects", icon: "□" },
-  { title: "Skills", url: "/dashboard/skills", icon: "⚡" },
-  { title: "Settings", url: "/dashboard/settings", icon: "⚙" },
-];
 
 function AgencyLogo() {
   const { state } = useSidebar();
@@ -47,18 +30,16 @@ function AgencyLogo() {
       data-testid="allura-logo"
     >
       {isCollapsed ? (
-        /* Collapsed: Show the Allura mark icon */
         <img
           src="/design/mark-icon-128.png"
           alt="Allura mark"
-          className="h-8 w-8 object-contain rounded-md"
+          className="h-8 w-8 rounded-md object-contain"
           width={32}
           height={32}
         />
       ) : (
-        /* Expanded: Show the full Allura wordmark */
         <img
-          src="/design/Wordmark.png"
+          src="/design/mark-logo.png"
           alt="Allura"
           className="h-9 w-auto object-contain"
           width={120}
@@ -69,13 +50,9 @@ function AgencyLogo() {
   );
 }
 
-function NavLink({
-  item,
-  isActive,
-}: {
-  item: NavItem;
-  isActive: boolean;
-}) {
+function NavLink({ item, isActive }: { item: NavMainItem; isActive: boolean }) {
+  const Icon = item.icon;
+
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
@@ -84,15 +61,17 @@ function NavLink({
         className={cn(
           "group/menu-item relative flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
           "text-[var(--dashboard-text-secondary)] hover:bg-[color-mix(in_srgb,var(--allura-blue)_8%,white)] hover:text-[var(--allura-charcoal)] focus-visible:ring-2 focus-visible:ring-[var(--allura-blue)]",
-          isActive &&
-            "bg-[color-mix(in_srgb,var(--allura-blue)_10%,white)] text-[var(--allura-blue)] font-semibold"
+          isActive && "bg-[color-mix(in_srgb,var(--allura-blue)_10%,white)] text-[var(--allura-blue)] font-semibold"
         )}
       >
         <Link prefetch={false} href={item.url} aria-current={isActive ? "page" : undefined}>
-          <span className="text-base leading-none w-5 text-center shrink-0">
-            {item.icon}
-          </span>
+          {Icon && <Icon className="size-5 shrink-0" />}
           <span>{item.title}</span>
+          {item.isNew && (
+            <span className="ml-auto rounded-full bg-[var(--allura-orange)] px-1.5 py-0.5 text-[10px] font-semibold text-white">
+              New
+            </span>
+          )}
           {isActive && (
             <div className="absolute inset-y-2 -left-0.5 w-[3px] rounded-full bg-[var(--allura-orange)]" />
           )}
@@ -126,28 +105,37 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent className="px-3 py-2" role="navigation" aria-label="Dashboard navigation">
-        <SidebarMenu className="gap-0.5">
-          {navMain.map((item) => (
-            <NavLink
-              key={item.url}
-              item={item}
-              isActive={isItemActive(item.url)}
-            />
-          ))}
-        </SidebarMenu>
+        {sidebarItems.map((group) => (
+          <div key={group.id} className="mb-2">
+            {group.label && (
+              <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--dashboard-text-muted)]">
+                {group.label}
+              </p>
+            )}
+            <SidebarMenu className="gap-0.5">
+              {group.items.map((item) => (
+                <NavLink
+                  key={item.url}
+                  item={item}
+                  isActive={isItemActive(item.url)}
+                />
+              ))}
+            </SidebarMenu>
+          </div>
+        ))}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-[var(--allura-gray-200)] px-3 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 rounded-lg px-3 py-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--allura-blue)] text-white text-xs font-semibold shrink-0">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--allura-blue)] text-xs font-semibold text-white">
               U
             </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-sm font-medium text-[var(--allura-charcoal)] truncate">
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate text-sm font-medium text-[var(--allura-charcoal)]">
                 User
               </span>
-              <span className="text-xs text-[var(--allura-gray-400-text)] truncate">
+              <span className="truncate text-xs text-[var(--allura-gray-400-text)]">
                 admin@allura.ai
               </span>
             </div>

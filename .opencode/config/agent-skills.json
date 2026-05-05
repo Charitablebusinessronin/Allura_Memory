@@ -6,7 +6,10 @@
       "allura-memory-skill",
       "skill-creator",
       "code-review",
-      "context7"
+      "party-mode",
+      "mcp-harness",
+      "security-bluebook-builder",
+      "task-creator"
     ],
     "knuth-data-architect": [
       "mcp-docker",
@@ -17,7 +20,11 @@
     "woz-builder": [
       "mcp-docker",
       "allura-memory-skill",
-      "code-review"
+      "code-review",
+      "frontend-craft",
+      "shadcn",
+      "task-management",
+      "varlock"
     ],
     "jobs-intent-gate": [
       "mcp-docker",
@@ -27,7 +34,10 @@
     "hightower-devops": [
       "mcp-docker",
       "allura-memory-skill",
-      "next-best-practices"
+      "next-best-practices",
+      "mcp-harness",
+      "varlock",
+      "perplexica-mcp"
     ],
     "carmack-performance": [
       "mcp-docker",
@@ -51,13 +61,17 @@
     "scout-recon": [
       "mcp-docker",
       "allura-memory-skill",
-      "context7",
-      "multi-search"
+      "multi-search",
+      "perplexica-mcp"
     ],
     "mizko-ui": [
       "mcp-docker",
       "allura-memory-skill",
-      "allura-design"
+      "frontend-design",
+      "frontend-craft",
+      "allura-design",
+      "huashu-design",
+      "shadcn"
     ]
   }
 }

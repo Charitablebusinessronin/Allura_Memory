@@ -18,12 +18,12 @@ export const tokens = {
       hover: "#E04D1F",
     },
     success: {
-      default: "#157A4A",
+      default: "#157A44",
       hover: "#166534",
     },
     surface: {
       default: "#FFFFFF",
-      subtle: "#F6F4EF",
+      subtle: "#F5F1E6",
       muted: "#F3F4F6",
     },
     border: {
@@ -31,7 +31,7 @@ export const tokens = {
       default: "#D1D5DB",
     },
     text: {
-      primary: "#0F1115",
+      primary: "#111827",
       secondary: "#6B7280",
       muted: "#9CA3AF",
       inverse: "#FFFFFF",
@@ -39,13 +39,13 @@ export const tokens = {
     accent: {
       gold: "#C89B3C",
       goldHover: "#A87D2B",
-      cream: "#F6F4EF",
+      cream: "#F5F1E6",
     },
     graph: {
       agent: "#1D4ED8",
       project: "#C89B3C",
-      outcome: "#157A4A",
-      event: "#0F1115",
+      outcome: "#157A44",
+      event: "#111827",
       insight: "#FF5A2E",
       memory: "#9CA3AF",
       edge: "#9CA3AF",
