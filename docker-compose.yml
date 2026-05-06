@@ -12,14 +12,14 @@
 #   docker-compose.enterprise.yml         — enterprise/multi-tenant overlay only
 #   archive/sovereign-memory-mvp/*        — archived MVP, historical reference only
 #
-# To start the full stack:
-#   docker compose up -d
+# To start the full stack (with secrets from .env.local):
+#   docker compose --env-file .env --env-file .env.local up -d
 # To check service health:
 #   docker compose ps
 # To rebuild all containers with current env:
-#   docker compose build --no-cache
+#   docker compose --env-file .env --env-file .env.local build --no-cache
 # To restart containers and reload env:
-#   docker compose restart mcp http-gateway && docker compose logs -f mcp
+#   docker compose --env-file .env --env-file .env.local restart mcp http-gateway && docker compose --env-file .env --env-file .env.local logs -f mcp
 
 # =============================================================================
 # Environment Variable Standardization (v2.2.0)
@@ -30,6 +30,11 @@
 # 2. env_file: .env.local  — Local secrets/overrides (NOT in git)
 #    - .env.local is intentionally .gitignored (see .gitignore)
 #    - It takes precedence: values in .env.local override .env
+#
+# IMPORTANT: Docker Compose reads .env for YAML ${VAR} substitution by default.
+# .env.local is NOT automatically read for YAML interpolation — only for
+# container runtime via env_file directives. To get secrets into YAML
+# substitution, you MUST use: docker compose --env-file .env --env-file .env.local
 #
 # MCP Container Loading Order:
 #   1. .env (base config from repo)
@@ -42,7 +47,10 @@
 #   - Container restarts trigger env_file re-evaluation
 #
 # To verify env loading in MCP container:
-#   docker compose exec mcp env | grep -E '(POSTGRES|NEO4J|OLLAMA)'
+#   docker compose --env-file .env --env-file .env.local exec mcp env | grep -E '(POSTGRES|NEO4J|OLLAMA|RUVIX)'
+#
+# To verify secrets are NOT in .env (committed file):
+#   grep -E '(PASSWORD|SECRET|API_KEY)' .env  # Should only show placeholders
 #
 # To rebuild with current env (critical after .env changes):
 #   docker compose down
