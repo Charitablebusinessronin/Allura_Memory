@@ -96,15 +96,6 @@ mcp__MCP_DOCKER__mcp-add("server-name")
 | `MCP_DOCKER__find_memories_by_name` | Neo4j exact name lookup |
 | `MCP_DOCKER__read_graph` | Neo4j full graph read |
 
-### Design (Penpot)
-| Tool | Use |
-|------|-----|
-| `penpot-mcp__execute_code` | Execute JS in Penpot plugin context |
-| `penpot-mcp__export_shape` | Export shape as PNG/SVG |
-| `penpot-mcp__import_image` | Import image into Penpot |
-| `penpot-mcp__high_level_overview` | Penpot API overview |
-| `penpot-mcp__penpot_api_info` | Penpot API type docs |
-
 ### Notion
 | Tool | Use |
 |------|-----|
