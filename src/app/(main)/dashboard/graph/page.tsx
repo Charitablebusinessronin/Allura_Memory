@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { useNodeStore } from "@/stores/node/node-store-provider"
 import {
   EmptyState,
   ErrorState,
@@ -13,9 +12,10 @@ import {
   PageHeader,
   WarningList,
 } from "@/components/dashboard"
-import { loadGraph } from "@/lib/dashboard/queries"
 import { getGraphNodeColor, getGraphNodeRadius, getResolvedColor } from "@/lib/brand/allura"
+import { loadGraph } from "@/lib/dashboard/queries"
 import type { DashboardResult, GraphEdge, GraphNode } from "@/lib/dashboard/types"
+import { useNodeStore } from "@/stores/node/node-store-provider"
 
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), { ssr: false })
 

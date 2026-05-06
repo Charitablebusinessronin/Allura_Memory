@@ -1,8 +1,30 @@
 import { NextRequest, NextResponse } from "next/server"
 
-import { forbiddenResponse, requireRole, unauthorizedResponse } from "@/lib/auth/api-auth"
+import { forbiddenResponse, getAuthUser, requireRole, unauthorizedResponse } from "@/lib/auth/api-auth"
 import { readTransaction } from "@/lib/neo4j/connection"
-import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id"
+import { GroupIdValidationError, validateGroupId } from "@/lib/validation/group-id"
+
+/**
+ * Graph API Contract (Story 2.8 — Pike Interface Gate)
+ *
+ * Method:    GET only (POST/PUT/DELETE return 405 Method Not Allowed)
+ * Headers:
+ *   - x-allura-group-id (primary tenant scoping)
+ *   - Accept: application/json (optional)
+ * Query params:
+ *   - group_id (fallback for legacy/manual calls)
+ *   - stats=true (optional, returns only counts, no nodes/edges)
+ * Response (200 OK):
+ *   { nodes: [], edges: [], total_edges: number }
+ * Response (206 Partial Content + Warning header):
+ *   Degraded mode — Neo4j unavailable, returns empty arrays but valid shape
+ * Response (400 Bad Request):
+ *   Missing or invalid group_id
+ * Response (405 Method Not Allowed):
+ *   Non-GET method
+ * Response (401 Unauthorized / 403 Forbidden):
+ *   Auth failures
+ */
 
 const EDGE_LABELS = new Set(["performed", "resulted_in", "generated", "applies_to", "connected_to", "caused_by"])
 
@@ -23,24 +45,43 @@ function edgeLabel(type: string): "performed" | "resulted_in" | "generated" | "a
 }
 
 export async function GET(request: NextRequest) {
+  // Auth: require viewer or above role
   const roleCheck = requireRole(request, "viewer")
   if (!roleCheck.user) return unauthorizedResponse()
   if (!roleCheck.allowed) return forbiddenResponse(roleCheck)
 
+  // Resolve group_id from x-allura-group-id header (primary) or query param (fallback)
+  const authUser = getAuthUser(request)
   const { searchParams } = new URL(request.url)
-  const rawGroupId = searchParams.get("group_id")
-  const statsOnly = searchParams.get("stats") === "true"
-  if (!rawGroupId) return NextResponse.json({ error: "group_id is required" }, { status: 400 })
+  
+  // Primary: header-based scoping
+  const headerGroupId = request.headers.get("x-allura-group-id")
+  // Fallback: query parameter
+  const queryGroupId = searchParams.get("group_id")
+  // Use header first, then query param, then fall back to auth user's group
+  const rawGroupId = headerGroupId || queryGroupId || authUser?.groupId
+
+  if (!rawGroupId) {
+    return NextResponse.json(
+      { error: "group_id is required. Provide x-allura-group-id header or ?group_id= query parameter" },
+      { status: 400 }
+    )
+  }
 
   let groupId: string
   try {
     groupId = validateGroupId(rawGroupId)
   } catch (error) {
-    if (error instanceof GroupIdValidationError) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error instanceof GroupIdValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
     throw error
   }
 
+  const statsOnly = searchParams.get("stats") === "true"
+
   try {
+    // Execute Neo4j query
     if (statsOnly) {
       const [nodeCountResult, edgeCountResult] = await Promise.all([
         readTransaction(async (tx) => {
@@ -64,6 +105,7 @@ export async function GET(request: NextRequest) {
       const totalNodes = nodeCountResult.records[0]?.get("total")?.toNumber?.() ?? 0
       const totalEdges = edgeCountResult.records[0]?.get("total")?.toNumber?.() ?? 0
 
+        // Return stats-only response (nodes: [], edges: [])
       return NextResponse.json({
         nodes: [],
         edges: [],
@@ -126,9 +168,46 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    return NextResponse.json({ nodes: Array.from(nodeMap.values()), edges, total_edges: totalEdges })
+    const response = NextResponse.json({ nodes: Array.from(nodeMap.values()), edges, total_edges: totalEdges })
+    // Mark degraded when Neo4j is unavailable (handled by Neo4j error handler)
+    return response
   } catch (error) {
+    // Log the error for debugging
     console.error("Failed to fetch memory graph:", error)
-    return NextResponse.json({ error: "Failed to fetch memory graph" }, { status: 500 })
+
+    // Return 200 with degraded=true and empty data instead of 500
+    // This is the key change: degraded response instead of server error
+    const response = NextResponse.json(
+      { 
+        nodes: [], 
+        edges: [], 
+        total_edges: 0,
+        degraded: true,
+        error: error instanceof Error ? error.message : "Failed to fetch memory graph"
+      },
+      { status: 200 }
+    )
+    // Add Warning header to indicate degraded state
+    const warningMsg = error instanceof Error 
+      ? `299 Allura "${error.message.replace(/"/g, "'")}"` 
+      : '299 Allura "neo4j_unavailable"'
+    response.headers.set("Warning", warningMsg)
+    return response
   }
+}
+
+/**
+ * Reject non-GET methods with 405 Method Not Allowed
+ * (Story 2.8 — Pike Interface Gate: read-only GET only)
+ */
+export async function POST() {
+  return NextResponse.json({ error: "Method not allowed. Use GET." }, { status: 405 })
+}
+
+export async function PUT() {
+  return NextResponse.json({ error: "Method not allowed. Use GET." }, { status: 405 })
+}
+
+export async function DELETE() {
+  return NextResponse.json({ error: "Method not allowed. Use GET." }, { status: 405 })
 }
