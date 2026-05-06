@@ -3,6 +3,7 @@
  * Story 3.2: Enforce Kmax and budget limits with immediate halt
  */
 
+import { BudgetMonitor, createBudgetMonitor } from "./monitor";
 import type {
   BudgetBreach,
   BudgetCategory,
@@ -13,7 +14,6 @@ import type {
   SessionState,
 } from "./types";
 import { DEFAULT_BUDGET_CONFIG } from "./types";
-import { BudgetMonitor, createBudgetMonitor } from "./monitor";
 
 /**
  * Execution loop control interface
@@ -484,7 +484,7 @@ export class BudgetEnforcer {
     const self = this;
 
     return {
-      shouldContinue(): boolean {
+      shouldContinue: (): boolean => {
         // First check if halted
         if (self.isHalted(sessionId)) {
           return false;

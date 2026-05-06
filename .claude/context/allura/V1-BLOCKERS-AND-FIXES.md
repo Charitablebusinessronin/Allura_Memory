@@ -385,21 +385,21 @@ The following items must be added to the GOAL DONE PROMPT checklist as new hard 
 
 ```
 [LAYER 1 — STORAGE ADDITIONS]
-❌ 1.11  events.id is BIGSERIAL; no UUID is inserted into events.id
-❌ 1.12  canonical_proposals.trace_ref is BIGINT (not UUID)
-❌ 1.13  canonical tools write memory_id UUID into metadata, not into events.id
-❌ 1.14  RETURNING id is used to capture BIGINT trace_ref after events insert
+✅ 1.11  events.id is BIGSERIAL; no UUID is inserted into events.id
+✅ 1.12  canonical_proposals.trace_ref is BIGINT (not UUID)
+✅ 1.13  canonical tools write memory_id UUID into metadata, not into events.id
+✅ 1.14  RETURNING id is used to capture BIGINT trace_ref after events insert
 
 [LAYER 2 — MCP API ADDITIONS]
-❌ 2.11  Default bun run mcp starts canonical server, not legacy server
-❌ 2.12  .claude/settings.json allura-memory command points to memory-server-canonical.ts
-❌ 2.13  .opencode/config.json allura-memory command points to memory-server-canonical.ts
-❌ 2.14  Legacy tools.ts is marked and isolated — not exposed to agents
+✅ 2.11  Default bun run mcp starts canonical server, not legacy server
+✅ 2.12  .claude/settings.json allura-brain HTTP endpoint points at canonical gateway
+✅ 2.13  opencode.json allura-brain HTTP endpoint points at canonical gateway
+✅ 2.14  Legacy tools.ts is not present/exposed in src/mcp
 
 [LAYER 9 — RUNTIME ADDITIONS]
-❌ 9.11  ci.yml triggers on new-main branch
-❌ 9.12  mcp-testing.yml triggers on new-main branch
-❌ 9.13  .env.example includes DATABASE_URL, OPENCLAW_PORT, ALLURA_DASHBOARD_PORT
+✅ 9.11  ci.yml triggers on new-main branch
+✅ 9.12  mcp-testing.yml triggers on new-main branch
+✅ 9.13  .env.example includes DATABASE_URL, OPENCLAW_PORT, ALLURA_DASHBOARD_PORT
 ❌ 9.14  Fresh docker compose down -v → up completes without migration errors
 ❌ 9.15  canonical-memory.test.ts exists and passes on live stack
 ```

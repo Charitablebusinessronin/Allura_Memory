@@ -529,8 +529,8 @@ export interface CuratorProposal {
   /** Status */
   status: ProposalStatus
 
-  /** Trace reference (PostgreSQL event ID) */
-  trace_ref: string
+  /** Trace reference (PostgreSQL BIGSERIAL event ID) */
+  trace_ref: number | null
 
   /** Timestamp */
   created_at: string

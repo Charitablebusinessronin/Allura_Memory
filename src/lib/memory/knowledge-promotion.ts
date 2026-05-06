@@ -24,10 +24,10 @@
 
 import type { Pool } from 'pg';
 import { z } from 'zod';
-import { getPool } from '../postgres/connection';
-import { createInsight, createInsightVersion, type InsightRecord } from '../neo4j/queries/insert-insight';
 import { Neo4jPromotionError } from '../errors/neo4j-errors';
-import { insertEvent, type EventRecord } from '../postgres/queries/insert-trace';
+import { createInsight, createInsightVersion, type InsightRecord } from '../neo4j/queries/insert-insight';
+import { getPool } from '../postgres/connection';
+import { type EventRecord, insertEvent } from '../postgres/queries/insert-trace';
 
 // ============================================================================
 // Constants
@@ -214,7 +214,7 @@ export const ApprovedProposalRowSchema = z.object({
   reasoning: z.string().nullable().optional(),
   tier: z.string(),
   status: z.literal('approved'),
-  trace_ref: z.string().nullable().optional(),
+  trace_ref: z.union([z.string().regex(/^\d+$/), z.number().int()]).nullable().optional(),
   decided_by: z.string().nullable().optional(),
   decided_at: z.string().nullable().optional(),
   notion_page_id: z.string().nullable().optional(),

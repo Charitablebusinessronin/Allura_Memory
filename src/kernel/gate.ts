@@ -11,7 +11,7 @@
  * 4. Log violations for audit
  */
 
-import { RuVixKernel, initializeKernel } from "./ruvix";
+import { initializeKernel, RuVixKernel } from "./ruvix";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
