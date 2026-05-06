@@ -7,9 +7,9 @@
  * If a test needs PostgreSQL, Neo4j, or any external service, it belongs
  * in the integration lane — NOT here.
  */
+import { config } from "dotenv"
 import { defineConfig } from "vitest/config"
 import path from "node:path"
-import { config } from "dotenv"
 
 config()
 
@@ -60,6 +60,8 @@ export default defineConfig({
       "src/__tests__/watchdog-sustained.test.ts",
       // Backup automation (pure logic, mocked deps)
       "src/__tests__/backup-automation.test.ts",
+      // Token compliance validation (Story 2.7)
+      "src/__tests__/token-compliance.test.ts",
       // Retrieval benchmark (FR-1.2 — mocked DB/services)
       "src/__tests__/retrieval-benchmark.test.ts",
       // TraceMiddleware (Story 1.2)
