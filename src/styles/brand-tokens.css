@@ -41,94 +41,6 @@
 
   /* ── Dashboard Semantic Aliases (light mode) ── */
   --dashboard-text-primary:   var(--allura-charcoal);
-  --dashboard-text-secondary: var(--allura-gray-500);
-  --dashboard-text-muted:     var(--allura-gray-400);
-  --dashboard-surface:        var(--allura-white);
-  --dashboard-surface-alt:    var(--allura-cream);
-  --dashboard-surface-muted:  var(--allura-gray-100);
-  --dashboard-border:         var(--allura-gray-200);
-  --dashboard-border-default: var(--allura-gray-300);
-  --dashboard-accent:         var(--allura-orange);
-  --dashboard-accent-secondary: var(--allura-blue);
-  --dashboard-success:        var(--allura-green);
-  --dashboard-info:           var(--allura-blue);
-  --dashboard-warning:        var(--allura-orange);
-  --dashboard-danger:         #DC2626;
-  --dashboard-evidence:       var(--allura-cream);
-
-  /* ── Evidence Category Mappings ── */
-  /* ── Evidence CATEGORY mappings use cream tone (not brand gold) ── */
-  --dashboard-evidence-bg:    var(--dashboard-evidence);
-  --dashboard-evidence-text:  var(--allura-charcoal);
-
-  /* ── Tone / Badge Mappings ── */
-  --tone-blue-bg:   color-mix(in srgb, var(--allura-blue) 8%, white);
-  --tone-blue-text: var(--allura-blue);
-  --tone-orange-bg: color-mix(in srgb, var(--allura-orange) 8%, white);
-  --tone-orange-text: var(--allura-orange);
-  --tone-green-bg:  color-mix(in srgb, var(--allura-green) 8%, white);
-  --tone-green-text: var(--allura-green);
-  --tone-charcoal-bg: color-mix(in srgb, var(--allura-charcoal) 8%, white);
-  --tone-charcoal-text: var(--allura-charcoal);
-  --tone-gold-bg:   color-mix(in srgb, var(--allura-gold) 10%, white);
-  --tone-gold-text: #8a651d;
-  --tone-red-bg:    color-mix(in srgb, #DC2626 8%, white);
-  --tone-red-text:  #DC2626;
-
-  /* ── Backward Compatibility: Derived Fills ── */
-  --allura-navy-5:   color-mix(in srgb, var(--allura-deep-navy) 5%, white);
-  --allura-navy-10:  color-mix(in srgb, var(--allura-deep-navy) 10%, white);
-  --allura-coral-10: color-mix(in srgb, var(--allura-coral) 10%, white);
-  --allura-coral-20: color-mix(in srgb, var(--allura-coral) 20%, white);
-
-  /* ── Backward Compatibility: Shadow Tokens ── */
-  --allura-shadow-card: 0 4px 24px rgba(26, 43, 74, 0.08);
-  --allura-shadow-hover: 0 8px 32px rgba(26, 43, 74, 0.12);
-  --allura-shadow-modal: 0 16px 48px rgba(26, 43, 74, 0.16);
-
-  /* ── Backward Compatibility: Radius Tokens ── */
-  --allura-radius-card: 16px;
-  --allura-radius-badge: 6px;
-  --allura-radius-button: 8px;
-  --allura-radius-input: 10px;
-
-  /* ── Backward Compatibility: Status Tokens ── */
-  --allura-status-active: var(--allura-trust-green);
-  --allura-status-proposed: var(--allura-clarity-blue);
-  --allura-status-forgotten: var(--allura-warm-gray);
-  --allura-status-warning: var(--allura-coral);
-
-  /* ── WCAG-compliant text variants ── */
-  /* Brand tokens are kept as-is (Kotler-locked). These darker variants
-     are for text/readable use only, where the canonical token fails WCAG. */
-  --allura-gold-text:       #8a651d;   /* gold #C89B3C fails on white (2.56:1); this passes 4.5:1 */
-  --allura-gray-400-text:    #6B7280;   /* gray-400 #9CA3AF fails on white (2.54:1); use gray-500 for text */
-  --allura-orange-on-text:   #7C2D12;   /* white on orange #FF5A2E fails (3.11:1); dark text on orange bg */
-
-  /* ── Montserrat (Kotler spec: weight 900 display headings) ── */
-  --font-family-display: 'Montserrat', 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
-}
-
-.dark {
-  /* ── Dark mode brand primitives ── */
-  --allura-blue:        #60A5FA;
-  --allura-orange:      #FB923C;
-  --allura-green:       #34D399;
-  --allura-gold:        #FBBF24;
-  --allura-charcoal:    #F3F4F6;
-  --allura-cream:       #0F172A;
-  --allura-white:       #1E293B;
-
-  /* ── Backward compatibility aliases (dark mode) ── */
-  --allura-deep-navy:   var(--allura-blue);
-  --allura-coral:       var(--allura-orange);
-  --allura-trust-green: var(--allura-green);
-  --allura-clarity-blue:var(--allura-blue);
-  --allura-pure-white:  var(--allura-white);
-  --allura-ink-black:   var(--allura-charcoal);
-  --allura-warm-gray:   #A0A0A0;
-
-  --dashboard-text-primary:   var(--allura-white);
   --dashboard-text-secondary: #A0A0A0;
   --dashboard-text-muted:     #737373;
   --dashboard-surface:        #162035;
@@ -146,6 +58,16 @@
   --allura-gold-text:       #FBBF24;   /* dark mode gold text: passes 4.5:1 on dark bg */
   --allura-gray-400-text:    #9CA3AF;   /* dark mode: gray-400 is readable on dark bg */
   --allura-orange-on-text:   #FFCDB2;   /* dark text on dark-mode orange bg */
+
+  /* ── Dark mode hard-coded dashboard tokens (orphans) ── */
+  /* These do not map to Allura primitives due to design system gaps */
+  --dashboard-text-secondary-raw: #A0A0A0;
+  --dashboard-text-muted-raw:     #737373;
+  --dashboard-surface-raw:        #162035;
+  --dashboard-surface-alt-raw:    #0F1A2E;
+  --dashboard-surface-muted-raw:  #1E2D47;
+  --dashboard-border-raw:         rgb(255 255 255 / 0.08);
+  --dashboard-border-default-raw: rgb(255 255 255 / 0.12);
 
   /* ── Montserrat (dark mode) ── */
   --font-family-display: 'Montserrat', 'IBM Plex Sans', system-ui, -apple-system, sans-serif;

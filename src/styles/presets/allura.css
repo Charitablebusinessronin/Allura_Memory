@@ -99,14 +99,15 @@ value: allura
   --sidebar-ring: var(--allura-blue);
 
   /* ── Dashboard Aliases (derived from brand-tokens.css) ── */
+  /* Use canonical brand primitives for all dashboard tokens */
   --dashboard-text-primary:   var(--allura-charcoal);
-  --dashboard-text-secondary: var(--allura-text-2);
-  --dashboard-text-muted:     var(--allura-text-3);
+  --dashboard-text-secondary: var(--allura-gray-500);
+  --dashboard-text-muted:     var(--allura-gray-400);
   --dashboard-surface:        var(--allura-white);
   --dashboard-surface-alt:    var(--allura-cream);
-  --dashboard-surface-muted:  var(--allura-muted);
-  --dashboard-border:         var(--allura-border-1);
-  --dashboard-border-default: var(--allura-border-2);
+  --dashboard-surface-muted:  var(--allura-gray-100);
+  --dashboard-border:         var(--allura-gray-200);
+  --dashboard-border-default: var(--allura-gray-300);
   --dashboard-accent:         var(--allura-orange);
   --dashboard-accent-secondary: var(--allura-blue);
   --dashboard-success:        var(--allura-green);
@@ -203,6 +204,21 @@ value: allura
   --input: var(--allura-border-1);
   --ring: var(--allura-blue);
   --dashboard-evidence: var(--allura-cream);
+  
+  /* ── Dashboard Aliases (dark mode) ── */
+  /* Use canonical brand primitives where available, document orphans */
+  --dashboard-text-primary:   var(--allura-charcoal);
+  --dashboard-text-secondary: #A0A0A0;
+  --dashboard-text-muted:     #737373;
+  --dashboard-surface:        #162035;
+  --dashboard-surface-alt:    #0F1A2E;
+  --dashboard-surface-muted:  #1E2D47;
+  --dashboard-border:         rgb(255 255 255 / 0.08);
+  --dashboard-border-default: rgb(255 255 255 / 0.12);
+
+  /* ── Evidence Category Mappings (dark mode) ── */
+  --dashboard-evidence-bg:    var(--dashboard-evidence);
+  --dashboard-evidence-text:  var(--allura-charcoal);
   --chart-1: var(--allura-blue);
   --chart-2: var(--allura-orange);
   --chart-3: var(--allura-green);
