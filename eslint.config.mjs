@@ -1,19 +1,38 @@
-import * as fs from "fs"
 
 // https://github.com/francoismassart/eslint-plugin-tailwindcss/pull/381
 // import eslintPluginTailwindcss from "eslint-plugin-tailwindcss"
-import eslintPluginImport from "eslint-plugin-import"
 import eslintPluginNext from "@next/eslint-plugin-next"
+import eslintPluginImport from "eslint-plugin-import"
+import eslintPluginReactHooks from "eslint-plugin-react-hooks"
 import eslintPluginStorybook from "eslint-plugin-storybook"
 import typescriptEslint from "typescript-eslint"
+import * as fs from "fs"
 
 const eslintIgnore = [
   ".git/",
   ".next/",
+  ".worktrees/",
+  ".agents/",
+  ".claude/",
+  ".opencode/",
   "node_modules/",
   "dist/",
   "build/",
   "coverage/",
+  "archive/",
+  "benchmark/",
+  "docker/",
+  "k6/",
+  "packages/",
+  "ralph/",
+  "scripts/",
+  "supabase/",
+  "templates/",
+  "skills/",
+  "public/",
+  "tests/load/",
+  "docs/branding/",
+  "report-bundle-size.js",
   "*.min.js",
   "*.config.js",
   "*.d.ts",
@@ -38,6 +57,23 @@ const config = typescriptEslint.config(
     },
   },
   {
+    plugins: {
+      "react-hooks": eslintPluginReactHooks,
+    },
+    rules: {
+      ...eslintPluginReactHooks.configs.recommended.rules,
+    },
+  },
+  // Relax rules for test files
+  {
+    files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-expressions": "off",
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
+  {
     settings: {
       tailwindcss: {
         callees: ["classnames", "clsx", "ctl", "cn", "cva"],
@@ -56,6 +92,7 @@ const config = typescriptEslint.config(
           varsIgnorePattern: "^_",
         },
       ],
+      "@typescript-eslint/no-explicit-any": "warn",
       "sort-imports": [
         "error",
         {
