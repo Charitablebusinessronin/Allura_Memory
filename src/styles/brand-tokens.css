@@ -38,9 +38,17 @@
   --allura-pure-white:  var(--allura-white);
   --allura-ink-black:   var(--allura-charcoal);
   --allura-warm-gray:   var(--allura-gray-500);
+}
 
-  /* ── Dashboard Semantic Aliases (light mode) ── */
-  --dashboard-text-primary:   var(--allura-charcoal);
+/*
+ * Dashboard dark tokens — ONLY activate with .dark class.
+ * This enforces the two-door model: dashboard surfaces cannot render
+ * without a dark context. Removing class="dark" restores light mode
+ * with working brand primitives.
+ */
+.dark {
+  /* ── Dashboard Semantic Aliases (dark mode) ── */
+  --dashboard-text-primary:   #FFFFFF;
   --dashboard-text-secondary: #A0A0A0;
   --dashboard-text-muted:     #737373;
   --dashboard-surface:        #162035;
@@ -48,6 +56,12 @@
   --dashboard-surface-muted:  #1E2D47;
   --dashboard-border:         rgb(255 255 255 / 0.08);
   --dashboard-border-default: rgb(255 255 255 / 0.12);
+  --dashboard-accent:         var(--allura-orange);
+  --dashboard-accent-secondary: var(--allura-blue);
+  --dashboard-success:        var(--allura-green);
+  --dashboard-info:           var(--allura-blue);
+  --dashboard-warning:        var(--allura-orange);
+  --dashboard-danger:         #DC2626;
   --dashboard-evidence:       var(--allura-cream);
 
   /* ── Evidence Category Mappings (dark mode) ── */
@@ -58,16 +72,6 @@
   --allura-gold-text:       #FBBF24;   /* dark mode gold text: passes 4.5:1 on dark bg */
   --allura-gray-400-text:    #9CA3AF;   /* dark mode: gray-400 is readable on dark bg */
   --allura-orange-on-text:   #FFCDB2;   /* dark text on dark-mode orange bg */
-
-  /* ── Dark mode hard-coded dashboard tokens (orphans) ── */
-  /* These do not map to Allura primitives due to design system gaps */
-  --dashboard-text-secondary-raw: #A0A0A0;
-  --dashboard-text-muted-raw:     #737373;
-  --dashboard-surface-raw:        #162035;
-  --dashboard-surface-alt-raw:    #0F1A2E;
-  --dashboard-surface-muted-raw:  #1E2D47;
-  --dashboard-border-raw:         rgb(255 255 255 / 0.08);
-  --dashboard-border-default-raw: rgb(255 255 255 / 0.12);
 
   /* ── Montserrat (dark mode) ── */
   --font-family-display: 'Montserrat', 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
