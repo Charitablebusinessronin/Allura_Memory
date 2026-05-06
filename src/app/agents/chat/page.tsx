@@ -75,6 +75,10 @@ export default function AgentChat() {
 
   return (
     <div className="container mx-auto p-4 max-w-4xl">
+      <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mb-6 flex items-center gap-2 text-amber-600 dark:text-amber-400">
+        <span className="text-lg">⚠️</span>
+        <p className="text-sm font-medium">Agent Chat is a placeholder — not connected to a live backend. Responses are simulated.</p>
+      </div>
       <h1 className="text-3xl font-bold mb-6">Allura Agent Chat</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

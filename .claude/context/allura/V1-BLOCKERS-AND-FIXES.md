@@ -14,7 +14,7 @@
 
 Pick one:
 
-- [ ] **Option A — Document-only auth for v1:** Routes stay public, curator is hardcoded, ship with a documented TODO. Auth is NOT a v1 ship gate.
+- [x] **Option A — Document-only auth for v1:** Routes stay public, curator is hardcoded, ship with a documented TODO. Auth is NOT a v1 ship gate.
 - [ ] **Option B — Auth is a ship gate:** Add a minimal route guard (env-gated secret or simple session check) to `/curator` before shipping. `/memory` and `/agents/chat` remain public dev routes.
 
 **Recommendation:** Option A for local/dev v1. If this is going multi-user or multi-tenant in production, Option B before any real data enters.
@@ -400,7 +400,7 @@ The following items must be added to the GOAL DONE PROMPT checklist as new hard 
 ✅ 9.11  ci.yml triggers on new-main branch
 ✅ 9.12  mcp-testing.yml triggers on new-main branch
 ✅ 9.13  .env.example includes DATABASE_URL, OPENCLAW_PORT, ALLURA_DASHBOARD_PORT
-❌ 9.14  Fresh docker compose down -v → up completes without migration errors
+✅ 9.14  Fresh docker compose down -v → up completes without migration errors
 ❌ 9.15  canonical-memory.test.ts exists and passes on live stack
 ```
 
