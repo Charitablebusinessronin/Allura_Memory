@@ -87,7 +87,8 @@ value: allura
   --chart-1: var(--allura-blue);
   --chart-2: var(--allura-orange);
   --chart-3: var(--allura-green);
-  --chart-4: var(--allura-gold);
+  /* chart-4 = evidence category data, cream (#F5F1E6) in light mode, abyss-cream in dark mode */
+  --chart-4:  var(--allura-cream);
   --chart-5: var(--allura-charcoal);
   --sidebar: var(--allura-white);
   --sidebar-foreground: var(--allura-charcoal);
@@ -97,33 +98,6 @@ value: allura
   --sidebar-accent-foreground: var(--allura-white);
   --sidebar-border: var(--allura-border-1);
   --sidebar-ring: var(--allura-blue);
-
-  /* ── Dashboard Aliases (derived from brand-tokens.css) ── */
-  /* Use canonical brand primitives for all dashboard tokens */
-  --dashboard-text-primary:   var(--allura-charcoal);
-  --dashboard-text-secondary: var(--allura-gray-500);
-  --dashboard-text-muted:     var(--allura-gray-400);
-  --dashboard-surface:        var(--allura-white);
-  --dashboard-surface-alt:    var(--allura-cream);
-  --dashboard-surface-muted:  var(--allura-gray-100);
-  --dashboard-border:         var(--allura-gray-200);
-  --dashboard-border-default: var(--allura-gray-300);
-  --dashboard-accent:         var(--allura-orange);
-  --dashboard-accent-secondary: var(--allura-blue);
-  --dashboard-success:        var(--allura-green);
-  --dashboard-info:           var(--allura-blue);
-  --dashboard-warning:        var(--allura-orange);
-  --dashboard-danger:         #DC2626;
-  --dashboard-evidence:       var(--allura-cream);
-
-  /* ── Evidence Category Mappings ── */
-  /* ── Evidence CATEGORY mappings use cream tone (not brand gold) ── */
-  --dashboard-evidence-bg:    var(--dashboard-evidence);
-  --dashboard-evidence-text:  var(--allura-charcoal);
-
-  /* ── UI / Component Color Mappings ── */
-  /* ── Chart-4 uses cream for evidence category data ── */
-  --chart-4:  var(--dashboard-evidence);
 
   /* ── Tone / Badge Mappings ── */
   --tone-blue-bg:   var(--allura-blue-8);
@@ -215,6 +189,12 @@ value: allura
   --dashboard-surface-muted:  #1E2D47;
   --dashboard-border:         rgb(255 255 255 / 0.08);
   --dashboard-border-default: rgb(255 255 255 / 0.12);
+  --dashboard-accent:         var(--allura-orange);
+  --dashboard-accent-secondary: var(--allura-blue);
+  --dashboard-success:        var(--allura-green);
+  --dashboard-info:           var(--allura-blue);
+  --dashboard-warning:        var(--allura-orange);
+  --dashboard-danger:         #DC2626;
 
   /* ── Evidence Category Mappings (dark mode) ── */
   --dashboard-evidence-bg:    var(--dashboard-evidence);
@@ -222,7 +202,8 @@ value: allura
   --chart-1: var(--allura-blue);
   --chart-2: var(--allura-orange);
   --chart-3: var(--allura-green);
-  --chart-4: var(--allura-gold);
+  /* chart-4 = evidence category data, consistent with light mode */
+  --chart-4: var(--dashboard-evidence);
   --chart-5: var(--allura-charcoal);
   --sidebar: var(--allura-white);
   --sidebar-foreground: var(--allura-charcoal);
@@ -242,4 +223,330 @@ value: allura
   --shadow-lg: 0px 22px 48px -24px rgb(0 0 0 / 0.45);
   --shadow-xl: 0px 28px 60px -28px rgb(0 0 0 / 0.50);
   --shadow-2xl: 0px 36px 80px -32px rgb(0 0 0 / 0.55);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Evidence Panel Component Family
+   "The signature component family" — DESIGN.md
+   ── Base panel, log viewer, metadata row, status badges, actions, states ──
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Base Panel ── */
+.evidence-panel {
+  background: var(--dashboard-surface);
+  color: var(--dashboard-text-primary);
+  border: 1px solid var(--dashboard-border);
+  border-radius: var(--allura-r-lg);
+  padding: var(--allura-xxl);
+  font-family: var(--font-family-brand);
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+/* ── 2. Evidence Log (monospace scroll viewer) ── */
+.evidence-panel__log {
+  font-family: var(--font-family-mono);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  background: var(--dashboard-surface-alt);
+  color: var(--dashboard-text-primary);
+  border: 1px solid var(--dashboard-border);
+  border-radius: var(--allura-r-md);
+  padding: var(--allura-lg);
+  max-height: 320px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── 3. Metadata Row (human-readable provenance) ── */
+.evidence-panel__metadata {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--allura-md);
+  color: var(--dashboard-text-muted);
+  font-family: var(--font-family-brand);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.evidence-panel__metadata-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--allura-xs);
+}
+
+/* ── 4. Status Chips (badges using tone tokens) ── */
+.evidence-panel__status {
+  display: inline-block;
+  padding: var(--allura-xs) var(--allura-sm);
+  border-radius: var(--allura-r-full);
+  font-family: var(--font-family-brand);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+.evidence-panel__status--approved {
+  background: var(--tone-green-bg);
+  color: var(--tone-green-text);
+}
+
+.evidence-panel__status--pending {
+  background: var(--tone-gold-bg);
+  color: var(--tone-gold-text);
+}
+
+.evidence-panel__status--new {
+  background: var(--tone-blue-bg);
+  color: var(--tone-blue-text);
+}
+
+.evidence-panel__status--failed {
+  background: var(--tone-red-bg);
+  color: var(--tone-red-text);
+}
+
+/* ── 5. Actions Row (ghost buttons: copy / promote / dismiss) ── */
+.evidence-panel__actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  gap: var(--allura-sm);
+  padding-top: var(--allura-lg);
+  border-top: 1px solid var(--dashboard-border);
+}
+
+.evidence-panel__actions .btn-ghost {
+  background: transparent;
+  border: 1px solid var(--dashboard-border);
+  border-radius: var(--allura-r-md);
+  color: var(--dashboard-text-secondary);
+  cursor: pointer;
+  font-family: var(--font-family-brand);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: var(--allura-xs) var(--allura-lg);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.evidence-panel__actions .btn-ghost:hover {
+  background: var(--dashboard-surface-muted);
+  color: var(--dashboard-text-primary);
+  border-color: var(--dashboard-border-default);
+}
+
+.evidence-panel__actions .btn-ghost--primary {
+  color: var(--dashboard-accent);
+  border-color: var(--dashboard-accent);
+}
+
+.evidence-panel__actions .btn-ghost--primary:hover {
+  background: var(--tone-orange-bg);
+  color: var(--tone-orange-text);
+}
+
+.evidence-panel__actions .btn-ghost--danger {
+  color: var(--tone-red-text);
+  border-color: var(--dashboard-border);
+}
+
+.evidence-panel__actions .btn-ghost--danger:hover {
+  background: var(--tone-red-bg);
+  border-color: var(--tone-red-text);
+}
+
+/* ── 6. Superseded State ── */
+.evidence-panel--superseded {
+  opacity: 0.6;
+  position: relative;
+}
+
+.evidence-panel--superseded::after {
+  content: "Superseded";
+  position: absolute;
+  top: var(--allura-lg);
+  right: var(--allura-lg);
+  background: var(--tone-charcoal-bg);
+  color: var(--tone-charcoal-text);
+  border: 1px solid var(--dashboard-border);
+  border-radius: var(--allura-r-sm);
+  font-family: var(--font-family-brand);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: var(--allura-xs) var(--allura-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+}
+
+/* ── 7. Pending State (gold left-edge indicator) ── */
+.evidence-panel--pending {
+  border-left: 4px solid var(--allura-gold);
+}
+
+/* ── Allura Search Components ── */
+/* Design principle #4: "Make search the natural first move" */
+
+.allura-search {
+  height: 48px;
+  width: 100%;
+  background: var(--allura-white);
+  border: 1px solid var(--allura-border-1);
+  border-radius: var(--allura-r-md);
+  padding: 0 var(--allura-lg);
+  color: var(--allura-charcoal);
+  font-size: 14px;
+  font-family: var(--font-family-brand);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.allura-search::placeholder {
+  color: var(--allura-gray-400);
+  opacity: 1;
+  font-family: var(--font-family-brand);
+}
+
+.allura-search:focus {
+  border-color: var(--allura-blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--allura-blue) 25%, transparent);
+  outline: none;
+}
+
+/* ── Dashboard Search Variant ── */
+.allura-search--dashboard {
+  background: var(--dashboard-surface-muted);
+  border-color: var(--dashboard-border);
+  color: var(--dashboard-text-primary);
+}
+
+.allura-search--dashboard::placeholder {
+  color: var(--dashboard-text-muted);
+}
+
+.allura-search--dashboard:focus {
+  border-color: var(--allura-blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--allura-blue) 25%, transparent);
+}
+
+/* ── Search Dropdown ── */
+.allura-search-dropdown {
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--allura-white);
+  border-radius: var(--allura-r-md);
+  box-shadow: var(--allura-sh-lg);
+  margin-top: 4px;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--allura-border-1);
+}
+
+/* ── Search Result Item ── */
+.allura-search-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--allura-xs);
+  padding: var(--allura-lg);
+  border-bottom: 1px solid var(--allura-border-1);
+  cursor: pointer;
+  transition: background 0.1s ease;
+  font-family: var(--font-family-brand);
+}
+
+.allura-search-item:last-child {
+  border-bottom: none;
+}
+
+.allura-search-item:hover {
+  background: var(--allura-gray-100);
+}
+
+.allura-search-item-title {
+  display: flex;
+  align-items: center;
+  gap: var(--allura-sm);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--allura-charcoal);
+  line-height: 1.4;
+}
+
+.allura-search-item-icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--allura-text-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.allura-search-item-provenance {
+  font-size: 12px;
+  color: var(--allura-text-3);
+  margin-left: 26px;
+  line-height: 1.3;
+}
+
+/* ── Search Empty State ── */
+.allura-search-empty {
+  padding: var(--allura-xxl);
+  text-align: center;
+  color: var(--allura-gray-400);
+  font-size: 14px;
+  font-family: var(--font-family-brand);
+}
+
+.allura-search-empty-text {
+  margin: 0 0 var(--allura-sm) 0;
+  color: var(--allura-gray-400);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.allura-search-empty-helper {
+  margin: 0;
+  font-size: 13px;
+  color: var(--allura-text-3);
+  font-weight: 400;
+}
+
+/* ── Search Loading State (Skeleton) ── */
+.allura-search-loading {
+  padding: var(--allura-lg);
+}
+
+.allura-search-loading-line {
+  height: 12px;
+  border-radius: var(--allura-r-sm);
+  background: var(--allura-muted);
+  margin-bottom: var(--allura-sm);
+  animation: allura-skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+.allura-search-loading-line:nth-child(2) {
+  width: 85%;
+}
+
+.allura-search-loading-line:last-child {
+  margin-bottom: 0;
+  width: 60%;
+}
+
+@keyframes allura-skeleton-pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 1;
+  }
 }
