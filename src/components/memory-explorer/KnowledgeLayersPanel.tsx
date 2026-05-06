@@ -3,12 +3,12 @@
 import { Layers } from "lucide-react"
 
 const layers = [
-  { label: "Raw Memory",     color: "#1D4ED8", count: "10,241", pct: 100 },
-  { label: "Evidence",       color: "#2563EB", count: "634",    pct: 60  },
-  { label: "Insight",        color: "#157A44", count: "248",    pct: 40  },
-  { label: "ADR / Decisions",color: "#C89B3C", count: "87",     pct: 25  },
-  { label: "Knowledge Graph",color: "#111827", count: "1,492",  pct: 50  },
-  { label: "Notion Mirror",  color: "#6B7280", count: "312",    pct: 30  },
+  { label: "Raw Memory",     color: "var(--dashboard-accent-secondary)", count: "10,241", pct: 100 },
+  { label: "Evidence",       color: "var(--dashboard-accent-secondary)", count: "634",   pct: 60 },
+  { label: "Insight",        color: "var(--dashboard-success)",          count: "248",   pct: 40 },
+  { label: "ADR / Decisions",color: "var(--dashboard-warning)",          count: "87",    pct: 25 },
+  { label: "Knowledge Graph",color: "var(--dashboard-text-primary)",     count: "1,492", pct: 50 },
+  { label: "Notion Mirror",  color: "var(--dashboard-text-secondary)",   count: "312",   pct: 30 },
 ]
 
 export function KnowledgeLayersPanel() {
@@ -16,11 +16,11 @@ export function KnowledgeLayersPanel() {
     <div className="border-b border-[var(--allura-border-1)]">
       <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--allura-border-1)]">
         <div className="flex items-center gap-2">
-          <Layers size={13} className="text-[var(--allura-blue)]" />
-          <span className="text-[11px] font-semibold uppercase tracking-widest text-[var(--allura-charcoal)]">Knowledge Layers</span>
+          <Layers size={13} className="text-[var(--dashboard-accent-secondary)]" />
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-[var(--dashboard-text-primary)]">Knowledge Layers</span>
         </div>
-        <span className="inline-flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--allura-green)_10%,white)] px-2 py-0.5 text-[10px] font-semibold text-[var(--allura-green)]">
-          <span className="size-1.5 rounded-full bg-[var(--allura-green)]" />
+        <span className="inline-flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--dashboard-success)_10%,white)] px-2 py-0.5 text-[10px] font-semibold text-[var(--dashboard-success)]">
+          <span className="size-1.5 rounded-full bg-[var(--dashboard-success)]" />
           LIVE
         </span>
       </div>

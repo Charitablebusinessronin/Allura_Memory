@@ -1,9 +1,10 @@
 "use client"
 
+import { Search, SlidersHorizontal } from "lucide-react"
 import dynamic from "next/dynamic"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Search, SlidersHorizontal } from "lucide-react"
 
+import { NodeDetailPanel } from "@/components/dashboard"
 import {
   ExplorerStatusBar,
   KnowledgeLayersPanel,
@@ -13,16 +14,15 @@ import {
   SystemHealthPanel,
   SystemOverviewPanel,
 } from "@/components/memory-explorer"
-import { NodeDetailPanel } from "@/components/dashboard"
 
 // Types for the explorer data
-import type { GraphNode, GraphEdge } from "@/lib/dashboard/types"
-import {
-  loadGraph,
-  loadDashboardOverview,
-  loadCuratorQueue,
-} from "@/lib/dashboard/queries"
 import { getHealthMetrics } from "@/lib/dashboard/api"
+import {
+  loadCuratorQueue,
+  loadDashboardOverview,
+  loadGraph,
+} from "@/lib/dashboard/queries"
+import type { GraphEdge, GraphNode } from "@/lib/dashboard/types"
 
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), { ssr: false })
 
@@ -57,30 +57,41 @@ const FALLBACK_EDGES = [
   { id: "e11", source: "n1",  target: "n3", label: "triggered"   },
 ]
 
-// Brand color per node type — light theme
-const NODE_COLORS_LIGHT: Record<string, string> = {
-  memory:   "#1D4ED8",  // blue
-  insight:  "#157A44",  // green
-  evidence: "#C89B3C",  // gold
-  agent:    "#FF5A2E",  // orange
-  project:  "#157A44",  // green
-  system:   "#111827",  // charcoal
+// ─── Dashboard Color Management ──────────────────────────────────────────────
+// Centralized color map with CSS variable resolution for canvas rendering
+// Rules:
+// 1. All colors are semantic dashboard tokens (--dashboard-*)
+// 2. Canvas code resolves them at runtime with getComputedStyle
+// 3. Fallback to Another semantic token if needed, never raw hex
+// 4. Aligns with token definitions in brand-tokens.css
+
+// Canvas color token definitions (semantic names, no raw hex)
+const DASHBOARD_NODE_COLOR_TOKEN = {
+  memory:   '--dashboard-info',      // blue
+  insight:  '--dashboard-success',   // green
+  evidence: '--dashboard-warning',   // orange/gold
+  agent:    '--dashboard-accent',    // orange
+  project:  '--dashboard-success',   // green (alternate)
+  system:   '--dashboard-text-secondary',
+} as const
+
+// Runtime CSS variable resolver for canvas (cannot use CSS classes in canvas)
+function getDashboardColor(token: string): string {
+  if (typeof document === 'undefined') return '#9CA3AF' // fallback if no DOM
+  const computed = getComputedStyle(document.documentElement)
+  const value = computed.getPropertyValue(token).trim()
+  return value || '#9CA3AF' // fallback if token missing
 }
 
-// Brand color per node type — dark theme
-const NODE_COLORS_DARK: Record<string, string> = {
-  memory:   "#60A5FA",  // light blue
-  insight:  "#34D399",  // light green
-  evidence: "#FBBF24",  // light gold
-  agent:    "#FB923C",  // light orange
-  project:  "#34D399",  // light green
-  system:   "#9CA3AF",  // light gray for visibility
+// Semantic node colors (use CSS variable resolution for canvas rendering)
+function nodeColor(type: string): string {
+  const token = DASHBOARD_NODE_COLOR_TOKEN[type as keyof typeof DASHBOARD_NODE_COLOR_TOKEN] ?? '--dashboard-text-secondary'
+  return getDashboardColor(token)
 }
 
-function nodeColor(type: string) {
-  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
-  const colors = isDark ? NODE_COLORS_DARK : NODE_COLORS_LIGHT
-  return colors[type] ?? "#6B7280"
+// Canvas border/selection/label colors (semantic, no raw hex)
+function getCanvasColor(token: string): string {
+  return getDashboardColor(token)
 }
 
 const NODE_RADII: Record<string, number> = {
@@ -278,45 +289,44 @@ export default function MemoryExplorerPage() {
                 nodeLabel={(n: any) => `${n.label} [${n.type}]`}
                 nodeColor={(n: any) => nodeColor(n.type)}
                 nodeRelSize={1}
-                nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, gs: number) => {
-                  const r = (NODE_RADII[node.type] ?? 5) / gs * 2.5
-                  const isSelected = selectedId === node.id
-                  const isHovered  = hoverId === node.id
-                  const scale = isHovered ? 1.25 : 1
-                  const fr = r * scale
+                  nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, gs: number) => {
+                    const r = (NODE_RADII[node.type] ?? 5) / gs * 2.5
+                    const isSelected = selectedId === node.id
+                    const isHovered  = hoverId === node.id
+                    const scale = isHovered ? 1.25 : 1
+                    const fr = r * scale
 
-                  // Node fill
-                  ctx.beginPath()
-                  ctx.arc(node.x, node.y, fr, 0, Math.PI * 2)
-                  ctx.fillStyle = nodeColor(node.type)
-                  ctx.fill()
-
-                  // White border
-                  ctx.beginPath()
-                  ctx.arc(node.x, node.y, fr, 0, Math.PI * 2)
-                  ctx.strokeStyle = "#ffffff"
-                  ctx.lineWidth = 1 / gs
-                  ctx.stroke()
-
-                  // Gold selection ring
-                  if (isSelected) {
+                    // Node fill (use semantic color resolver)
                     ctx.beginPath()
-                    ctx.arc(node.x, node.y, fr + 4 / gs, 0, Math.PI * 2)
-                    ctx.strokeStyle = "#C89B3C"
-                    ctx.lineWidth = 2 / gs
-                    ctx.stroke()
-                  }
+                    ctx.arc(node.x, node.y, fr, 0, Math.PI * 2)
+                    ctx.fillStyle = nodeColor(node.type)
+                    ctx.fill()
 
-                  // Label
-                  if (gs > 0.7 || isSelected || isHovered) {
-                    ctx.font = `${Math.min(11, 500 / gs)}px IBM Plex Sans, system-ui, sans-serif`
-                    const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
-                    ctx.fillStyle = isDark ? '#E5E7EB' : '#374151'
-                    ctx.textAlign = "center"
-                    ctx.fillText(node.label, node.x, node.y + fr + 10 / gs)
-                  }
-                }}
-                linkColor={() => "rgba(107,114,128,0.35)"}
+                    // Dashboard border (semantic, no raw hex)
+                    ctx.beginPath()
+                    ctx.arc(node.x, node.y, fr, 0, Math.PI * 2)
+                    ctx.strokeStyle = getCanvasColor('--dashboard-border')
+                    ctx.lineWidth = 1 / gs
+                    ctx.stroke()
+
+                    // Selection ring (semantic, no raw hex)
+                    if (isSelected) {
+                      ctx.beginPath()
+                      ctx.arc(node.x, node.y, fr + 4 / gs, 0, Math.PI * 2)
+                      ctx.strokeStyle = getCanvasColor('--dashboard-warning')
+                      ctx.lineWidth = 2 / gs
+                      ctx.stroke()
+                    }
+
+                    // Label (semantic, no raw hex)
+                    if (gs > 0.7 || isSelected || isHovered) {
+                      ctx.font = `${Math.min(11, 500 / gs)}px IBM Plex Sans, system-ui, sans-serif`
+                      ctx.fillStyle = getCanvasColor('--dashboard-text-primary')
+                      ctx.textAlign = "center"
+                      ctx.fillText(node.label, node.x, node.y + fr + 10 / gs)
+                    }
+                  }}
+                linkColor={() => "rgba(107,114,128,0.35)"} // Keep for now; replace with semantic in next iteration
                 linkWidth={() => 1}
                 linkDirectionalArrowLength={4}
                 linkDirectionalArrowRelPos={1}
@@ -335,9 +345,9 @@ export default function MemoryExplorerPage() {
               <button onClick={fitView} className="rounded px-2 py-1 text-sm text-[var(--allura-gray-500)] hover:bg-[var(--allura-gray-100)] hover:text-[var(--allura-charcoal)]">⟲</button>
             </div>
 
-            {/* Color legend */}
+             {/* Color legend (uses nodeColor resolver, no raw hex) */}
             <div className="absolute bottom-4 right-4 flex flex-col gap-1 rounded-lg border border-[var(--allura-border-1)] bg-[var(--allura-white)]/90 p-2.5 shadow-sm backdrop-blur">
-              {Object.keys(NODE_COLORS_LIGHT).map((type) => (
+              {['memory', 'insight', 'evidence', 'agent', 'project', 'system'].map((type) => (
                 <div key={type} className="flex items-center gap-1.5">
                   <span className="size-2 rounded-full" style={{ backgroundColor: nodeColor(type) }} />
                   <span className="text-[9px] capitalize text-[var(--allura-gray-500)]">{type}</span>
