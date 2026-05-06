@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import Link from "next/link"
 import { Activity, Brain, GitBranch, Lightbulb } from "lucide-react"
+import Link from "next/link"
+import { useEffect, useState } from "react"
 
 import {
   ActivityPanel,
@@ -49,7 +49,7 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
         <div className="flex flex-col gap-1">
           <span
-            className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[var(--allura-gold-text)]"
+            className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[var(--dashboard-evidence-text)]"
           >
             Memory that shows its work
           </span>

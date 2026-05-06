@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { Activity, CheckCircle, Cpu, Database, Radio, Shield } from "lucide-react"
+import { useEffect, useState } from "react"
 
 export function ExplorerStatusBar() {
   const [time, setTime] = useState("")
@@ -38,7 +38,7 @@ export function ExplorerStatusBar() {
       {/* Center */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-1.5">
-          <Cpu size={10} className="text-[var(--allura-gold)]" />
+          <Cpu size={10} className="text-[var(--dashboard-evidence)]" />
           <span className="text-[10px] text-[var(--allura-gray-300)]">Memory Model: v2.1</span>
         </div>
         <div className="flex items-center gap-1.5">

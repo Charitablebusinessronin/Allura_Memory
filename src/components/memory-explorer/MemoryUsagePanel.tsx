@@ -87,7 +87,7 @@ const charts = [
     sublabel: "RATE",
     data: [60, 65, 62, 68, 70, 67, 72, 74, 71, 76],
     type: "line" as const,
-    color: "var(--allura-gold)",
+    color: "var(--dashboard-evidence)",
   },
 ]
 

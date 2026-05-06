@@ -11,7 +11,7 @@ function statusIcon(status: DecisionStatus) {
     case "decided":
       return <CheckCircle2 className="size-4 shrink-0 text-[var(--allura-green)]" />
     case "proposed":
-      return <Clock className="size-4 shrink-0 text-[var(--allura-gold)]" />
+      return <Clock className="size-4 shrink-0 text-[var(--dashboard-evidence)]" />
     case "superseded":
       return <XCircle className="size-4 shrink-0 text-[var(--allura-orange)]" />
     case "deferred":
@@ -34,7 +34,7 @@ function statusLabel(status: DecisionStatus): string {
 function statusBadgeClass(status: DecisionStatus): string {
   switch (status) {
     case "decided": return "bg-[var(--tone-green-bg)] text-[var(--tone-green-text)] border-[var(--allura-green)]/20"
-    case "proposed": return "bg-[var(--tone-gold-bg)] text-[var(--tone-gold-text)] border-[var(--allura-gold)]/20"
+    case "proposed": return "bg-[var(--dashboard-surface)] text-[var(--allura-charcoal)] border-[var(--dashboard-border)]/20"
     case "superseded": return "bg-[var(--tone-orange-bg)] text-[var(--tone-orange-text)] border-[var(--allura-orange)]/20"
     case "deferred": return "bg-[var(--tone-charcoal-bg)] text-[var(--tone-charcoal-text)] border-[var(--allura-charcoal)]/20"
     default: return "bg-[var(--allura-gray-100)] text-[var(--allura-gray-500)] border-[var(--allura-gray-200)]"

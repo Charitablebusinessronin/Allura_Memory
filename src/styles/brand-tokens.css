@@ -39,7 +39,7 @@
   --allura-ink-black:   var(--allura-charcoal);
   --allura-warm-gray:   var(--allura-gray-500);
 
-  /* ── Dashboard Semantic Aliases ── */
+  /* ── Dashboard Semantic Aliases (light mode) ── */
   --dashboard-text-primary:   var(--allura-charcoal);
   --dashboard-text-secondary: var(--allura-gray-500);
   --dashboard-text-muted:     var(--allura-gray-400);
@@ -54,6 +54,12 @@
   --dashboard-info:           var(--allura-blue);
   --dashboard-warning:        var(--allura-orange);
   --dashboard-danger:         #DC2626;
+  --dashboard-evidence:       var(--allura-cream);
+
+  /* ── Evidence Category Mappings ── */
+  /* ── Evidence CATEGORY mappings use cream tone (not brand gold) ── */
+  --dashboard-evidence-bg:    var(--dashboard-evidence);
+  --dashboard-evidence-text:  var(--allura-charcoal);
 
   /* ── Tone / Badge Mappings ── */
   --tone-blue-bg:   color-mix(in srgb, var(--allura-blue) 8%, white);
@@ -130,6 +136,11 @@
   --dashboard-surface-muted:  #1E2D47;
   --dashboard-border:         rgb(255 255 255 / 0.08);
   --dashboard-border-default: rgb(255 255 255 / 0.12);
+  --dashboard-evidence:       var(--allura-cream);
+
+  /* ── Evidence Category Mappings (dark mode) ── */
+  --dashboard-evidence-bg:    var(--dashboard-evidence);
+  --dashboard-evidence-text:  var(--allura-charcoal);
 
   /* ── WCAG-compliant text variants (dark mode) ── */
   --allura-gold-text:       #FBBF24;   /* dark mode gold text: passes 4.5:1 on dark bg */

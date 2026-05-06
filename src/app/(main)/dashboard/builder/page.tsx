@@ -1,6 +1,5 @@
 "use client"
 
-import { useEffect, useState, useTransition } from "react"
 import {
   CheckCircle2,
   Clock,
@@ -10,12 +9,13 @@ import {
   Wand2,
   XCircle,
 } from "lucide-react"
+import { useEffect, useState, useTransition } from "react"
 
 import {
   EmptyState,
   ErrorState,
-  InsightCard,
   InsightActions,
+  InsightCard,
   LoadingState,
   PageHeader,
   WarningList,
@@ -123,7 +123,7 @@ function ComposePanel({ onSubmitSuccess }: { onSubmitSuccess: () => void }) {
   return (
     <form onSubmit={handleSubmit} className="agency-card p-6 space-y-4">
       <div className="flex items-center gap-2 mb-2">
-        <Wand2 className="size-4 text-[var(--allura-gold)]" />
+        <Wand2 className="size-4 text-[var(--dashboard-evidence)]" />
         <h3 className="text-sm font-semibold text-[var(--allura-charcoal)]">Compose Insight</h3>
       </div>
 

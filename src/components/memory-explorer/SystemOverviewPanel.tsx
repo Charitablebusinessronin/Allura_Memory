@@ -12,7 +12,7 @@ const counters = [
   { label: "Pending Insights",   value: "12",    color: "var(--allura-orange)" },
   { label: "Approved Insights",  value: "248",   color: "var(--allura-green)" },
   { label: "Graph Connections",  value: "1,492", color: "var(--allura-blue)" },
-  { label: "Evidence Items",     value: "634",   color: "var(--allura-gold)" },
+  { label: "Evidence Items",     value: "634",   color: "var(--dashboard-evidence)" },
   { label: "Active Agents",      value: "7",     color: "var(--allura-charcoal)" },
 ]
 

@@ -21,6 +21,8 @@ export const ALLURA_TOKENS = {
   charcoal:    "var(--allura-charcoal)",
   cream:       "var(--allura-cream)",
   white:       "var(--allura-white)",
+  // ── Dashboard semantic aliases ──
+  dashboardEvidence: "var(--dashboard-evidence)",
   gray100:     "var(--allura-gray-100)",
   gray200:     "var(--allura-gray-200)",
   gray300:     "var(--allura-gray-300)",
@@ -81,6 +83,8 @@ export const ALLURA_CSS_VARS = {
   charcoal: "var(--allura-charcoal)",
   cream: "var(--allura-cream)",
   white: "var(--allura-white)",
+  // ── Dashboard semantic aliases ──
+  dashboardEvidence: "var(--dashboard-evidence)",
   gray100: "var(--allura-gray-100)",
   gray200: "var(--allura-gray-200)",
   gray300: "var(--allura-gray-300)",
@@ -107,30 +111,40 @@ export const ALLURA_CSS_VARS = {
 // ── Graph node colors (migrated from tokens.ts graph.color.graph.*) ──
 const GRAPH_NODE_COLORS: Record<string, string> = {
   agent: "var(--allura-blue)",
-  project: "var(--allura-gold)",
+  project: "var(--allura-gold)",  // ── brand-only usage, preserved per Knuth ──
   outcome: "var(--allura-green)",
   event: "var(--allura-charcoal)",
   insight: "var(--allura-orange)",
   memory: "var(--allura-gray-500)",
 }
 
+// ── Evidence category graph nodes use --dashboard-evidence (cream) ──
+const EVIDENCE_NODE_COLORS: Record<string, string> = {
+  evidence: "var(--dashboard-evidence)",
+}
+
 // ── Helper: Resolve CSS var to hex at runtime (SSR-safe fallback) ──
 export function getResolvedColor(name: string): string {
   if (typeof window === "undefined") {
     // SSR: return hardcoded fallback
+    // Check evidence first, then graph colors
+    if (name === "evidence") return "#F5F1E6" // --allura-cream
     return GRAPH_NODE_COLORS[name]?.replace("var(--", "")?.replace(")", "") ?? "#9CA3AF"
   }
   try {
     const el = document.documentElement
     // Normalize name to match CSS var prefix
-    const varName = name.replace(/^allura-/, "")
-    const cssVar = `--allura-${varName}`
+    const varName = name.replace(/^allura-/, "").replace(/^dashboard-/, "")
+    const cssVar = name.startsWith("dashboard-")
+      ? `--${name}`
+      : `--allura-${varName}`
     const value = window.getComputedStyle(el).getPropertyValue(cssVar).trim()
     if (value) return value
   } catch {
     // Silent fallback
   }
   // Fallback to hardcoded hex
+  if (name === "evidence") return "#F5F1E6" // --allura-cream
   const fallback = GRAPH_NODE_COLORS[name]
   if (fallback) return fallback.replace("var(--", "")?.replace(")", "")
   return "#9CA3AF"
@@ -139,9 +153,29 @@ export function getResolvedColor(name: string): string {
 // ── Graph node color by type (runtime resolution) ──
 export function getGraphNodeColor(type: string): string {
   const key = type.toLowerCase()
+  // Check evidence category first
+  if (key === "evidence" || key === "category") return getResolvedColor("evidence")
   const cssVar = GRAPH_NODE_COLORS[key]
   if (!cssVar) return getResolvedColor("memory")
   return getResolvedColor(key)
+}
+
+// ── Helper: Get dashboard-specific color (for evidence/category nodes) ──
+export function getDashboardColor(key: string): string {
+  if (typeof window === "undefined") {
+    // SSR fallback
+    if (key === "--dashboard-evidence") return "#F5F1E6"
+    return "#9CA3AF"
+  }
+  try {
+    const el = document.documentElement
+    const value = window.getComputedStyle(el).getPropertyValue(key).trim()
+    if (value) return value
+  } catch {
+    // Silent fallback
+  }
+  if (key === "--dashboard-evidence") return "#F5F1E6"
+  return "#9CA3AF"
 }
 
 // ── Graph node radius by type (keeps existing logic) ──

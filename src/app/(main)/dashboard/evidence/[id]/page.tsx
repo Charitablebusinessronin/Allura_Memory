@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { ArrowLeft, Check, Copy, Download } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Check, Copy, Download } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
 
 import { ConfidenceBadge, ErrorState, LoadingState, MemoryDetailSkeleton, PageHeader, StatusPill, WarningList } from "@/components/dashboard"
 import { Button } from "@/components/ui/button"
@@ -180,7 +180,7 @@ interface TraceEvent {
 const traceStatusColors: Record<TraceEvent["status"], string> = {
   success: "var(--allura-green)",
   error: "var(--allura-orange)",
-  warning: "var(--allura-gold)",
+  warning: "var(--dashboard-evidence)",
   info: "var(--allura-blue)",
   pending: "var(--allura-text-3)",
 }
@@ -267,7 +267,7 @@ export default function EvidenceDetailPage({ params }: { params: Promise<{ id: s
           >
             {t.label}
             {tab === t.value && (
-              <span className={`absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--allura-gold)]`} />
+              <span className={`absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--dashboard-evidence)]`} />
             )}
           </button>
         ))}

@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import Link from "next/link"
 import { ArrowUpRight, Brain, CheckCircle2, Clock, RefreshCw, Zap } from "lucide-react"
+import Link from "next/link"
+import { useEffect, useState } from "react"
 
 import { ErrorState, LoadingState, PageHeader, WarningList } from "@/components/dashboard"
 import { getHealthMetrics } from "@/lib/dashboard/api"
@@ -85,7 +85,7 @@ function categoryBadgeClass(cat: string) {
   switch (cat) {
     case "memory": return "bg-[var(--tone-blue-bg)] text-[var(--tone-blue-text)] border-[var(--allura-blue)]/20"
     case "insight": return "bg-[var(--tone-orange-bg)] text-[var(--tone-orange-text)] border-[var(--allura-orange)]/20"
-    case "graph": return "bg-[var(--tone-gold-bg)] text-[var(--tone-gold-text)] border-[var(--allura-gold)]/20"
+    case "graph": return "bg-[var(--dashboard-surface)] text-[var(--allura-charcoal)] border-[var(--dashboard-border)]/20"
     case "curator": return "bg-[var(--tone-green-bg)] text-[var(--tone-green-text)] border-[var(--allura-green)]/20"
     case "agent": return "bg-[var(--tone-charcoal-bg)] text-[var(--tone-charcoal-text)] border-[var(--allura-charcoal)]/20"
     default: return "bg-[var(--allura-gray-100)] text-[var(--allura-gray-500)] border-[var(--allura-gray-200)]"
@@ -136,8 +136,8 @@ export default function SkillsPage() {
       {/* Hero */}
       <div className="flex flex-col gap-1">
         <span
-          className="font-mono text-xs font-semibold uppercase tracking-[0.14em]"
-          style={{ color: "var(--allura-gold-text)", fontFamily: "'IBM Plex Mono', monospace" }}
+          className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[var(--dashboard-evidence-text)]"
+          style={{ fontFamily: "'IBM Plex Mono', monospace" }}
         >
           Allura Memory dashboard
         </span>
@@ -252,9 +252,9 @@ export default function SkillsPage() {
                             backgroundColor:
                               skill.success_rate >= 0.95
                                 ? "var(--allura-green)"
-                                : skill.success_rate >= 0.85
-                                  ? "var(--allura-gold)"
-                                  : "var(--allura-orange)",
+                               : skill.success_rate >= 0.85
+                                   ? "var(--dashboard-evidence)"
+                                   : "var(--allura-orange)",
                           }}
                         />
                       </div>

@@ -113,6 +113,16 @@ value: allura
   --dashboard-info:           var(--allura-blue);
   --dashboard-warning:        var(--allura-orange);
   --dashboard-danger:         #DC2626;
+  --dashboard-evidence:       var(--allura-cream);
+
+  /* ── Evidence Category Mappings ── */
+  /* ── Evidence CATEGORY mappings use cream tone (not brand gold) ── */
+  --dashboard-evidence-bg:    var(--dashboard-evidence);
+  --dashboard-evidence-text:  var(--allura-charcoal);
+
+  /* ── UI / Component Color Mappings ── */
+  /* ── Chart-4 uses cream for evidence category data ── */
+  --chart-4:  var(--dashboard-evidence);
 
   /* ── Tone / Badge Mappings ── */
   --tone-blue-bg:   var(--allura-blue-8);
@@ -192,6 +202,7 @@ value: allura
   --border: var(--allura-border-2);
   --input: var(--allura-border-1);
   --ring: var(--allura-blue);
+  --dashboard-evidence: var(--allura-cream);
   --chart-1: var(--allura-blue);
   --chart-2: var(--allura-orange);
   --chart-3: var(--allura-green);

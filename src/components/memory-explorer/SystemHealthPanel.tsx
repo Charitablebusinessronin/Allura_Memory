@@ -24,12 +24,12 @@ const metrics = [
   { label: "CPU Usage",    value: 58, data: [45,50,52,48,55,57,54,58,56,58], color: "var(--allura-blue)" },
   { label: "Memory Usage", value: 62, data: [55,58,60,57,62,61,63,60,62,62], color: "var(--allura-green)" },
   { label: "Disk I/O",     value: 41, data: [30,35,38,32,40,38,41,39,40,41], color: "var(--allura-orange)" },
-  { label: "Network I/O",  value: 72, data: [60,65,68,62,70,68,72,69,71,72], color: "var(--allura-gold)" },
+  { label: "Network I/O",  value: 72, data: [60,65,68,62,70,68,72,69,71,72], color: "var(--dashboard-evidence)" },
 ]
 
 function pctColor(v: number) {
   if (v >= 80) return "var(--allura-orange)"
-  if (v >= 60) return "var(--allura-gold)"
+  if (v >= 60) return "var(--dashboard-evidence)"
   return "var(--allura-green)"
 }
 
