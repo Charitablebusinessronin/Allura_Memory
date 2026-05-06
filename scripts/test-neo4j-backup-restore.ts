@@ -16,7 +16,11 @@ config({ path: resolve(__dirname, "../.env.local") });
 config({ path: resolve(__dirname, "../.env") });
 
 const NEO4J_USER = process.env.NEO4J_USER || "neo4j";
-const NEO4J_PASSWORD = process.env.NEO4J_PASSWORD || "Kamina2026*";
+const NEO4J_PASSWORD = process.env.NEO4J_PASSWORD;
+if (!NEO4J_PASSWORD) {
+  console.error("[test-neo4j-backup-restore] ERROR: NEO4J_PASSWORD is required. Set it in .env.local");
+  process.exit(1);
+}
 
 function runCypher(query: string): string {
   // Pipe query through stdin to avoid shell quoting issues

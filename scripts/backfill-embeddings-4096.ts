@@ -7,7 +7,11 @@
 import { config } from 'dotenv';
 config({ path: '../../docker/.env' });
 
-const PG_URL = `postgresql://${process.env.POSTGRES_USER || 'ronin4life'}:${process.env.POSTGRES_PASSWORD || 'KaminaDabs*'}@${process.env.POSTGRES_HOST || 'localhost'}:${process.env.POSTGRES_PORT || 5432}/${process.env.POSTGRES_DB || 'memory'}`;
+const PG_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL || `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${process.env.POSTGRES_DB}`;
+if (!process.env.POSTGRES_PASSWORD && !process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
+  console.error('[backfill] ERROR: POSTGRES_PASSWORD (or DATABASE_URL) is required. Set it in .env.local');
+  process.exit(1);
+}
 const OLLAMA_URL = process.env.EMBEDDING_BASE_URL || 'http://localhost:11434';
 const MODEL = 'qwen3-embedding:8b';
 const BATCH_SIZE = 10;
