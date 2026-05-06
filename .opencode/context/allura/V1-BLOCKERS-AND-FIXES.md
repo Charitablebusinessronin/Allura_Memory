@@ -401,7 +401,7 @@ The following items must be added to the GOAL DONE PROMPT checklist as new hard 
 ✅ 9.12  mcp-testing.yml triggers on new-main branch
 ✅ 9.13  .env.example includes DATABASE_URL, OPENCLAW_PORT, ALLURA_DASHBOARD_PORT
 ✅ 9.14  Fresh docker compose down -v → up completes without migration errors
-❌ 9.15  canonical-memory.test.ts exists and passes on live stack
+✅ 9.15  canonical-memory.test.ts exists and passes on live stack
 ```
 
 ---
