@@ -10,6 +10,7 @@
 @import "../styles/presets/allura-consumer.css";
 @import "../styles/brand-tokens.css";
 @import "../styles/agency-dashboard.css";
+@import "../components/memory-explorer/memory-explorer.css";
 
 @custom-variant dark (&:is(.dark *));
 
