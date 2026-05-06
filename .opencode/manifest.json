@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "generated": "2026-05-03",
-  "description": "Allura Memory .opencode architecture manifest — OAC Core + Allura Overlay",
+  "description": "Allura Memory .opencode architecture manifest \u2014 OAC Core + Allura Overlay",
   "core": [
     ".opencode/context/core/",
     ".opencode/context/core/standards/",

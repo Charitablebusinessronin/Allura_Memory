@@ -11,9 +11,15 @@
       "category": "database",
       "essential": true,
       "tools": [
-        "memory_add", "memory_search", "memory_get", "memory_list",
-        "memory_update", "memory_delete", "memory_promote",
-        "memory_export", "memory_restore"
+        "memory_add",
+        "memory_search",
+        "memory_get",
+        "memory_list",
+        "memory_update",
+        "memory_delete",
+        "memory_promote",
+        "memory_export",
+        "memory_restore"
       ],
       "rationale": "Core governed memory system. All agents must search before acting and write after completing."
     },
@@ -55,16 +61,7 @@
       "approved_by": "brooks-architect",
       "category": "search",
       "essential": false,
-      "rationale": "Self-hosted AI search via Perplexica/Vane. Replaces Tavily — no API key required."
-    },
-    "penpot-mcp": {
-      "status": "approved",
-      "approved_at": "2026-04-27T00:00:00Z",
-      "approved_by": "brooks-architect",
-      "category": "design",
-      "essential": false,
-      "tools": ["execute_code", "high_level_overview", "penpot_api_info", "export_shape", "import_image"],
-      "rationale": "Penpot design tool integration via MCP. Enables design retrieval, modification, CSS generation, and export. Requires Penpot browser plugin connection."
+      "rationale": "Self-hosted AI search via Perplexica/Vane. Replaces Tavily \u2014 no API key required."
     }
   },
   "allura-graph-debug": {
@@ -73,7 +70,11 @@
     "approved_by": "hightower-spec",
     "category": "diagnostics",
     "essential": false,
-    "tools": ["MCP_DOCKER__find_memories_by_name", "MCP_DOCKER__search_memories", "MCP_DOCKER__read_graph"],
+    "tools": [
+      "MCP_DOCKER__find_memories_by_name",
+      "MCP_DOCKER__search_memories",
+      "MCP_DOCKER__read_graph"
+    ],
     "rationale": "Read-only graph debugging. No writes permitted."
   },
   "allura-propose-promotion": {
@@ -82,8 +83,12 @@
     "approved_by": "hightower-spec",
     "category": "governance",
     "essential": true,
-    "tools": ["allura-brain__memory_promote", "allura-brain__memory_search", "allura-brain__memory_get"],
-    "rationale": "Propose memories for canonical promotion. Does not approve — that requires allura-approve-promotion."
+    "tools": [
+      "allura-brain__memory_promote",
+      "allura-brain__memory_search",
+      "allura-brain__memory_get"
+    ],
+    "rationale": "Propose memories for canonical promotion. Does not approve \u2014 that requires allura-approve-promotion."
   },
   "allura-approve-promotion": {
     "status": "approved",
@@ -91,7 +96,11 @@
     "approved_by": "hightower-spec",
     "category": "governance",
     "essential": true,
-    "tools": ["allura-brain__memory_promote", "allura-brain__memory_search", "allura-brain__memory_get"],
+    "tools": [
+      "allura-brain__memory_promote",
+      "allura-brain__memory_search",
+      "allura-brain__memory_get"
+    ],
     "rationale": "HITL curator approval for canonical promotion. curator_id must identify a human."
   },
   "allura-health-observability": {
@@ -100,7 +109,11 @@
     "approved_by": "hightower-spec",
     "category": "observability",
     "essential": true,
-    "tools": ["allura-brain__memory_search", "MCP_DOCKER__execute_sql", "MCP_DOCKER__search_memories"],
+    "tools": [
+      "allura-brain__memory_search",
+      "MCP_DOCKER__execute_sql",
+      "MCP_DOCKER__search_memories"
+    ],
     "rationale": "System health and queue observability. Read-only diagnostics."
   },
   "pending": {},

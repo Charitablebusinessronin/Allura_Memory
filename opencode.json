@@ -15,12 +15,6 @@
         "chrome-devtools-mcp@latest"
       ],
       "type": "local"
-    },
-    "penpot-mcp": {
-      "enabled": true,
-      "oauth": false,
-      "type": "remote",
-      "url": "http://localhost:4401/mcp"
     }
   },
   "model": "ollama-cloud/glm-5.1",
