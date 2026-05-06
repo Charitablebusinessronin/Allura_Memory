@@ -1,9 +1,9 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
-  McpSkillExecutor,
-  McpClientPool,
   createMcpSkillExecutor,
+  McpClientPool,
+  McpSkillExecutor,
   type SkillServerConfig,
 } from "./mcp-skill-executor"
 import type { SkillCall } from "./orchestrator"
@@ -28,7 +28,7 @@ function mockMcpResult(data: unknown, isError = false) {
 function createMockClientPool(toolHandler: (name: string, args: Record<string, unknown>) => unknown) {
   const connections: Array<{
     client: { callTool: (params: { name: string; arguments: Record<string, unknown> }) => Promise<unknown>; close: () => Promise<void> }
-    transport: {}
+    transport: Record<string, unknown>
     subprocess: { kill: () => void }
     skillName: string
   }> = []

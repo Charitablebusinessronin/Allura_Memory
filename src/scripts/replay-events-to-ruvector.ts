@@ -14,10 +14,10 @@
  *   bun run src/scripts/replay-events-to-ruvector.ts --group-id allura-system
  */
 
-import { getRuVectorPool, closeRuVectorPool } from "../lib/ruvector/connection"
-import { generateEmbedding } from "../lib/ruvector/embedding-service"
 import { Pool } from "pg"
 import { env } from "process"
+import { closeRuVectorPool, getRuVectorPool } from "../lib/ruvector/connection"
+import { generateEmbedding } from "../lib/ruvector/embedding-service"
 
 // ── Config ──────────────────────────────────────────────────────────────────
 

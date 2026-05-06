@@ -7,26 +7,24 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { memory_get, memory_update, memory_delete } from "@/mcp/canonical-tools"
-import type {
-  MemoryGetRequest,
-  MemoryUpdateRequest,
-  MemoryDeleteRequest,
-  GroupId,
-  MemoryId,
-  UserId,
-} from "@/lib/memory/canonical-contracts"
-import { DatabaseUnavailableError, DatabaseQueryError } from "@/lib/errors/database-errors"
+import { DatabaseQueryError, DatabaseUnavailableError } from "@/lib/errors/database-errors"
 import { MemoryNotFoundError } from "@/lib/memory/canonical-contracts"
-import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id"
-import type { MemoryResponseMeta } from "@/lib/memory/canonical-contracts"
+import type {
+  GroupId,
+  MemoryDeleteRequest,
+  MemoryGetRequest,
+  MemoryId,
+  MemoryResponseMeta,
+  MemoryUpdateRequest,
+ UserId } from "@/lib/memory/canonical-contracts"
+import { GroupIdValidationError, validateGroupId } from "@/lib/validation/group-id"
+import { memory_delete, memory_get, memory_update } from "@/mcp/canonical-tools"
 
 // ── Degraded Response Helper ────────────────────────────────────────────────
 // See src/app/api/memory/route.ts for rationale (Issue #14).
 // When meta.degraded = true, return 206 + Warning header instead of silent 200.
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function jsonWithDegradation<T extends any = any>(data: T & { meta?: MemoryResponseMeta }): NextResponse<T> {
+function jsonWithDegradation<T = unknown>(data: T & { meta?: MemoryResponseMeta }): NextResponse<T> {
   const meta = data.meta
   if (meta?.degraded) {
     const warning = meta.degraded_reason ? `299 Allura "${meta.degraded_reason}"` : '299 Allura "partial_data"'

@@ -13,13 +13,13 @@
  * Run with: RUN_E2E_TESTS=true bun vitest run src/lib/session/persistence.test.ts
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import fs from 'fs/promises';
 import path from 'path';
 import {
-  SessionPersistence,
   createSessionPersistence,
   generateSessionId,
+  SessionPersistence,
 } from './persistence';
 
 const shouldRunE2E = process.env.RUN_E2E_TESTS === "true";

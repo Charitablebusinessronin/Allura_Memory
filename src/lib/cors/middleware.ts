@@ -12,7 +12,7 @@
 
 import type { IncomingMessage } from "http";
 import type { CorsConfig } from "./config";
-import { loadCorsConfig, compileOriginValidator } from "./config";
+import { compileOriginValidator, loadCorsConfig } from "./config";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

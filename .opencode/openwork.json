@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "workspace": {
+    "name": "allura memory",
+    "createdAt": 1778044191236,
+    "preset": "starter"
+  },
+  "authorizedRoots": [
+    "/home/ronin704/Projects/allura memory"
+  ]
+}

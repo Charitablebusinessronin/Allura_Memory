@@ -22,7 +22,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 
-import { isClerkEnabled, PUBLIC_ROUTES, AUTH_ROUTES, PROTECTED_ROUTES } from "@/lib/auth/config"
+import { AUTH_ROUTES, isClerkEnabled, PROTECTED_ROUTES, PUBLIC_ROUTES } from "@/lib/auth/config"
 import { getDevUserSync } from "@/lib/auth/dev-auth"
 import { hasPermission } from "@/lib/auth/roles"
 import type { AlluraRole } from "@/lib/auth/types"

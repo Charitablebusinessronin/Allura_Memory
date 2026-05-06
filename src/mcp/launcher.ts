@@ -6,7 +6,7 @@
  * when running the MCP server directly with Bun.
  */
 
-import { plugin, type BunPlugin } from "bun"
+import { type BunPlugin, plugin } from "bun"
 
 // Define path resolution plugin
 const pathAliasPlugin: BunPlugin = {

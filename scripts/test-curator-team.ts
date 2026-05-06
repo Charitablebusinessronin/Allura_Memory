@@ -6,9 +6,9 @@
  * Usage: bun scripts/test-curator-team.ts <trace_id>
  */
 
-import { getPool, closePool } from "../src/lib/postgres/connection";
-import { getDriver, closeDriver } from "../src/lib/neo4j/connection";
 import { curatorScore } from "../src/lib/curator/score";
+import { closeDriver, getDriver } from "../src/lib/neo4j/connection";
+import { closePool, getPool } from "../src/lib/postgres/connection";
 
 const TRACE_ID = process.argv[2] || "35994";
 

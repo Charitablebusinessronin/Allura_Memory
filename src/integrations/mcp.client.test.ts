@@ -5,8 +5,8 @@
  * ARCH-001: Verify groupIdEnforcer is wired into MCP client calls.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { McpClientImpl, getMcpClient, type McpToolCaller } from "./mcp.client";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { getMcpClient, McpClientImpl, type McpToolCaller } from "./mcp.client";
 
 // Import EnforcedMcpClient from our test file
 // In production, this would be imported from src/lib/mcp/enforced-client.ts

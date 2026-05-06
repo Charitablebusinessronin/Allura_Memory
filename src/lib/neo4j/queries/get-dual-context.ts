@@ -6,9 +6,9 @@
  * preserving scope metadata and version resolution for both scopes.
  */
 
-import { readTransaction, type ManagedTransaction } from "../connection";
-import type { InsightRecord, InsightStatus } from "./insert-insight";
 import { getInsightById, type QueryError } from "./get-insight";
+import type { InsightRecord, InsightStatus } from "./insert-insight";
+import { type ManagedTransaction, readTransaction } from "../connection";
 
 /**
  * Scope identifiers for dual-context queries
@@ -18,7 +18,8 @@ export const GLOBAL_GROUP_ID = "global";
 // Use neo4j.int to create proper integers for Cypher queries
 const neo4jInt = (value: number) => {
   // Dynamically import neo4j-driver integer function
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+   
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const neo4j = require("neo4j-driver");
   return neo4j.int(value);
 };

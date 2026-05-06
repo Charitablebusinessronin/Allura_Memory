@@ -1,7 +1,7 @@
 import { createEnv } from "@t3-oss/env-nextjs"
 import { config, parse } from "dotenv"
-import { existsSync, readFileSync } from "fs"
 import { z } from "zod"
+import { existsSync, readFileSync } from "fs"
 
 // Load base config plus local overrides without clobbering already-injected
 // runtime environment variables. This keeps Docker/CI/Varlock injection

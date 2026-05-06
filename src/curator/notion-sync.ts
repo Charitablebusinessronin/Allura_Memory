@@ -30,8 +30,8 @@
  * Usage: bun src/curator/notion-sync.ts [--group-id allura-system]
  */
 
-import { getPool, closePool } from "../lib/postgres/connection";
 import { insertDlqEntry } from "./notion-sync-dlq";
+import { closePool, getPool } from "../lib/postgres/connection";
 
 // ── Constants ──────────────────────────────────────────────────────────────
 

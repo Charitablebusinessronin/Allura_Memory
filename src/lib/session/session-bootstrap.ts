@@ -11,10 +11,10 @@
  * This is the entry point for 6-month operational stability.
  */
 
-import { EncodingValidator, createEncodingValidator } from "../validation/encoding-validator"
-import { CheckpointManager, createCheckpointManager, type CheckpointState } from "./checkpoint-manager"
-import { StateHydrator, createStateHydrator, type SessionState } from "./state-hydrator"
+import { CheckpointManager, type CheckpointState, createCheckpointManager } from "./checkpoint-manager"
+import { createStateHydrator, type SessionState, StateHydrator } from "./state-hydrator"
 import { BudgetEnforcer } from "../budget/enforcer"
+import { createEncodingValidator, EncodingValidator } from "../validation/encoding-validator"
 
 /**
  * Session bootstrap configuration

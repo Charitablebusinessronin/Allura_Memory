@@ -10,10 +10,10 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { createHash } from "crypto"
-import { getPool } from "@/lib/postgres/connection"
-import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id"
-import { requireRole, forbiddenResponse, unauthorizedResponse } from "@/lib/auth/api-auth"
+import { forbiddenResponse, requireRole, unauthorizedResponse } from "@/lib/auth/api-auth"
 import { captureException } from "@/lib/observability/sentry"
+import { getPool } from "@/lib/postgres/connection"
+import { GroupIdValidationError, validateGroupId } from "@/lib/validation/group-id"
 
 export async function POST(request: NextRequest) {
   const roleCheck = requireRole(request, "curator")

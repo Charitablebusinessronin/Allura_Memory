@@ -4,8 +4,8 @@
  * Every violation is logged as an audit event.
  */
 
-import { SearchRequest, RetrievalConfig, DEFAULT_RETRIEVAL_CONFIG } from './contract';
-import { isCompatibleVersion, CURRENT_SCHEMA_VERSION, type SchemaVersion } from '../schema-version';
+import { DEFAULT_RETRIEVAL_CONFIG, RetrievalConfig, SearchRequest } from './contract';
+import { CURRENT_SCHEMA_VERSION, isCompatibleVersion, type SchemaVersion } from '../schema-version';
 
 export interface PolicyResult {
   allowed: boolean;

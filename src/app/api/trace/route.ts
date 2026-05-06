@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { insertEvent, type EventInsert } from "@/lib/postgres/queries/insert-trace"
+import { type EventInsert, insertEvent } from "@/lib/postgres/queries/insert-trace"
 
 /**
  * POST /api/trace — Internal trace endpoint for TraceMiddleware

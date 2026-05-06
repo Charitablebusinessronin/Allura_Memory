@@ -1,18 +1,30 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "ollama-cloud/glm-5.1",
+  "default_agent": "openwork",
   "mcp": {
     "allura-brain": {
-      "type": "remote",
-      "url": "http://localhost:5888/mcp",
+      "enabled": true,
       "oauth": false,
-      "enabled": true
+      "type": "remote",
+      "url": "http://localhost:5888/mcp"
+    },
+    "chrome-devtools": {
+      "command": [
+        "npx",
+        "-y",
+        "chrome-devtools-mcp@latest"
+      ],
+      "type": "local"
     },
     "penpot-mcp": {
-      "type": "remote",
-      "url": "http://localhost:4401/mcp",
+      "enabled": true,
       "oauth": false,
-      "enabled": true
+      "type": "remote",
+      "url": "http://localhost:4401/mcp"
     }
-  }
+  },
+  "model": "ollama-cloud/glm-5.1",
+  "plugin": [
+    "opencode-scheduler"
+  ]
 }

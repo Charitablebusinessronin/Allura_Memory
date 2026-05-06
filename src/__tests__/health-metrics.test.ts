@@ -1,8 +1,8 @@
 /**
  * @vitest-environment node
  */
-import { describe, it, expect, beforeAll, afterAll } from "vitest"
 import { NextRequest } from "next/server"
+import { afterAll, beforeAll, describe, expect, it } from "vitest"
 import { GET } from "@/app/api/health/metrics/route"
 
 describe("Health Metrics Endpoint", () => {

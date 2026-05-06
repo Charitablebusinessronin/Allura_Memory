@@ -1,3 +1,15 @@
+import {
+  ActivityItemSchema,
+  EvidenceSchema,
+
+  GraphEdgeSchema,
+  GraphNodeSchema,
+  InsightSchema,
+  MemorySchema,
+  MetricSchema,
+  SystemStatusSchema,
+  validateDashboardArray,
+  validateDashboardShape} from "@/lib/dashboard/schemas"
 import type {
   ActivityItem,
   DashboardWarning,
@@ -10,20 +22,6 @@ import type {
   Metric,
   SystemStatus,
 } from "@/lib/dashboard/types"
-import {
-  validateDashboardShape,
-  validateDashboardArray,
-} from "@/lib/dashboard/schemas"
-import {
-  MemorySchema,
-  InsightSchema,
-  EvidenceSchema,
-  ActivityItemSchema,
-  SystemStatusSchema,
-  MetricSchema,
-  GraphNodeSchema,
-  GraphEdgeSchema,
-} from "@/lib/dashboard/schemas"
 
 function record(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : {}

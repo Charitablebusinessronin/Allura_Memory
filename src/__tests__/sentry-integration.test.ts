@@ -8,21 +8,21 @@
  * Usage: bun vitest run src/__tests__/sentry-integration.test.ts
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { IncomingMessage } from "http";
+import { loadSentryConfig } from "@/lib/observability/config.js";
 import {
-  initSentry,
-  isSentryEnabled,
   captureException,
   captureMessage,
-  setUser,
-  setTag,
-  startTransaction,
   extractRequestContext,
+  initSentry,
+  isSentryEnabled,
   resetSentry,
+  setTag,
+  setUser,
+  startTransaction,
 } from "@/lib/observability/sentry.js";
-import { loadSentryConfig } from "@/lib/observability/config.js";
 import type { CaptureContext } from "@/lib/observability/sentry.js";
-import type { IncomingMessage } from "http";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

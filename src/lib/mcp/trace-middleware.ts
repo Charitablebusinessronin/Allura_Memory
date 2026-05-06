@@ -10,9 +10,9 @@ if (typeof window !== "undefined") {
   throw new Error("This module can only be used server-side");
 }
 
-import { logTrace, type TraceLog } from "@/lib/postgres/trace-logger";
-import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
 import type { McpToolCaller } from "@/integrations/mcp.client";
+import { logTrace, type TraceLog } from "@/lib/postgres/trace-logger";
+import { GroupIdValidationError, validateGroupId } from "@/lib/validation/group-id";
 
 const MAX_PAYLOAD_SIZE = 10240;
 const STRING_TRUNCATE_LIMIT = 5000;
@@ -294,7 +294,7 @@ export class TraceMiddleware {
     }
 
     try {
-      let serialized = JSON.parse(JSON.stringify(value));
+      const serialized = JSON.parse(JSON.stringify(value));
       let { data: truncated, wasTruncated } = this._truncateValue(serialized);
 
       const jsonStr = JSON.stringify(truncated);

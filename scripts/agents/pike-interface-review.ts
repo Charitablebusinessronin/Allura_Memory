@@ -20,9 +20,9 @@
  * When no DB, produces real analysis — the analysis is the value, DB is just logging.
  */
 
-import { readFileSync, existsSync, statSync, readdirSync } from "node:fs";
-import { join, relative, extname, basename } from "node:path";
-import { execSync, execFileSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { basename, extname, join, relative } from "node:path";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -661,7 +661,7 @@ function cmdReview(targetPath: string): {
     files.push(absPath);
   }
 
-  let allExports: ExportInfo[] = [];
+  const allExports: ExportInfo[] = [];
 
   for (const fp of files) {
     const rel = relPath(fp);

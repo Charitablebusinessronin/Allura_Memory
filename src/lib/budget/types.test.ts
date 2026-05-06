@@ -3,17 +3,17 @@
  * Story 3.2: Test budget type definitions and helpers
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  DEFAULT_BUDGET_LIMITS,
-  DEFAULT_BUDGET_CONFIG,
-  estimateCost,
   calculateUtilization,
-  isThresholdBreached,
   createEmptyConsumption,
   createSessionState,
+  DEFAULT_BUDGET_CONFIG,
+  DEFAULT_BUDGET_LIMITS,
+  estimateCost,
+  isThresholdBreached,
 } from "./types";
-import type { TokenUsage, LLMPricing, BudgetLimits, SessionId } from "./types";
+import type { BudgetLimits, LLMPricing, SessionId, TokenUsage } from "./types";
 
 describe("Budget Types", () => {
   describe("DEFAULT_BUDGET_LIMITS", () => {

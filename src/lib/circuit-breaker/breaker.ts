@@ -7,18 +7,18 @@
  */
 
 import type {
-  BreakerState,
   BreakerConfig,
-  BreakerStateSnapshot,
-  BreakerResult,
   BreakerError,
+  BreakerResetCallback,
+  BreakerResetEvent,
+  BreakerResult,
+  BreakerState,
+  BreakerStateChangeCallback,
+  BreakerStateChangeEvent,
+  BreakerStateSnapshot,
   BreakerSuccess,
   BreakerTripCallback,
-  BreakerResetCallback,
-  BreakerStateChangeCallback,
   BreakerTripEvent,
-  BreakerResetEvent,
-  BreakerStateChangeEvent,
   TransitionReason,
 } from "./types";
 import { DEFAULT_BREAKER_CONFIG } from "./types";

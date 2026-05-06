@@ -10,8 +10,8 @@
  * - Both return JSON with timestamp for observability
  */
 
-import { isPoolHealthy } from "@/lib/postgres/connection";
 import { isDriverHealthy } from "@/lib/neo4j/connection";
+import { isPoolHealthy } from "@/lib/postgres/connection";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

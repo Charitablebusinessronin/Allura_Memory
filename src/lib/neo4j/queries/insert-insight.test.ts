@@ -1,15 +1,15 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   createInsight,
   createInsightVersion,
   deprecateInsight,
-  revertInsightVersion,
-  InsightValidationError,
   InsightConflictError,
   type InsightInsert,
+  InsightValidationError,
+  revertInsightVersion,
 } from "./insert-insight";
-import { getDriver, closeDriver } from "../connection";
-import { writeTransaction, readTransaction, type ManagedTransaction } from "../connection";
+import { closeDriver, getDriver } from "../connection";
+import { type ManagedTransaction, readTransaction, writeTransaction } from "../connection";
 
 /**
  * Test suite for Neo4j insight insertion and versioning

@@ -1,17 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import path from "node:path";
 
+import type { MemoryClient } from "../../scripts/helpers/memory-client";
 import type { SnapshotEntry } from "../../scripts/helpers/snapshot-types";
 import {
   hydrateSessionFromSnapshot,
   runHydrationCli,
 } from "../../scripts/hydrate-session-from-snapshot";
-import type { MemoryClient } from "../../scripts/helpers/memory-client";
-import type { EventRecord } from "../../src/lib/postgres/queries/insert-trace";
 import type { InsightRecord } from "../../src/lib/neo4j/queries/insert-insight";
 import { InsightValidationError } from "../../src/lib/neo4j/queries/insert-insight";
+import type { EventRecord } from "../../src/lib/postgres/queries/insert-trace";
 
 // Pre-Phase-4 baseline — tracked in docs/deferred/pre-existing-failures.md
 // Reason: tests use group_id "roninmemory" which no longer passes validation (requires allura-* format)

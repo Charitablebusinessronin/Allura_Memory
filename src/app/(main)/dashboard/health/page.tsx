@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { Activity, Database, GitBranch, Network, RefreshCw, Server } from "lucide-react"
+import { useEffect, useState } from "react"
 
 import { ErrorState, LoadingState, PageHeader, StatusBadge, SystemStatusCard, WarningList } from "@/components/dashboard"
 import { getHealth, getHealthMetrics } from "@/lib/dashboard/api"

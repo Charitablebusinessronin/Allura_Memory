@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
-import { getPool, closePool } from "../src/lib/postgres/connection";
-import { getDriver, closeDriver } from "../src/lib/neo4j/connection";
 import { execSync } from "child_process";
+import { closeDriver, getDriver } from "../src/lib/neo4j/connection";
+import { closePool, getPool } from "../src/lib/postgres/connection";
 
 async function promoteInsights() {
   console.log("[Promoter] Starting insight promotion...");

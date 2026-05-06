@@ -6,9 +6,9 @@
  * to track what agents learned during sessions.
  */
 
+import { canonicalizeAgentId, resolveCanonicalAgentIdentity } from "@/lib/agents/canonical-identity";
 import { memory } from "../writer";
 import type { MemoryLabel } from "../writer";
-import { resolveCanonicalAgentIdentity, canonicalizeAgentId } from "@/lib/agents/canonical-identity";
 
 /**
  * Agent learning input

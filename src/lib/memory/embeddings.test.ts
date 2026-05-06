@@ -4,9 +4,9 @@
  * Tests for Ollama, OpenAI, and Voyage embedding integrations.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getEmbedding, getEmbeddings, type EmbeddingResult } from './embeddings';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getConfig } from './config';
+import { type EmbeddingResult, getEmbedding, getEmbeddings } from './embeddings';
 
 // Mock fetch globally
 const mockFetch = vi.fn();

@@ -5,18 +5,18 @@
  * Phase 7: SOC2 Compliance — Audit Log CSV Export
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  escapeCsvValue,
-  serializeToCsv,
+  type AuditQueryInput,
+  auditQuerySchema,
+  buildAuditQuery,
+} from "@/lib/audit/query-builder";
+import {
   createCsvStream,
   type CsvRow,
+  escapeCsvValue,
+  serializeToCsv,
 } from "@/lib/csv/serialize";
-import {
-  buildAuditQuery,
-  auditQuerySchema,
-  type AuditQueryInput,
-} from "@/lib/audit/query-builder";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CSV SERIALIZATION TESTS

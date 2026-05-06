@@ -24,16 +24,16 @@ if (typeof window !== "undefined") {
   throw new Error("memory() can only be used server-side");
 }
 
+import type { Pool } from "pg";
 import { randomUUID } from "crypto";
-import { validateGroupId } from "@/lib/validation/group-id";
+import { createGraphAdapter, getGraphBackend } from "@/lib/graph-adapter";
+import type { IGraphAdapter } from "@/lib/graph-adapter";
 import {
+  type ManagedTransaction,
   readTransaction,
   writeTransaction,
-  type ManagedTransaction,
 } from "@/lib/neo4j/connection";
-import { getGraphBackend, createGraphAdapter } from "@/lib/graph-adapter";
-import type { IGraphAdapter } from "@/lib/graph-adapter";
-import type { Pool } from "pg";
+import { validateGroupId } from "@/lib/validation/group-id";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -136,6 +136,7 @@ let pgPoolInstance: Pool | null = null;
 
 function getPgPool(): Pool {
   if (!pgPoolInstance) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { Pool: PgPool } = require("pg") as { Pool: new (config: Record<string, unknown>) => Pool };
     const password = process.env.POSTGRES_PASSWORD;
     if (!password) {

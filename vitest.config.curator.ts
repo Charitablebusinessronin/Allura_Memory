@@ -4,9 +4,9 @@
  * Auto-Curator and curator proposal pipeline only.
  * Scoring, pattern detection, similarity, dedup, governance.
  */
+import { config } from "dotenv"
 import { defineConfig } from "vitest/config"
 import path from "node:path"
-import { config } from "dotenv"
 
 config()
 

@@ -7,8 +7,8 @@
  */
 
 import type { Pool } from "pg";
-import { getPool } from "../connection";
 import type { EventSummary } from "./get-episodic-memory";
+import { getPool } from "../connection";
 
 /**
  * Scope identifiers for dual-context queries

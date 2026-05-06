@@ -6,12 +6,12 @@
  * Usage: bun vitest run src/__tests__/byok-key-manager.test.ts
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  byokConfigSchema,
   ByokKeyManager,
   createByokKeyManagerFromEnv,
   isByokConfigured,
-  byokConfigSchema,
 } from "@/lib/byok/key-manager";
 
 // ── Test Master Key ────────────────────────────────────────────────────────────

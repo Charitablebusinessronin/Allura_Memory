@@ -3,7 +3,6 @@
  * Extracted from page.tsx for line count reduction.
  */
 
-import { Input } from "@/components/ui/input"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,6 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Input } from "@/components/ui/input"
 
 interface AddMemoryDialogProps {
   open: boolean

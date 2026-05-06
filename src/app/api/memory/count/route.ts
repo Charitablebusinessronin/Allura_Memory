@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPool } from "@/lib/postgres/connection";
+import { forbiddenResponse, requireRole, unauthorizedResponse } from "@/lib/auth/api-auth";
 import { readTransaction } from "@/lib/neo4j/connection";
-import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
-import { requireRole, forbiddenResponse, unauthorizedResponse } from "@/lib/auth/api-auth";
+import { getPool } from "@/lib/postgres/connection";
+import { GroupIdValidationError, validateGroupId } from "@/lib/validation/group-id";
 
 /**
  * GET /api/memory/count

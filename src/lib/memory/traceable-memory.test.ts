@@ -5,9 +5,9 @@
  * Verifies that all Neo4j operations are automatically traced to PostgreSQL.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { createTraceableMemory, type TraceableMemoryConfig } from "./traceable-memory";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TraceMiddleware } from "@/lib/mcp/trace-middleware";
+import { createTraceableMemory, type TraceableMemoryConfig } from "./traceable-memory";
 import { memory, type MemoryAPI } from "./writer";
 
 // Mock dependencies

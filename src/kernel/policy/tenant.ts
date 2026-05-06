@@ -10,7 +10,7 @@
  * Use kernel syscalls or SDK wrapper instead.
  */
 
-import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
+import { GroupIdValidationError, validateGroupId } from "@/lib/validation/group-id";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS

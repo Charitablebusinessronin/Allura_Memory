@@ -19,23 +19,23 @@
  */
 
 import type { Pool } from "pg"
+import type { ConfidenceScore, GroupId, MemoryId, MemoryProvenance } from "@/lib/memory/canonical-contracts"
 import type {
-  IGraphAdapter,
-  GraphMemoryNode,
-  GraphSearchResult,
-  DuplicateCheckResult,
-  VersionLookupResult,
   CanonicalCheckResult,
   CountResult,
-  GraphListResult,
-  GraphGetResult,
+  DuplicateCheckResult,
   GraphDeleteResult,
-  GraphSupersedesResult,
-  GraphRestoreResult,
   GraphExportResult,
+  GraphGetResult,
+  GraphListResult,
+  GraphMemoryNode,
+  GraphRestoreResult,
+  GraphSearchResult,
+  GraphSupersedesResult,
+  IGraphAdapter,
+  VersionLookupResult,
 } from "./types"
 import { GraphAdapterError } from "./types"
-import type { GroupId, MemoryId, MemoryProvenance, ConfidenceScore } from "@/lib/memory/canonical-contracts"
 
 // ── Row Types ────────────────────────────────────────────────────────────────
 

@@ -9,9 +9,9 @@
  * Run: bun run scripts/verify-group-id-enforcement.ts
  */
 
-import { validateGroupId, GroupIdValidationError } from '../src/lib/validation/group-id';
-import { EnforcedMcpClient } from '../src/lib/mcp/enforced-client';
 import type { McpToolCaller } from '../src/integrations/mcp.client';
+import { EnforcedMcpClient } from '../src/lib/mcp/enforced-client';
+import { GroupIdValidationError, validateGroupId } from '../src/lib/validation/group-id';
 
 // Type for captured args
 interface CapturedArgs {

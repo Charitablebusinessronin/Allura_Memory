@@ -15,18 +15,6 @@
  *        ALLURA_MCP_AUTH_TOKEN  (optional Bearer token for /mcp endpoint)
  */
 
-import { createServer, type IncomingMessage, type ServerResponse } from "http";
-import { parse } from "url";
-import { randomUUID } from "crypto";
-import { config } from "dotenv";
-import { applyCors, corsHeaders, isPreflightRequest, getCorsConfig } from "@/lib/cors/index.js";
-import { initSentry, captureException, extractRequestContext, startTransaction } from "@/lib/observability/index.js";
-import { checkReadiness, markMcpInitialized } from "@/lib/health/probes";
-import { collectMetrics, recordHttpRequest, ensureMetricsInitialized } from "@/lib/health/metrics";
-import { resetHaltedGroup, getHaltedSessions } from "@/mcp/canonical-tools/budget-circuit";
-import { applyRateLimit, getRateLimitConfig } from "@/lib/health/rate-limiter";
-
-// MCP SDK imports for Streamable HTTP transport
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
@@ -34,6 +22,18 @@ import {
   isInitializeRequest,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { config } from "dotenv";
+import { randomUUID } from "crypto";
+import { createServer, type IncomingMessage, type ServerResponse } from "http";
+import { parse } from "url";
+import { applyCors, corsHeaders, getCorsConfig, isPreflightRequest } from "@/lib/cors/index.js";
+import { collectMetrics, ensureMetricsInitialized, recordHttpRequest } from "@/lib/health/metrics";
+import { checkReadiness, markMcpInitialized } from "@/lib/health/probes";
+import { applyRateLimit, getRateLimitConfig } from "@/lib/health/rate-limiter";
+import { captureException, extractRequestContext, initSentry, startTransaction } from "@/lib/observability/index.js";
+import { getHaltedSessions, resetHaltedGroup } from "@/mcp/canonical-tools/budget-circuit";
+
+// MCP SDK imports for Streamable HTTP transport
 
 config();
 
@@ -111,18 +111,18 @@ function validateBearerAuth(req: IncomingMessage): boolean {
 
 import {
   memory_add,
-  memory_search,
+  memory_delete,
   memory_get,
   memory_list,
-  memory_delete,
+  memory_search,
 } from "./canonical-tools.js";
 
 import type {
   MemoryAddRequest,
-  MemorySearchRequest,
+  MemoryDeleteRequest,
   MemoryGetRequest,
   MemoryListRequest,
-  MemoryDeleteRequest,
+  MemorySearchRequest,
 } from "@/lib/memory/canonical-contracts.js";
 
 // ── MCP Server Setup (Streamable HTTP) ───────────────────────────────────────

@@ -26,19 +26,19 @@
  * ```
  */
 
-import type { AlluraClientConfig, HealthResponse } from "./types.js";
-import { HealthResponseSchema } from "./types.js";
-import { MemoryOperations } from "./memory.js";
 import { resolveAuthToken } from "./auth.js";
 import {
   AlluraError,
   ConnectionError,
   createErrorFromResponse,
 } from "./errors.js";
+import { MemoryOperations } from "./memory.js";
+import type { AlluraClientConfig, HealthResponse } from "./types.js";
+import { HealthResponseSchema } from "./types.js";
 import {
-  DEFAULT_TIMEOUT,
-  DEFAULT_RETRIES,
   buildHeaders,
+  DEFAULT_RETRIES,
+  DEFAULT_TIMEOUT,
   normalizeBaseUrl,
   withRetry,
 } from "./utils.js";

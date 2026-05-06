@@ -1,21 +1,21 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
-  parseTraceRef,
-  formatTraceRef,
-  validateTraceRefFormat,
-  verifyTraceRefExists,
-  validateTraceRefs,
-  extractTraceRefs,
-  createEventTraceRef,
   createArtifactTraceRef,
-  isTraceRefFormat,
-  getTraceRefTable,
+  createEventTraceRef,
+  extractTraceRefs,
+  formatTraceRef,
   getTraceRefId,
-  TraceRefValidationError,
+  getTraceRefTable,
+  isTraceRefFormat,
+  parseTraceRef,
   SUPPORTED_TRACE_TABLES,
+  TraceRefValidationError,
+  validateTraceRefFormat,
+  validateTraceRefs,
+  verifyTraceRefExists,
 } from "./trace-ref";
-import { getPool, closePool } from "../postgres/connection";
-import { insertEvent, type EventInsert } from "../postgres/queries/insert-trace";
+import { closePool, getPool } from "../postgres/connection";
+import { type EventInsert, insertEvent } from "../postgres/queries/insert-trace";
 
 // E2E gating: tests that need live PostgreSQL are gated behind RUN_E2E_TESTS=true
 const describeE2E = process.env.RUN_E2E_TESTS === "true" ? describe : describe.skip;

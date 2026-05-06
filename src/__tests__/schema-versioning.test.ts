@@ -10,16 +10,16 @@
  * - Backfill script sets version on all existing data
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  clearMigrations,
   CURRENT_SCHEMA_VERSION,
-  MIN_SUPPORTED_VERSION,
+  getMigrationCount,
   isCompatibleVersion,
   isCurrentVersion,
   migratePayload,
+  MIN_SUPPORTED_VERSION,
   registerMigration,
-  clearMigrations,
-  getMigrationCount,
   type SchemaVersion,
   type VersionCompatibilityResult,
 } from '../lib/schema-version';

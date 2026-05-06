@@ -72,8 +72,8 @@ process.env.NEO4J_PASSWORD = "test-password"
 
 // ── Import under test (after mocks are in place) ─────────────────────────────
 
-import { memory } from "./writer"
 import { validateGroupId } from "@/lib/validation/group-id"
+import { memory } from "./writer"
 
 // ─────────────────────────────────────────────────────────────────────────────
 

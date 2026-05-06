@@ -8,8 +8,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { getPool } from "@/lib/postgres/connection"
 import { captureException } from "@/lib/observability/sentry"
+import { getPool } from "@/lib/postgres/connection"
 
 export interface SkillMetric {
   tool_name: string

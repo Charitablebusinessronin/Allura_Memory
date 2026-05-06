@@ -17,7 +17,7 @@
  * with group_id="allura-system", user_id="knuth", source="benchmark".
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi, afterAll } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
@@ -153,9 +153,9 @@ vi.mock("@/lib/errors/database-errors", () => ({
 
 // ── Imports (after mocks) ────────────────────────────────────────────────────
 
-import { memory_search } from "../mcp/canonical-tools";
-import { validateGroupId } from "../lib/validation/group-id";
 import type { MemorySearchRequest, MemorySearchResponse } from "../lib/memory/canonical-contracts";
+import { validateGroupId } from "../lib/validation/group-id";
+import { memory_search } from "../mcp/canonical-tools";
 
 // ── Test fixture data ────────────────────────────────────────────────────────
 

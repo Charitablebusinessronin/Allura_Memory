@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  ProposalDedupChecker,
   createProposalDedupChecker,
   DEFAULT_PROPOSAL_DEDUP_THRESHOLD,
   getDedupThreshold,
   type ProposalCandidate,
+  ProposalDedupChecker,
 } from "./proposal-dedup";
 
 function createProposal(

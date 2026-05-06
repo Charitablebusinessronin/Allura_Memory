@@ -2,13 +2,13 @@
 
 import * as React from "react"
 
-import { cn, getInitials } from "@/lib/utils"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { cn, getInitials } from "@/lib/utils"
 
 /* ─── shadcn/ui compatible Avatar ─── */
 

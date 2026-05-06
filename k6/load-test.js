@@ -11,8 +11,8 @@
  * Reference: docs/allura/SPRINT-PLAN.md (RK-14)
  */
 
-import http from 'k6/http';
 import { check, sleep } from 'k6';
+import http from 'k6/http';
 import { Rate, Trend } from 'k6/metrics';
 
 // Custom metrics

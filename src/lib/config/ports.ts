@@ -179,6 +179,7 @@ ALLURA_MCP_HTTP_URL=http://localhost:${config.mcp_http}
  */
 export async function isPortAvailable(port: number): Promise<boolean> {
   return new Promise((resolve) => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const server = require("net").createServer();
     server.once("error", () => resolve(false));
     server.once("listening", () => {

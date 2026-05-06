@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import { execSync } from 'child_process';
 
 const BASE_PATH = '/home/ronin704/.openclaw/workspace/projects/sabir-ai-os/_bmad';
 const TEST_AGENT = 'test-agent-story-6-1';

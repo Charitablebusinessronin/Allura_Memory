@@ -43,6 +43,10 @@ tsconfig.tsbuildinfo
 # opencode.json.*
 # .opencode/opencode.json*
 
+# MCP server configs with tokens/secrets
+.claude/mcp.json
+.opencode/mcp.json
+
 # Legacy / retired artifacts (never re-add)
 _bmad-output/
 workspaces/

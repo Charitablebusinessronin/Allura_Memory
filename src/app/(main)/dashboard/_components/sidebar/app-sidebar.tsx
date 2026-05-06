@@ -14,7 +14,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import { sidebarItems, type NavMainItem } from "@/navigation/sidebar/sidebar-items";
+import { type NavMainItem, sidebarItems } from "@/navigation/sidebar/sidebar-items";
 import { ThemeSwitcher } from "./theme-switcher";
 
 function AgencyLogo() {

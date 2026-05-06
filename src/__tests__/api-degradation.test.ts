@@ -9,8 +9,8 @@
  * without requiring live database connections.
  */
 
-import { describe, it, expect } from "vitest";
 import { NextResponse } from "next/server";
+import { describe, expect, it } from "vitest";
 import type { MemoryResponseMeta } from "../lib/memory/canonical-contracts";
 
 // ── Inline the jsonWithDegradation logic for unit testing ──────────────────

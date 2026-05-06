@@ -4,16 +4,16 @@
  * All pure helper functions with no side effects.
  */
 
+import { Pool } from "pg"
+import { randomUUID } from "crypto"
 import type {
   GroupId,
+  MemoryGetResponse,
   MemoryId,
   MemoryProvenance,
   MemoryResponseMeta,
-  MemoryGetResponse,
 } from "@/lib/memory/canonical-contracts"
-import { randomUUID } from "crypto"
 import { validateGroupId as canonicalValidateGroupId } from "@/lib/validation/group-id"
-import { Pool } from "pg"
 
 // ── Neo4j DateTime → ISO string ──────────────────────────────────────────
 // Neo4j driver returns temporal types as neo4j.DateTime objects, not ISO strings.

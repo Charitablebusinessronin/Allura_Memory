@@ -1,15 +1,15 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
-  getPostgresGroupIdStats,
-  getNeo4jGroupIdStats,
-  findSimilarGroupIds,
   findOrphanedGroupIds,
+  findSimilarGroupIds,
   generateGroupIdGovernanceReport,
+  getNeo4jGroupIdStats,
+  getPostgresGroupIdStats,
 } from "./group-governance";
-import { getPool, closePool } from "../postgres/connection";
-import { getDriver, closeDriver } from "../neo4j/connection";
-import { insertEvent, type EventInsert } from "../postgres/queries/insert-trace";
+import { closeDriver, getDriver } from "../neo4j/connection";
 import { createInsight, type InsightInsert } from "../neo4j/queries/insert-insight";
+import { closePool, getPool } from "../postgres/connection";
+import { type EventInsert, insertEvent } from "../postgres/queries/insert-trace";
 
 // E2E gating: skip unless RUN_E2E_TESTS=true (requires live PostgreSQL + Neo4j)
 const describeE2E = process.env.RUN_E2E_TESTS === "true" ? describe : describe.skip;

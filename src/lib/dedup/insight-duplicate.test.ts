@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest'
 
+import type { EmbeddingManager } from './embeddings'
 import {
+  classifyInsightSimilarity,
   DUPLICATE_THRESHOLD,
+  evaluateInsightDuplicates,
+  type ExistingInsightCandidate,
+  getInsightDuplicateRecommendation,
   POSSIBLE_SUPERSEDE_THRESHOLD,
   RELATED_CONTEXT_THRESHOLD,
-  classifyInsightSimilarity,
-  evaluateInsightDuplicates,
-  getInsightDuplicateRecommendation,
-  type ExistingInsightCandidate,
 } from './insight-duplicate'
-import type { EmbeddingManager } from './embeddings'
 import type { TextSimilarityManager } from './text-similarity'
 import type { EmbeddingVector } from './types'
 

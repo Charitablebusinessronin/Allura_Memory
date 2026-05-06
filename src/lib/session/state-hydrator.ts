@@ -8,9 +8,9 @@
  * 4. Memory Bank - Fallback documentation
  */
 
+import { z } from "zod"
 import fs from "fs/promises"
 import path from "path"
-import { z } from "zod"
 import type { CheckpointState } from "./checkpoint-manager"
 
 /**

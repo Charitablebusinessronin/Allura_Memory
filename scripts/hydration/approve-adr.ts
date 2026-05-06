@@ -1,4 +1,4 @@
-import { queryNotionDatabase, fetchNotionDatabase, DATABASE_IDS } from './notion-client';
+import { DATABASE_IDS, fetchNotionDatabase, queryNotionDatabase } from './notion-client';
 
 const ADR_CHANGE_ID = '7bfa63ad-d4c1-408e-80d2-c288d8f9e4b9';
 

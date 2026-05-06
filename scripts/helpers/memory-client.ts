@@ -1,11 +1,11 @@
-import { getPool } from "../../src/lib/postgres/connection";
-import { insertEvent, type EventInsert, type EventRecord } from "../../src/lib/postgres/queries/insert-trace";
 import {
   createInsight,
   createInsightVersion,
   type InsightInsert,
   type InsightRecord,
 } from "../../src/lib/neo4j/queries/insert-insight";
+import { getPool } from "../../src/lib/postgres/connection";
+import { type EventInsert, type EventRecord, insertEvent } from "../../src/lib/postgres/queries/insert-trace";
 
 export interface MemoryClient {
   logEvent(event: EventInsert): Promise<EventRecord>;

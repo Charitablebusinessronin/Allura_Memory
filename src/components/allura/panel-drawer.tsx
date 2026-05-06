@@ -1,13 +1,13 @@
 "use client"
 
-import { useCallback, useEffect, useRef } from "react"
 import { X } from "lucide-react"
-import { cn } from "@/lib/utils"
-import type { Memory } from "@/hooks/use-memory-list"
-import { StatusBadge } from "@/components/allura/status-badge"
+import { useCallback, useEffect, useRef } from "react"
 import { ConfidenceBar } from "@/components/allura/confidence-bar"
+import { StatusBadge } from "@/components/allura/status-badge"
 import { TraceCard } from "@/components/allura/trace-card"
 import { Button } from "@/components/ui/button"
+import type { Memory } from "@/hooks/use-memory-list"
+import { cn } from "@/lib/utils"
 
 interface TraceEntry {
   tool: string

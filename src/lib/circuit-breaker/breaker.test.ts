@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   CircuitBreaker,
   createCircuitBreaker,
 } from "./breaker";
-import type { BreakerState, BreakerConfig } from "./types";
+import type { BreakerConfig, BreakerState } from "./types";
 
 describe("CircuitBreaker - Story 3.6", () => {
   let breaker: CircuitBreaker;

@@ -11,8 +11,8 @@
  * 4. Log all rejections with full context
  */
 
-import { ProofOfIntent, verifyProof, VerificationResult, getKernelSecretKey } from "../proof";
 import { ViolationRecord } from "../gate";
+import { getKernelSecretKey, ProofOfIntent, VerificationResult, verifyProof } from "../proof";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -119,7 +119,7 @@ export class McpInterceptor {
   private config: InterceptorConfig;
   private interceptions: McpInterception[] = [];
   private initialized: boolean = false;
-  private originalTools: Map<string, Function> = new Map();
+  private originalTools: Map<string, (...args: unknown[]) => unknown> = new Map();
   private rejectionCount: number = 0;
 
   constructor(config: Partial<InterceptorConfig> = {}) {
@@ -210,8 +210,6 @@ export class McpInterceptor {
       return;
     }
 
-    const self = this;
-
     for (const op of PROTECTED_OPERATIONS) {
       const originalFn = mcpDocker[op];
 
@@ -220,8 +218,8 @@ export class McpInterceptor {
         this.originalTools.set(op, originalFn);
 
         // Wrap with interceptor
-        mcpDocker[op] = async function (...args: unknown[]) {
-          return self.interceptCall(op, args, originalFn.bind(this));
+        mcpDocker[op] = async (...args: unknown[]) => {
+          return this.interceptCall(op, args, originalFn.bind(mcpDocker));
         };
 
         if (this.config.logCalls) {
@@ -237,7 +235,7 @@ export class McpInterceptor {
   private async interceptCall(
     toolName: string,
     args: unknown[],
-    originalFn: Function
+    originalFn: (...args: unknown[]) => unknown
   ): Promise<unknown> {
     if (!this.config.enabled) {
       return originalFn(...args);

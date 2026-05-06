@@ -12,10 +12,10 @@ import {
   RuVixKernel,
 } from "./ruvix";
 import type {
-  SyscallContext,
-  SyscallResult,
   MutationRequest,
   QueryRequest,
+  SyscallContext,
+  SyscallResult,
 } from "./syscalls";
 
 // ─────────────────────────────────────────────────────────────────────────────

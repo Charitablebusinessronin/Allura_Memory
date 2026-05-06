@@ -1,9 +1,9 @@
 // scripts/hydration/parse-skill-files.ts
 // Parse skill markdown files and extract metadata from frontmatter
 
+import yaml from 'yaml';
 import fs from 'fs';
 import path from 'path';
-import yaml from 'yaml';
 import { SkillSchema } from './notion-client';
 
 export interface ParsedSkill {

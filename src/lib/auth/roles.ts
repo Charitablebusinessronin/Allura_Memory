@@ -13,8 +13,8 @@
 import {
   ALLURA_ROLES,
   AlluraRole,
-  ROLE_LEVEL,
   PermissionCheckResult,
+  ROLE_LEVEL,
 } from "./types";
 
 // ── Role Hierarchy ─────────────────────────────────────────────────────────

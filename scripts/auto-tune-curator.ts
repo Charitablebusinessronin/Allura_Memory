@@ -6,8 +6,8 @@
  * Agents: curator_tuner, feedback_validator, decision_analyzer
  */
 
-import { getPool, closePool } from "../src/lib/postgres/connection";
-import { getDriver, closeDriver } from "../src/lib/neo4j/connection";
+import { closeDriver, getDriver } from "../src/lib/neo4j/connection";
+import { closePool, getPool } from "../src/lib/postgres/connection";
 
 interface TuningProposal {
   parameter: string;

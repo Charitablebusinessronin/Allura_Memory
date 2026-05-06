@@ -13,30 +13,30 @@
  * Run with: bun vitest run src/__tests__/notion-sync-dlq.test.ts
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi, beforeAll, afterAll } from "vitest";
-import { Pool } from "pg";
-import { randomUUID } from "crypto";
 import { config } from "dotenv";
+import { Pool } from "pg";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { randomUUID } from "crypto";
 
 import {
-  insertDlqEntry,
+  BACKOFF_SCHEDULE_SECONDS,
+  calculateNextRetryAt,
+  type DlqEntry,
+  getDlqStats,
+  getPermanentlyFailedEntries,
   getRetryableEntries,
-  markEntryRetrying,
+  insertDlqEntry,
   markEntryCompleted,
   markEntryFailed,
-  getPermanentlyFailedEntries,
-  getDlqStats,
-  requeueFailedEntry,
-  calculateNextRetryAt,
-  BACKOFF_SCHEDULE_SECONDS,
+  markEntryRetrying,
   MAX_RETRIES,
-  type DlqEntry,
+  requeueFailedEntry,
 } from "../curator/notion-sync-dlq";
 
 import {
   handleNotionSyncFailure,
-  processDlqRetries,
   type NotionSyncEvent,
+  processDlqRetries,
 } from "../curator/notion-sync-worker";
 
 // Load environment variables

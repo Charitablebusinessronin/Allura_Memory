@@ -16,8 +16,8 @@
  *   NEO4J_PASSWORD     — Neo4j password
  */
 
-import { Pool } from "pg"
 import neo4j from "neo4j-driver"
+import { Pool } from "pg"
 
 const SCHEMA_VERSION = 1
 

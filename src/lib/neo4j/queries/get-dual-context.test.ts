@@ -1,20 +1,20 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
-  getDualContextSemanticMemory,
-  getMergedDualContextInsights,
-  getDualContextWorkingMemory,
-  isGlobalContext,
-  validateCrossGroupAccess,
-  searchDualContextInsights,
-  GLOBAL_GROUP_ID,
   DualInsightQueryError,
   type DualInsightQueryParams,
+  getDualContextSemanticMemory,
+  getDualContextWorkingMemory,
+  getMergedDualContextInsights,
+  GLOBAL_GROUP_ID,
+  isGlobalContext,
+  searchDualContextInsights,
+  validateCrossGroupAccess,
 } from "./get-dual-context";
 import {
   createInsight,
   type InsightInsert,
 } from "./insert-insight";
-import { getDriver, closeDriver } from "../connection";
+import { closeDriver, getDriver } from "../connection";
 
 /**
  * Test suite for dual-context semantic memory queries (Neo4j)

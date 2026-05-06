@@ -6,8 +6,8 @@
  * pattern used by /api/memory and /api/curator/proposals.
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest"
 import { NextRequest, NextResponse } from "next/server"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 // ── Mock environment: Clerk disabled for test mode ────────────────────────────
 

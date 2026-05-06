@@ -1,8 +1,8 @@
-import { hydrateTasks } from './hydration/create-tasks';
+import { approveAdr001 } from './hydration/approve-adr';
 import { hydrateAgents } from './hydration/create-agents';
 import { hydrateSkills } from './hydration/create-skills';
+import { hydrateTasks } from './hydration/create-tasks';
 import { seedAdr001 } from './hydration/seed-changes';
-import { approveAdr001 } from './hydration/approve-adr';
 
 interface HydrationSummary {
   tasks: { total: number; created: number; errors: number };

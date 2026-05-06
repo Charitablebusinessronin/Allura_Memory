@@ -13,17 +13,17 @@
 
 import { randomBytes } from "crypto";
 import {
-  ProofOfIntent,
-  ProofClaims,
-  createProof,
-  verifyProofOrThrow,
-  getKernelSecretKey,
-} from "./proof";
-import {
   evaluatePoliciesOrThrow,
-  PolicyContext,
   Policy,
+  PolicyContext,
 } from "./policy";
+import {
+  createProof,
+  getKernelSecretKey,
+  ProofClaims,
+  ProofOfIntent,
+  verifyProofOrThrow,
+} from "./proof";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES

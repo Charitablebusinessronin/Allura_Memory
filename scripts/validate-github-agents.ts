@@ -5,7 +5,7 @@
  * Tests each agent to ensure they're working with GitHub events.
  */
 
-import { getPool, closePool } from "../src/lib/postgres/connection";
+import { closePool, getPool } from "../src/lib/postgres/connection";
 
 const AGENTS = [
   { name: 'carmack', script: 'carmack-review.ts', testArg: '123' },

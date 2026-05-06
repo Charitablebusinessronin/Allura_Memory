@@ -10,8 +10,8 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { captureException } from "@/lib/observability/sentry"
 import { getSession } from "@/lib/neo4j/connection"
+import { captureException } from "@/lib/observability/sentry"
 import { getPool } from "@/lib/postgres/connection"
 
 /**

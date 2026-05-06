@@ -4,7 +4,7 @@
  * Run with: RUN_E2E_TESTS=true bun vitest run src/lib/session/checkpoint-manager.test.ts
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import fs from 'fs/promises';
 import path from 'path';
 import { CheckpointManager, createCheckpointManager } from './checkpoint-manager';

@@ -10,7 +10,7 @@
  * 3. Edge: middleware doesn't block response (latency check)
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // Mock fetch globally
 const mockFetch = vi.fn()

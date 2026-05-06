@@ -5,9 +5,9 @@
  * from dashboard/memories/page.tsx. Pure rendering stays in the page.
  */
 
-import { useState, useEffect, useCallback, useRef } from "react"
-import { normalizeNeo4jTimestamp } from "@/lib/utils/date"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { DEFAULT_GROUP_ID } from "@/lib/defaults/scope"
+import { normalizeNeo4jTimestamp } from "@/lib/utils/date"
 
 const DEFAULT_USER_ID = "system"
 

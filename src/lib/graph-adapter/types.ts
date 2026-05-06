@@ -22,7 +22,7 @@
  * - This is table work wearing a graph costume — accidental complexity
  */
 
-import type { GroupId, MemoryId, MemoryProvenance, ConfidenceScore } from "@/lib/memory/canonical-contracts"
+import type { ConfidenceScore, GroupId, MemoryId, MemoryProvenance } from "@/lib/memory/canonical-contracts"
 
 // ── Graph Memory Node ────────────────────────────────────────────────────────
 

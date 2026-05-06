@@ -9,9 +9,9 @@
 
 import { execSync } from "node:child_process"
 import { createHash } from "node:crypto"
-import { mkdir, writeFile, readFile, stat, access, readdir } from "node:fs/promises"
-import { resolve, join } from "node:path"
+import { access, mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises"
 import { homedir } from "node:os"
+import { join, resolve } from "node:path"
 import type { BackupResult, EncryptionConfig } from "./types"
 
 // ── Types ───────────────────────────────────────────────────────────────────

@@ -1,15 +1,15 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
-  MemorySearchRequest,
+  buildTopicKey,
   CreateMemoryRequest,
   GetMemoryRequest,
-  MemoryNodeType,
   InsightStatus,
-  buildTopicKey,
+  MemoryNodeType,
+  MemorySearchRequest,
   parseTopicKey,
-  TOPIC_KEY_PREFIXES,
-  RESERVED_GROUP_IDS,
   PROJECT_GROUP_IDS,
+  RESERVED_GROUP_IDS,
+  TOPIC_KEY_PREFIXES,
 } from "./types";
 
 describe("Memory Types", () => {

@@ -5,12 +5,12 @@
  * and a Restore action button. Uses Durham brand tokens throughout.
  */
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { RotateCcw, Clock } from "lucide-react"
+import { Clock, RotateCcw } from "lucide-react"
 import Link from "next/link"
-import { DEFAULT_GROUP_ID } from "@/lib/defaults/scope"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import type { DeletedMemory } from "@/hooks/use-memory-list"
+import { DEFAULT_GROUP_ID } from "@/lib/defaults/scope"
 
 interface DeletedMemoryCardProps {
   memory: DeletedMemory

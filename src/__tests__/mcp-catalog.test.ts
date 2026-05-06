@@ -1,15 +1,15 @@
 /**
  * @vitest-environment node
  */
-import { describe, it, expect } from "vitest"
+import { describe, expect, it } from "vitest"
 import {
   classifyRiskLevel,
   requiresAlwaysAsk,
-  validateToolId,
-  validateToolCandidate,
-  validateToolProfile,
   type ToolCandidate,
   type ToolProfile,
+  validateToolCandidate,
+  validateToolId,
+  validateToolProfile,
 } from "@/lib/mcp-catalog/types"
 
 describe("MCP Catalog Types", () => {

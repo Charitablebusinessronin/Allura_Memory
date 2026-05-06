@@ -8,15 +8,15 @@
  */
 
 import {
-  SearchRequest,
-  SearchResponse,
+  DEFAULT_RETRIEVAL_CONFIG,
   MemoryResult,
   RetrievalConfig,
-  DEFAULT_RETRIEVAL_CONFIG,
+  SearchRequest,
+  SearchResponse,
 } from './contract';
-import { validateStartup, StartupReport } from './startup-validator';
 import { enforcePolicy, PolicyResult } from './policy';
-import { isCompatibleVersion, CURRENT_SCHEMA_VERSION } from '../schema-version';
+import { StartupReport, validateStartup } from './startup-validator';
+import { CURRENT_SCHEMA_VERSION, isCompatibleVersion } from '../schema-version';
 
 let startupValidated = false;
 

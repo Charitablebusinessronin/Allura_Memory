@@ -20,14 +20,14 @@ if (typeof window !== "undefined") {
   throw new Error("This module can only be used server-side");
 }
 
-import { TraceMiddleware, type TraceMiddlewareConfig } from "@/lib/mcp/trace-middleware";
 import type { McpToolCaller } from "@/integrations/mcp.client";
+import { TraceMiddleware, type TraceMiddlewareConfig } from "@/lib/mcp/trace-middleware";
 import {
-  memory,
-  type MemoryAPI,
   type CreateEntityInput,
   type CreateEntityResult,
   type CreateRelationshipCallInput,
+  memory,
+  type MemoryAPI,
   type SearchInput,
 } from "./writer";
 

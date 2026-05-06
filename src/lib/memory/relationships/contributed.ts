@@ -6,9 +6,9 @@
  * to track which agents contributed to tasks, decisions, lessons, etc.
  */
 
+import { canonicalizeAgentId, resolveCanonicalAgentIdentity } from "@/lib/agents/canonical-identity";
 import { memory } from "../writer";
 import type { MemoryLabel, RelationshipType } from "../writer";
-import { resolveCanonicalAgentIdentity, canonicalizeAgentId } from "@/lib/agents/canonical-identity";
 
 /**
  * Agent contribution input

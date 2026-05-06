@@ -11,13 +11,13 @@ import { createHash } from "crypto"
 import { getPool } from "@/lib/postgres/connection"
 import { validateGroupId } from "@/lib/validation/group-id"
 import {
-  type ToolCandidate,
   type ApprovedTool,
-  type ToolProfile,
-  type ToolApproval,
-  type ToolInvocationLog,
   classifyRiskLevel,
   requiresAlwaysAsk,
+  type ToolApproval,
+  type ToolCandidate,
+  type ToolInvocationLog,
+  type ToolProfile,
   validateToolCandidate,
   validateToolProfile,
 } from "./types"

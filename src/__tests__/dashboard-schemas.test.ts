@@ -7,19 +7,19 @@
  * 3. Edge cases (missing fields, wrong types) are caught
  * 4. validateDashboardShape returns fallback data without throwing
  */
-import { describe, it, expect, vi } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import {
-  MetricSchema,
-  MemorySchema,
-  InsightSchema,
-  EvidenceSchema,
   ActivityItemSchema,
   DashboardWarningSchema,
-  SystemStatusSchema,
-  GraphNodeSchema,
+  EvidenceSchema,
   GraphEdgeSchema,
-  validateDashboardShape,
+  GraphNodeSchema,
+  InsightSchema,
+  MemorySchema,
+  MetricSchema,
+  SystemStatusSchema,
   validateDashboardArray,
+  validateDashboardShape,
 } from "@/lib/dashboard/schemas"
 
 // ─── Schema: Valid Data ───────────────────────────────────────

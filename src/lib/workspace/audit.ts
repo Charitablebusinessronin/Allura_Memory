@@ -9,7 +9,7 @@
  * NFR-5: Observable health checks
  */
 
-import { insertEvent, type EventInsert } from "@/lib/postgres/queries/insert-trace";
+import { type EventInsert, insertEvent } from "@/lib/postgres/queries/insert-trace";
 import { CURRENT_SCHEMA_VERSION } from "@/lib/schema-version";
 
 // ── Types ───────────────────────────────────────────────────────────────────

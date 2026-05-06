@@ -19,9 +19,9 @@
  *   pnpm test:mcp          — MCP browser checks
  *   pnpm test:all          → typecheck + lint + all lanes + e2e + mcp
  */
+import { config } from "dotenv"
 import { defineConfig } from "vitest/config"
 import path from "node:path"
-import { config } from "dotenv"
 
 config()
 

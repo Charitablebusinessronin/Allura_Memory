@@ -16,9 +16,9 @@ if (typeof window !== "undefined") {
 }
 
 import { z } from "zod";
-import { memory_add } from "@/mcp/canonical-tools";
-import { validateGroupId } from "@/lib/validation/group-id";
 import type { MemoryAddRequest } from "@/lib/memory/canonical-contracts";
+import { validateGroupId } from "@/lib/validation/group-id";
+import { memory_add } from "@/mcp/canonical-tools";
 
 // ── Error Class ───────────────────────────────────────────────────────────────
 

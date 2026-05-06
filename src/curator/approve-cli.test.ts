@@ -13,7 +13,7 @@
  * No external services required. Pure unit lane.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
@@ -68,10 +68,10 @@ vi.mock("../lib/graph-adapter/neo4j-adapter", () => ({
   })),
 }));
 
-import { getPool, closePool } from "../lib/postgres/connection";
-import { createInsight, InsightConflictError } from "../lib/neo4j/queries/insert-insight";
-import { validateGroupId, GroupIdValidationError } from "../lib/validation/group-id";
 import { createHash } from "crypto";
+import { createInsight, InsightConflictError } from "../lib/neo4j/queries/insert-insight";
+import { closePool, getPool } from "../lib/postgres/connection";
+import { GroupIdValidationError, validateGroupId } from "../lib/validation/group-id";
 
 // ── Import module under test (after mocks) ────────────────────────────────────
 //

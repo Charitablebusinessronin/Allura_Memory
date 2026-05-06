@@ -12,9 +12,9 @@
  * If the database is unreachable, tests will be skipped gracefully.
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { Pool } from "pg";
 import { config } from "dotenv";
+import { Pool } from "pg";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 // Load environment variables
 config();
@@ -51,14 +51,14 @@ process.env.RUVECTOR_USER = E2E_CONFIG.user;
 process.env.RUVECTOR_PASSWORD = E2E_CONFIG.password;
 
 import {
-  storeMemory,
-  retrieveMemories,
-  postFeedback,
   isRuVectorReady,
+  postFeedback,
+  retrieveMemories,
   RuVectorBridgeValidationError,
+  storeMemory,
 } from "../lib/ruvector/bridge";
-import { GroupIdValidationError } from "../lib/validation/group-id";
 import { closeRuVectorPool } from "../lib/ruvector/connection";
+import { GroupIdValidationError } from "../lib/validation/group-id";
 
 // ── Direct pool for cleanup ────────────────────────────────────────────────────
 let cleanupPool: Pool | null = null;

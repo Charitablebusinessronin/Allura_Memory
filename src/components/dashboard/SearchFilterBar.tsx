@@ -1,7 +1,7 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
 import { Search, SlidersHorizontal } from "lucide-react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 
 interface SearchFilterBarProps {

@@ -1,8 +1,8 @@
 "use client";
 
+import { BadgeCheck, Bell, CreditCard, LogOut } from "lucide-react";
 import { useState } from "react";
 
-import { BadgeCheck, Bell, CreditCard, LogOut } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {

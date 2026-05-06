@@ -9,11 +9,11 @@
  * NFR-4: Path traversal must be impossible
  */
 
-import { readFile, writeFile, mkdir, readdir, access } from "node:fs/promises";
+import { access, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { logWorkspaceViolation } from "./audit";
 import { isWithinWorkspace, WORKSPACE_ROOT } from "./boundary";
 import { WorkspaceViolationError } from "./errors";
-import { logWorkspaceViolation } from "./audit";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 

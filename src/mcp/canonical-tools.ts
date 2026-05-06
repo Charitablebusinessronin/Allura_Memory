@@ -32,81 +32,81 @@
  */
 
 // ── Sub-module imports ────────────────────────────────────────────────────
-import { getConnections, resetConnections } from "./canonical-tools/connection"
-import {
-  neo4jDateToISO,
-  EpisodicMemoryRow,
-  toMemoryId,
-  toProvenance,
-  parseEpisodicTags,
-  getRecentUsageCount,
-  baseMeta,
-  degradedMeta,
-  getPromotionMode,
-  getAutoApprovalThreshold,
-  DUPLICATE_THRESHOLD,
-  RECOVERY_WINDOW_DAYS,
-  validateGroupId,
-  generateMemoryId,
-  sortDedupedMemories,
-} from "./canonical-tools/validation-utils"
-import {
-  getBudgetEnforcer,
-  getBreakerManager,
-  ensureSession,
-  checkBudget,
-  recordToolCall,
-  withCircuitBreaker,
-  resetHaltedGroup,
-  getHaltedSessions,
-} from "./canonical-tools/budget-circuit"
 
 // ── External imports ──────────────────────────────────────────────────────
-import type {
-  MemoryAddRequest,
-  MemoryAddResponse,
-  MemorySearchRequest,
-  MemorySearchResponse,
-  MemoryGetRequest,
-  MemoryGetResponse,
-  MemoryListRequest,
-  MemoryListResponse,
-  MemoryDeleteRequest,
-  MemoryDeleteResponse,
-  MemoryUpdateRequest,
-  MemoryUpdateResponse,
-  MemoryPromoteRequest,
-  MemoryPromoteResponse,
-  MemoryExportRequest,
-  MemoryExportResponse,
-  MemoryRestoreRequest,
-  MemoryRestoreResponse,
-  MemoryListDeletedRequest,
-  MemoryListDeletedResponse,
-  GroupId,
-  MemoryId,
-  MemoryContent,
-  ConfidenceScore,
-  StorageLocation,
-  MemoryProvenance,
-  MemoryResponseMeta,
-  ScopeTuple,
-  MemoryRetrievalStatus,
-} from "@/lib/memory/canonical-contracts"
-import {
-  MemoryNotFoundError,
-  MemoryAlreadyCanonicalError,
-  MemoryNotDeletedError,
-  RecoveryWindowExpiredError,
-} from "@/lib/memory/canonical-contracts"
 
 import { randomUUID } from "crypto"
-import { DatabaseUnavailableError, DatabaseQueryError, classifyPostgresError } from "@/lib/errors/database-errors"
-import { createGraphAdapter } from "@/lib/graph-adapter"
 import { curatorScore } from "@/lib/curator/score"
 import { createProposalDedupChecker, getDedupThreshold, type ProposalCandidate } from "@/lib/dedup/proposal-dedup"
-import { searchWithFeedback } from "@/lib/ruvector/retrieval-adapter"
+import { classifyPostgresError, DatabaseQueryError, DatabaseUnavailableError } from "@/lib/errors/database-errors"
+import { createGraphAdapter } from "@/lib/graph-adapter"
+import {
+  MemoryAlreadyCanonicalError,
+  MemoryNotDeletedError,
+  MemoryNotFoundError,
+  RecoveryWindowExpiredError,
+} from "@/lib/memory/canonical-contracts"
+import type {
+  ConfidenceScore,
+  GroupId,
+  MemoryAddRequest,
+  MemoryAddResponse,
+  MemoryContent,
+  MemoryDeleteRequest,
+  MemoryDeleteResponse,
+  MemoryExportRequest,
+  MemoryExportResponse,
+  MemoryGetRequest,
+  MemoryGetResponse,
+  MemoryId,
+  MemoryListDeletedRequest,
+  MemoryListDeletedResponse,
+  MemoryListRequest,
+  MemoryListResponse,
+  MemoryPromoteRequest,
+  MemoryPromoteResponse,
+  MemoryProvenance,
+  MemoryResponseMeta,
+  MemoryRestoreRequest,
+  MemoryRestoreResponse,
+  MemoryRetrievalStatus,
+  MemorySearchRequest,
+  MemorySearchResponse,
+  MemoryUpdateRequest,
+  MemoryUpdateResponse,
+  ScopeTuple,
+  StorageLocation,
+} from "@/lib/memory/canonical-contracts"
 import { storeMemory } from "@/lib/ruvector/bridge"
+import { searchWithFeedback } from "@/lib/ruvector/retrieval-adapter"
+import {
+  checkBudget,
+  ensureSession,
+  getBreakerManager,
+  getBudgetEnforcer,
+  getHaltedSessions,
+  recordToolCall,
+  resetHaltedGroup,
+  withCircuitBreaker,
+} from "./canonical-tools/budget-circuit"
+import { getConnections, resetConnections } from "./canonical-tools/connection"
+import {
+  baseMeta,
+  degradedMeta,
+  DUPLICATE_THRESHOLD,
+  EpisodicMemoryRow,
+  generateMemoryId,
+  getAutoApprovalThreshold,
+  getPromotionMode,
+  getRecentUsageCount,
+  neo4jDateToISO,
+  parseEpisodicTags,
+  RECOVERY_WINDOW_DAYS,
+  sortDedupedMemories,
+  toMemoryId,
+  toProvenance,
+  validateGroupId,
+} from "./canonical-tools/validation-utils"
 
 // ── Canonical Operations ───────────────────────────────────────────────────
 

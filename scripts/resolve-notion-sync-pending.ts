@@ -9,7 +9,7 @@
  *
  * Run: bun scripts/resolve-notion-sync-pending.ts
  */
-import { getPool, closePool } from "../src/lib/postgres/connection";
+import { closePool, getPool } from "../src/lib/postgres/connection";
 
 async function main(): Promise<void> {
   const pool = getPool();

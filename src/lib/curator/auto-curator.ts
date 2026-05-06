@@ -15,9 +15,9 @@ if (typeof window !== "undefined") {
 }
 
 import { createHash } from "crypto"
+import { curatorScore, type CuratorScore, type PromotionTier } from "@/lib/curator/score"
 import { getPool } from "@/lib/postgres/connection"
 import { validateGroupId } from "@/lib/validation/group-id"
-import { curatorScore, type CuratorScore, type PromotionTier } from "@/lib/curator/score"
 
 // ── Types ──────────────────────────────────────────────────────────────────
 

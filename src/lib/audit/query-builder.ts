@@ -12,8 +12,8 @@ if (typeof window !== "undefined") {
   throw new Error("This module can only be used server-side");
 }
 
-import { getPool } from "@/lib/postgres/connection";
 import { z } from "zod";
+import { getPool } from "@/lib/postgres/connection";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES

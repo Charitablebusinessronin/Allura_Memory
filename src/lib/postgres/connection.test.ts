@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { getPool, getConnectionConfig, closePool } from "./connection";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { closePool, getConnectionConfig, getPool } from "./connection";
 
 /**
  * PostgreSQL Connection Layer tests

@@ -7,18 +7,18 @@
  * Run with: bun vitest run src/__tests__/knowledge-hub-bridge.test.ts
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  type NotionMCPClient,
-  type KnowledgeHubPromotionParams,
-  type KnowledgeHubEntry,
   type ApprovalQueueItem,
-  KNOWLEDGE_HUB_DB_ID,
   KNOWLEDGE_HUB_DATA_SOURCE_ID,
+  KNOWLEDGE_HUB_DB_ID,
+  type KnowledgeHubEntry,
+  type KnowledgeHubPromotionParams,
   KnowledgeHubPromotionParamsSchema,
+  type NotionMCPClient,
   promoteToKnowledgeHub,
-  queryKnowledgeHubBySourceId,
   queryKnowledgeHubByPgTraceId,
+  queryKnowledgeHubBySourceId,
   validateInsightForPromotion,
 } from "../lib/memory/knowledge-promotion";
 

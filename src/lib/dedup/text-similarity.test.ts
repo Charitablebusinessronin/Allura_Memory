@@ -4,21 +4,21 @@
  * Tests for Levenshtein distance, Jaro-Winkler similarity, and text matching.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import {
-  TextSimilarityManager,
-  createTextManager,
-  createLevenshteinManager,
-  createJaroWinklerManager,
   createHybridTextManager,
-  normalizeString,
+  createJaroWinklerManager,
+  createLevenshteinManager,
+  createTextManager,
   expandAbbreviations,
-  tokenize,
   getNgrams,
-  levenshteinDistance,
-  levenshteinSimilarity,
   jaroSimilarity,
   jaroWinklerSimilarity,
+  levenshteinDistance,
+  levenshteinSimilarity,
+  normalizeString,
+  TextSimilarityManager,
+  tokenize,
 } from './text-similarity'
 import type { DedupEntity } from './types'
 

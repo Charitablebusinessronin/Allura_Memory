@@ -1,4 +1,4 @@
-import neo4j, { Driver, Session, ManagedTransaction } from "neo4j-driver";
+import neo4j, { Driver, ManagedTransaction, Session } from "neo4j-driver";
 import { env } from "process";
 import { Neo4jConnectionError, Neo4jQueryError } from "../errors/neo4j-errors";
 

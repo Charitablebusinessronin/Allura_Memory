@@ -8,8 +8,8 @@ type: primary
 scope: harness
 platform: Both
 status: active
-model: deepseek-v4-pro:cloud
-fallback_model: kimi-k2.6:cloud
+model: ollama-cloud/deepseek-v4-pro
+fallback_model: ollama-cloud/kimi-k2.6
 permission:
   skill:
     "*": allow

@@ -7,9 +7,9 @@
  * @module checkpoint
  */
 
+import { z } from 'zod';
 import fs from 'fs/promises';
 import path from 'path';
-import { z } from 'zod';
 
 // =============================================================================
 // Type Definitions

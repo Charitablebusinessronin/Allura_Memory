@@ -1,20 +1,20 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  createTripAlertCallback,
+  acknowledgeAlert,
+  alertQueue,
   createResetAlertCallback,
   createStateChangeAlertCallback,
-  getPendingAlerts,
-  getAllAlerts,
+  createTripAlertCallback,
   getAlert,
-  acknowledgeAlert,
-  onAlert,
+  getAllAlerts,
+  getPendingAlerts,
   offAlert,
-  alertQueue,
+  onAlert,
 } from "./alerting";
 import type {
-  BreakerTripEvent,
   BreakerResetEvent,
   BreakerStateChangeEvent,
+  BreakerTripEvent,
 } from "./types";
 
 describe("Circuit Breaker Alerting - Story 3.6", () => {

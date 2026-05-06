@@ -12,8 +12,8 @@
  * FR-5, FR-6, NFR-4, NFR-5
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Mock insertEvent before importing audit module ──────────────────────────
 
@@ -24,41 +24,41 @@ vi.mock("@/lib/postgres/queries/insert-trace", () => ({
 
 // ── Imports ───────────────────────────────────────────────────────────────────
 
+import { GET as healthIsolationGet } from "@/app/api/health/isolation/route";
 import {
-  resolveWorkspacePath,
-  isWithinWorkspace,
-  isValidWorkspaceGroupId,
-  isAllowedGroupId,
-  assertWithinWorkspace,
-  createWorkspaceBoundary,
-  WORKSPACE_ROOT,
-} from "@/lib/workspace/boundary";
-import { WorkspaceViolationError } from "@/lib/workspace/errors";
-import {
-  safeReadFile,
-  safeWriteFile,
-  safeMkdir,
-  safeReaddir,
-  safeAccess,
-} from "@/lib/workspace/fs-guard";
-import {
-  hasGroupIdFilter,
-  guardSqlQuery,
-  assertGroupIdMatch,
-  guardCypherQuery,
-  validateResultGroupId,
-} from "@/lib/workspace/db-guard";
-import {
-  logWorkspaceViolation,
   getViolationSummary,
+  logWorkspaceViolation,
   resetViolationCounters,
 } from "@/lib/workspace/audit";
 import {
-  withWorkspaceIsolation,
-  extractGroupId,
+  assertWithinWorkspace,
+  createWorkspaceBoundary,
+  isAllowedGroupId,
+  isValidWorkspaceGroupId,
+  isWithinWorkspace,
+  resolveWorkspacePath,
+  WORKSPACE_ROOT,
+} from "@/lib/workspace/boundary";
+import {
+  assertGroupIdMatch,
+  guardCypherQuery,
+  guardSqlQuery,
+  hasGroupIdFilter,
+  validateResultGroupId,
+} from "@/lib/workspace/db-guard";
+import { WorkspaceViolationError } from "@/lib/workspace/errors";
+import {
+  safeAccess,
+  safeMkdir,
+  safeReaddir,
+  safeReadFile,
+  safeWriteFile,
+} from "@/lib/workspace/fs-guard";
+import {
   checkWorkspaceIsolation,
+  extractGroupId,
+  withWorkspaceIsolation,
 } from "@/middleware/workspace-isolation";
-import { GET as healthIsolationGet } from "@/app/api/health/isolation/route";
 
 // ── Boundary Tests ────────────────────────────────────────────────────────────
 

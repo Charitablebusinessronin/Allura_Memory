@@ -10,23 +10,21 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { memory_restore } from "@/mcp/canonical-tools"
-import type { MemoryRestoreRequest, GroupId, MemoryId, UserId } from "@/lib/memory/canonical-contracts"
+import { forbiddenResponse, requireRole, unauthorizedResponse } from "@/lib/auth/api-auth"
+import { DatabaseQueryError, DatabaseUnavailableError } from "@/lib/errors/database-errors"
 import {
-  MemoryNotFoundError,
   MemoryNotDeletedError,
+  MemoryNotFoundError,
   RecoveryWindowExpiredError,
 } from "@/lib/memory/canonical-contracts"
-import { DatabaseUnavailableError, DatabaseQueryError } from "@/lib/errors/database-errors"
-import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id"
-import { requireRole, forbiddenResponse, unauthorizedResponse } from "@/lib/auth/api-auth"
+import type { GroupId, MemoryId, MemoryResponseMeta, MemoryRestoreRequest , UserId } from "@/lib/memory/canonical-contracts"
 import { captureException } from "@/lib/observability/sentry"
-import type { MemoryResponseMeta } from "@/lib/memory/canonical-contracts"
+import { GroupIdValidationError, validateGroupId } from "@/lib/validation/group-id"
+import { memory_restore } from "@/mcp/canonical-tools"
 
 // ── Degraded Response Helper ────────────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function jsonWithDegradation<T extends any = any>(data: T & { meta?: MemoryResponseMeta }): NextResponse<T> {
+function jsonWithDegradation<T = unknown>(data: T & { meta?: MemoryResponseMeta }): NextResponse<T> {
   const meta = data.meta
   if (meta?.degraded) {
     const warning = meta.degraded_reason ? `299 Allura "${meta.degraded_reason}"` : '299 Allura "partial_data"'

@@ -1,5 +1,5 @@
+import type { Evidence, Insight, Memory } from "@/lib/dashboard/types"
 import { cn } from "@/lib/utils"
-import type { Memory, Insight, Evidence } from "@/lib/dashboard/types"
 
 export type BadgeStatus =
   | Memory["status"]

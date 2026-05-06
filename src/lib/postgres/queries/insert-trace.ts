@@ -1,7 +1,7 @@
 import type { Pool } from "pg"
-import { getPool } from "../connection"
-import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id"
 import { CURRENT_SCHEMA_VERSION } from "@/lib/schema-version"
+import { GroupIdValidationError, validateGroupId } from "@/lib/validation/group-id"
+import { getPool } from "../connection"
 
 /**
  * Event status values

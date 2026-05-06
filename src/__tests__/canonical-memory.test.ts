@@ -11,27 +11,27 @@
  * Reference: docs/allura/BLUEPRINT.md
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { randomUUID } from "crypto";
 import {
-  memory_add,
-  memory_search,
-  memory_get,
-  memory_list,
-  memory_delete,
-  resetConnections,
-} from "../mcp/canonical-tools";
+  DatabaseQueryError,
+  DatabaseUnavailableError,
+} from "../lib/errors/database-errors";
 import type {
   MemoryAddRequest,
-  MemorySearchRequest,
+  MemoryDeleteRequest,
   MemoryGetRequest,
   MemoryListRequest,
-  MemoryDeleteRequest,
+  MemorySearchRequest,
 } from "../lib/memory/canonical-contracts";
 import {
-  DatabaseUnavailableError,
-  DatabaseQueryError,
-} from "../lib/errors/database-errors";
+  memory_add,
+  memory_delete,
+  memory_get,
+  memory_list,
+  memory_search,
+  resetConnections,
+} from "../mcp/canonical-tools";
 
 // Live-DB gating: skip tests requiring live PostgreSQL/Neo4j unless RUN_E2E_TESTS=true
 const itIfE2E = process.env.RUN_E2E_TESTS === "true" ? it : it.skip;

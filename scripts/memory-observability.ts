@@ -18,9 +18,9 @@
  * - Storage size estimates
  */
 
-import { getPool, closePool } from "../src/lib/postgres/connection";
 import { config } from "dotenv";
 import { resolve } from "path";
+import { closePool, getPool } from "../src/lib/postgres/connection";
 
 config({ path: resolve(__dirname, "../.env.local") });
 config({ path: resolve(__dirname, "../.env") });

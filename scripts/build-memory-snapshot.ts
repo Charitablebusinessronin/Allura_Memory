@@ -8,17 +8,17 @@ import {
   DEFAULT_SOURCE_DIRS,
   DEFAULT_SUMMARY_LENGTH,
   SNAPSHOT_DEFAULT_OUTPUT_DIR,
+  SNAPSHOT_FILE_SUFFIX,
   SNAPSHOT_JSON_FILENAME,
   SNAPSHOT_METADATA_FILENAME,
   SNAPSHOT_SCHEMA_VERSION,
-  SNAPSHOT_FILE_SUFFIX,
   type SnapshotBuildArtifacts,
+  SnapshotBuildError,
   type SnapshotBuildOptions,
   type SnapshotBuildStats,
   type SnapshotEntry,
   type SnapshotFileHashes,
   type SnapshotMetadata,
-  SnapshotBuildError,
 } from "./helpers/snapshot-types";
 
 interface InternalBuildOptions extends SnapshotBuildOptions {

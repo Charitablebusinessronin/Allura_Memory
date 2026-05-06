@@ -14,7 +14,7 @@
  */
 
 import type { BudgetEnforcer } from "./enforcer";
-import type { SessionId, HaltReason } from "./types";
+import type { HaltReason, SessionId } from "./types";
 
 /**
  * Minimum tokens required for a single turn

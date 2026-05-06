@@ -7,11 +7,11 @@
  * TDD: These tests define the expected behavior before implementation.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { TraceMiddleware, type TraceMiddlewareConfig } from "./trace-middleware";
-import { logTrace, TraceValidationError } from "@/lib/postgres/trace-logger";
-import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { McpToolCaller } from "@/integrations/mcp.client";
+import { logTrace, TraceValidationError } from "@/lib/postgres/trace-logger";
+import { GroupIdValidationError, validateGroupId } from "@/lib/validation/group-id";
+import { TraceMiddleware, type TraceMiddlewareConfig } from "./trace-middleware";
 
 // Mock external dependencies
 vi.mock("@/lib/postgres/trace-logger", () => ({

@@ -1,16 +1,16 @@
 // scripts/hydration/parse-agent-files.ts
 // Parse agent markdown files and extract metadata from frontmatter
 
+import yaml from 'yaml';
 import fs from 'fs';
 import path from 'path';
-import yaml from 'yaml';
 
-import { AgentSchema } from './notion-client';
 import {
   type AgentMetadataLookup,
   DEFAULT_NOTION_GROUP_ID,
   resolveAgentIdentity,
 } from './agent-identity';
+import { AgentSchema } from './notion-client';
 
 export interface ParsedAgent {
   agentId: string;

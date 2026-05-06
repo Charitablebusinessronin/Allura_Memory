@@ -11,19 +11,19 @@
  * Reference: docs/allura/BLUEPRINT.md (F-003: Approval Audit Flow)
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import type {
   MemoryAddResponse,
-  MemorySearchResponse,
-  MemoryGetResponse,
-  MemoryListResponse,
   MemoryDeleteResponse,
-  MemoryUpdateResponse,
-  MemoryPromoteResponse,
   MemoryExportResponse,
-  MemoryRestoreResponse,
+  MemoryGetResponse,
   MemoryListDeletedResponse,
+  MemoryListResponse,
+  MemoryPromoteResponse,
   MemoryResponseMeta,
+  MemoryRestoreResponse,
+  MemorySearchResponse,
+  MemoryUpdateResponse,
 } from "@/lib/memory/canonical-contracts"
 
 // ── Mock Setup ────────────────────────────────────────────────────────────
@@ -47,15 +47,15 @@ vi.mock("@/mcp/canonical-tools", () => ({
 
 import {
   memory_add,
-  memory_search,
+  memory_delete,
+  memory_export,
   memory_get,
   memory_list,
-  memory_delete,
-  memory_update,
-  memory_promote,
-  memory_export,
-  memory_restore,
   memory_list_deleted,
+  memory_promote,
+  memory_restore,
+  memory_search,
+  memory_update,
 } from "@/mcp/canonical-tools"
 
 // ── Helpers ───────────────────────────────────────────────────────────────

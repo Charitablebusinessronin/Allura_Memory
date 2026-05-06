@@ -11,7 +11,7 @@
     "browserOS": {
       "type": "stdio",
       "command": "npx",
-      "args": ["mcp-remote", "http://127.0.0.1:9000/mcp"]
+      "args": ["mcp-remote", "http://127.0.0.1:5888/mcp"]
     },
     "MCP_DOCKER": {
       "command": "docker",

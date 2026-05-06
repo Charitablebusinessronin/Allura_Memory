@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { createProfile, addToolToProfile, removeToolFromProfile, getProfileAllowlist } from "@/lib/mcp-catalog/registry"
+import { addToolToProfile, createProfile, getProfileAllowlist, removeToolFromProfile } from "@/lib/mcp-catalog/registry"
 import { captureException } from "@/lib/observability/sentry"
 
 export async function POST(request: NextRequest) {

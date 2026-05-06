@@ -2,9 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import process from "node:process";
 
-import type { EventRecord } from "../src/lib/postgres/queries/insert-trace";
-import { InsightValidationError, type InsightRecord } from "../src/lib/neo4j/queries/insert-insight";
-import { validateGroupId } from "../src/lib/validation/group-id";
+import { createMemoryClient, type MemoryClient } from "./helpers/memory-client";
 import {
   SNAPSHOT_DEFAULT_OUTPUT_DIR,
   SNAPSHOT_INGESTION_METADATA_FILENAME,
@@ -15,7 +13,9 @@ import {
   type SnapshotIngestionMetadata,
   type SnapshotIngestionMetadataHistoryFile,
 } from "./helpers/snapshot-types";
-import { createMemoryClient, type MemoryClient } from "./helpers/memory-client";
+import { type InsightRecord, InsightValidationError } from "../src/lib/neo4j/queries/insert-insight";
+import type { EventRecord } from "../src/lib/postgres/queries/insert-trace";
+import { validateGroupId } from "../src/lib/validation/group-id";
 
 type HydrationErrorCode = "CONFIG" | "SNAPSHOT_MISSING" | "IO" | "UNKNOWN";
 

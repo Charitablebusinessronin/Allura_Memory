@@ -19,9 +19,9 @@ if (typeof window !== "undefined") {
   throw new Error("RuVector retrieval adapter can only be used server-side");
 }
 
-import type { RetrieveMemoriesResult } from "./types";
-import { retrieveMemories, isRuVectorReady } from "./bridge";
+import { isRuVectorReady, retrieveMemories } from "./bridge";
 import { isRuVectorEnabled } from "./connection";
+import type { RetrieveMemoriesResult } from "./types";
 import { validateGroupId } from "../validation/group-id";
 
 // ── Types ────────────────────────────────────────────────────────────────────

@@ -21,8 +21,8 @@
  * When DB available, logs real findings to PostgreSQL and Neo4j.
  */
 
-import { readdirSync, statSync, readFileSync, existsSync } from "node:fs";
-import { join, relative, extname, basename } from "node:path";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { basename, extname, join, relative } from "node:path";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

@@ -15,25 +15,25 @@
 
 import type { Driver } from "neo4j-driver"
 import neo4j from "neo4j-driver"
-import type {
-  IGraphAdapter,
-  GraphMemoryNode,
-  GraphSearchResult,
-  DuplicateCheckResult,
-  VersionLookupResult,
-  CanonicalCheckResult,
-  CountResult,
-  GraphListResult,
-  GraphGetResult,
-  GraphDeleteResult,
-  GraphSupersedesResult,
-  GraphRestoreResult,
-  GraphExportResult,
-} from "./types"
-import { GraphAdapterError, GraphAdapterUnavailableError } from "./types"
-import type { GroupId, MemoryId, MemoryProvenance, ConfidenceScore } from "@/lib/memory/canonical-contracts"
+import type { ConfidenceScore, GroupId, MemoryId, MemoryProvenance } from "@/lib/memory/canonical-contracts"
 import { CURRENT_SCHEMA_VERSION } from "@/lib/schema-version"
 import { resolveAgentName, resolveProjectName } from "./sync-contract-mappings"
+import { GraphAdapterError, GraphAdapterUnavailableError } from "./types"
+import type {
+  CanonicalCheckResult,
+  CountResult,
+  DuplicateCheckResult,
+  GraphDeleteResult,
+  GraphExportResult,
+  GraphGetResult,
+  GraphListResult,
+  GraphMemoryNode,
+  GraphRestoreResult,
+  GraphSearchResult,
+  GraphSupersedesResult,
+  IGraphAdapter,
+  VersionLookupResult,
+} from "./types"
 
 // ── Helper: Neo4j DateTime → ISO string ──────────────────────────────────────
 

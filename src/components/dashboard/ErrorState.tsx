@@ -1,5 +1,5 @@
-import type { ReactNode } from "react"
 import { AlertCircle } from "lucide-react"
+import type { ReactNode } from "react"
 
 export function ErrorState({ message, action }: { message: string; action?: ReactNode }) {
   return (

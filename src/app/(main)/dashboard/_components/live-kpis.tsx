@@ -1,13 +1,13 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
-import Link from "next/link"
 import { Activity, AlertTriangle, CheckCircle, MinusCircle, XCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import Link from "next/link"
+import { useEffect, useRef, useState } from "react"
 import type { HealthResponse } from "@/app/api/health/route"
 import type { SnapshotPayload } from "@/app/api/stream/route"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export interface LiveKPIsProps {
   initialHealth: HealthResponse | null

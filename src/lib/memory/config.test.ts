@@ -9,7 +9,7 @@
  * - Configuration validation
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Store original env values to restore after tests
 const originalEnv = { ...process.env };

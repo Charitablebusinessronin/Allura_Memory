@@ -1,8 +1,8 @@
 "use client"
 
-import { cn } from "@/lib/utils"
 import type { AlluraStatus } from "@/lib/brand/allura"
 import { ALLURA_STATUS_MAP } from "@/lib/brand/allura"
+import { cn } from "@/lib/utils"
 
 interface StatusBadgeProps {
   status: AlluraStatus

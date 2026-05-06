@@ -1,13 +1,13 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
-  getCurrentInsight,
-  getInsightVersion,
-  getInsightHistory,
-  listInsights,
-  searchInsights,
-  getInsightById,
   getActiveInsightCount,
+  getCurrentInsight,
+  getInsightById,
+  getInsightHistory,
+  getInsightVersion,
+  listInsights,
   QueryError,
+  searchInsights,
 } from "./get-insight";
 import {
   createInsight,
@@ -15,7 +15,7 @@ import {
   deprecateInsight,
   type InsightInsert,
 } from "./insert-insight";
-import { getDriver, closeDriver } from "../connection";
+import { closeDriver, getDriver } from "../connection";
 
 /**
  * Test suite for Neo4j insight retrieval

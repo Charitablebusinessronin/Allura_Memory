@@ -7,8 +7,8 @@
  * This is a fast test (5 VUs, 10s) for CI validation.
  */
 
-import http from 'k6/http';
 import { check } from 'k6';
+import http from 'k6/http';
 import { Rate } from 'k6/metrics';
 
 const errorRate = new Rate('errors');

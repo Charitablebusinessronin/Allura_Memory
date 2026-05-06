@@ -5,7 +5,7 @@
  * All configuration comes from environment variables via config.ts.
  */
 
-import { getConfig, getApiKey } from './config.js';
+import { getApiKey, getConfig } from './config.js';
 
 export interface EmbeddingResult {
   embedding: number[];

@@ -3,14 +3,14 @@
  * Story 1.5: Track agent knowledge contributions
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  createTaskWithContribution,
+  getAgentContributions,
+  getAgentContributionStats,
+  getEntityContributors,
   recordContribution,
   recordContributionsBatch,
-  getAgentContributions,
-  getEntityContributors,
-  createTaskWithContribution,
-  getAgentContributionStats,
 } from "./contributed";
 
 // Mock the memory() wrapper

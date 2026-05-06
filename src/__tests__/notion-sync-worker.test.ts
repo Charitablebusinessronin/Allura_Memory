@@ -7,9 +7,9 @@
  * 3. Verify property format matches Notion DB schema
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { Pool } from "pg";
-import { processNotionSyncEvent, getPendingEvents } from "../curator/notion-sync-worker";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { getPendingEvents, processNotionSyncEvent } from "../curator/notion-sync-worker";
 
 // Mock PostgreSQL pool
 let mockPool: Pool;

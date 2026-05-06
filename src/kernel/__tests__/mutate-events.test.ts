@@ -13,11 +13,11 @@
  * - Append-only semantics
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest"
-import { RuVixKernel } from "../ruvix"
-import { logTrace, queryTraces } from "@/lib/postgres/trace-logger"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { getPool } from "@/lib/postgres/connection"
-import type { TraceLog, QueryTracesOptions } from "@/lib/postgres/types"
+import { logTrace, queryTraces } from "@/lib/postgres/trace-logger"
+import type { QueryTracesOptions, TraceLog } from "@/lib/postgres/types"
+import { RuVixKernel } from "../ruvix"
 
 // Pre-Phase-4 baseline — tracked in docs/deferred/pre-existing-failures.md
 // Reason: requires live PostgreSQL DB for kernel syscall integration

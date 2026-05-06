@@ -8,11 +8,11 @@
  * Run with: RUN_E2E_TESTS=true bun vitest run src/__tests__/notion-sync.test.ts
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { Pool } from "pg";
-import { randomUUID } from "crypto";
 import { config } from "dotenv";
-import { getPendingProposals, markSynced, syncToNotion, type NotionSyncConfig } from "../curator/notion-sync";
+import { Pool } from "pg";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { randomUUID } from "crypto";
+import { getPendingProposals, markSynced, type NotionSyncConfig, syncToNotion } from "../curator/notion-sync";
 import { closePool } from "../lib/postgres/connection";
 
 // Load environment variables

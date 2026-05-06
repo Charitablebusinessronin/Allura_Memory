@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { expect, test } from "@playwright/test"
 
 /**
  * FR-1.3 E2E: Settings → Theme Switch → Persists

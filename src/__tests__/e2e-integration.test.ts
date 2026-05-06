@@ -10,10 +10,10 @@
  * Run with: bun run test:e2e
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
-import { Pool } from "pg";
-import neo4j, { Driver } from "neo4j-driver";
 import { config } from "dotenv";
+import neo4j, { Driver } from "neo4j-driver";
+import { Pool } from "pg";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 // Load environment variables from .env file
 config();

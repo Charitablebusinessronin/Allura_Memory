@@ -6,7 +6,7 @@
  * Usage: bun run scripts/drift-detection.ts
  */
 
-import { readFileSync, readdirSync, existsSync } from 'fs';
+import { existsSync, readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 
 // ── Types ─────────────────────────────────────────────────────────────────────

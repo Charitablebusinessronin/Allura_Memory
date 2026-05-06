@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
-  getDriver,
-  getConnectionConfig,
   closeDriver,
+  getConnectionConfig,
+  getDriver,
   getSession,
   isDriverHealthy,
   verifyConnectivity,

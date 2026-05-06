@@ -9,23 +9,23 @@
  * - Breaker registry for agent isolation
  */
 
-import type {
-  BreakerState,
-  BreakerConfig,
-  BreakerStateSnapshot,
-  BreakerScope,
-  BreakerRegistryEntry,
-  BreakerTripCallback,
-  BreakerResetCallback,
-  BreakerStateChangeCallback,
-  HealthCheckFunction,
-} from "./types";
-import { CircuitBreaker, createCircuitBreaker } from "./breaker";
 import {
-  createTripAlertCallback,
   createResetAlertCallback,
   createStateChangeAlertCallback,
+  createTripAlertCallback,
 } from "./alerting";
+import { CircuitBreaker, createCircuitBreaker } from "./breaker";
+import type {
+  BreakerConfig,
+  BreakerRegistryEntry,
+  BreakerResetCallback,
+  BreakerScope,
+  BreakerState,
+  BreakerStateChangeCallback,
+  BreakerStateSnapshot,
+  BreakerTripCallback,
+  HealthCheckFunction,
+} from "./types";
 
 /**
  * Manager configuration

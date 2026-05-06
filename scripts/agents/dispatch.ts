@@ -20,7 +20,7 @@
  * See: src/lib/agents/agent-manifest.ts
  */
 
-import { routeEvent, buildScriptArgument, formatRouteLog } from "../../src/lib/agents/dynamic-router";
+import { buildScriptArgument, formatRouteLog, routeEvent } from "../../src/lib/agents/dynamic-router";
 
 const eventType = process.env.GITHUB_EVENT_NAME ?? "";
 const eventAction = process.env.GITHUB_EVENT_ACTION ?? "";

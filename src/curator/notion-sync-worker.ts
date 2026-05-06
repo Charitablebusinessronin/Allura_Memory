@@ -43,17 +43,17 @@
  *     Notion Synced — checkbox
  */
 
-import { getPool, closePool } from "../lib/postgres/connection"
 import {
-  insertDlqEntry,
+  type DlqEntry,
+  getDlqStats,
   getRetryableEntries,
-  markEntryRetrying,
+  insertDlqEntry,
+  type InsertDlqEntryParams,
   markEntryCompleted,
   markEntryFailed,
-  getDlqStats,
-  type DlqEntry,
-  type InsertDlqEntryParams,
+  markEntryRetrying,
 } from "./notion-sync-dlq"
+import { closePool, getPool } from "../lib/postgres/connection"
 
 // ── Types ──────────────────────────────────────────────────────────────────
 

@@ -7,10 +7,10 @@
 
 import "../src/lib/neo4j/connection";
 import {
+  closeDriver,
   createAgentGroup,
   initializeDefaultAgents,
   verifyAgentNodes,
-  closeDriver,
 } from "../src/lib/neo4j/client";
 
 const GROUP_ID = "allura-default";

@@ -1,10 +1,11 @@
+import { GeistPixelSquare } from "geist/font/pixel";
 import {
   DM_Sans,
   Figtree,
   Geist,
   Geist_Mono,
-  IBM_Plex_Sans,
   IBM_Plex_Mono,
+  IBM_Plex_Sans,
   Inter,
   JetBrains_Mono,
   Lora,
@@ -21,7 +22,6 @@ import {
   Roboto_Slab,
 } from "next/font/google";
 
-import { GeistPixelSquare } from "geist/font/pixel";
 import "@fontsource/ibm-plex-sans/400.css";
 import "@fontsource/ibm-plex-sans/500.css";
 import "@fontsource/ibm-plex-sans/700.css";

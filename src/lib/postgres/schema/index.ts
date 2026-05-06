@@ -1,7 +1,7 @@
-import { readFileSync, existsSync } from "fs";
-import { join, dirname } from "path";
+import { existsSync, readFileSync } from "fs";
+import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import { getPool, closePool, isPoolHealthy } from "../connection";
+import { closePool, getPool, isPoolHealthy } from "../connection";
 
 /**
  * Schema application result

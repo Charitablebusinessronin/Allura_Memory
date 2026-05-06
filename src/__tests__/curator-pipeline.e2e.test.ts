@@ -10,19 +10,19 @@
  * Run with: RUN_E2E_TESTS=true bun vitest run src/__tests__/curator-pipeline.e2e.test.ts
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { Pool } from "pg";
-import neo4j, { Driver } from "neo4j-driver";
-import { randomUUID } from "crypto";
 import { config } from "dotenv";
-import { memory_add, resetConnections } from "../mcp/canonical-tools";
+import neo4j, { Driver } from "neo4j-driver";
+import { Pool } from "pg";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { randomUUID } from "crypto";
+import { autoPromoteProposal, isAutoPromoteEnabled } from "../lib/curator/auto-promote";
 import { curatorScore } from "../lib/curator/score";
 import {
   createInsight,
   createInsightVersion,
   InsightConflictError,
 } from "../lib/neo4j/queries/insert-insight";
-import { autoPromoteProposal, isAutoPromoteEnabled } from "../lib/curator/auto-promote";
+import { memory_add, resetConnections } from "../mcp/canonical-tools";
 
 // Load environment variables from .env file
 config();

@@ -1,16 +1,16 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
-  getDualContextEpisodicMemory,
-  getMergedDualContextEvents,
-  getDualContextWorkingMemory,
-  isGlobalContext,
-  validateCrossGroupAccess,
-  GLOBAL_GROUP_ID,
   DualContextQueryError,
   type DualContextQueryParams,
+  getDualContextEpisodicMemory,
+  getDualContextWorkingMemory,
+  getMergedDualContextEvents,
+  GLOBAL_GROUP_ID,
+  isGlobalContext,
+  validateCrossGroupAccess,
 } from "./get-dual-context";
-import { getPool, closePool } from "../connection";
-import { insertEvent, type EventInsert } from "./insert-trace";
+import { type EventInsert, insertEvent } from "./insert-trace";
+import { closePool, getPool } from "../connection";
 
 /**
  * Test suite for dual-context episodic memory queries

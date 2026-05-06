@@ -10,16 +10,16 @@
  * @module team-ram/e2e-smoke
  */
 
-import { describe, expect, it, beforeAll, afterAll } from "vitest"
+import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
-import { orchestrateTeamRamTask, selectSkills } from "./orchestrator"
-import { McpSkillExecutor, createMcpSkillExecutor } from "./mcp-skill-executor"
+import { createMcpSkillExecutor, McpSkillExecutor } from "./mcp-skill-executor"
 import {
+  type OrchestrationTraceConfig,
+  traceOrchestrationEnd,
   traceOrchestrationStart,
   traceSkillResult,
-  traceOrchestrationEnd,
-  type OrchestrationTraceConfig,
 } from "./orchestration-tracing"
+import { orchestrateTeamRamTask, selectSkills } from "./orchestrator"
 
 const E2E = process.env.RUN_E2E_TESTS === "true"
 const GROUP_ID = "allura-roninmemory"

@@ -1,17 +1,17 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  validateGroupId,
-  normalizeGroupId,
-  isValidGroupId,
-  isReservedGroupId,
-  isGlobalGroupId,
-  validateGroupIds,
   assertValidGroupId,
-  ValidGroupId,
-  validateGroupIdWithRules,
-  GroupIdValidationError,
-  RESERVED_GROUP_IDS,
   GROUP_ID_RULES,
+  GroupIdValidationError,
+  isGlobalGroupId,
+  isReservedGroupId,
+  isValidGroupId,
+  normalizeGroupId,
+  RESERVED_GROUP_IDS,
+  validateGroupId,
+  validateGroupIds,
+  validateGroupIdWithRules,
+  ValidGroupId,
 } from "./group-id";
 
 // Pre-Phase-4 baseline — tracked in docs/deferred/pre-existing-failures.md

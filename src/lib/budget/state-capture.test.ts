@@ -3,9 +3,9 @@
  * Story 3.2: Test forensic state preservation
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { StateCapture, createStateCapture } from "./state-capture";
-import type { SessionId, SessionState, HaltReason } from "./types";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createStateCapture, StateCapture } from "./state-capture";
+import type { HaltReason, SessionId, SessionState } from "./types";
 import { createSessionState, DEFAULT_BUDGET_LIMITS } from "./types";
 
 // Mock the postgres connection

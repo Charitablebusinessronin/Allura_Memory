@@ -1,9 +1,9 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import type { BreakerStateEntry, SnapshotPayload } from "@/app/api/stream/route"
 import { Badge } from "@/components/ui/badge"
-import type { SnapshotPayload, BreakerStateEntry } from "@/app/api/stream/route"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export interface BudgetCardProps {
   groupId: string

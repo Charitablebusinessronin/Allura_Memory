@@ -8,10 +8,10 @@
  * parameter validation, and response parsing.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AlluraClient } from "../src/client.js";
+import { NotFoundError, ValidationError } from "../src/errors.js";
 import { MemoryOperations } from "../src/memory.js";
-import { ValidationError, NotFoundError } from "../src/errors.js";
 import { validateGroupId } from "../src/utils.js";
 
 // ── Test Fixtures ────────────────────────────────────────────────────────────

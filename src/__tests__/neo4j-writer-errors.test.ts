@@ -12,7 +12,7 @@
  * when the underlying Neo4j driver fails.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Neo4jConnectionError, Neo4jQueryError } from "@/lib/errors/neo4j-errors";
 
 // Mock the neo4j connection module to simulate driver failures
@@ -35,8 +35,8 @@ vi.mock("@/lib/neo4j/connection", () => {
 });
 
 // Import after mock setup
-import { readTransaction, writeTransaction } from "@/lib/neo4j/connection";
 import { memory } from "@/lib/memory/writer";
+import { readTransaction, writeTransaction } from "@/lib/neo4j/connection";
 
 describe("Neo4j Writer Error Handling (Issue #13)", () => {
   beforeEach(() => {

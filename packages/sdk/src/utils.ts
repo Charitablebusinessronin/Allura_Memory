@@ -5,8 +5,8 @@
  * and request/response helpers.
  */
 
+import { AlluraError, ConnectionError, RetryExhaustedError , ValidationError } from "./errors.js";
 import { GroupIdSchema } from "./types.js";
-import { AlluraError, ConnectionError, RetryExhaustedError } from "./errors.js";
 
 // ── Constants ───────────────────────────────────────────────────────────────
 
@@ -54,7 +54,6 @@ export function validateGroupId(groupId: string): void {
 
 // ── Import ValidationError for the function above ────────────────────────────
 
-import { ValidationError } from "./errors.js";
 
 // ── Exponential Backoff ─────────────────────────────────────────────────────
 

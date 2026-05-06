@@ -5,16 +5,16 @@
  * Supports pairwise comparison and clustering strategies.
  */
 
+import { createMockEmbeddingManager, EmbeddingManager } from './embeddings'
+import { createTextManager, TextSimilarityManager } from './text-similarity'
 import type {
-  EntityType,
   DedupEntity,
-  DuplicatePair,
   DetectionConfig,
   DetectionResult,
+  DuplicatePair,
+  EntityType,
   SimilarityResult,
 } from './types'
-import { EmbeddingManager, createMockEmbeddingManager } from './embeddings'
-import { TextSimilarityManager, createTextManager } from './text-similarity'
 
 // =============================================================================
 // Default Configuration

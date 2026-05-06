@@ -51,8 +51,8 @@ We don't hire 10 surgeons. We hire one surgeon and a team of specialists who own
 
 | Agent | Persona | Role | Primary | Fallback | Use When |
 |-------|---------|------|---------|----------|----------|
-| **Brooks** | Frederick Brooks | Architect + Orchestrator | `openai/gpt-5.5` | `deepseek-v4-pro:cloud` | Task planning, architecture, delegation |
-| **Jobs** | Steve Jobs | Intent Gate | `deepseek-v4-pro:cloud` | `kimi-k2.6:cloud` | Scope control, acceptance criteria |
+| **Brooks** | Frederick Brooks | Architect + Orchestrator | `openai/gpt-5.5` | `ollama-cloud/deepseek-v4-pro` | Task planning, architecture, delegation |
+| **Jobs** | Steve Jobs | Intent Gate | `ollama-cloud/deepseek-v4-pro` | `ollama-cloud/kimi-k2.6` | Scope control, acceptance criteria |
 | **Woz** | Steve Wozniak | Builder | `ollama-cloud/qwen3-coder-next` | — | Autonomous implementation, ships working code |
 | **Pike** | Rob Pike | Interface Gate | `openai/gpt-5.4-mini` | — | Read-only architecture consultation |
 | **Bellard** | Fabrice Bellard | Diagnostics + Perf | `openai/gpt-5.4-mini` | — | Performance, measurement, low-level fixes |
@@ -60,7 +60,7 @@ We don't hire 10 surgeons. We hire one surgeon and a team of specialists who own
 | **Scout** | (none) | Recon + Discovery | `ollama-cloud/nemotron-3-super` | — | Fast codebase search, pattern discovery |
 | **Carmack** | John Carmack | Performance Specialist | `openai/gpt-5.4-mini` | — | Optimization, API design, latency |
 | **Knuth** | Donald Knuth | Data Architect | `ollama-cloud/qwen3-coder-next` | — | Schema design, query optimization |
-| **Hightower** | Kelsey Hightower | DevOps Specialist | `openai/gpt-5.5` | `deepseek-v4-pro:cloud` | CI/CD, IaC, deployment, observability |
+| **Hightower** | Kelsey Hightower | DevOps Specialist | `openai/gpt-5.5` | `ollama-cloud/deepseek-v4-pro` | CI/CD, IaC, deployment, observability |
 
 ## Category Routing
 
@@ -128,9 +128,9 @@ The category system reduces this further:
 
 | Agent | Primary | Fallback |
 |-------|---------|----------|
-| Brooks | `openai/gpt-5.5` | `deepseek-v4-pro:cloud` |
-| Jobs | `deepseek-v4-pro:cloud` | `kimi-k2.6:cloud` |
-| Hightower | `openai/gpt-5.5` | `deepseek-v4-pro:cloud` |
+| Brooks | `openai/gpt-5.5` | `ollama-cloud/deepseek-v4-pro` |
+| Jobs | `ollama-cloud/deepseek-v4-pro` | `ollama-cloud/kimi-k2.6` |
+| Hightower | `openai/gpt-5.5` | `ollama-cloud/deepseek-v4-pro` |
 | Scout | `ollama-cloud/nemotron-3-super` | — |
 | Woz | `ollama-cloud/qwen3-coder-next` | — |
 | Bellard | `openai/gpt-5.4-mini` | — |
@@ -153,7 +153,7 @@ routing:
     use: openai/gpt-5.5
 
   - if: agent == jobs
-    use: deepseek-v4-pro:cloud
+    use: ollama-cloud/deepseek-v4-pro
 
   - if: agent in [woz, knuth]
     use: ollama-cloud/qwen3-coder-next
@@ -166,10 +166,10 @@ routing:
 
   # Recovery only uses frontmatter-declared fallbacks
   - if: agent in [brooks, hightower] and primary_unavailable
-    use: deepseek-v4-pro:cloud
+    use: ollama-cloud/deepseek-v4-pro
 
   - if: agent == jobs and primary_unavailable
-    use: kimi-k2.6:cloud
+    use: ollama-cloud/kimi-k2.6
 ```
 
 **Key principle:** Brooks, Hightower, and Fowler use GPT-5.5 as their declared primary. Woz and Knuth use Qwen3-Coder-Next. Bellard, Carmack, and Pike use GPT-5.4-Mini. Scout uses Nemotron-3-Super. Only brooks, hightower, and jobs have frontmatter-declared fallbacks.

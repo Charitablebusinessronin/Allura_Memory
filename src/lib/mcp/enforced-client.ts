@@ -11,8 +11,8 @@
  * - Provides type-safe interfaces for common operations
  */
 
-import { validateGroupId, GroupIdValidationError } from '@/lib/validation/group-id';
 import type { McpToolCaller } from '@/integrations/mcp.client';
+import { GroupIdValidationError, validateGroupId } from '@/lib/validation/group-id';
 
 /**
  * Common parameter types for MCP operations

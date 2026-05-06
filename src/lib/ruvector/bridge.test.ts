@@ -58,17 +58,17 @@ vi.mock("node:crypto", () => ({
 // ── Imports (after mocks) ───────────────────────────────────────────────────
 
 import {
-  storeMemory,
-  retrieveMemories,
-  postFeedback,
   isRuVectorReady,
+  postFeedback,
+  retrieveMemories,
   RuVectorBridgeValidationError,
+  storeMemory,
 } from "./bridge";
 
 // Import mocked modules for assertion access
-import { getRuVectorPool, isRuVectorEnabled, checkRuVectorHealth } from "./connection";
-import { validateGroupId } from "../validation/group-id";
+import { checkRuVectorHealth, getRuVectorPool, isRuVectorEnabled } from "./connection";
 import { generateEmbedding } from "./embedding-service";
+import { validateGroupId } from "../validation/group-id";
 
 // Typed mock reference for the mocked embedding service
 const mockGenerateEmbedding = vi.mocked(generateEmbedding);

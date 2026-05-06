@@ -5,7 +5,7 @@
  * Tests all three harnesses (Claude, Copilot, OpenCode) for compliance.
  */
 
-import { readFileSync, existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 
 interface ValidationResult {

@@ -9,15 +9,15 @@
  */
 
 import type {
-  BreakerTripEvent,
-  BreakerResetEvent,
-  BreakerStateChangeEvent,
-  BreakerTripCallback,
   BreakerResetCallback,
+  BreakerResetEvent,
   BreakerStateChangeCallback,
+  BreakerStateChangeEvent,
   BreakerStateSnapshot,
+  BreakerTripCallback,
+  BreakerTripEvent,
 } from "./types";
-import { insertEvent, type EventInsert } from "../postgres/queries/insert-trace";
+import { type EventInsert, insertEvent } from "../postgres/queries/insert-trace";
 
 /**
  * Alert severity levels for Mission Control

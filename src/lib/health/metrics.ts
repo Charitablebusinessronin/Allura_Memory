@@ -7,11 +7,11 @@
  * Content-Type: text/plain; version=0.0.4; charset=utf-8
  */
 
+import { getBreakerManager } from "@/lib/circuit-breaker/manager";
 import {
   metricsRegistry,
   registerStandardMetrics,
 } from "./metrics-registry";
-import { getBreakerManager } from "@/lib/circuit-breaker/manager";
 
 // ── Initialize Standard Metrics ──────────────────────────────────────────────
 

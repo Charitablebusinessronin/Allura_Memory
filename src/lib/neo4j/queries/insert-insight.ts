@@ -1,6 +1,6 @@
-import { writeTransaction, readTransaction, type ManagedTransaction } from "../connection";
 import { Neo4jPromotionError, Neo4jQueryError } from "../../errors/neo4j-errors";
 import { CURRENT_SCHEMA_VERSION } from "../../schema-version";
+import { type ManagedTransaction, readTransaction, writeTransaction } from "../connection";
 
 /**
  * Insight status values

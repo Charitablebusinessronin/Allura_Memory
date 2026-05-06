@@ -13,14 +13,14 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { logWorkspaceViolation } from "@/lib/workspace/audit";
 import {
-  isValidWorkspaceGroupId,
   isAllowedGroupId,
+  isValidWorkspaceGroupId,
   isWithinWorkspace,
   WORKSPACE_ROOT,
 } from "@/lib/workspace/boundary";
 import { WorkspaceViolationError } from "@/lib/workspace/errors";
-import { logWorkspaceViolation } from "@/lib/workspace/audit";
 
 // ── Configuration ─────────────────────────────────────────────────────────────
 

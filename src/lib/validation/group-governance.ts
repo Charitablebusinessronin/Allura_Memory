@@ -5,11 +5,11 @@
  * Detects orphaned, misspelled, and anomalous group_ids across the system.
  */
 
-import type { Pool } from "pg";
-import { getPool } from "../postgres/connection";
 import { Driver } from "neo4j-driver";
+import type { Pool } from "pg";
+import { GroupIdValidationError, normalizeGroupId, validateGroupId } from "./group-id";
 import { getDriver } from "../neo4j/connection";
-import { normalizeGroupId, validateGroupId, GroupIdValidationError } from "./group-id";
+import { getPool } from "../postgres/connection";
 
 /**
  * Levenshtein distance for detecting similar (potentially misspelled) group_ids

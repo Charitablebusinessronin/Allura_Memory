@@ -1,14 +1,14 @@
 /**
  * @vitest-environment node
  */
-import { describe, it, expect } from "vitest"
+import { describe, expect, it } from "vitest"
 import {
-  classifySimilarity,
-  detectFailurePatterns,
-  detectWinPatterns,
-  detectApprovalPatterns,
-  detectToolRiskPatterns,
   type CandidateInsight,
+  classifySimilarity,
+  detectApprovalPatterns,
+  detectFailurePatterns,
+  detectToolRiskPatterns,
+  detectWinPatterns,
   type RawEvent,
 } from "@/lib/curator/auto-curator"
 

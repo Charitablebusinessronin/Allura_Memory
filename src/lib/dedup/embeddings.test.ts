@@ -4,11 +4,11 @@
  * Tests for embedding generation, caching, and similarity computation.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import {
-  EmbeddingManager,
-  createMockEmbeddingManager,
   createEmbeddingManager,
+  createMockEmbeddingManager,
+  EmbeddingManager,
 } from './embeddings'
 import type { DedupEntity, EmbeddingVector } from './types'
 

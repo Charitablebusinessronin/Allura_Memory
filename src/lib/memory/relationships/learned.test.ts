@@ -3,15 +3,15 @@
  * Story 1.6: Track agent session learning
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  createLessonWithLearning,
+  getAgentLearnings,
+  getAgentLearningStats,
+  getHighRelevanceLearnings,
+  getLearningAgents,
   recordLearning,
   recordLearningsBatch,
-  getAgentLearnings,
-  getLearningAgents,
-  createLessonWithLearning,
-  getHighRelevanceLearnings,
-  getAgentLearningStats,
 } from "./learned";
 
 // Mock the memory() wrapper

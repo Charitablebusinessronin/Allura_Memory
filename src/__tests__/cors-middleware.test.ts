@@ -8,19 +8,19 @@
  * Usage: bun vitest run src/__tests__/cors-middleware.test.ts
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { IncomingMessage } from "http";
 import {
-  loadCorsConfig,
+  applyCors,
   compileOriginValidator,
+  corsHeaders,
+  getCorsConfig,
+  isPreflightRequest,
+  loadCorsConfig,
   resetCorsConfig,
   setCorsConfig,
-  getCorsConfig,
-  applyCors,
-  corsHeaders,
-  isPreflightRequest,
 } from "@/lib/cors/index";
 import type { CorsConfig, CorsResponse } from "@/lib/cors/index";
-import type { IncomingMessage } from "http";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

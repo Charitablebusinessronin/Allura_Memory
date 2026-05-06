@@ -1,9 +1,9 @@
 // scripts/hydration/parse-epic-stories.ts
 // Parse epic markdown files and extract story entries
 
+import yaml from 'yaml';
 import fs from 'fs';
 import path from 'path';
-import yaml from 'yaml';
 import { TaskSchema } from './notion-client';
 
 export interface Story {

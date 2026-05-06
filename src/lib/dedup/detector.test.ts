@@ -4,8 +4,8 @@
  * Tests for duplicate detection using embedding and text similarity.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
-import { DuplicateDetector, createDetector, createDetectorForTypes } from './detector'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { createDetector, createDetectorForTypes, DuplicateDetector } from './detector'
 import { createMockEmbeddingManager } from './embeddings'
 import { createTextManager } from './text-similarity'
 import type { DedupEntity, DetectionConfig, DuplicatePair } from './types'

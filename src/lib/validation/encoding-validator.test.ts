@@ -2,8 +2,8 @@
  * Tests for Encoding Validator
  */
 
-import { describe, it, expect } from "vitest"
-import { EncodingValidator, createEncodingValidator } from "./encoding-validator.js"
+import { describe, expect, it } from "vitest"
+import { createEncodingValidator, EncodingValidator } from "./encoding-validator.js"
 
 describe("EncodingValidator", () => {
   const validator = createEncodingValidator()

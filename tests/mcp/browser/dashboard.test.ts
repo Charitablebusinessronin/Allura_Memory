@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { 
-  browser_navigate, 
-  browser_take_screenshot,
-  browser_click,
-  browser_wait_for,
+  browser_click, 
   browser_console_messages,
-  browser_evaluate
+  browser_evaluate,
+  browser_navigate,
+  browser_take_screenshot,
+  browser_wait_for
 } from "@mcp-docker/playwright";
 import { getPort } from "../../../src/lib/config/ports";
 

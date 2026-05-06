@@ -10,10 +10,9 @@
  */
 
 import { NextResponse } from "next/server";
-import { isStrictMode, isPermissiveMode } from "@/middleware/workspace-isolation";
 import { getViolationSummary } from "@/lib/workspace/audit";
-import { isValidWorkspaceGroupId } from "@/lib/workspace/boundary";
-import { WORKSPACE_ROOT } from "@/lib/workspace/boundary";
+import { isValidWorkspaceGroupId , WORKSPACE_ROOT } from "@/lib/workspace/boundary";
+import { isPermissiveMode, isStrictMode } from "@/middleware/workspace-isolation";
 
 export const dynamic = "force-dynamic";
 

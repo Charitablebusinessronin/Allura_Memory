@@ -3,10 +3,10 @@
  * Story 3.2: Test real-time budget monitoring
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BudgetMonitor, createBudgetMonitor } from "./monitor";
-import type { SessionId, TokenUsage, ToolCallRecord, BudgetLimits } from "./types";
-import { DEFAULT_BUDGET_LIMITS, DEFAULT_BUDGET_CONFIG } from "./types";
+import type { BudgetLimits, SessionId, TokenUsage, ToolCallRecord } from "./types";
+import { DEFAULT_BUDGET_CONFIG, DEFAULT_BUDGET_LIMITS } from "./types";
 
 describe("BudgetMonitor", () => {
   let monitor: BudgetMonitor;

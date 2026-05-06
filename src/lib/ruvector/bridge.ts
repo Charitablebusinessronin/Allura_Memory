@@ -24,26 +24,25 @@ if (typeof window !== "undefined") {
   throw new Error("RuVector bridge module can only be used server-side")
 }
 
-import { randomUUID } from "node:crypto"
 import type { Pool, QueryResult } from "pg"
+import { randomUUID } from "node:crypto"
 
-import { getRuVectorPool, isRuVectorEnabled, checkRuVectorHealth } from "./connection"
-import { validateGroupId } from "../validation/group-id"
-import { GroupIdValidationError } from "../validation/group-id"
-import { DatabaseUnavailableError, DatabaseQueryError, classifyPostgresError } from "../errors/database-errors"
+import { checkRuVectorHealth, getRuVectorPool, isRuVectorEnabled } from "./connection"
 import { generateEmbedding } from "./embedding-service"
 import type {
-  StoreMemoryParams,
-  StoreMemoryResult,
+  AlluraMemoryRow,
+  PostFeedbackParams,
+  RetrievedMemory,
   RetrieveMemoriesParams,
   RetrieveMemoriesResult,
-  RetrievedMemory,
-  PostFeedbackParams,
-  RuVectorReadinessResult,
   RuVectorMemoryType,
-  AlluraMemoryRow,
+  RuVectorReadinessResult,
+  StoreMemoryParams,
+  StoreMemoryResult,
 } from "./types"
+import { classifyPostgresError, DatabaseQueryError, DatabaseUnavailableError } from "../errors/database-errors"
 import { CURRENT_SCHEMA_VERSION } from "../schema-version"
+import { GroupIdValidationError , validateGroupId } from "../validation/group-id"
 
 // ── Bridge-Specific Errors ───────────────────────────────────────────────────
 

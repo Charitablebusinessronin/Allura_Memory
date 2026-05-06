@@ -47,7 +47,7 @@ if (typeof window !== "undefined") {
   throw new Error("Embedding backfill worker can only be used server-side")
 }
 
-import { getRuVectorPool, closeRuVectorPool } from "../lib/ruvector/connection"
+import { closeRuVectorPool, getRuVectorPool } from "../lib/ruvector/connection"
 import { generateEmbeddingBatch } from "../lib/ruvector/embedding-service"
 
 // ── Constants ────────────────────────────────────────────────────────────────

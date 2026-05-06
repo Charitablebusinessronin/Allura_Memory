@@ -1,5 +1,5 @@
-import { parseSkillFile, findSkillFiles, ParsedSkill } from './parse-skill-files';
 import { createNotionPage, DATABASE_IDS, SkillSchema } from './notion-client';
+import { findSkillFiles, ParsedSkill, parseSkillFile } from './parse-skill-files';
 import { transformSkillToNotion } from './transform-to-notion';
 
 interface HydrationResult {

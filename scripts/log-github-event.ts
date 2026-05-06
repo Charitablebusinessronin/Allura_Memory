@@ -35,7 +35,7 @@ if (!postgresUrl) {
   process.exit(0);
 }
 
-import { getPool, closePool } from "../src/lib/postgres/connection";
+import { closePool, getPool } from "../src/lib/postgres/connection";
 
 async function logGitHubEvent() {
   console.log('[log-github-event] Logging event:', event);

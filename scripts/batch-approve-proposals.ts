@@ -9,9 +9,9 @@
  */
 
 import { Pool } from "pg";
-import { randomUUID, createHash } from "crypto";
-import { createInsight } from "@/lib/neo4j/queries/insert-insight";
+import { createHash, randomUUID } from "crypto";
 import { Neo4jConnectionError, Neo4jPromotionError } from "@/lib/errors/neo4j-errors";
+import { createInsight } from "@/lib/neo4j/queries/insert-insight";
 
 const isDryRun = process.argv.includes("--dry-run");
 const limitArg = process.argv.indexOf("--limit");

@@ -12,9 +12,9 @@
  *   bun run scripts/checkpoint.ts auto --interval 300  # Auto-save every 5 min
  */
 
+import { z } from 'zod';
 import fs from 'fs/promises';
 import path from 'path';
-import { z } from 'zod';
 
 // Simple checkpoint schema - no external dependencies
 const CheckpointSchema = z.object({

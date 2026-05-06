@@ -1,7 +1,7 @@
-import { createOllamaEmbeddingManager } from "../src/lib/dedup/embeddings";
-import { readFile } from "fs/promises";
-import { getDriver, closeDriver } from "../src/lib/neo4j/connection";
+import { readdir , readFile } from "fs/promises";
 import { join } from "path";
+import { createOllamaEmbeddingManager } from "../src/lib/dedup/embeddings";
+import { closeDriver, getDriver } from "../src/lib/neo4j/connection";
 
 async function getTsFiles(dir: string): Promise<string[]> {
   const files: string[] = [];
@@ -19,7 +19,6 @@ async function getTsFiles(dir: string): Promise<string[]> {
   return files;
 }
 
-import { readdir } from "fs/promises";
 
 async function embedCodebase() {
   console.log("[Embedder] Starting codebase embedding with qwen3-embedding:8b...");

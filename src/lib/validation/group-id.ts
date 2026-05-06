@@ -255,7 +255,7 @@ export function validateGroupIdWithRules(
     );
   }
 
-  let validated = groupId.trim();
+  const validated = groupId.trim();
 
   if (validated.length === 0) {
     throw new GroupIdValidationError("group_id cannot be empty or whitespace-only");

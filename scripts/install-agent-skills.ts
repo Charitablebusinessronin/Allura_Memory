@@ -6,8 +6,8 @@
  * Usage: bun scripts/install-agent-skills.ts --tier=1
  */
 
-import { writeFile, mkdir } from "fs/promises";
 import { existsSync } from "fs";
+import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
 
 const SKILLS_DIR = ".claude/skills";

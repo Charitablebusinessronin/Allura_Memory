@@ -7,7 +7,7 @@
  * Every state change requires cryptographic proof-of-intent before mutation.
  */
 
-import { createHmac, timingSafeEqual, randomBytes } from "crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "crypto";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES

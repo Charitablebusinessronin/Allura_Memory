@@ -9,8 +9,8 @@
  * See docs/adr/ADR-003-approve-promotions-deprecation.md
  */
 
-import { getPool, closePool } from "../lib/postgres/connection";
 import { curatorScore } from "../lib/curator/score";
+import { closePool, getPool } from "../lib/postgres/connection";
 
 // ── Core Functions ─────────────────────────────────────────────────────────
 

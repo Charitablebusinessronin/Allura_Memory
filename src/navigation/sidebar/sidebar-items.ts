@@ -1,4 +1,4 @@
-import { Activity, BookOpen, Brain, FileText, Folder, GitBranch, Home, Lightbulb, Map, Settings, type LucideIcon, Users, Wand2 } from "lucide-react"
+import { Activity, BookOpen, Brain, FileText, Folder, GitBranch, Home, Lightbulb, type LucideIcon, Map, Settings, Users, Wand2 } from "lucide-react"
 
 export interface NavSubItem {
   title: string

@@ -18,30 +18,30 @@
 import type {
   MemoryAddRequest,
   MemoryAddResponse,
-  MemorySearchRequest,
-  MemorySearchResponse,
-  MemoryGetRequest,
-  MemoryGetResponse,
-  MemoryListRequest,
-  MemoryListResponse,
   MemoryDeleteRequest,
   MemoryDeleteResponse,
-  MemoryUpdateRequest,
-  MemoryUpdateResponse,
-  MemoryPromoteRequest,
-  MemoryPromoteResponse,
   MemoryExportRequest,
   MemoryExportResponse,
-  MemoryRestoreRequest,
-  MemoryRestoreResponse,
+  MemoryGetRequest,
+  MemoryGetResponse,
   MemoryListDeletedRequest,
   MemoryListDeletedResponse,
+  MemoryListRequest,
+  MemoryListResponse,
+  MemoryPromoteRequest,
+  MemoryPromoteResponse,
+  MemoryRestoreRequest,
+  MemoryRestoreResponse,
+  MemorySearchRequest,
+  MemorySearchResponse,
+  MemoryUpdateRequest,
+  MemoryUpdateResponse,
 } from "@/lib/memory/canonical-contracts"
 
-import type { MemoryResponseEnvelope, EnvelopeMeta } from "@/lib/memory/response-envelope"
-import { successEnvelope, errorEnvelope, validationErrorEnvelope } from "@/lib/memory/response-envelope"
+import type { EnvelopeMeta, MemoryResponseEnvelope } from "@/lib/memory/response-envelope"
+import { errorEnvelope, successEnvelope, validationErrorEnvelope } from "@/lib/memory/response-envelope"
 
-import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id"
+import { GroupIdValidationError, validateGroupId } from "@/lib/validation/group-id"
 
 import * as canonicalTools from "@/mcp/canonical-tools"
 
@@ -55,7 +55,7 @@ function auditLog(tool: string, groupId: string, outcome: "success" | "validatio
   // Non-blocking: we don't want audit logging failures to break the response
   setImmediate(() => {
     try {
-      canonicalTools.memory_add === canonicalTools.memory_add // force module binding
+      void canonicalTools.memory_add // force module binding
       // We use the existing getConnections from canonical-tools to log
       // This is intentionally fire-and-forget
       import("@/mcp/canonical-tools/connection").then(({ getConnections }) => {

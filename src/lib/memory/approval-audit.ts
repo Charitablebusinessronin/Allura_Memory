@@ -15,7 +15,7 @@
 
 import type { Pool } from "pg"
 import { getPool } from "@/lib/postgres/connection"
-import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id"
+import { GroupIdValidationError, validateGroupId } from "@/lib/validation/group-id"
 
 // ── Types ─────────────────────────────────────────────────────────────────
 

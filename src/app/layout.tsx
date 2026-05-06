@@ -1,20 +1,20 @@
+import type { Metadata } from "next"
+import { cookies } from "next/headers"
 import type { ReactNode } from "react"
 
-import type { Metadata } from "next"
 
-import { cookies } from "next/headers"
 
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { APP_CONFIG } from "@/config/app-config"
-import { fontVars } from "@/lib/fonts/registry"
-import { PREFERENCE_DEFAULTS } from "@/lib/preferences/preferences-config"
-import { CONTENT_LAYOUT_VALUES, NAVBAR_STYLE_VALUES } from "@/lib/preferences/layout"
-import { THEME_MODE_VALUES, THEME_PRESET_VALUES } from "@/lib/preferences/theme"
 import { isClerkEnabled } from "@/lib/auth/config"
+import { fontVars } from "@/lib/fonts/registry"
+import { CONTENT_LAYOUT_VALUES, NAVBAR_STYLE_VALUES } from "@/lib/preferences/layout"
+import { PREFERENCE_DEFAULTS } from "@/lib/preferences/preferences-config"
+import { THEME_MODE_VALUES, THEME_PRESET_VALUES } from "@/lib/preferences/theme"
 import { ThemeBootScript } from "@/scripts/theme-boot"
-import { PreferencesStoreProvider } from "@/stores/preferences/preferences-provider"
 import { getPreference } from "@/server/server-actions"
+import { PreferencesStoreProvider } from "@/stores/preferences/preferences-provider"
 
 import "./globals.css"
 

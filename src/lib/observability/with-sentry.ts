@@ -20,8 +20,8 @@ import type { IncomingMessage, ServerResponse } from "http";
 import {
   captureException,
   extractRequestContext,
-  startTransaction,
   isSentryEnabled,
+  startTransaction,
 } from "./sentry.js";
 import type { CaptureContext, SentryTransaction } from "./sentry.js";
 

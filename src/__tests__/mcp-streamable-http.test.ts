@@ -18,9 +18,9 @@
  * Usage: bun vitest run src/__tests__/mcp-streamable-http.test.ts
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { IncomingMessage, ServerResponse } from "http";
 
 // We test the transport layer by creating a lightweight HTTP server

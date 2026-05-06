@@ -13,8 +13,7 @@ import { resolve } from "path";
 config({ path: resolve(__dirname, "../.env.local") });
 config({ path: resolve(__dirname, "../.env") });
 
-import { memory_add } from "../src/mcp/canonical-tools";
-import { memory_search } from "../src/mcp/canonical-tools";
+import { memory_add , memory_search } from "../src/mcp/canonical-tools";
 
 const GROUP_A = "allura-scope-test-a" as any;
 const GROUP_B = "allura-scope-test-b" as any;

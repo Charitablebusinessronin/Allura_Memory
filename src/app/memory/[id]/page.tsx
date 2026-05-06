@@ -1,9 +1,10 @@
 "use client"
 
+import { ArrowLeft, Clock3, FileSearch, History, PencilLine, RotateCcw, ShieldCheck, Sparkles } from "lucide-react"
+import { useParams, useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import type { JSX } from "react"
-import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Clock3, FileSearch, PencilLine, ShieldCheck, Sparkles, History, RotateCcw } from "lucide-react"
+import { toast } from "sonner"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,10 +21,9 @@ import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
-import { toast } from "sonner"
 import { DURHAM_GRADIENTS } from "@/lib/brand/durham"
 import { DEFAULT_GROUP_ID, DEFAULT_USER_ID } from "@/lib/defaults/scope"
-import { normalizeNeo4jTimestamp, formatRelativeTime } from "@/lib/utils/date"
+import { formatRelativeTime, normalizeNeo4jTimestamp } from "@/lib/utils/date"
 
 interface MemoryDetail {
   id: string

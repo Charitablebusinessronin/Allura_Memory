@@ -23,9 +23,9 @@
  * Future: A full MCP client will be added in Phase 2 for pure MCP architecture.
  */
 
-import { getPool } from "@/lib/postgres/connection";
-import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
 import type { QueryResult } from "pg";
+import { getPool } from "@/lib/postgres/connection";
+import { GroupIdValidationError, validateGroupId } from "@/lib/validation/group-id";
 
 /**
  * Trace event from PostgreSQL bronze layer

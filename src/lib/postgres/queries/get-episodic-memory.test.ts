@@ -1,16 +1,16 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
+  type EpisodicQueryParams,
   getEpisodicMemory,
-  getWorkingMemoryContext,
+  getEventById,
   getEventsAfterParent,
   getEventsByTimeWindow,
   getRecentEvents,
-  getEventById,
+  getWorkingMemoryContext,
   QueryError,
-  type EpisodicQueryParams,
 } from "./get-episodic-memory";
-import { getPool, closePool } from "../connection";
-import { insertEvent, type EventInsert } from "./insert-trace";
+import { type EventInsert, insertEvent } from "./insert-trace";
+import { closePool, getPool } from "../connection";
 
 /**
  * Test suite for episodic memory retrieval

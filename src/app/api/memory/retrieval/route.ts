@@ -10,12 +10,12 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { forbiddenResponse, requireRole, unauthorizedResponse } from "@/lib/auth/api-auth";
 import {
-  retrieveKnowledge,
   RetrievalError,
   type RetrievalRequest,
+  retrieveKnowledge,
 } from "@/lib/memory/retrieval-layer";
-import { requireRole, forbiddenResponse, unauthorizedResponse } from "@/lib/auth/api-auth";
 import { captureException } from "@/lib/observability/sentry";
 
 /**

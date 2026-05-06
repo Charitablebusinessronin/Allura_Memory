@@ -7,10 +7,10 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getPool } from "@/lib/postgres/connection";
-import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
-import { requireRole, forbiddenResponse, unauthorizedResponse } from "@/lib/auth/api-auth";
+import { forbiddenResponse, requireRole, unauthorizedResponse } from "@/lib/auth/api-auth";
 import { captureException } from "@/lib/observability/sentry";
+import { getPool } from "@/lib/postgres/connection";
+import { GroupIdValidationError, validateGroupId } from "@/lib/validation/group-id";
 
 /**
  * GET /api/curator/proposals

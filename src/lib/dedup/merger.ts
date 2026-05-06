@@ -6,12 +6,12 @@
  */
 
 import type {
-  EntityType,
   DedupEntity,
+  EntityType,
+  MergeAuditEntry,
   MergeRequest,
   MergeResult,
   MergeStrategy,
-  MergeAuditEntry,
 } from './types'
 
 // =============================================================================

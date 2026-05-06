@@ -1,20 +1,20 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
 
 import { Activity, Brain, Lightbulb, MoreHorizontal, Users } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
 
 import {
   EmptyState,
   ErrorState,
   LoadingState,
-  PageHeader,
   MetricCardsSkeleton,
+  PageHeader,
   WarningList,
 } from "@/components/dashboard"
-import { cn } from "@/lib/utils"
 import { loadGraphNodes } from "@/lib/dashboard/queries"
 import type { DashboardResult, GraphEdge, GraphNode } from "@/lib/dashboard/types"
+import { cn } from "@/lib/utils"
 
 function confidencePercent(node: GraphNode) {
   const c = Number(node.metadata?.confidence ?? node.metadata?.score ?? 0)

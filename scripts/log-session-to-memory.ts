@@ -4,9 +4,9 @@
  * Records session completion to PostgreSQL events + Neo4j knowledge graph
  */
 
+import { memory } from "../src/lib/memory/writer";
 import { getPool } from "../src/lib/postgres/connection";
 import { insertEvent } from "../src/lib/postgres/queries/insert-trace";
-import { memory } from "../src/lib/memory/writer";
 
 const sessionData = {
   session_id: "ralph-loop-epic-1-complete-2026-04-06",

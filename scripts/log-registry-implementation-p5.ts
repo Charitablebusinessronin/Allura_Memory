@@ -1,7 +1,7 @@
 /**
  * Log Phase 5 implementation events to PostgreSQL
  */
-import { insertEvent, type EventInsert } from "../src/lib/postgres/queries/insert-trace";
+import { type EventInsert, insertEvent } from "../src/lib/postgres/queries/insert-trace";
 
 async function logImplementationEvents(): Promise<void> {
   const now = new Date().toISOString();

@@ -8,9 +8,9 @@
  * Usage: bun run scripts/verify-checkpoints.ts [--session-id <id>]
  */
 
-import { createCheckpointManager } from "../src/lib/session/checkpoint-manager";
 import * as fs from "fs/promises";
 import * as path from "path";
+import { createCheckpointManager } from "../src/lib/session/checkpoint-manager";
 
 const CHECKPOINT_DIR = ".opencode/state/checkpoints";
 

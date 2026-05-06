@@ -17,14 +17,13 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { randomUUID } from "crypto"
-import { createHash } from "crypto"
-import { getPool } from "@/lib/postgres/connection"
+import { createHash , randomUUID } from "crypto"
+import { forbiddenResponse, requireRole, unauthorizedResponse } from "@/lib/auth/api-auth"
 import { Neo4jConnectionError, Neo4jPromotionError } from "@/lib/errors/neo4j-errors"
 import { createInsight, InsightConflictError } from "@/lib/neo4j/queries/insert-insight"
-import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id"
-import { requireRole, forbiddenResponse, unauthorizedResponse } from "@/lib/auth/api-auth"
 import { captureException } from "@/lib/observability/sentry"
+import { getPool } from "@/lib/postgres/connection"
+import { GroupIdValidationError, validateGroupId } from "@/lib/validation/group-id"
 
 const DEFAULT_GROUP_ID = process.env.DEFAULT_GROUP_ID || "allura-default"
 
@@ -133,7 +132,9 @@ export async function POST(request: NextRequest) {
         // TODO: After Insight→Memory label migration, use graphAdapter.createMemory
         // instead of createInsight so we get :Memory nodes directly.
         try {
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
           const { getDriver } = require("@/lib/neo4j/connection")
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
           const { Neo4jGraphAdapter } = require("@/lib/graph-adapter/neo4j-adapter")
           const driver = getDriver()
           const adapter = new Neo4jGraphAdapter(driver)

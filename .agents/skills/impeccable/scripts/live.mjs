@@ -21,9 +21,9 @@ import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadContext } from './load-context.mjs';
-import { resolveFiles } from './live-inject.mjs';
 import { readLiveServerInfo } from './impeccable-paths.mjs';
+import { resolveFiles } from './live-inject.mjs';
+import { loadContext } from './load-context.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

@@ -13,8 +13,8 @@
  *   --output=FILE   Output results to file
  */
 
-const { Pool } = require("pg");
 const neo4j = require("neo4j-driver");
+const { Pool } = require("pg");
 const { performance } = require("perf_hooks");
 
 // Configuration

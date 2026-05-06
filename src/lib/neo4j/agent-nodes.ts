@@ -10,7 +10,7 @@
  * **Steel Frame Versioning**: Agent nodes support SUPERSEDES lineage.
  */
 
-import { writeTransaction, readTransaction, type ManagedTransaction } from "./connection";
+import { type ManagedTransaction, readTransaction, writeTransaction } from "./connection";
 
 // Server-only guard: throw if imported in browser environment
 if (typeof window !== "undefined") {
@@ -663,7 +663,7 @@ export async function initializeDefaultAgents(
       agent_id: "scout",
       name: "Scout",
       role: "Recon — fast repo scanning, file path finding, context discovery",
-      model: "ollama-cloud/nemotron-3-super:cloud",
+      model: "ollama-cloud/nemotron-3-super",
       fallback_model: "ollama-cloud/nemotron-3-super",
       group_id,
     },

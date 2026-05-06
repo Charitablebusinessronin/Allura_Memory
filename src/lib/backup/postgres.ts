@@ -10,8 +10,8 @@
 
 import { execSync } from "node:child_process"
 import { createHash } from "node:crypto"
-import { mkdir, writeFile, readFile, stat } from "node:fs/promises"
-import { resolve, join } from "node:path"
+import { mkdir, readFile, stat, writeFile } from "node:fs/promises"
+import { join, resolve } from "node:path"
 import type { BackupResult, EncryptionConfig } from "./types"
 
 // ── Constants ─────────────────────────────────────────────────────────────────

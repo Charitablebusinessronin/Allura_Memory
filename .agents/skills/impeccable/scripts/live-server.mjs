@@ -13,16 +13,14 @@
  *   node <scripts_path>/live-server.mjs --help
  */
 
-import http from 'node:http';
+import { execFileSync, spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { spawn, execFileSync } from 'node:child_process';
 import fs from 'node:fs';
-import path from 'node:path';
+import http from 'node:http';
 import net from 'node:net';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseDesignMd } from './design-parser.mjs';
-import { resolveContextDir } from './load-context.mjs';
-import { createLiveSessionStore } from './live-session-store.mjs';
 import {
   getDesignSidecarPath,
   getLiveAnnotationsDir,
@@ -31,6 +29,8 @@ import {
   resolveDesignSidecarPath,
   writeLiveServerInfo,
 } from './impeccable-paths.mjs';
+import { createLiveSessionStore } from './live-session-store.mjs';
+import { resolveContextDir } from './load-context.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // PRODUCT.md / DESIGN.md live wherever load-context.mjs resolves. The generated

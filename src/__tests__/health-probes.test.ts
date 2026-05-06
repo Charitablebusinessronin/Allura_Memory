@@ -7,7 +7,7 @@
  * Usage: bun vitest run src/__tests__/health-probes.test.ts
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Mock dependencies before importing ────────────────────────────────────────
 
@@ -32,11 +32,11 @@ vi.mock("@/lib/circuit-breaker/manager", () => ({
 
 // ── Import after mocking ──────────────────────────────────────────────────────
 
-import { checkReadiness, checkLiveness, markMcpInitialized } from "@/lib/health/probes";
-import { MetricsRegistry, registerStandardMetrics } from "@/lib/health/metrics-registry";
 import { collectMetrics, recordHttpRequest, recordMemoryAdd, recordMemorySearch } from "@/lib/health/metrics";
-import { isPoolHealthy } from "@/lib/postgres/connection";
+import { MetricsRegistry, registerStandardMetrics } from "@/lib/health/metrics-registry";
+import { checkLiveness, checkReadiness, markMcpInitialized } from "@/lib/health/probes";
 import { isDriverHealthy } from "@/lib/neo4j/connection";
+import { isPoolHealthy } from "@/lib/postgres/connection";
 
 // ── Readiness Probe Tests ─────────────────────────────────────────────────────
 

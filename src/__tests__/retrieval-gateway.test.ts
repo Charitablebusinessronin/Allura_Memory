@@ -4,16 +4,16 @@
  * degraded mode, and graceful degradation on failure.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  DEFAULT_RETRIEVAL_CONFIG,
+  RetrievalConfig,
   SearchRequest,
   SearchResponse,
-  RetrievalConfig,
-  DEFAULT_RETRIEVAL_CONFIG,
 } from '../lib/retrieval/contract';
-import { validateStartup, clearStartupCache } from '../lib/retrieval/startup-validator';
-import { enforcePolicy } from '../lib/retrieval/policy';
 import { createRetrievalGateway } from '../lib/retrieval/gateway';
+import { enforcePolicy } from '../lib/retrieval/policy';
+import { clearStartupCache, validateStartup } from '../lib/retrieval/startup-validator';
 
 const TEST_CONFIG: RetrievalConfig = {
   ...DEFAULT_RETRIEVAL_CONFIG,

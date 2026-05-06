@@ -11,8 +11,8 @@
  * Usage: bun src/curator/watchdog.ts [--interval 60] [--group-id allura-system]
  */
 
-import { getPool, closePool } from "../lib/postgres/connection";
 import { curatorScore } from "../lib/curator/score";
+import { closePool, getPool } from "../lib/postgres/connection";
 
 export interface WatchdogConfig {
   groupId: string;

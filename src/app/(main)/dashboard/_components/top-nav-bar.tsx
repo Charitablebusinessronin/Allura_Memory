@@ -1,7 +1,7 @@
 "use client"
 
-import { usePathname } from "next/navigation"
 import { Search } from "lucide-react"
+import { usePathname } from "next/navigation"
 
 import { cn } from "@/lib/utils"
 

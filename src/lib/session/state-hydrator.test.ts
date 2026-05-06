@@ -4,10 +4,10 @@
  * Run with: RUN_E2E_TESTS=true bun vitest run src/lib/session/state-hydrator.test.ts
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import fs from "fs/promises"
 import path from "path"
-import { StateHydrator, createStateHydrator, type SessionState } from "./state-hydrator"
+import { createStateHydrator, type SessionState, StateHydrator } from "./state-hydrator"
 
 const shouldRunE2E = process.env.RUN_E2E_TESTS === "true"
 

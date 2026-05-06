@@ -7,26 +7,26 @@
  * 3. Output schemas accept valid responses and detect drift
  * 4. validateInput throws on bad data; validateOutput logs but doesn't throw
  */
-import { describe, it, expect, vi } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import {
   MemoryAddInputSchema,
   MemoryAddOutputSchema,
-  MemorySearchInputSchema,
-  MemorySearchOutputSchema,
-  MemoryListInputSchema,
-  MemoryListOutputSchema,
-  MemoryGetInputSchema,
-  MemoryGetOutputSchema,
-  MemoryUpdateInputSchema,
-  MemoryUpdateOutputSchema,
   MemoryDeleteInputSchema,
   MemoryDeleteOutputSchema,
+  MemoryExportInputSchema,
+  MemoryExportOutputSchema,
+  MemoryGetInputSchema,
+  MemoryGetOutputSchema,
+  MemoryListInputSchema,
+  MemoryListOutputSchema,
   MemoryPromoteInputSchema,
   MemoryPromoteOutputSchema,
   MemoryRestoreInputSchema,
   MemoryRestoreOutputSchema,
-  MemoryExportInputSchema,
-  MemoryExportOutputSchema,
+  MemorySearchInputSchema,
+  MemorySearchOutputSchema,
+  MemoryUpdateInputSchema,
+  MemoryUpdateOutputSchema,
   validateInput,
   validateOutput,
   validateOutputArray,

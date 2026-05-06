@@ -6,8 +6,8 @@
  */
 
 import { GetMemoryRequest, GetMemoryResponse, MemorySearchResult } from "./types"
-import { readTransaction } from "../neo4j/connection"
 import { Neo4jConnectionError, Neo4jQueryError } from "../errors/neo4j-errors"
+import { readTransaction } from "../neo4j/connection"
 
 /**
  * Get a specific memory by topic_key

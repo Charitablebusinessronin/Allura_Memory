@@ -6,16 +6,16 @@
  * Reference: Phase 7 benchmark — RBAC with curator/admin/viewer roles
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  hasPermission,
   checkPermission,
+  hasPermission,
   isValidRole,
   parseRole,
+  ROLE_DESCRIPTIONS,
   roleLevel,
   rolesAtOrAbove,
   rolesBelow,
-  ROLE_DESCRIPTIONS,
 } from "@/lib/auth/roles";
 import { ALLURA_ROLES, ROLE_LEVEL } from "@/lib/auth/types";
 

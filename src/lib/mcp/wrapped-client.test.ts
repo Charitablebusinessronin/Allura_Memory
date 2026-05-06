@@ -16,19 +16,19 @@
  * 9. Factory functions
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { McpToolCaller } from "@/integrations/mcp.client";
+import { GroupIdValidationError } from "@/lib/validation/group-id";
 import {
-  WrappedMcpClient,
-  TracedToolCall,
-  createWrappedClient,
+  type AgentMetadata,
   createAgentClient,
   createUntracedClient,
-  type AgentMetadata,
+  createWrappedClient,
   type TraceCaptureConfig,
+  TracedToolCall,
   type WrappedClientConfig,
+  WrappedMcpClient,
 } from "./wrapped-client";
-import { GroupIdValidationError } from "@/lib/validation/group-id";
-import type { McpToolCaller } from "@/integrations/mcp.client";
 
 // Pre-Phase-4 baseline — tracked in docs/deferred/pre-existing-failures.md
 // Reason: requires MCP server running (integration) — module-level imports trigger

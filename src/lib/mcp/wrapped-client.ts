@@ -19,22 +19,22 @@ if (typeof window !== "undefined") {
   throw new Error("WrappedMcpClient can only be used server-side");
 }
 
-import { TraceMiddleware, type TraceMiddlewareConfig } from "./trace-middleware";
-import { EnforcedMcpClient, type McpOperationResult } from "./enforced-client";
-import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
 import type { McpToolCaller } from "@/integrations/mcp.client";
 import { BudgetEnforcer } from "@/lib/budget/enforcer";
-import type { SessionId } from "@/lib/budget/types";
 import {
-  MIN_TURN_TOKENS,
-  checkBudgetBeforeCall,
-  updateBudgetAfterCall,
-  handleBudgetExceeded,
-  createSessionId,
-  BudgetExceededError,
   type BudgetCheckResult,
+  BudgetExceededError,
+  checkBudgetBeforeCall,
+  createSessionId,
+  handleBudgetExceeded,
+  MIN_TURN_TOKENS,
   type ToolCallMetadata,
+  updateBudgetAfterCall,
 } from "@/lib/budget/middleware-integration";
+import type { SessionId } from "@/lib/budget/types";
+import { GroupIdValidationError, validateGroupId } from "@/lib/validation/group-id";
+import { EnforcedMcpClient, type McpOperationResult } from "./enforced-client";
+import { TraceMiddleware, type TraceMiddlewareConfig } from "./trace-middleware";
 
 /**
  * Agent metadata for trace attribution
@@ -330,6 +330,7 @@ export class WrappedMcpClient implements McpToolCaller {
     if (config.innerClient) {
       this._innerClient = config.innerClient;
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { McpClientImpl } = require("@/integrations/mcp.client");
       const baseClient = new McpClientImpl();
       this._enforcedClient = new EnforcedMcpClient(validatedGroupId, baseClient);

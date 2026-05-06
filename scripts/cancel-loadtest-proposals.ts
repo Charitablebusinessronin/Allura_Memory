@@ -8,7 +8,7 @@
  * Run: bun scripts/cancel-loadtest-proposals.ts
  */
 import { createHash } from "crypto";
-import { getPool, closePool } from "../src/lib/postgres/connection";
+import { closePool, getPool } from "../src/lib/postgres/connection";
 
 const CURATOR_ID = "knuth-bulk-cancel";
 const RATIONALE =

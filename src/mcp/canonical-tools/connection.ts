@@ -5,10 +5,10 @@
  * dotenv config is loaded here since connection setup needs env vars.
  */
 
-import { Pool } from "pg"
-import neo4j, { Driver } from "neo4j-driver"
-import { existsSync, readFileSync } from "fs"
 import { parse } from "dotenv"
+import neo4j, { Driver } from "neo4j-driver"
+import { Pool } from "pg"
+import { existsSync, readFileSync } from "fs"
 import { resetBudgetState } from "./budget-circuit"
 
 // Load base config plus local overrides without clobbering already-injected

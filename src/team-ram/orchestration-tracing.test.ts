@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 // Mock the trace-logger before importing the module under test
 vi.mock("@/lib/postgres/trace-logger", () => ({
@@ -13,13 +13,13 @@ vi.mock("@/lib/validation/group-id", () => ({
 
 import { logTrace } from "@/lib/postgres/trace-logger"
 import {
-  traceOrchestrationStart,
-  traceSkillResult,
-  traceOrchestrationEnd,
   createTracedOrchestrator,
   type OrchestrationTraceConfig,
+  traceOrchestrationEnd,
+  traceOrchestrationStart,
+  traceSkillResult,
 } from "./orchestration-tracing"
-import type { SkillResult, OrchestrationResult } from "./orchestrator"
+import type { OrchestrationResult, SkillResult } from "./orchestrator"
 
 const mockLogTrace = vi.mocked(logTrace)
 

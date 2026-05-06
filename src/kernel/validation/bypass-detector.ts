@@ -184,7 +184,7 @@ export class BypassDetector {
   private installHooks(): void {
     // Hook into module loading (Node.js specific)
     if (typeof require !== "undefined") {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const originalRequire = (globalThis as Record<string, unknown>).require;
 
       // Monitor for suspicious requires
@@ -193,7 +193,7 @@ export class BypassDetector {
     }
 
     // Hook into dynamic imports
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const originalImport = (globalThis as Record<string, unknown>).import;
     // Monitor for suspicious imports
     void originalImport; // Prevent unused warning

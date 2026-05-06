@@ -13,8 +13,8 @@
  *   - ALLURA_MCP_AUTH_TOKEN set if auth is enabled
  */
 
-import http from "k6/http";
 import { check, sleep } from "k6";
+import http from "k6/http";
 import { Rate, Trend } from "k6/metrics";
 
 // ── Configuration ─────────────────────────────────────────────────────────────

@@ -15,9 +15,22 @@ export class DashboardApiError extends Error {
   }
 }
 
+/**
+ * Get current tenant group from auth context or defaults
+ * This ensures all dashboard API calls respect tenant isolation
+ */
+function getCurrentGroupId(): string {
+  // Try to read from cookies first (production Clerk auth)
+  if (typeof document !== "undefined") {
+    const cookie = document.cookie.match(/x-allura-group-id=([^;]+)/)
+    if (cookie?.[1]) return cookie[1]
+  }
+  return DASHBOARD_GROUP_ID
+}
+
 function withGroupId(params?: Record<string, QueryValue>): URLSearchParams {
   const search = new URLSearchParams()
-  search.set("group_id", DASHBOARD_GROUP_ID)
+  search.set("group_id", getCurrentGroupId())
   for (const [key, value] of Object.entries(params ?? {})) {
     if (value !== undefined && value !== null && value !== "") {
       search.set(key, String(value))
@@ -124,7 +137,50 @@ export function getHealthMetrics() {
 }
 
 export function getGraph(params?: Record<string, QueryValue>) {
-  return readJson<unknown>(`/api/memory/graph?${withGroupId(params).toString()}`)
+  // Build headers with x-allura-group-id from auth context
+  const headers: Record<string, string> = {}
+  const currentGroupId = getCurrentGroupId()
+  if (currentGroupId) {
+    headers["x-allura-group-id"] = currentGroupId
+  }
+
+  // Use readJson with custom headers
+  const url = `/api/memory/graph?${withGroupId(params).toString()}`
+
+  // Direct fetch with headers instead of readJson to control header injection
+  return fetchWithHeaders(url, {
+    headers,
+    cache: "no-store",
+  })
+}
+
+/**
+ * Custom fetch wrapper that sets headers properly
+ * This avoids the API helper's header merging behavior
+ */
+async function fetchWithHeaders<T>(
+  url: string,
+  init?: RequestInit
+): Promise<{ data: T; degraded: boolean; warning: string | null }> {
+  const response = await fetch(url, {
+    cache: "no-store",
+    ...init,
+    headers: {
+      Accept: "application/json",
+      ...(init?.headers ?? {}),
+    },
+  })
+  const warning = response.headers.get("Warning")
+  const degraded = response.status === 206 || Boolean(warning)
+  const payload = await response.json().catch(() => null)
+
+  if (!response.ok && response.status !== 206) {
+    const message =
+      payload && typeof payload === "object" && "error" in payload ? String(payload.error) : `Request failed: ${response.status}`
+    throw new DashboardApiError(message, response.status, url)
+  }
+
+  return { data: payload as T, degraded, warning }
 }
 
 export async function approveProposal(proposalId: string): Promise<void> {

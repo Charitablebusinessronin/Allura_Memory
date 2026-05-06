@@ -2,7 +2,7 @@
  * Log Phase 1 and Phase 2 implementation events to PostgreSQL
  * Records the OpenAgents Control Registry build progress
  */
-import { insertEvent, type EventInsert } from "../src/lib/postgres/queries/insert-trace";
+import { type EventInsert, insertEvent } from "../src/lib/postgres/queries/insert-trace";
 
 async function logImplementationEvents(): Promise<void> {
   const now = new Date().toISOString();

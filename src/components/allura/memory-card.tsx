@@ -1,9 +1,9 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { StatusBadge } from "@/components/allura/status-badge"
 import { ConfidenceBar } from "@/components/allura/confidence-bar"
+import { StatusBadge } from "@/components/allura/status-badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import type { Memory } from "@/hooks/use-memory-list"
 
 interface MemoryCardProps {

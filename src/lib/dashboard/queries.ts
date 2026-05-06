@@ -20,11 +20,11 @@ import {
   mapMetrics,
   mapProposalsResponse,
   mapSystemStatus,
-  mapTraceToEvidence,
   mapTracesResponse,
+  mapTraceToEvidence,
   warningFrom,
 } from "@/lib/dashboard/mappers"
-import type { DecisionRecord, DashboardOverview, DashboardResult, Evidence, GraphEdge, GraphNode, Insight, Memory } from "@/lib/dashboard/types"
+import type { DashboardOverview, DashboardResult, DecisionRecord, Evidence, GraphEdge, GraphNode, Insight, Memory } from "@/lib/dashboard/types"
 
 function failure<T>(error: unknown): DashboardResult<T> {
   return {

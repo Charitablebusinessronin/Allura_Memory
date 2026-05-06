@@ -17,16 +17,16 @@
  * Reference: docs/archive/allura/VALIDATION-GATE.md
  */
 
-import { getPool, closePool } from "../src/lib/postgres/connection";
-import { getDriver, closeDriver } from "../src/lib/neo4j/connection";
-import { insertEvent } from "../src/lib/postgres/queries/insert-trace";
-import { curatorScore } from "../src/lib/curator/score";
-import { createInsight, createInsightVersion, deprecateInsight, revertInsightVersion } from "../src/lib/neo4j/queries/insert-insight";
-import { listInsights, searchInsights } from "../src/lib/neo4j/queries/get-insight";
-import { getDualContextSemanticMemory } from "../src/lib/neo4j/queries/get-dual-context";
-import { retrieveKnowledge } from "../src/lib/memory/retrieval-layer";
-import { validateGroupId } from "../src/lib/validation/group-id";
 import { randomUUID } from "crypto";
+import { curatorScore } from "../src/lib/curator/score";
+import { retrieveKnowledge } from "../src/lib/memory/retrieval-layer";
+import { closeDriver, getDriver } from "../src/lib/neo4j/connection";
+import { getDualContextSemanticMemory } from "../src/lib/neo4j/queries/get-dual-context";
+import { listInsights, searchInsights } from "../src/lib/neo4j/queries/get-insight";
+import { createInsight, createInsightVersion, deprecateInsight, revertInsightVersion } from "../src/lib/neo4j/queries/insert-insight";
+import { closePool, getPool } from "../src/lib/postgres/connection";
+import { insertEvent } from "../src/lib/postgres/queries/insert-trace";
+import { validateGroupId } from "../src/lib/validation/group-id";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 

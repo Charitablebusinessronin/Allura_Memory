@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils"
 import type { Memory } from "@/lib/dashboard/types"
+import { cn } from "@/lib/utils"
 
 const TYPE_BADGE_LABELS: Record<Memory["type"], string> = {
   memory: "RAW MEMORY",

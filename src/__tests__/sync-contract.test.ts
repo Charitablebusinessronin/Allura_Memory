@@ -8,7 +8,7 @@
  * Run with: bun vitest run src/__tests__/sync-contract.test.ts
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // ── Mock neo4j-driver before importing adapter ───────────────────────────
 // Factory must be self-contained — no top-level variables (hoisted by vitest)
@@ -37,7 +37,7 @@ import type { Driver } from "neo4j-driver"
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
-import type { MemoryId, GroupId } from "@/lib/memory/canonical-contracts"
+import type { GroupId, MemoryId } from "@/lib/memory/canonical-contracts"
 
 const TEST_GROUP = "allura-sync-contract" as unknown as GroupId
 const TEST_MEMORY_ID = "mem-test-001" as unknown as MemoryId

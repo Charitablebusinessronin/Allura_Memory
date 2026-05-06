@@ -4,7 +4,6 @@
  */
 
 import type { Pool } from "pg";
-import { getPool } from "../postgres/connection";
 import type {
   BudgetConsumptionReport,
   ForensicSnapshot,
@@ -12,6 +11,7 @@ import type {
   SessionId,
   SessionState,
 } from "./types";
+import { getPool } from "../postgres/connection";
 
 /**
  * State capture configuration

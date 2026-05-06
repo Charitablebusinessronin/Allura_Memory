@@ -6,7 +6,7 @@
  * Component rendering tests would require jsdom (not in current config).
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 // ── Mock env vars ─────────────────────────────────────────────────────────
 

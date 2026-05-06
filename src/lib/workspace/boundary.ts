@@ -10,7 +10,7 @@
  */
 
 import { homedir } from "node:os";
-import { resolve, normalize, isAbsolute } from "node:path";
+import { isAbsolute, normalize, resolve } from "node:path";
 
 // ── Constants ───────────────────────────────────────────────────────────────
 

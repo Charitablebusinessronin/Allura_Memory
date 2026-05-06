@@ -9,11 +9,11 @@
  */
 
 import type { Pool } from "pg"
-import { getPool } from "./connection"
-import { insertEvent, type EventInsert, type EventRecord } from "./queries/insert-trace"
 import { RuVixKernel } from "@/kernel/ruvix"
 import { canonicalizeAgentId } from "@/lib/agents/canonical-identity"
-import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id"
+import { GroupIdValidationError, validateGroupId } from "@/lib/validation/group-id"
+import { getPool } from "./connection"
+import { type EventInsert, type EventRecord, insertEvent } from "./queries/insert-trace"
 import type { QueryTracesOptions, QueryTracesResult } from "./types"
 
 // Re-export types for backward compatibility

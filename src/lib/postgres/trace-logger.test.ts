@@ -1,16 +1,16 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { Pool } from "pg";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { RuVixKernel } from "@/kernel/ruvix";
+import { closePool, getPool } from "./connection";
 import {
-  logTrace,
+  countTraces,
+  getTraceById,
   getTracesByAgent,
   getTracesByType,
-  getTraceById,
-  countTraces,
-  TraceValidationError,
+  logTrace,
   type TraceLog,
+  TraceValidationError,
 } from "./trace-logger";
-import { getPool, closePool } from "./connection";
-import { RuVixKernel } from "@/kernel/ruvix";
 
 /**
  * TraceLogger integration tests

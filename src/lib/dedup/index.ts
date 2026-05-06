@@ -78,8 +78,8 @@ export type {
 
 // Default export
 import { DuplicateDetector } from './detector'
-import { MergeManager } from './merger'
 import { EmbeddingManager } from './embeddings'
+import { MergeManager } from './merger'
 import { TextSimilarityManager } from './text-similarity'
 
 const dedup = {

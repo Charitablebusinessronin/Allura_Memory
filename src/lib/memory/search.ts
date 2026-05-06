@@ -11,13 +11,13 @@
  * ADR: AD-029 — Graph Adapter Pattern for Neo4j → RuVector Migration
  */
 
-import { MemorySearchRequest, MemorySearchResponse, MemorySearchResult } from "./types"
-import { readTransaction } from "../neo4j/connection"
-import { Neo4jConnectionError, Neo4jQueryError } from "../errors/neo4j-errors"
-import { getGraphBackend, createGraphAdapter } from "@/lib/graph-adapter"
-import type { IGraphAdapter } from "@/lib/graph-adapter"
 import type { Pool } from "pg"
+import { createGraphAdapter, getGraphBackend } from "@/lib/graph-adapter"
+import type { IGraphAdapter } from "@/lib/graph-adapter"
 import type { GroupId } from "@/lib/memory/canonical-contracts"
+import { MemorySearchRequest, MemorySearchResponse, MemorySearchResult } from "./types"
+import { Neo4jConnectionError, Neo4jQueryError } from "../errors/neo4j-errors"
+import { readTransaction } from "../neo4j/connection"
 
 // ── PG Pool singleton (for GRAPH_BACKEND=ruvector) ─────────────────────────
 
@@ -25,6 +25,7 @@ let searchPgPool: Pool | null = null;
 
 function getSearchPgPool(): Pool {
   if (!searchPgPool) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { Pool: PgPool } = require("pg") as { Pool: new (config: Record<string, unknown>) => Pool };
     const password = process.env.POSTGRES_PASSWORD;
     if (!password) {

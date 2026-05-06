@@ -1,8 +1,8 @@
 /**
  * @vitest-environment node
  */
-import { describe, it, expect } from "vitest"
-import { generateSyncKey, EVENT_TYPE_TO_TARGET } from "@/curator/notion-projection-sync"
+import { describe, expect, it } from "vitest"
+import { EVENT_TYPE_TO_TARGET, generateSyncKey } from "@/curator/notion-projection-sync"
 
 describe("Notion Projection Sync", () => {
   describe("generateSyncKey", () => {

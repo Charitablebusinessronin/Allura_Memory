@@ -18,21 +18,21 @@ if (typeof window !== "undefined") {
   throw new Error("retrieval-layer can only be used server-side");
 }
 
-import { getPool } from "@/lib/postgres/connection";
 import {
-  searchInsights,
-  listInsights,
-  type InsightQueryParams,
-  type PaginatedInsights,
-} from "@/lib/neo4j/queries/get-insight";
-import {
+  type DualInsightQueryParams,
   getDualContextSemanticMemory,
   getMergedDualContextInsights,
-  type DualInsightQueryParams,
   type ScopedInsight,
 } from "@/lib/neo4j/queries/get-dual-context";
+import {
+  type InsightQueryParams,
+  listInsights,
+  type PaginatedInsights,
+  searchInsights,
+} from "@/lib/neo4j/queries/get-insight";
+import { getPool } from "@/lib/postgres/connection";
 import { queryTraces } from "@/lib/postgres/traces";
-import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
+import { GroupIdValidationError, validateGroupId } from "@/lib/validation/group-id";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 

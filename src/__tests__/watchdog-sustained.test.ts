@@ -8,10 +8,10 @@
  * Run with: RUN_E2E_TESTS=true bun vitest run src/__tests__/watchdog-sustained.test.ts
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { Pool } from "pg";
-import { randomUUID } from "crypto";
 import { config } from "dotenv";
+import { Pool } from "pg";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { randomUUID } from "crypto";
 import { scanAndPropose, type WatchdogConfig } from "../curator/watchdog";
 import { closePool, getPool } from "../lib/postgres/connection";
 

@@ -9,9 +9,9 @@
  * - "deleted": recently forgotten memories (30-day recovery window)
  */
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
-import { normalizeNeo4jTimestamp, formatRelativeTime } from "@/lib/utils/date"
+import { formatRelativeTime, normalizeNeo4jTimestamp } from "@/lib/utils/date"
 
 interface Memory {
   id: string

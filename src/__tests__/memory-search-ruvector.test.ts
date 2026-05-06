@@ -12,7 +12,7 @@
  * to "primary backend" for episodic retrieval.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
@@ -137,8 +137,8 @@ vi.mock("@/lib/errors/database-errors", () => ({
   classifyPostgresError: vi.fn((err: Error, op: string, q: string) => err),
 }));
 
-import { memory_search } from "../mcp/canonical-tools";
 import type { MemorySearchRequest } from "../lib/memory/canonical-contracts";
+import { memory_search } from "../mcp/canonical-tools";
 
 // ── Test fixtures ─────────────────────────────────────────────────────────────
 

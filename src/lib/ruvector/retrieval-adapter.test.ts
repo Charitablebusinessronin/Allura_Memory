@@ -45,10 +45,10 @@ vi.mock("../validation/group-id", () => ({
 
 // ── Imports (after mocks) ────────────────────────────────────────────────────
 
-import { shouldUseRuVector, searchWithFeedback } from "./retrieval-adapter";
-import type { RetrievalWithFeedbackResult } from "./retrieval-adapter";
-import { retrieveMemories, isRuVectorReady } from "./bridge";
+import { isRuVectorReady, retrieveMemories } from "./bridge";
 import { isRuVectorEnabled } from "./connection";
+import { searchWithFeedback, shouldUseRuVector } from "./retrieval-adapter";
+import type { RetrievalWithFeedbackResult } from "./retrieval-adapter";
 import { validateGroupId } from "../validation/group-id";
 
 // ── Test Suite ────────────────────────────────────────────────────────────────

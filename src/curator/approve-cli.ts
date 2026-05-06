@@ -22,12 +22,11 @@
  */
 
 import { Pool } from "pg"
-import { getPool, closePool } from "../lib/postgres/connection"
+import { createHash , randomUUID } from "crypto"
 import { Neo4jConnectionError, Neo4jPromotionError } from "../lib/errors/neo4j-errors"
 import { createInsight, InsightConflictError } from "../lib/neo4j/queries/insert-insight"
-import { validateGroupId, GroupIdValidationError } from "../lib/validation/group-id"
-import { randomUUID } from "crypto"
-import { createHash } from "crypto"
+import { closePool, getPool } from "../lib/postgres/connection"
+import { GroupIdValidationError, validateGroupId } from "../lib/validation/group-id"
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -178,7 +177,9 @@ async function promoteToNeo4j(
     // DRIFT-2 fix: Phase 3 sync contract — link AUTHORED_BY → Agent and RELATES_TO → Project
     // Best-effort: failure does not block the approval (matches API route behavior)
     try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { getNeo4jDriver } = require("../lib/neo4j/connection")
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { Neo4jGraphAdapter } = require("../lib/graph-adapter/neo4j-adapter")
       const driver = getNeo4jDriver()
       const adapter = new Neo4jGraphAdapter(driver)

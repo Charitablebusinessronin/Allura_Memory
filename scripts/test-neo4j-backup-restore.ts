@@ -9,8 +9,8 @@
  */
 
 import { config } from "dotenv";
-import { resolve } from "path";
 import { execSync } from "child_process";
+import { resolve } from "path";
 
 config({ path: resolve(__dirname, "../.env.local") });
 config({ path: resolve(__dirname, "../.env") });

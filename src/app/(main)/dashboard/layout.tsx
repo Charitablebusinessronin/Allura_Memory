@@ -1,6 +1,6 @@
+import { cookies } from "next/headers"
 import type { ReactNode } from "react"
 
-import { cookies } from "next/headers"
 
 import { AppSidebar } from "@/app/(main)/dashboard/_components/sidebar/app-sidebar"
 import { TopNavBar } from "@/app/(main)/dashboard/_components/top-nav-bar"

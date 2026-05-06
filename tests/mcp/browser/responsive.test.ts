@@ -1,8 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { 
+  browser_evaluate,
   browser_navigate,
-  browser_take_screenshot,
-  browser_evaluate
+  browser_take_screenshot
 } from "@mcp-docker/playwright";
 import { getPort } from "../../../src/lib/config/ports";
 

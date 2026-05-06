@@ -1,4 +1,4 @@
-import { getDriver, closeDriver } from "../src/lib/neo4j/connection";
+import { closeDriver, getDriver } from "../src/lib/neo4j/connection";
 
 async function searchCode(query: string) {
   console.log(`[Search] Query: "${query}"`);

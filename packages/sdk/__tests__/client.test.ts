@@ -5,16 +5,16 @@
  * auth token propagation, and error handling.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AlluraClient } from "../src/client.js";
 import {
+  AlluraError,
   AuthenticationError,
-  ValidationError,
+  ConnectionError,
   NotFoundError,
   RateLimitError,
   ServerError,
-  ConnectionError,
-  AlluraError,
+  ValidationError,
 } from "../src/errors.js";
 
 // ── Mock Fetch ───────────────────────────────────────────────────────────────

@@ -5,10 +5,10 @@
  * ARCH-001: Verify groupIdEnforcer is properly wired into MCP operations.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { EnforcedMcpClient, createEnforcedClient } from "./enforced-client";
-import { GroupIdValidationError } from "@/lib/validation/group-id";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { McpToolCaller } from "@/integrations/mcp.client";
+import { GroupIdValidationError } from "@/lib/validation/group-id";
+import { createEnforcedClient, EnforcedMcpClient } from "./enforced-client";
 
 // Mock the getMcpClient function
 vi.mock("@/integrations/mcp.client", () => ({

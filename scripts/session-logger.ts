@@ -7,8 +7,8 @@
  * Uses direct SQL queries to bypass MCP client singleton issues.
  */
 
-import { getPool, closePool } from "../src/lib/postgres/connection";
 import { canonicalizeAgentId } from "../src/lib/agents/canonical-identity";
+import { closePool, getPool } from "../src/lib/postgres/connection";
 
 type Phase = "start" | "end";
 type EventStatus = "pending" | "completed" | "failed" | "cancelled";

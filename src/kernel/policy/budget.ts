@@ -10,7 +10,7 @@
  * Use kernel syscalls or SDK wrapper instead.
  */
 
-import type { BudgetLimits, BudgetConsumption } from "@/lib/budget/types";
+import type { BudgetConsumption, BudgetLimits } from "@/lib/budget/types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES

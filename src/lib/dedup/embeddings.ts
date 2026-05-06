@@ -6,11 +6,11 @@
  */
 
 import type {
-  EntityType,
-  DedupEntity,
-  EmbeddingVector,
   CachedEmbedding,
+  DedupEntity,
   EmbeddingOptions,
+  EmbeddingVector,
+  EntityType,
   SimilarityResult,
 } from './types'
 

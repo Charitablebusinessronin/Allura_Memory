@@ -9,7 +9,7 @@
 
 import { execSync } from "node:child_process"
 import { createHash } from "node:crypto"
-import { mkdir, writeFile, readFile, stat, access } from "node:fs/promises"
+import { access, mkdir, readFile, stat, writeFile } from "node:fs/promises"
 import { resolve } from "node:path"
 import type { BackupResult, EncryptionConfig } from "./types"
 

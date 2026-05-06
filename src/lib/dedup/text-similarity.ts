@@ -5,7 +5,7 @@
  * Handles abbreviations and normalizes strings for comparison.
  */
 
-import type { DedupEntity, TextSimilarityOptions, TextSimilarityResult, SimilarityResult } from './types'
+import type { DedupEntity, SimilarityResult, TextSimilarityOptions, TextSimilarityResult } from './types'
 
 // =============================================================================
 // Configuration

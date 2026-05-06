@@ -12,10 +12,9 @@
  * where @clerk/nextjs is conditionally imported.
  */
 
-import type { AuthUser, AlluraRole, ClerkAlluraMetadata, ClerkPublicMetadata } from "./types";
+import { GroupIdValidationError , validateGroupId } from "@/lib/validation/group-id";
 import { parseRole } from "./roles";
-import { validateGroupId } from "@/lib/validation/group-id";
-import { GroupIdValidationError } from "@/lib/validation/group-id";
+import type { AlluraRole, AuthUser, ClerkAlluraMetadata, ClerkPublicMetadata } from "./types";
 
 // ── Clerk Metadata Access ──────────────────────────────────────────────────
 

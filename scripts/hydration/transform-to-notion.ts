@@ -1,9 +1,9 @@
 // scripts/hydration/transform-to-notion.ts
 // Property transformation layer for Notion schemas
 
+import { DEFAULT_NOTION_GROUP_ID } from './agent-identity';
 import { Story } from './parse-epic-stories';
 
-import { DEFAULT_NOTION_GROUP_ID } from './agent-identity';
 
 /**
  * Transform date to Notion date format

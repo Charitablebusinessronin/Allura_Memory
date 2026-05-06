@@ -21,10 +21,10 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import type { AuthUser, AlluraRole, PermissionCheckResult } from "./types";
-import { hasPermission, checkPermission, parseRole } from "./roles";
 import { isClerkEnabled } from "./config";
 import { getDevUserSync } from "./dev-auth";
+import { checkPermission, hasPermission, parseRole } from "./roles";
+import type { AlluraRole, AuthUser, PermissionCheckResult } from "./types";
 
 // ── Auth Resolution ─────────────────────────────────────────────────────────
 

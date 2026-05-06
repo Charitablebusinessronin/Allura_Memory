@@ -1,15 +1,15 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
-import { getPool, closePool } from "../connection";
-import { initializeSchema, getSchemaVersion } from "../schema/index";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
-  insertEvent,
-  insertEvents,
   type EventInsert,
   type EventRecord,
+  insertEvent,
+  insertEvents,
   insertOutcome,
   type OutcomeInsert,
   type OutcomeRecord,
 } from "./insert-trace";
+import { closePool, getPool } from "../connection";
+import { getSchemaVersion, initializeSchema } from "../schema/index";
 
 /**
  * Insert Trace API Integration Tests

@@ -16,7 +16,7 @@
  *   help        — Show this help
  */
 
-import { initializeSession, setPhase, endSession, showCheckpointStatus } from "./brooks-session-start";
+import { endSession, initializeSession, setPhase, showCheckpointStatus } from "./brooks-session-start";
 import { verifyCheckpoints } from "./verify-checkpoints";
 import { closePool } from "../src/lib/postgres/connection";
 

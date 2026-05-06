@@ -7,8 +7,8 @@
  */
 
 import { BudgetEnforcer } from "@/lib/budget/enforcer"
-import { type SessionId, DEFAULT_BUDGET_CONFIG } from "@/lib/budget/types"
-import { checkBudgetBeforeCall, updateBudgetAfterCall, createSessionId } from "@/lib/budget/middleware-integration"
+import { checkBudgetBeforeCall, createSessionId, updateBudgetAfterCall } from "@/lib/budget/middleware-integration"
+import { DEFAULT_BUDGET_CONFIG, type SessionId } from "@/lib/budget/types"
 import { BreakerManager } from "@/lib/circuit-breaker/manager"
 
 const BUDGET_ENABLED = process.env.BUDGET_ENABLED !== "false"

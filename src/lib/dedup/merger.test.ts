@@ -4,9 +4,9 @@
  * Tests for canonical merge operations, relationship updates, and audit trails.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
-import { MergeManager, createMerger, createMergerWithStrategy } from './merger'
-import type { DedupEntity, MergeRequest, MergeStrategy, MergeResult } from './types'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { createMerger, createMergerWithStrategy, MergeManager } from './merger'
+import type { DedupEntity, MergeRequest, MergeResult, MergeStrategy } from './types'
 
 // =============================================================================
 // Test Fixtures

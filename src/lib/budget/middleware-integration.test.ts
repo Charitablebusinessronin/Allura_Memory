@@ -15,19 +15,19 @@
  * 10. Session ID creation
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { BudgetEnforcer } from "./enforcer";
 import {
-  MIN_TURN_TOKENS,
+  BudgetExceededError,
   checkBudgetBeforeCall,
-  updateBudgetAfterCall,
-  handleBudgetExceeded,
-  wrapMcpToolWithBudget,
   createBudgetIntegration,
   createSessionId,
-  BudgetExceededError,
+  handleBudgetExceeded,
+  MIN_TURN_TOKENS,
+  updateBudgetAfterCall,
+  wrapMcpToolWithBudget,
 } from "./middleware-integration";
-import { BudgetEnforcer } from "./enforcer";
-import type { SessionId, HaltReason } from "./types";
+import type { HaltReason, SessionId } from "./types";
 import { DEFAULT_BUDGET_LIMITS } from "./types";
 
 describe("Budget Middleware Integration", () => {

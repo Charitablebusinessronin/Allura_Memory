@@ -4,22 +4,22 @@
  * Run with: RUN_E2E_TESTS=true bun vitest run src/lib/neo4j/agent-nodes.test.ts
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { closeDriver, getDriver } from "./connection";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
-  createAgentNode,
-  getAgentNode,
-  listAgentNodes,
-  updateAgentNode,
-  createAgentGroup,
-  linkAgentToGroup,
-  initializeDefaultAgents,
-  verifyAgentNodes,
-  AgentValidationError,
   AgentConflictError,
   AgentQueryError,
+  AgentValidationError,
+  createAgentGroup,
+  createAgentNode,
+  getAgentNode,
+  initializeDefaultAgents,
+  linkAgentToGroup,
+  listAgentNodes,
+  updateAgentNode,
+  verifyAgentNodes,
 } from "./agent-nodes";
 import type { AgentInsert } from "./agent-nodes";
+import { closeDriver, getDriver } from "./connection";
 
 // Test configuration
 const TEST_GROUP_ID = "allura-test-agents";

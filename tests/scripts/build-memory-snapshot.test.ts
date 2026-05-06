@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { promises as fsPromises } from "node:fs";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
-import path from "node:path";
 import { tmpdir } from "node:os";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
@@ -26,6 +26,7 @@ interface CliModule {
 }
 
 async function runCli(args: string[]) {
+  // eslint-disable-next-line @next/next/no-assign-module-variable
   const module = await import("../../scripts/build-memory-snapshot");
   const typedModule = module as CliModule;
   if (typeof typedModule.runSnapshotBuilderCli !== "function") {

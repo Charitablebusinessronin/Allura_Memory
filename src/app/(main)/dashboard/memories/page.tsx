@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 
-import { EmptyState, ErrorState, LoadingState, MemoryCard, PageHeader, SearchInput, Tabs, WarningList, SearchResultsSkeleton } from "@/components/dashboard"
+import { EmptyState, ErrorState, LoadingState, MemoryCard, PageHeader, SearchInput, SearchResultsSkeleton, Tabs, WarningList } from "@/components/dashboard"
 import { loadMemories } from "@/lib/dashboard/queries"
 import type { DashboardResult, Memory } from "@/lib/dashboard/types"
 

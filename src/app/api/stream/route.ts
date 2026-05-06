@@ -4,9 +4,9 @@
  * No auth required — data is health + counts only, not sensitive.
  */
 
-import { getPool } from "@/lib/postgres/connection"
-import { getBreakerManager } from "@/lib/circuit-breaker/index"
 import type { HealthResponse } from "@/app/api/health/route"
+import { getBreakerManager } from "@/lib/circuit-breaker/index"
+import { getPool } from "@/lib/postgres/connection"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"

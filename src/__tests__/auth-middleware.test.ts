@@ -7,8 +7,8 @@
  * Reference: Phase 7 benchmark — Clerk SSO + RBAC
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest"
 import { NextRequest, NextResponse } from "next/server"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 // ── Mock Environment ────────────────────────────────────────────────────────
 
@@ -56,9 +56,8 @@ vi.mock("@clerk/nextjs/server", () => ({
 
 // ── Import after env setup and mocks ──────────────────────────────────────────
 
+import { clearAuthConfig, PROTECTED_ROUTES , PUBLIC_ROUTES } from "@/lib/auth/config"
 import proxyDefault from "@/proxy"
-import { PROTECTED_ROUTES, PUBLIC_ROUTES } from "@/lib/auth/config"
-import { clearAuthConfig } from "@/lib/auth/config"
 
 // vi.mock replaces the real clerkMiddleware with our passthrough, so the
 // default export is actually (req: NextRequest) => Promise<NextResponse>.

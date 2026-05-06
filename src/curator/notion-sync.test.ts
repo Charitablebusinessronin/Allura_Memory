@@ -9,7 +9,7 @@
  * - Inject a mock `notionCreatePage` to control success / failure paths
  */
 
-import { describe, it, expect, vi, beforeEach, type MockInstance } from "vitest";
+import { beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
@@ -24,18 +24,18 @@ vi.mock("./notion-sync-dlq", () => ({
   insertDlqEntry: vi.fn(),
 }));
 
-import { getPool } from "../lib/postgres/connection";
-import { insertDlqEntry } from "./notion-sync-dlq";
 import {
-  syncToNotion,
+  DEFAULT_NOTION_CURATOR_DB_ID,
   getPendingProposals,
   markSynced,
-  DEFAULT_NOTION_CURATOR_DB_ID,
   NOTION_CURATOR_DATA_SOURCE_ID,
-  type NotionSyncConfig,
   type NotionCreatePageFn,
+  type NotionSyncConfig,
   type PendingProposal,
+  syncToNotion,
 } from "./notion-sync";
+import { insertDlqEntry } from "./notion-sync-dlq";
+import { getPool } from "../lib/postgres/connection";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

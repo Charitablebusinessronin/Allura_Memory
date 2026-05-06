@@ -10,12 +10,12 @@
  * Usage: bun run scripts/brooks-session-start.ts [--group-id <id>]
  */
 
-import { createCheckpointManager } from "../src/lib/session/checkpoint-manager";
-import { SessionBootstrap } from "../src/lib/session/session-bootstrap";
-import { getPool, closePool } from "../src/lib/postgres/connection";
-import { canonicalizeAgentId } from "../src/lib/agents/canonical-identity";
 import * as fs from "fs/promises";
 import * as path from "path";
+import { canonicalizeAgentId } from "../src/lib/agents/canonical-identity";
+import { closePool, getPool } from "../src/lib/postgres/connection";
+import { createCheckpointManager } from "../src/lib/session/checkpoint-manager";
+import { SessionBootstrap } from "../src/lib/session/session-bootstrap";
 
 // Session configuration
 const SESSION_CONFIG = {

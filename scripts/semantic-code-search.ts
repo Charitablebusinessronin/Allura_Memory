@@ -1,5 +1,5 @@
 import { createOllamaEmbeddingManager } from "../src/lib/dedup/embeddings";
-import { getDriver, closeDriver } from "../src/lib/neo4j/connection";
+import { closeDriver, getDriver } from "../src/lib/neo4j/connection";
 
 async function semanticCodeSearch(query: string) {
   console.log(`[Search] Query: "${query}"`);

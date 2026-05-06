@@ -15,30 +15,29 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
+import { forbiddenResponse, requireRole, unauthorizedResponse } from "@/lib/auth/api-auth"
+import { DatabaseQueryError, DatabaseUnavailableError } from "@/lib/errors/database-errors"
+import { MemoryNotFoundError } from "@/lib/memory/canonical-contracts"
+import type {
+  GroupId,
+  MemoryAddRequest,
+  MemoryDeleteRequest,
+  MemoryGetRequest,
+  MemoryListDeletedRequest,
+  MemoryListRequest,
+  MemoryResponseMeta,
+  MemorySearchRequest,
+ UserId } from "@/lib/memory/canonical-contracts"
+import { captureException } from "@/lib/observability/sentry"
+import { GroupIdValidationError, validateGroupId } from "@/lib/validation/group-id"
 import {
   memory_add,
-  memory_search,
+  memory_delete,
   memory_get,
   memory_list,
-  memory_delete,
   memory_list_deleted,
+  memory_search,
 } from "@/mcp/canonical-tools"
-import type {
-  MemoryAddRequest,
-  MemorySearchRequest,
-  MemoryGetRequest,
-  MemoryListRequest,
-  MemoryDeleteRequest,
-  MemoryListDeletedRequest,
-  GroupId,
-  UserId,
-} from "@/lib/memory/canonical-contracts"
-import { DatabaseUnavailableError, DatabaseQueryError } from "@/lib/errors/database-errors"
-import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id"
-import { MemoryNotFoundError } from "@/lib/memory/canonical-contracts"
-import { requireRole, forbiddenResponse, unauthorizedResponse } from "@/lib/auth/api-auth"
-import { captureException } from "@/lib/observability/sentry"
-import type { MemoryResponseMeta } from "@/lib/memory/canonical-contracts"
 
 // ── Error Handling ────────────────────────────────────────────────────────
 
@@ -227,8 +226,7 @@ export async function GET(request: NextRequest) {
 // Issue #14: PostgreSQL errors now propagate as thrown exceptions (503/500).
 // Neo4j degraded mode returns partial data with meta.degraded = true (206).
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function jsonWithDegradation<T extends any = any>(data: T & { meta?: MemoryResponseMeta }): NextResponse<T> {
+function jsonWithDegradation<T = unknown>(data: T & { meta?: MemoryResponseMeta }): NextResponse<T> {
   const meta = data.meta
   if (meta?.degraded) {
     const warning = meta.degraded_reason ? `299 Allura "${meta.degraded_reason}"` : '299 Allura "partial_data"'

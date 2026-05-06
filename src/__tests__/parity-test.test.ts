@@ -16,10 +16,10 @@
  * Reference: docs/allura/BLUEPRINT.md (F-003: Approval Audit Flow)
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "vitest"
-import { Pool } from "pg"
-import { randomUUID } from "crypto"
 import { config } from "dotenv"
+import { Pool } from "pg"
+import { afterAll, beforeAll, describe, expect, it } from "vitest"
+import { randomUUID } from "crypto"
 
 config()
 

@@ -5,8 +5,8 @@
  * Updates the Agent Harness Team database in Notion with current status.
  */
 
-import { getPool, closePool } from "../src/lib/postgres/connection";
-import { getDriver, closeDriver } from "../src/lib/neo4j/connection";
+import { closeDriver, getDriver } from "../src/lib/neo4j/connection";
+import { closePool, getPool } from "../src/lib/postgres/connection";
 
 const AGENTS = [
   { id: 'brooks', name: 'Frederick Brooks', role: 'Orchestrator', platform: 'Claude Code + OpenCode + GitHub', status: 'active' },

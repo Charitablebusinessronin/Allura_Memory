@@ -11,9 +11,9 @@
  * without Clerk (fallback to env-based auth)"
  */
 
-import type { AuthUser, AlluraRole, AuthProvider } from "./types";
 import { getDevAuthConfig, isDevAuthActive } from "./config";
 import { hasPermission } from "./roles";
+import type { AlluraRole, AuthProvider, AuthUser } from "./types";
 
 /**
  * DevAuthProvider implements AuthProvider for local development.

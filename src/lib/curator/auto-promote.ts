@@ -15,15 +15,13 @@ if (typeof window !== "undefined") {
   throw new Error("auto-promote can only be used server-side")
 }
 
-import { randomUUID } from "crypto"
-import { createHash } from "crypto"
-import { getPool } from "@/lib/postgres/connection"
-import { createInsight } from "@/lib/neo4j/queries/insert-insight"
-import { InsightConflictError } from "@/lib/neo4j/queries/insert-insight"
+import { createHash , randomUUID } from "crypto"
 import { Neo4jConnectionError, Neo4jPromotionError } from "@/lib/errors/neo4j-errors"
-import { validateGroupId } from "@/lib/validation/group-id"
-import { getDriver as getNeo4jDriver } from "@/lib/neo4j/connection"
 import { Neo4jGraphAdapter } from "@/lib/graph-adapter/neo4j-adapter"
+import { getDriver as getNeo4jDriver } from "@/lib/neo4j/connection"
+import { createInsight , InsightConflictError } from "@/lib/neo4j/queries/insert-insight"
+import { getPool } from "@/lib/postgres/connection"
+import { validateGroupId } from "@/lib/validation/group-id"
 
 // ── Types ──────────────────────────────────────────────────────────────────
 

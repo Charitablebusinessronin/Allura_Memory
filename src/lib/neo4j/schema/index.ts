@@ -1,7 +1,7 @@
 import { readFileSync } from "fs";
-import { join, dirname } from "path";
+import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import { writeTransaction, readTransaction, type ManagedTransaction } from "../connection";
+import { type ManagedTransaction, readTransaction, writeTransaction } from "../connection";
 
 /**
  * Schema version tracking

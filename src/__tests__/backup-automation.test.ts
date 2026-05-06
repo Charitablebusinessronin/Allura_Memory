@@ -14,48 +14,47 @@
  * - Error handling
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { execSync } from "node:child_process"
+import { randomBytes } from "node:crypto"
+import { mkdir , readFile, rm, writeFile } from "node:fs/promises"
+import { tmpdir } from "node:os"
+import { join, resolve } from "node:path"
 import type {
-  BackupType,
+  BackupInventoryItem,
   BackupManifest,
   BackupResult,
+  BackupType,
   RestoreOptions,
   RestoreValidationResult,
-  BackupInventoryItem,
   RetentionPolicy,
 } from "../lib/backup"
+import { backupConfig } from "../lib/backup/config"
+import { backupNeo4j } from "../lib/backup/neo4j"
+import { backupPostgres } from "../lib/backup/postgres"
+import {
+  getRetentionSummary,
+  listBackups,
+  loadManifest,
+  validateRestore,
+} from "../lib/backup/restore"
+import { backupSkills } from "../lib/backup/skills"
 import {
   ALL_BACKUP_TYPES,
-  DEFAULT_RETENTION_POLICY,
-  MANIFEST_FILENAME,
   BACKUP_VERSION,
-  MIN_SUPPORTED_BACKUP_VERSION,
-  EVENT_BACKUP_STARTED,
+  DEFAULT_RETENTION_POLICY,
   EVENT_BACKUP_COMPLETED,
   EVENT_BACKUP_FAILED,
-  EVENT_RESTORE_STARTED,
+  EVENT_BACKUP_STARTED,
   EVENT_RESTORE_COMPLETED,
   EVENT_RESTORE_FAILED,
+  EVENT_RESTORE_STARTED,
   EVENT_RESTORE_VALIDATED,
+  MANIFEST_FILENAME,
+  MIN_SUPPORTED_BACKUP_VERSION,
 } from "../lib/backup/types"
-import { runBackup, getDefaultConfig } from "../lib/backup/worker"
-import {
-  validateRestore,
-  loadManifest,
-  listBackups,
-  getRetentionSummary,
-} from "../lib/backup/restore"
-import { backupPostgres } from "../lib/backup/postgres"
-import { backupNeo4j } from "../lib/backup/neo4j"
-import { backupConfig } from "../lib/backup/config"
+import { getDefaultConfig, runBackup } from "../lib/backup/worker"
 import { backupWorkspace } from "../lib/backup/workspace"
-import { backupSkills } from "../lib/backup/skills"
-import { execSync } from "node:child_process"
-import { readFile } from "node:fs/promises"
-import { mkdir, writeFile, rm } from "node:fs/promises"
-import { resolve, join } from "node:path"
-import { tmpdir } from "node:os"
-import { randomBytes } from "node:crypto"
 
 // ── Mocks ───────────────────────────────────────────────────────────────────────
 

@@ -7,9 +7,9 @@
  * canonical-memory.test.ts is NOT here — it needs a live PostgreSQL/RuVector
  * connection and belongs in the E2E lane.
  */
+import { config } from "dotenv"
 import { defineConfig } from "vitest/config"
 import path from "node:path"
-import { config } from "dotenv"
 
 config()
 

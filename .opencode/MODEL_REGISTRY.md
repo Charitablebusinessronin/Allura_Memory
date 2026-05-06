@@ -18,15 +18,15 @@ This registry uses **role-first routing with per-agent fallback chains**:
 3. **Task-based specialist overrides** — code-producing tasks escalate to the coding specialist (qwen3-coder-next)
 4. **No universal fallback** — fallback chains are agent-specific to preserve role-appropriate degradation
 
-The model stack: openai/gpt-5.5 (orchestration) → deepseek-v4-pro:cloud (strategy/vision) → kimi-k2.6:cloud (multimodal/vision) → ollama-cloud/qwen3-coder-next (code) → ollama-cloud/glm-5.1 (steady) → openai/gpt-5.4-mini (interface/perf) → ollama-cloud/nemotron-3-super (recon).
+The model stack: openai/gpt-5.5 (orchestration) → ollama-cloud/deepseek-v4-pro (strategy/vision) → ollama-cloud/kimi-k2.6 (multimodal/vision) → ollama-cloud/qwen3-coder-next (code) → ollama-cloud/glm-5.1 (steady) → openai/gpt-5.4-mini (interface/perf) → ollama-cloud/nemotron-3-super (recon).
 
 ## Primary Assignments
 
 | Agent        | Role           | Primary Model                      | Specialist Override               | Fallback Model                  | Vision         |
 | ------------ | -------------- | ---------------------------------- | --------------------------------- | ------------------------------- | -------------- |
-| brooks       | Orchestrator   | openai/gpt-5.5                     | —                                 | deepseek-v4-pro:cloud           | Both ✅        |
-| hightower    | Infra          | openai/gpt-5.5                     | —                                 | deepseek-v4-pro:cloud           | Both ✅        |
-| jobs         | Strategy       | deepseek-v4-pro:cloud              | —                                 | kimi-k2.6:cloud                 | Both ✅        |
+| brooks       | Orchestrator   | openai/gpt-5.5                     | —                                 | ollama-cloud/deepseek-v4-pro           | Both ✅        |
+| hightower    | Infra          | openai/gpt-5.5                     | —                                 | ollama-cloud/deepseek-v4-pro           | Both ✅        |
+| jobs         | Strategy       | ollama-cloud/deepseek-v4-pro              | —                                 | ollama-cloud/kimi-k2.6                 | Both ✅        |
 | woz          | Code           | ollama-cloud/qwen3-coder-next      | —                                 | —                               | —              |
 | carmack      | Code/Perf      | openai/gpt-5.4-mini                | —                                 | —                               | —              |
 | bellard      | Code/Diag      | openai/gpt-5.4-mini                | —                                 | —                               | —              |
@@ -42,12 +42,12 @@ routing:
   # Tier 1 — Orchestration (highest judgment + vision fallback)
   - if: agent in [BROOKS_ARCHITECT, HIGHTOWER_DEVOPS]
     use: openai/gpt-5.5
-    fallback: deepseek-v4-pro:cloud
+    fallback: ollama-cloud/deepseek-v4-pro
 
   # Tier 1b — Strategy (long-context multimodal + vision)
   - if: agent == JOBS_INTENT_GATE
-    use: deepseek-v4-pro:cloud
-    fallback: kimi-k2.6:cloud
+    use: ollama-cloud/deepseek-v4-pro
+    fallback: ollama-cloud/kimi-k2.6
 
   # Tier 1c — Code/Refactor (frontier model)
   - if: agent == FOWLER_REFACTOR_GATE
@@ -81,11 +81,11 @@ routing:
 ```yaml
 # brooks.md / hightower.md / fowler.md
 model: openai/gpt-5.5
-fallback_model: deepseek-v4-pro:cloud   # brooks + hightower only
+fallback_model: ollama-cloud/deepseek-v4-pro   # brooks + hightower only
 
 # jobs.md
-model: deepseek-v4-pro:cloud
-fallback_model: kimi-k2.6:cloud
+model: ollama-cloud/deepseek-v4-pro
+fallback_model: ollama-cloud/kimi-k2.6
 
 # scout.md
 model: ollama-cloud/nemotron-3-super
@@ -102,8 +102,8 @@ model: openai/gpt-5.4-mini
 | Model                         | Why                                                                 |
 | ----------------------------- | ------------------------------------------------------------------- |
 | openai/gpt-5.5                | Highest judgment for orchestration, scope, and infra reasoning      |
-| deepseek-v4-pro:cloud         | Long-context strategy, multimodal product reasoning, HIGH priority  |
-| kimi-k2.6:cloud               | Multimodal vision-capable, HIGH priority                            |
+| ollama-cloud/deepseek-v4-pro         | Long-context strategy, multimodal product reasoning, HIGH priority  |
+| ollama-cloud/kimi-k2.6               | Multimodal vision-capable, HIGH priority                            |
 | openai/gpt-5.4-mini           | Mini frontier model — sufficient for interface review and data tasks |
 | ollama-cloud/qwen3-coder-next | Coding specialist for patch, codegen, and perf-fix tasks            |
 | ollama-cloud/nemotron-3-super | Fast wide-context scanning for recon and discovery (see note)       |
@@ -117,10 +117,10 @@ Performance claims for Nemotron-3-Super (e.g., "fastest overall at 1.63s") are *
 
 | Model                      | Reason                                                     |
 |----------------------------|------------------------------------------------------------|
-| ollama-cloud/kimi-k2.5     | Superseded by kimi-k2.6:cloud (vision + HIGH priority)     |
+| ollama-cloud/kimi-k2.5     | Superseded by ollama-cloud/kimi-k2.6 (vision + HIGH priority)     |
 | openai/gpt-5.4             | Superseded by openai/gpt-5.5                               |
 | ollama-cloud/gpt-5.4-nano  | Removed — no longer available                              |
-| deepseek-v3.1:671b-cloud   | Replaced by deepseek-v4-pro:cloud                          |
+| deepseek-v3.1:671b-cloud   | Replaced by ollama-cloud/deepseek-v4-pro                          |
 | gpt-oss:120b-cloud         | Removed per owner decision                                 |
 | gemma3:27b-cloud           | Removed per owner decision                                 |
 

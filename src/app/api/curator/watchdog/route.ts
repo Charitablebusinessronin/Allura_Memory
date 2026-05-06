@@ -14,9 +14,9 @@ if (typeof window !== "undefined") {
 
 import { NextRequest, NextResponse } from "next/server";
 import { scanAndPropose } from "@/curator/watchdog";
+import { forbiddenResponse, requireRole, unauthorizedResponse } from "@/lib/auth/api-auth";
 import { getPool } from "@/lib/postgres/connection";
-import { validateGroupId, GroupIdValidationError } from "@/lib/validation/group-id";
-import { requireRole, forbiddenResponse, unauthorizedResponse } from "@/lib/auth/api-auth";
+import { GroupIdValidationError, validateGroupId } from "@/lib/validation/group-id";
 
 const DEFAULT_GROUP_ID = process.env.ALLURA_GROUP_ID ?? "allura-system";
 const DEFAULT_THRESHOLD = parseFloat(process.env.CURATOR_SCORE_THRESHOLD ?? "0.7");

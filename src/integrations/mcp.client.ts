@@ -5,7 +5,7 @@
  */
 
 import { CallToolRequest } from "@modelcontextprotocol/sdk/types.js";
-import { validateGroupId, GroupIdValidationError } from '@/lib/validation/group-id';
+import { GroupIdValidationError, validateGroupId } from '@/lib/validation/group-id';
 
 /**
  * MCP Tool Caller interface
@@ -56,7 +56,9 @@ export class McpClientImpl implements McpToolCaller {
   }
 
   private async callSmitheryTool<T>(toolName: string, args: Record<string, unknown>): Promise<T> {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { exec } = require('child_process');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { promisify } = require('util');
     const execAsync = promisify(exec);
 

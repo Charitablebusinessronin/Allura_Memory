@@ -2,13 +2,13 @@
 
 import { useState } from "react"
 
+import { PageHeader } from "@/components/dashboard"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { PageHeader } from "@/components/dashboard"
 import { DASHBOARD_GROUP_ID } from "@/lib/dashboard/api"
 
 type Tab = "general" | "api-keys" | "curator" | "exports" | "team"

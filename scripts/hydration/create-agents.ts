@@ -1,9 +1,9 @@
 // scripts/hydration/create-agents.ts
 // Hydrate Agents database from .opencode/agent files
 
-import { findAgentFiles, categorizeAgent, parseAgentFile } from './parse-agent-files';
-import { loadAgentMetadataLookup, DEFAULT_NOTION_GROUP_ID } from './agent-identity';
+import { DEFAULT_NOTION_GROUP_ID, loadAgentMetadataLookup } from './agent-identity';
 import { createNotionPage, DATABASE_IDS } from './notion-client';
+import { categorizeAgent, findAgentFiles, parseAgentFile } from './parse-agent-files';
 import { transformAgentToNotion } from './transform-to-notion';
 
 interface HydrationResult {

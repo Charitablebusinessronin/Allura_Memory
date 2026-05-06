@@ -3,9 +3,9 @@
  * Story 3.2: Test hard limit enforcement
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { BudgetEnforcer, createBudgetEnforcer, KmaxEnforcer, createKmaxEnforcer } from "./enforcer";
-import type { SessionId, BudgetLimits, HaltReason } from "./types";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { BudgetEnforcer, createBudgetEnforcer, createKmaxEnforcer, KmaxEnforcer } from "./enforcer";
+import type { BudgetLimits, HaltReason, SessionId } from "./types";
 import { DEFAULT_BUDGET_CONFIG } from "./types";
 
 describe("BudgetEnforcer", () => {

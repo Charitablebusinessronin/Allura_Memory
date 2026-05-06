@@ -1,13 +1,13 @@
 "use client"
 
+import { CheckCircle, MinusCircle, RefreshCw, XCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { RefreshCw, CheckCircle, XCircle, MinusCircle } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 import type { ComponentHealth } from "@/app/api/health/route"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "healthy") {

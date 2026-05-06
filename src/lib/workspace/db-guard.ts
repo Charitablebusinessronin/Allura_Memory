@@ -9,8 +9,8 @@
  * NFR-4: group_id must be present on every query
  */
 
-import { WorkspaceViolationError } from "./errors";
 import { logWorkspaceViolation } from "./audit";
+import { WorkspaceViolationError } from "./errors";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 

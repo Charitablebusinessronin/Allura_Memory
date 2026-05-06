@@ -10,7 +10,7 @@
 
 import { config } from "dotenv"
 import { resolve } from "node:path"
-import { listBackups, getRetentionSummary } from "../src/lib/backup"
+import { getRetentionSummary, listBackups } from "../src/lib/backup"
 
 // Load environment variables
 config({ path: resolve(__dirname, "../.env.local") })

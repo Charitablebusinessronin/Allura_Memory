@@ -12,11 +12,11 @@
  * ADR: AD-029 — Graph Adapter Pattern for Neo4j → RuVector Migration
  */
 
-import type { IGraphAdapter } from "./types"
-import { Neo4jGraphAdapter } from "./neo4j-adapter"
-import { RuVectorGraphAdapter } from "./ruvector-adapter"
 import type { Driver } from "neo4j-driver"
 import type { Pool } from "pg"
+import { Neo4jGraphAdapter } from "./neo4j-adapter"
+import { RuVectorGraphAdapter } from "./ruvector-adapter"
+import type { IGraphAdapter } from "./types"
 
 export type GraphBackend = "neo4j" | "ruvector"
 

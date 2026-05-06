@@ -9,7 +9,7 @@
  * - Test batch query, update format, CLI flags, and graceful shutdown
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
@@ -24,18 +24,18 @@ vi.mock("../lib/ruvector/embedding-service", () => ({
   generateEmbeddingBatch: vi.fn(),
 }));
 
-import { getRuVectorPool, closeRuVectorPool } from "../lib/ruvector/connection";
-import { generateEmbeddingBatch } from "../lib/ruvector/embedding-service";
 import {
-  parseArgs,
-  getPendingRows,
   formatEmbeddingForUpdate,
+  getPendingRows,
+  parseArgs,
+  type PendingMemoryRow,
   processBatch,
   runBackfillCycle,
   runWorker,
   type WorkerConfig,
-  type PendingMemoryRow,
 } from "./embedding-backfill-worker";
+import { closeRuVectorPool, getRuVectorPool } from "../lib/ruvector/connection";
+import { generateEmbeddingBatch } from "../lib/ruvector/embedding-service";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

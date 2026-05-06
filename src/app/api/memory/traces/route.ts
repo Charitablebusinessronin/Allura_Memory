@@ -6,9 +6,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { forbiddenResponse, requireRole, unauthorizedResponse } from '@/lib/auth/api-auth';
 import { logTrace, TraceLog } from '@/lib/postgres/trace-logger';
-import { validateGroupId, GroupIdValidationError } from '@/lib/validation/group-id';
-import { requireRole, forbiddenResponse, unauthorizedResponse } from '@/lib/auth/api-auth';
+import { GroupIdValidationError, validateGroupId } from '@/lib/validation/group-id';
 
 /**
  * GET /api/memory/traces

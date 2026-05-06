@@ -5,14 +5,14 @@
  * Zero-trust enforcement: every proof must be cryptographically valid.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   createProof,
+  getKernelSecretKey,
+  ProofClaims,
+  validateKernelSecret,
   verifyProof,
   verifyProofOrThrow,
-  getKernelSecretKey,
-  validateKernelSecret,
-  ProofClaims,
 } from "./proof";
 
 // ─────────────────────────────────────────────────────────────────────────────

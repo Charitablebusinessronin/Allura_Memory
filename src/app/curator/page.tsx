@@ -1,15 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
+import { toast } from "sonner"
+import { ConfidenceBar } from "@/components/allura/confidence-bar"
+import { EmptyState } from "@/components/allura/empty-state"
+import { StatusBadge } from "@/components/allura/status-badge"
+import { TraceCard } from "@/components/allura/trace-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
-import { StatusBadge } from "@/components/allura/status-badge"
-import { ConfidenceBar } from "@/components/allura/confidence-bar"
-import { TraceCard } from "@/components/allura/trace-card"
-import { EmptyState } from "@/components/allura/empty-state"
-import { toast } from "sonner"
+import { Textarea } from "@/components/ui/textarea"
 
 interface Trace {
   id: string
