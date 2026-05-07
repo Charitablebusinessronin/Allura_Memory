@@ -26,7 +26,7 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
         <div className="sticky top-0 z-20 flex h-14 items-center border-b border-[var(--dashboard-border)] bg-[var(--dashboard-surface)]/95 px-4 backdrop-blur md:hidden">
           <SidebarTrigger aria-label="Open navigation" className="min-h-11 min-w-11" />
           <img src="/design/allura-mark.svg" alt="Allura" className="ml-2 h-8 w-8 rounded-lg" />
-          <span className="ml-2 text-sm font-semibold text-[var(--dashboard-text-primary)]">Allura Command</span>
+           <span className="ml-2 text-sm font-semibold text-[var(--dashboard-text-primary)]">Allura Memory</span>
         </div>
         {/* Desktop header */}
         <TopNavBar />

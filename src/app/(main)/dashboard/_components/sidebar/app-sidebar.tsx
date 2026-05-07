@@ -29,7 +29,7 @@ function AgencyLogo() {
       href="/dashboard"
       prefetch={false}
       className="flex min-h-14 items-center gap-2.5 px-3 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--allura-blue)]"
-      aria-label="Go to Allura Command Deck"
+       aria-label="Go to Allura Memory"
       data-testid="allura-logo"
     >
       {isCollapsed ? (
@@ -43,7 +43,7 @@ function AgencyLogo() {
       ) : (
         <img
           src="/design/allura-wordmark.svg"
-          alt="Allura Command"
+           alt="Allura Memory"
           className="h-12 w-auto object-contain"
           width={187}
           height={48}
@@ -84,9 +84,9 @@ function NavLink({
               New
             </span>
           )}
-          {isActive && (
-            <div className="absolute inset-y-2 -left-0.5 w-[3px] rounded-full bg-[var(--allura-orange)]" />
-          )}
+           {isActive && (
+             <div className="absolute inset-y-2 -left-0.5 w-[3px] rounded-full bg-[var(--allura-blue)]" />
+           )}
         </Link>
       </SidebarMenuButton>
       {hasSubItems && (
@@ -163,12 +163,12 @@ export function AppSidebar({
       <SidebarFooter className="border-t border-[var(--allura-gray-200)] px-3 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 rounded-lg px-3 py-2.5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--allura-charcoal)] text-xs font-semibold text-[var(--allura-cream)]">
-              C
-            </div>
+           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--allura-charcoal)] text-xs font-semibold text-[var(--allura-cream)]">
+               R
+             </div>
             <div className="flex min-w-0 flex-col">
               <span className="truncate text-sm font-medium text-[var(--allura-charcoal)]">
-                Captain
+                Ronin
               </span>
               <span className="truncate text-xs text-[var(--allura-gray-400-text)]">
                 allura-system

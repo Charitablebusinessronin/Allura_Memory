@@ -6,22 +6,20 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 
 const ROUTE_TITLES: Record<string, string> = {
-  "/dashboard": "Command Deck",
-  "/dashboard/missions": "Command Deck",
+  "/dashboard": "What We Know",
   "/dashboard/feed": "What We Know",
-  "/dashboard/graph": "How It Connects",
-  "/dashboard/insights": "Approvals",
-  "/dashboard/evidence": "Evidence Trail",
-  "/dashboard/agents": "Crew",
+  "/dashboard/insights": "Decisions",
   "/dashboard/projects": "Projects",
-  "/dashboard/skills": "Skills",
-  "/dashboard/settings": "Ship Settings",
-  "/dashboard/memory-explorer": "Memory Explorer",
+  "/dashboard/agents": "Team",
   "/dashboard/decisions": "Decision Records",
   "/dashboard/builder": "Insight Builder",
-  "/dashboard/health": "Ship Status",
-  "/dashboard/traces": "Handoffs",
+  "/dashboard/settings": "Preferences",
+  "/dashboard/health": "System Health",
   "/dashboard/audit": "Audit Log",
+  "/dashboard/missions": "Missions",
+  "/dashboard/graph": "Graph",
+  "/dashboard/evidence": "Evidence",
+  "/dashboard/traces": "Traces",
 }
 
 function getPageTitle(pathname: string): string {
@@ -47,7 +45,7 @@ export function TopNavBar({ className }: { className?: string }) {
         <Search className="pointer-events-none absolute left-3 size-4 text-[var(--dashboard-text-muted)]" />
         <input
           type="search"
-          placeholder="Search knowledge, crew, decisions…"
+           placeholder="Search memories, decisions, people…"
           className="h-full w-full rounded-lg border border-[var(--dashboard-border)] bg-[var(--dashboard-surface-muted)] pl-9 pr-3 text-sm text-[var(--dashboard-text-primary)] placeholder:text-[var(--dashboard-text-muted)] transition-colors focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--allura-blue)]"
         />
       </div>
