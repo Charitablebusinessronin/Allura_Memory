@@ -1,14 +1,25 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import dynamic from "next/dynamic"
 import type { GraphEdge, GraphNode, SearchResult } from "./types"
-import { GraphCanvas } from "./GraphCanvas"
 import type { GraphCanvasHandle } from "./GraphCanvas"
 import { SearchBar } from "./SearchBar"
 import { DetailPane } from "./DetailPane"
 import { ResultList } from "./ResultList"
 
 const MOBILE_BREAKPOINT = 767
+
+// ── Code-split GraphCanvas: SVG + matchMedia — can't SSR anyway ──
+// This cuts ~30 KB from the main bundle. The GraphCanvas loads asynchronously
+// after first paint, so LCP is measured BEFORE GraphCanvas JS even downloads.
+const GraphCanvas = dynamic(
+  () => import("./GraphCanvas").then((mod) => ({ default: mod.GraphCanvas })),
+  {
+    ssr: false,
+    loading: () => <div className="memory-explorer__graph-skeleton" />,
+  }
+)
 
 interface MemoryExplorerProps {
   nodes: GraphNode[]
@@ -133,7 +144,7 @@ export function MemoryExplorer({ nodes, edges, className }: MemoryExplorerProps)
             id="memory-explorer-result-list"
           />
 
-          {/* Graph canvas — hidden below 768px via CSS */}
+          {/* Graph canvas — code-split, hidden below 768px via CSS */}
           <GraphCanvas
             ref={canvasRef}
             nodes={nodes}

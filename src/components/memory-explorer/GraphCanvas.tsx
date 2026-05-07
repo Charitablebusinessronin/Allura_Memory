@@ -127,6 +127,9 @@ function tickStep(layout: LayoutNode[], nodeById: Map<string, LayoutNode>, edges
  * Per spec §1: background is var(--dashboard-surface-alt)
  * Per spec §2: edges opacity 0 default, 0.30 when highlighted
  * Per spec §3: labels tooltip-only on hover
+ *
+ * Performance: positions are stored in refs and SVG transforms are mutated
+ * imperatively during force simulation — only ONE setLayoutNodes call at sim end.
  */
 export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function GraphCanvas({
   nodes,
@@ -144,6 +147,19 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
   const [viewBox, setViewBox] = useState({ x: -200, y: -200, w: CANVAS_WIDTH + 400, h: CANVAS_HEIGHT + 400 })
   const dragging = useRef(false)
   const dragStart = useRef({ x: 0, y: 0, vx: 0, vy: 0, vw: 0, vh: 0 })
+
+  // ── Performance: store SVG element refs for imperative DOM mutation ──
+  const nodeElRefs = useRef<Map<string, SVGGElement>>(new Map())
+
+  // Callback ref factory — returns a stable-ish ref callback per node id
+  const setNodeElement = useCallback((id: string) => (el: SVGGElement | null) => {
+    if (el) {
+      nodeElRefs.current.set(id, el)
+    } else {
+      nodeElRefs.current.delete(id)
+    }
+  }, [])
+
   const zoomIn = useCallback(() => {
     setViewBox((vb) => {
       const s = 0.9
@@ -181,22 +197,28 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 
   useImperativeHandle(ref, () => ({ zoomIn, zoomOut, fitView: handleFitView }), [zoomIn, zoomOut, handleFitView])
 
-  // Initialize layout positions when nodes/edges change
-  // Initialize layout positions when nodes/edges change
+  // ═══════════════════════════════════════════════════════════════
+  // Force simulation — positions tracked in refs, DOM mutated imperatively.
+  // Only ONE setLayoutNodes call at simulation end (vs 300 before).
+  // Simulation start deferred via requestIdleCallback so React first-paint wins.
+  // ═══════════════════════════════════════════════════════════════
   useEffect(() => {
-    // Guard: skip simulation when no data (prevents infinite render loop)
     if (nodes.length === 0) {
       setLayoutNodes([])
       nodeByIdRef.current = new Map()
       return
     }
+
     const initial = createLayoutNodes(nodes)
-    setLayoutNodes(initial)
+    setLayoutNodes(initial) // ← One React render for initial positions
+
     const byId = new Map<string, LayoutNode>()
     for (const n of initial) byId.set(n.id, n)
     nodeByIdRef.current = byId
 
-    // Stop any running simulation
+    // Working copy for the simulation — mutated in-place
+    const working = initial.map((n) => ({ ...n }))
+
     if (simAnimRef.current) {
       cancelAnimationFrame(simAnimRef.current)
     }
@@ -205,32 +227,51 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     let frameCount = 0
     const maxFrames = 300
 
-    const sim = () => {
-      if (frameCount >= maxFrames || alpha <= 0.005) return
+    const tickLoop = () => {
+      if (frameCount >= maxFrames || alpha <= 0.005) {
+        // Simulation complete — render final positions via React (1 render)
+        const final = working.map((n) => ({ ...n }))
+        setLayoutNodes(final)
+        const finalById = new Map<string, LayoutNode>()
+        for (const n of final) finalById.set(n.id, n)
+        nodeByIdRef.current = finalById
+        return
+      }
 
-      // Get current layout
-      setLayoutNodes((prev) => {
-        const working = prev.map((n) => ({ ...n }))
-        const byId = new Map<string, LayoutNode>()
-        for (const n of working) byId.set(n.id, n)
+      // Run 10 simulation sub-steps
+      for (let i = 0; i < 10; i++) {
+        tickStep(working, byId, edges, alpha)
+      }
+      alpha *= 0.97
 
-        for (let i = 0; i < 10; i++) {
-          tickStep(working, byId, edges, alpha)
+      // Imperatively mutate SVG transform attributes — zero React overhead
+      for (const n of working) {
+        const el = nodeElRefs.current.get(n.id)
+        if (el) {
+          el.setAttribute("transform", `translate(${n.x}, ${n.y}) scale(1)`)
         }
-        alpha *= 0.97
-        nodeByIdRef.current = byId
-        return working
-      })
+      }
 
       frameCount++
-      simAnimRef.current = requestAnimationFrame(sim)
+      simAnimRef.current = requestAnimationFrame(tickLoop)
     }
 
-    simAnimRef.current = requestAnimationFrame(sim)
+    // Defer simulation start so React finishes first paint before CPU work begins
+    const scheduleSim = () => {
+      simAnimRef.current = requestAnimationFrame(tickLoop)
+    }
 
-    return () => {
-      if (simAnimRef.current) {
+    if (typeof requestIdleCallback !== "undefined") {
+      const idleId = requestIdleCallback(scheduleSim, { timeout: 100 })
+      return () => {
         cancelAnimationFrame(simAnimRef.current)
+        cancelIdleCallback(idleId)
+      }
+    } else {
+      const timeoutId = setTimeout(scheduleSim, 0)
+      return () => {
+        cancelAnimationFrame(simAnimRef.current)
+        clearTimeout(timeoutId)
       }
     }
   }, [nodes.length + "," + edges.length]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -360,11 +401,12 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
           })}
         </g>
 
-        {/* Nodes layer */}
+        {/* Nodes layer — ref callbacks registered so RAF loop mutates transforms directly */}
         <g className="memory-explorer__nodes">
           {layoutNodes.map((ln) => (
             <GraphNode
               key={ln.id}
+              ref={setNodeElement(ln.id)}
               node={ln}
               x={ln.x}
               y={ln.y}

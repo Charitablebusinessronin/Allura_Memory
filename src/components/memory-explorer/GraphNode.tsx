@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useRef, useState } from "react"
+import { forwardRef, useCallback } from "react"
 import type { GraphNode as NodeData, NodeType } from "./types"
 import { NODE_RADIUS, NODE_SHAPE } from "./types"
 
@@ -59,8 +59,13 @@ function roundedSquarePath(r: number, cr: number = 3): string {
 /**
  * GraphNode — SVG node group with shape-dependent rendering
  * Per spec §7: 6 types, distinct shapes & colors, hover/selected states via CSS classes
+ *
+ * Uses forwardRef so GraphCanvas can imperatively mutate the <g> transform
+ * during force simulation without triggering React re-renders.
  */
-export function GraphNode({ node, x, y, isSelected, isHovered, hasDetailOpen, onClick, onHover }: GraphNodeProps) {
+export const GraphNode = forwardRef<SVGGElement, GraphNodeProps>(function GraphNode({
+  node, x, y, isSelected, isHovered, hasDetailOpen, onClick, onHover
+}, ref) {
   const r = NODE_RADIUS[node.type]
   const shape = NODE_SHAPE[node.type]
   const colors = NODE_COLOR_VARS[node.type]
@@ -85,6 +90,7 @@ export function GraphNode({ node, x, y, isSelected, isHovered, hasDetailOpen, on
 
   return (
     <g
+      ref={ref}
       className={baseClassName}
       transform={`translate(${x},${y}) scale(${scale})`}
       onClick={handleClick}
@@ -157,14 +163,14 @@ export function GraphNode({ node, x, y, isSelected, isHovered, hasDetailOpen, on
         />
       )}
 
-      {/* Tooltip-only label per §3 */}
+      {/* Tooltip-only label per §3 — CSS-driven via .memory-explorer__node:hover .memory-explorer__node-label */}
       <foreignObject
         x={-80}
         y={-r - 32}
         width={160}
         height={24}
         className="memory-explorer__node-label"
-        style={{ display: isHovered ? "block" : "none" }}
+        data-testid="node-hover-label"
       >
         <div className="memory-explorer__node-label">
           {node.label}
@@ -172,4 +178,4 @@ export function GraphNode({ node, x, y, isSelected, isHovered, hasDetailOpen, on
       </foreignObject>
     </g>
   )
-}
+})

@@ -546,7 +546,30 @@
   }
 }
 
-/* ── 16. Reduced motion — accessibility ─────────────────────────── */
+/* ── 16. Graph skeleton — code-split loading placeholder ───────── */
+.memory-explorer__graph-skeleton {
+  background: var(--dashboard-surface-alt);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.memory-explorer__graph-skeleton::after {
+  content: "";
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--dashboard-text-muted);
+  animation: graph-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes graph-pulse {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 0.6; transform: scale(1); }
+}
+
+/* ── 17. Reduced motion — accessibility ─────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .memory-explorer__node {
     transition: none;
