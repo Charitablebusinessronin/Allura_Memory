@@ -139,7 +139,6 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
   const [viewBox, setViewBox] = useState({ x: -200, y: -200, w: CANVAS_WIDTH + 400, h: CANVAS_HEIGHT + 400 })
   const dragging = useRef(false)
   const dragStart = useRef({ x: 0, y: 0, vx: 0, vy: 0, vw: 0, vh: 0 })
-
   const zoomIn = useCallback(() => {
     setViewBox((vb) => {
       const s = 0.9
@@ -178,8 +177,14 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
   useImperativeHandle(ref, () => ({ zoomIn, zoomOut, fitView: handleFitView }), [zoomIn, zoomOut, handleFitView])
 
   // Initialize layout positions when nodes/edges change
-  // Highlighted nodes via edge connections
+  // Initialize layout positions when nodes/edges change
   useEffect(() => {
+    // Guard: skip simulation when no data (prevents infinite render loop)
+    if (nodes.length === 0) {
+      setLayoutNodes([])
+      nodeByIdRef.current = new Map()
+      return
+    }
     const initial = createLayoutNodes(nodes)
     setLayoutNodes(initial)
     const byId = new Map<string, LayoutNode>()
@@ -200,7 +205,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 
       // Get current layout
       setLayoutNodes((prev) => {
-        const working = prev.map((n) => ({ ...n })) // shallow copy for mutation
+        const working = prev.map((n) => ({ ...n }))
         const byId = new Map<string, LayoutNode>()
         for (const n of working) byId.set(n.id, n)
 

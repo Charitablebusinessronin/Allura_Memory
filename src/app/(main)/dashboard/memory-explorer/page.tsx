@@ -106,11 +106,11 @@ export default function MemoryExplorerPage() {
   }, [])
 
   const nodes = useMemo<GraphNodeData[]>(
-    () => liveNodes ? liveNodes.map(adaptNode) : FALLBACK_NODES,
+    () => (liveNodes && liveNodes.length > 0 ? liveNodes.map(adaptNode) : FALLBACK_NODES),
     [liveNodes]
   )
   const edges = useMemo<GraphEdgeData[]>(
-    () => liveEdges ? liveEdges.map(adaptEdge) : FALLBACK_EDGES,
+    () => (liveEdges && liveEdges.length > 0 ? liveEdges.map(adaptEdge) : FALLBACK_EDGES),
     [liveEdges]
   )
 
