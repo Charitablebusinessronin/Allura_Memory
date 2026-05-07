@@ -14,11 +14,11 @@ import { DASHBOARD_GROUP_ID } from "@/lib/dashboard/api"
 type Tab = "general" | "api-keys" | "curator" | "exports" | "team"
 
 const tabs: Array<{ value: Tab; label: string }> = [
-  { value: "general", label: "General" },
-  { value: "api-keys", label: "API Keys" },
-  { value: "curator", label: "Curator thresholds" },
+  { value: "general", label: "Ship" },
+  { value: "api-keys", label: "Access Keys" },
+  { value: "curator", label: "Approvals" },
   { value: "exports", label: "Exports" },
-  { value: "team", label: "Team access" },
+  { value: "team", label: "Crew Access" },
 ]
 
 export default function SettingsPage() {
@@ -29,7 +29,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Settings" description="Configure the Brain, exports, and your account." />
+      <PageHeader title="Ship Settings" description="Keep the brain, access, and exports simple enough to operate without opening the machine room." />
 
       <div className="flex flex-col gap-6 lg:flex-row">
         {/* Sidebar */}
@@ -56,12 +56,12 @@ export default function SettingsPage() {
           {tab === "general" && (
             <Card className="border-[var(--dashboard-border)] bg-[var(--dashboard-surface)]">
               <CardHeader>
-                <CardTitle className="text-[var(--dashboard-text-primary)]">Brain configuration</CardTitle>
+                <CardTitle className="text-[var(--dashboard-text-primary)]">Ship configuration</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between rounded-lg border border-[var(--dashboard-border)] p-4">
                   <div>
-                    <h4 className="text-sm font-medium text-[var(--dashboard-text-primary)]">Default group scope</h4>
+                    <h4 className="text-sm font-medium text-[var(--dashboard-text-primary)]">Default operating scope</h4>
                     <p className="text-xs text-[var(--dashboard-text-secondary)]">{groupId}</p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -78,7 +78,7 @@ export default function SettingsPage() {
 
                 <div className="flex items-center justify-between rounded-lg border border-[var(--dashboard-border)] p-4">
                   <div>
-                    <h4 className="text-sm font-medium text-[var(--dashboard-text-primary)]">Promotion mode</h4>
+                    <h4 className="text-sm font-medium text-[var(--dashboard-text-primary)]">Approval gate</h4>
                     <p className="text-xs text-[var(--dashboard-text-secondary)]">
                       SOC2 human approval before graph activation
                     </p>
@@ -93,7 +93,7 @@ export default function SettingsPage() {
 
                 <div className="flex items-center justify-between rounded-lg border border-[var(--dashboard-border)] p-4">
                   <div>
-                    <h4 className="text-sm font-medium text-[var(--dashboard-text-primary)]">Neo4j health</h4>
+                    <h4 className="text-sm font-medium text-[var(--dashboard-text-primary)]">Graph health</h4>
                     <p className="text-xs text-[var(--dashboard-text-secondary)]">
                       Graph views may be degraded until backend recovers
                     </p>
@@ -107,7 +107,7 @@ export default function SettingsPage() {
           {tab === "api-keys" && (
             <Card className="border-[var(--dashboard-border)] bg-[var(--dashboard-surface)]">
               <CardHeader>
-                <CardTitle className="text-[var(--dashboard-text-primary)]">API Keys</CardTitle>
+                <CardTitle className="text-[var(--dashboard-text-primary)]">Access Keys</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between rounded-lg border border-[var(--dashboard-border)] p-4">
@@ -146,7 +146,7 @@ export default function SettingsPage() {
           {tab === "curator" && (
             <Card className="border-[var(--dashboard-border)] bg-[var(--dashboard-surface)]">
               <CardHeader>
-                <CardTitle className="text-[var(--dashboard-text-primary)]">Curator thresholds</CardTitle>
+                <CardTitle className="text-[var(--dashboard-text-primary)]">Approval thresholds</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between rounded-lg border border-[var(--dashboard-border)] p-4">
@@ -217,7 +217,7 @@ export default function SettingsPage() {
           {tab === "team" && (
             <Card className="border-[var(--dashboard-border)] bg-[var(--dashboard-surface)]">
               <CardHeader>
-                <CardTitle className="text-[var(--dashboard-text-primary)]">Team access</CardTitle>
+                <CardTitle className="text-[var(--dashboard-text-primary)]">Crew access</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between rounded-lg border border-[var(--dashboard-border)] p-4">

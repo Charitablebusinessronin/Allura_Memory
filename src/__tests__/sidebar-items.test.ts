@@ -10,7 +10,6 @@
 
 import { describe, expect, it } from "vitest";
 import { sidebarItems } from "@/navigation/sidebar/sidebar-items";
-import type { NavGroup } from "@/navigation/sidebar/sidebar-items";
 
 describe("sidebarItems", () => {
   describe("primary navigation structure", () => {
@@ -80,11 +79,9 @@ describe("sidebarItems", () => {
     });
   });
 
-  describe("Records group", () => {
-    it("should have a Records group with 2 items", () => {
-      const recordsGroup = sidebarItems.find((g) => g.label === "Records");
-      expect(recordsGroup).toBeDefined();
-      expect(recordsGroup?.items.length).toBe(2);
+  describe("nested secondary actions", () => {
+    it("should not have a separate Records group", () => {
+      expect(sidebarItems.find((g) => g.label === "Records")).toBeUndefined();
     });
 
     it("Decisions subItems should include Decision Records", () => {
@@ -167,25 +164,15 @@ describe("icon typing", () => {
     const recordsGroup = sidebarItems.find((g) => g.label === "Records");
 
     expect(primaryGroup).toBeDefined();
-    expect(recordsGroup).toBeDefined();
+    expect(recordsGroup).toBeUndefined();
 
     primaryGroup?.items.forEach((item) => {
-      // Icons should be defined (type check happens at compile time)
-      // This test verifies the import statement has the right types
-      if (item.icon) {
-        // Icons are imported from lucide-react
-        expect(typeof item.icon).toBe("function");
-      }
-    });
-
-    recordsGroup?.items.forEach((item) => {
-      if (item.icon) {
-        expect(typeof item.icon).toBe("function");
-      }
+      // Lucide icons are React forwardRef components at runtime.
+      expect(item.icon).toBeDefined();
       if (item.subItems) {
         item.subItems.forEach((subItem) => {
           if (subItem.icon) {
-            expect(typeof subItem.icon).toBe("function");
+            expect(subItem.icon).toBeDefined();
           }
         });
       }

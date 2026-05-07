@@ -6,19 +6,22 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 
 const ROUTE_TITLES: Record<string, string> = {
-  "/dashboard": "Overview",
-  "/dashboard/feed": "Memory Feed",
-  "/dashboard/graph": "Knowledge Graph",
-  "/dashboard/insights": "Insights",
-  "/dashboard/evidence": "Evidence",
-  "/dashboard/agents": "Agents",
+  "/dashboard": "Command Deck",
+  "/dashboard/missions": "Command Deck",
+  "/dashboard/feed": "What We Know",
+  "/dashboard/graph": "How It Connects",
+  "/dashboard/insights": "Approvals",
+  "/dashboard/evidence": "Evidence Trail",
+  "/dashboard/agents": "Crew",
   "/dashboard/projects": "Projects",
   "/dashboard/skills": "Skills",
-  "/dashboard/settings": "Settings",
+  "/dashboard/settings": "Ship Settings",
   "/dashboard/memory-explorer": "Memory Explorer",
   "/dashboard/decisions": "Decision Records",
   "/dashboard/builder": "Insight Builder",
-  "/dashboard/health": "System Health",
+  "/dashboard/health": "Ship Status",
+  "/dashboard/traces": "Handoffs",
+  "/dashboard/audit": "Audit Log",
 }
 
 function getPageTitle(pathname: string): string {
@@ -44,7 +47,7 @@ export function TopNavBar({ className }: { className?: string }) {
         <Search className="pointer-events-none absolute left-3 size-4 text-[var(--dashboard-text-muted)]" />
         <input
           type="search"
-          placeholder="Search memories, entities, decisions…"
+          placeholder="Search knowledge, crew, decisions…"
           className="h-full w-full rounded-lg border border-[var(--dashboard-border)] bg-[var(--dashboard-surface-muted)] pl-9 pr-3 text-sm text-[var(--dashboard-text-primary)] placeholder:text-[var(--dashboard-text-muted)] transition-colors focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--allura-blue)]"
         />
       </div>
@@ -54,7 +57,7 @@ export function TopNavBar({ className }: { className?: string }) {
         role="img"
         aria-label="User avatar"
       >
-        U
+        C
       </div>
     </header>
   )

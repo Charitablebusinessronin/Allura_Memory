@@ -560,13 +560,10 @@ export class BudgetEnforcer {
       case "tokens":
         return { type: "token_limit", consumed: breach.consumed, limit: breach.limit };
       case "tool_calls":
-      case "toolCalls": // camelCase alias from BudgetMonitor.checkThresholds
         return { type: "tool_call_limit", consumed: breach.consumed, limit: breach.limit };
       case "time_ms":
-      case "timeMs": // camelCase alias from BudgetMonitor.checkThresholds
         return { type: "time_limit", elapsedMs: breach.consumed, limitMs: breach.limit };
       case "cost_usd":
-      case "costUsd": // camelCase alias from BudgetMonitor.checkThresholds
         return { type: "cost_limit", consumedUsd: breach.consumed, limitUsd: breach.limit };
       case "steps":
         return { type: "kmax_exceeded", currentStep: state.currentStep, maxSteps: breach.limit };

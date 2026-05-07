@@ -72,12 +72,12 @@ export default function MemoryFeedPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Memory Feed" description="Search and explore real memories from Allura Brain." />
+      <PageHeader title="What We Know" description="Search the trusted memory layer without exposing the machine room first." />
 
       <div className={`flex flex-col gap-3 rounded-xl border border-[var(--allura-border-1)] bg-[var(--dashboard-surface)] p-3 shadow-[var(--allura-sh-sm)] lg:flex-row lg:items-center lg:justify-between`}>
         <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
           <SearchBar
-            placeholder="Search memories…"
+            placeholder="Search what Allura knows…"
             value={query}
             onChange={(v) => {
               setQuery(v)
@@ -117,8 +117,8 @@ export default function MemoryFeedPage() {
           <WarningList warnings={state.warnings} />
           {pageItems.length === 0 ? (
             <EmptyState
-              title="No memories found"
-              description={query ? "No memories match your search. Try different keywords." : "No memories available for the current filter."}
+              title="Nothing matched"
+              description={query ? "No trusted knowledge matches that search. Try different keywords." : "No trusted knowledge is available for the current filter."}
             />
           ) : (
             <div className="space-y-3">

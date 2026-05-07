@@ -19,9 +19,7 @@ delegated specialists grouped by domain.
 .opencode/agent/
 ├── core/                          ← Primary orchestrators (mode: primary)
 │   ├── brooks.md                  ← Architect + Orchestrator
-│   ├── jobs.md                    ← Intent Gate
-│   ├── autopilot.md               ← YOLO execution mode
-│   └── openwork.md                ← Default safe agent
+│   └── jobs.md                    ← Intent Gate
 │
 └── subagents/                     ← Delegated specialists (mode: subagent)
     ├── code/                      ← Domain: coding & implementation
@@ -89,8 +87,6 @@ Ralph may not execute unless this gate passes:
 | --- | --- | --- | --- |
 | Brooks | Frederick P. Brooks Jr. | Architecture and orchestration | `core/` |
 | Jobs | Steve Jobs | Intent gate and scope owner | `core/` |
-| Autopilot | — | YOLO execution mode | `core/` |
-| OpenWork | — | Default safe agent | `core/` |
 | Woz | Steve Wozniak | Primary builder | `subagents/code/` |
 | Bellard | Fabrice Bellard | Deep diagnostics | `subagents/code/` |
 | Carmack | John Carmack | Performance | `subagents/code/` |

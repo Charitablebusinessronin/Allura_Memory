@@ -7,9 +7,11 @@ vi.mock("../mcp/canonical-tools/budget-circuit", () => ({
 import { resetHaltedGroup } from "../mcp/canonical-tools/budget-circuit";
 import { cleanupMemoryState } from "../mcp/cleanup";
 
+const mockResetHaltedGroup = resetHaltedGroup as unknown as ReturnType<typeof vi.fn>;
+
 describe("cleanupMemoryState", () => {
   it("resets halted sessions for a group and reports the count", () => {
-    vi.mocked(resetHaltedGroup).mockReturnValue(3);
+    mockResetHaltedGroup.mockReturnValue(3);
 
     expect(cleanupMemoryState("allura-test")).toEqual({
       group_id: "allura-test",
@@ -19,7 +21,7 @@ describe("cleanupMemoryState", () => {
   });
 
   it("resets all halted sessions when no group is given", () => {
-    vi.mocked(resetHaltedGroup).mockReturnValue(7);
+    mockResetHaltedGroup.mockReturnValue(7);
 
     expect(cleanupMemoryState()).toEqual({
       group_id: null,

@@ -1,9 +1,22 @@
-import { BookOpen, Brain, Folder, Lightbulb, Settings, Users } from "lucide-react"
+import {
+  Activity,
+  BookOpen,
+  Brain,
+  CheckCircle2,
+  Folder,
+  GitBranch,
+  HeartPulse,
+  Network,
+  Settings,
+  Users,
+  Wand2,
+  type LucideIcon,
+} from "lucide-react"
 
 export interface NavSubItem {
   title: string
   url: string
-  icon?: any
+  icon?: LucideIcon
   comingSoon?: boolean
   newTab?: boolean
   isNew?: boolean
@@ -12,7 +25,7 @@ export interface NavSubItem {
 export interface NavMainItem {
   title: string
   url: string
-  icon?: any
+  icon?: LucideIcon
   subItems?: NavSubItem[]
   comingSoon?: boolean
   newTab?: boolean
@@ -29,34 +42,51 @@ export interface NavGroup {
 export const sidebarItems: NavGroup[] = [
   {
     id: 1,
-    label: "Primary",
+    label: "Command",
     items: [
-      { title: "Memories", url: "/dashboard/feed", icon: Brain },
-      { title: "Insights", url: "/dashboard/insights", icon: Lightbulb },
-      { title: "Projects", url: "/dashboard/projects", icon: Folder },
-      { title: "Crew", url: "/dashboard/agents", icon: Users },
+      { title: "Command Deck", url: "/dashboard/missions", icon: Activity },
+      { title: "Approvals", url: "/dashboard/insights", icon: CheckCircle2 },
+      { title: "Handoffs", url: "/dashboard/traces", icon: GitBranch },
     ],
   },
   {
     id: 2,
-    label: "Records",
+    label: "Know",
     items: [
+      { title: "What We Know", url: "/dashboard/feed", icon: Brain },
+      { title: "Evidence Trail", url: "/dashboard/evidence", icon: BookOpen },
+      { title: "How It Connects", url: "/dashboard/graph", icon: Network },
+    ],
+  },
+  {
+    id: 3,
+    label: "Crew",
+    items: [
+      { title: "Crew", url: "/dashboard/agents", icon: Users },
+      { title: "Projects", url: "/dashboard/projects", icon: Folder },
       {
         title: "Decisions",
         url: "/dashboard/decisions",
         icon: BookOpen,
         subItems: [
           { title: "Decision Records", url: "/dashboard/decisions" },
-          { title: "Insight Builder", url: "/dashboard/builder" },
+          { title: "Insight Builder", url: "/dashboard/builder", icon: Wand2 },
         ],
       },
+    ],
+  },
+  {
+    id: 4,
+    label: "Ship",
+    items: [
+      { title: "Ship Status", url: "/dashboard/health", icon: HeartPulse },
       {
         title: "Settings",
         url: "/dashboard/settings",
         icon: Settings,
         subItems: [
           { title: "Preferences", url: "/dashboard/settings" },
-          { title: "System Health", url: "/dashboard/health" },
+          { title: "Audit Log", url: "/dashboard/audit", icon: BookOpen },
         ],
       },
     ],

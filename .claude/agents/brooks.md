@@ -71,6 +71,88 @@ permission:
 
 ---
 
+## Story 1.2: Agent Memory Wrapper (AD-030)
+
+**Status:** ✅ Implemented via `src/agents/memory-wrapper.ts`
+
+### Invoking from Agent Code
+
+Brooks and all Team RAM agents can now write back to Allura Brain using the memory wrapper:
+
+```typescript
+// Import the agent-facing memory client
+import { agentMemory } from '@/agents/memory-wrapper';
+
+// Add an architectural decision
+const result = await agentMemory.add({
+  groupId: 'allura-system',
+  userId: 'brooks-architect',
+  content: 'ADR-031: Implemented XYZ pattern because...',
+  metadata: { 
+    source: 'conversation',
+    confidence: 0.9,
+    category: 'Architecture'
+  }
+});
+
+// Search for prior decisions
+const results = await agentMemory.search({
+  groupId: 'allura-system',
+  query: 'concurrency control patterns',
+  limit: 10
+});
+
+// Get a specific memory by ID
+const memory = await agentMemory.get({
+  groupId: 'allura-system',
+  id: result.id
+});
+
+// List all architectural decisions
+const list = await agentMemory.list({
+  groupId: 'allura-system',
+  limit: 50,
+  sort: 'created_at_desc'
+});
+
+// Soft-delete a memory
+await agentMemory.delete({
+  groupId: 'allura-system',
+  id: 'mem_123',
+  userId: 'brooks-architect'
+});
+```
+
+### How It Works
+
+1. **Agent imports `agentMemory`** → lightweight wrapper at `src/agents/memory-wrapper.ts`
+2. **Calls `agentMemory.add()`, `search()`, etc.** → routes directly to canonical MCP tools
+3. **MCP tools execute** → PostgreSQL + Neo4j operations with full governance
+4. **Response validated** → matches @allura/sdk schemas
+5. **Audit trail logged** → all operations recorded for compliance
+
+### Validation Rules
+
+- `group_id`: Must match pattern `^allura-[a-z0-9-]+$`
+- `user_id`: Required for all operations (agent identifier, e.g., `brooks-architect`)
+- `content`: Required, must not be empty (for add/update)
+- `threshold`: Optional, must be between 0 and 1 (for add, default: 0.85)
+- All operations are server-side only; throws if called from client
+
+### Test Coverage
+
+Run: `bun test src/agents/memory-wrapper.test.ts`
+
+Tests verify:
+- ✅ Valid parameters route to canonical MCP tools
+- ✅ Invalid group_id rejected
+- ✅ Empty content rejected
+- ✅ Missing user_id rejected
+- ✅ Responses match SDK schemas
+- ✅ Agent → MCP tool routing works end-to-end
+
+---
+
 ## Frederick P. Brooks Jr. — System Architect Persona
 
 > **AI-Assisted Documentation**

@@ -11,6 +11,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
@@ -25,33 +28,42 @@ function AgencyLogo() {
     <Link
       href="/dashboard"
       prefetch={false}
-      className="flex min-h-12 items-center gap-2.5 px-3 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--allura-blue)]"
-      aria-label="Go to dashboard overview"
+      className="flex min-h-14 items-center gap-2.5 px-3 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--allura-blue)]"
+      aria-label="Go to Allura Command Deck"
       data-testid="allura-logo"
     >
       {isCollapsed ? (
         <img
-          src="/design/mark-icon-128.png"
+          src="/design/allura-mark.svg"
           alt="Allura mark"
-          className="h-8 w-8 rounded-md object-contain"
-          width={32}
-          height={32}
+          className="h-9 w-9 rounded-xl object-contain shadow-sm"
+          width={36}
+          height={36}
         />
       ) : (
         <img
-          src="/design/mark-logo.png"
-          alt="Allura"
-          className="h-9 w-auto object-contain"
-          width={120}
-          height={36}
+          src="/design/allura-wordmark.svg"
+          alt="Allura Command"
+          className="h-12 w-auto object-contain"
+          width={187}
+          height={48}
         />
       )}
     </Link>
   );
 }
 
-function NavLink({ item, isActive }: { item: NavMainItem; isActive: boolean }) {
+function NavLink({
+  item,
+  isActive,
+  isSubItemActive,
+}: {
+  item: NavMainItem;
+  isActive: boolean;
+  isSubItemActive: (url: string) => boolean;
+}) {
   const Icon = item.icon;
+  const hasSubItems = Boolean(item.subItems?.length);
 
   return (
     <SidebarMenuItem>
@@ -77,6 +89,24 @@ function NavLink({ item, isActive }: { item: NavMainItem; isActive: boolean }) {
           )}
         </Link>
       </SidebarMenuButton>
+      {hasSubItems && (
+        <SidebarMenuSub>
+          {item.subItems?.map((subItem) => {
+            const SubIcon = subItem.icon;
+            const active = isSubItemActive(subItem.url);
+            return (
+              <SidebarMenuSubItem key={subItem.url}>
+                <SidebarMenuSubButton asChild isActive={active} aria-disabled={subItem.comingSoon}>
+                  <Link prefetch={false} href={subItem.url} target={subItem.newTab ? "_blank" : undefined}>
+                    {SubIcon && <SubIcon className="size-4 shrink-0" />}
+                    <span>{subItem.title}</span>
+                  </Link>
+                </SidebarMenuSubButton>
+              </SidebarMenuSubItem>
+            );
+          })}
+        </SidebarMenuSub>
+      )}
     </SidebarMenuItem>
   );
 }
@@ -87,9 +117,13 @@ export function AppSidebar({
 }: React.ComponentProps<typeof Sidebar>) {
   const path = usePathname();
 
-  const isItemActive = (url: string) => {
+  const isUrlActive = (url: string) => {
     if (url === "/dashboard") return path === url;
     return path === url || path.startsWith(url + "/");
+  };
+
+  const isItemActive = (item: NavMainItem) => {
+    return isUrlActive(item.url) || Boolean(item.subItems?.some((subItem) => isUrlActive(subItem.url)));
   };
 
   return (
@@ -117,7 +151,8 @@ export function AppSidebar({
                 <NavLink
                   key={item.url}
                   item={item}
-                  isActive={isItemActive(item.url)}
+                  isActive={isItemActive(item)}
+                  isSubItemActive={isUrlActive}
                 />
               ))}
             </SidebarMenu>
@@ -128,15 +163,15 @@ export function AppSidebar({
       <SidebarFooter className="border-t border-[var(--allura-gray-200)] px-3 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 rounded-lg px-3 py-2.5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--allura-blue)] text-xs font-semibold text-white">
-              U
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--allura-charcoal)] text-xs font-semibold text-[var(--allura-cream)]">
+              C
             </div>
             <div className="flex min-w-0 flex-col">
               <span className="truncate text-sm font-medium text-[var(--allura-charcoal)]">
-                User
+                Captain
               </span>
               <span className="truncate text-xs text-[var(--allura-gray-400-text)]">
-                admin@allura.ai
+                allura-system
               </span>
             </div>
           </div>

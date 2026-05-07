@@ -38,8 +38,6 @@
     ".opencode/context/project-intelligence/v1-blockers.md",
     ".opencode/agent/core/brooks.md",
     ".opencode/agent/core/jobs.md",
-    ".opencode/agent/core/autopilot.md",
-    ".opencode/agent/core/openwork.md",
     ".opencode/agent/subagents/code/woz.md",
     ".opencode/agent/subagents/code/bellard.md",
     ".opencode/agent/subagents/code/carmack.md",

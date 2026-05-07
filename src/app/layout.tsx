@@ -24,6 +24,11 @@ export const metadata: Metadata = {
     template: `%s | ${APP_CONFIG.name}`,
   },
   description: APP_CONFIG.meta.description,
+  icons: {
+    icon: [{ url: "/design/allura-mark.svg", type: "image/svg+xml" }],
+    shortcut: [{ url: "/design/allura-mark.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/apple-touch-icon.png" }],
+  },
 }
 
 function getSafe<T extends string>(raw: string | undefined, allowed: readonly T[], fallback: T): T {
