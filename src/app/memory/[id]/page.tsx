@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, Clock3, FileSearch, History, PencilLine, RotateCcw, ShieldCheck, Sparkles } from "lucide-react"
+import { ArrowLeft, Clock, History, PencilLine, RotateCcw, Sparkles } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import type { JSX } from "react"
@@ -15,15 +15,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
-import { DURHAM_GRADIENTS } from "@/lib/brand/durham"
 import { DEFAULT_GROUP_ID, DEFAULT_USER_ID } from "@/lib/defaults/scope"
 import { formatRelativeTime, normalizeNeo4jTimestamp } from "@/lib/utils/date"
+
+// ── Types ─────────────────────────────────────────────────────────────────
 
 interface MemoryDetail {
   id: string
@@ -36,15 +33,9 @@ interface MemoryDetail {
   version?: number
   superseded_by?: string
   usage_count?: number
-  /** How many times this memory was retrieved/searched in the last 30 days. null = no tracking data. */
   recent_usage_count?: number | null
-  /** Whether this memory has been soft-deleted (forgotten) */
-  deleted?: boolean
-  /** When this memory was soft-deleted, if applicable */
-  deleted_at?: string
 }
 
-/** Shape of a deleted-memory item from the list-deleted API */
 interface DeletedMemoryItem {
   id: string
   content: string
@@ -55,35 +46,39 @@ interface DeletedMemoryItem {
   source: "episodic" | "semantic" | "both"
   provenance: "conversation" | "manual"
   user_id: string
-  tags?: string[]
   version?: number
 }
 
-interface MemoryUpdateResult {
-  id: string
-  previous_id: string
-  stored: "episodic" | "semantic" | "both"
-  version: number
-  updated_at: string
+// ── Plain-English helpers ─────────────────────────────────────────────────
+
+function toSourceProse(memory: MemoryDetail): string {
+  const date = new Date(memory.created_at).toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  })
+  if (memory.provenance === "conversation") {
+    return `Heard during a conversation on ${date}`
+  }
+  return `Written by hand on ${date}`
 }
 
-function toNaturalSource(memory: MemoryDetail): string {
-  return memory.provenance === "conversation" ? "Heard during a conversation" : "Added by hand"
+function toStoreProse(source: MemoryDetail["source"]): string {
+  if (source === "both") return "Kept in both memory stores for safekeeping."
+  if (source === "episodic") return "Stored in the day-to-day memory store."
+  return "Stored in the long-term knowledge store."
 }
 
-function toStoreLabel(source: MemoryDetail["source"]): string {
-  if (source === "both") return "Available in both memory stores"
-  if (source === "episodic") return "Stored in the episodic memory store"
-  return "Stored in the semantic memory store"
+function toConfidenceProse(score: number): string {
+  const pct = Math.round(score * 100)
+  if (pct >= 90) return `High confidence (${pct}%) — Allura is very sure about this.`
+  if (pct >= 70) return `Fairly confident (${pct}%) — the system believes this is accurate.`
+  if (pct >= 50) return `Moderate confidence (${pct}%) — worth verifying.`
+  return `Low confidence (${pct}%) — take this one with a grain of salt.`
 }
 
-function toUsageMessage(recentUsageCount?: number | null): string | null {
-  // If we have no tracking data, return null so the UI hides the indicator entirely
-  if (recentUsageCount == null) return null
-  if (recentUsageCount === 0) return "This memory has not been called on in the last 30 days."
-  if (recentUsageCount === 1) return "Used once in the last 30 days."
-  return `Used ${recentUsageCount} times in the last 30 days.`
-}
+// ── Page ──────────────────────────────────────────────────────────────────
 
 export default function MemoryDetailPage(): JSX.Element | null {
   const params = useParams<{ id: string }>()
@@ -93,13 +88,19 @@ export default function MemoryDetailPage(): JSX.Element | null {
   const [memory, setMemory] = useState<MemoryDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Edit state
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState("")
   const [isSaving, setIsSaving] = useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [isDeleted, setIsDeleted] = useState(false)
-  const [deletedAt, setDeletedAt] = useState<string | null>(null)
+
+  // Delete state
+  const [showForgetConfirm, setShowForgetConfirm] = useState(false)
+  const [isForgetting, setIsForgetting] = useState(false)
+  const [isForgotten, setIsForgotten] = useState(false)
+  const [forgottenAt, setForgottenAt] = useState<string | null>(null)
+
+  // Restore state
   const [isRestoring, setIsRestoring] = useState(false)
 
   const groupId = DEFAULT_GROUP_ID
@@ -110,87 +111,79 @@ export default function MemoryDetailPage(): JSX.Element | null {
     setError(null)
 
     try {
-      const response = await fetch(
+      const resp = await fetch(
         `/api/memory/${encodeURIComponent(memoryId)}?group_id=${encodeURIComponent(groupId)}`
       )
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          // Memory not found in active view — check if it was recently deleted
+      if (!resp.ok) {
+        if (resp.status === 404) {
+          // Check deleted list
           try {
-            const deletedResponse = await fetch(
-              `/api/memory?group_id=${encodeURIComponent(groupId)}&status=deleted&limit=100`
+            const deletedResp = await fetch(
+              `/api/memory?group_id=${encodeURIComponent(groupId)}&status=deleted&limit=200`
             )
-            if (deletedResponse.ok) {
-              const deletedData = await deletedResponse.json()
-              const deletedMemories: DeletedMemoryItem[] = deletedData.memories ?? []
-              const deletedMemory = deletedMemories.find((m: DeletedMemoryItem) => m.id === memoryId)
-              if (deletedMemory) {
-                // This memory was soft-deleted — show it with a "forgotten" banner
+            if (deletedResp.ok) {
+              const data = await deletedResp.json()
+              const deleted = (data.memories ?? []).find((m: DeletedMemoryItem) => m.id === memoryId)
+              if (deleted) {
                 setMemory({
-                  id: deletedMemory.id,
-                  content: deletedMemory.content,
-                  score: deletedMemory.score,
-                  source: deletedMemory.source,
-                  provenance: deletedMemory.provenance,
-                  user_id: deletedMemory.user_id,
-                  created_at: normalizeNeo4jTimestamp(deletedMemory.created_at),
-                  version: deletedMemory.version,
+                  id: deleted.id,
+                  content: deleted.content,
+                  score: deleted.score,
+                  source: deleted.source,
+                  provenance: deleted.provenance,
+                  user_id: deleted.user_id,
+                  created_at: normalizeNeo4jTimestamp(deleted.created_at),
+                  version: deleted.version,
                   usage_count: 0,
-                  deleted: true,
-                  deleted_at: normalizeNeo4jTimestamp(deletedMemory.deleted_at),
                 })
-                setIsDeleted(true)
-                setDeletedAt(deletedMemory.deleted_at)
+                setIsForgotten(true)
+                setForgottenAt(deleted.deleted_at)
                 setIsLoading(false)
                 return
               }
             }
-          } catch {
-            // Ignore errors when checking deleted status — fall through to 404
-          }
-
-          setError("This memory could not be found. It may have been removed or replaced.")
+          } catch { /* fallthrough */ }
+          setError("This memory has been removed or replaced.")
         } else {
-          const data = await response.json().catch(() => ({}))
-          setError((data as { error?: string }).error ?? `HTTP ${response.status}`)
+          setError("Could not load this memory right now.")
         }
         return
       }
 
-      const data: MemoryDetail = await response.json()
+      const data: MemoryDetail = await resp.json()
       setMemory({
         ...data,
         created_at: normalizeNeo4jTimestamp(data.created_at),
       })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load memory")
+    } catch {
+      setError("Something went wrong. Try again in a moment.")
     } finally {
       setIsLoading(false)
     }
   }, [groupId, memoryId])
 
-  useEffect(() => {
-    void fetchMemory()
-  }, [fetchMemory])
+  useEffect(() => { void fetchMemory() }, [fetchMemory])
 
-  const startEditing = (): void => {
+  // ── Edit ──
+
+  const startEditing = () => {
     if (!memory) return
     setEditContent(memory.content)
     setIsEditing(true)
   }
 
-  const cancelEditing = (): void => {
+  const cancelEditing = () => {
     setIsEditing(false)
     setEditContent("")
   }
 
-  const saveEdit = async (): Promise<void> => {
+  const saveEdit = async () => {
     if (!memory || !editContent.trim()) return
     setIsSaving(true)
 
     try {
-      const response = await fetch(
+      const resp = await fetch(
         `/api/memory/${encodeURIComponent(memoryId)}?group_id=${encodeURIComponent(groupId)}&user_id=${encodeURIComponent(userId)}`,
         {
           method: "PUT",
@@ -199,14 +192,12 @@ export default function MemoryDetailPage(): JSX.Element | null {
         }
       )
 
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}))
-        setError((data as { error?: string }).error ?? "Failed to update memory")
+      if (!resp.ok) {
+        toast.error("Could not save the change.")
         return
       }
 
-      const result: MemoryUpdateResult = await response.json()
-
+      const result = await resp.json()
       if (result.id !== memoryId) {
         router.replace(`/memory/${result.id}`)
         return
@@ -215,479 +206,405 @@ export default function MemoryDetailPage(): JSX.Element | null {
       await fetchMemory()
       setIsEditing(false)
       setEditContent("")
-      toast.success("Memory updated")
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to save changes"
-      setError(message)
-      toast.error(message)
+      toast.success("Updated successfully.")
+    } catch {
+      toast.error("Failed to save.")
     } finally {
       setIsSaving(false)
     }
   }
 
-  const deleteMemory = async (): Promise<void> => {
+  // ── Forget ──
+
+  const forgetMemory = async () => {
     if (!memory) return
-    setIsDeleting(true)
+    setIsForgetting(true)
 
     try {
-      const response = await fetch(
+      const resp = await fetch(
         `/api/memory/${encodeURIComponent(memoryId)}?group_id=${encodeURIComponent(groupId)}&user_id=${encodeURIComponent(userId)}`,
         { method: "DELETE" }
       )
 
-      if (response.ok) {
-        toast.success("Memory forgotten")
+      if (resp.ok) {
+        toast.success("Memory forgotten.")
         router.push("/memory")
         return
       }
 
-      const data = await response.json().catch(() => ({}))
-      const message = (data as { error?: string }).error ?? "Failed to delete memory"
-      setError(message)
-      toast.error(message)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to delete memory"
-      setError(message)
-      toast.error(message)
+      toast.error("Could not forget this memory.")
+    } catch {
+      toast.error("Something went wrong.")
     } finally {
-      setIsDeleting(false)
-      setShowDeleteConfirm(false)
+      setIsForgetting(false)
+      setShowForgetConfirm(false)
     }
   }
 
-  const restoreMemory = async (): Promise<void> => {
+  // ── Restore ──
+
+  const restoreMemory = async () => {
     if (!memory) return
     setIsRestoring(true)
 
     try {
-      const response = await fetch(
+      const resp = await fetch(
         `/api/memory/${encodeURIComponent(memoryId)}/restore?group_id=${encodeURIComponent(groupId)}&user_id=${encodeURIComponent(userId)}`,
         { method: "POST" }
       )
 
-      if (response.ok) {
-        toast.success("Memory restored")
-        // Navigate back to the memory list — the memory is now active again
+      if (resp.ok) {
+        toast.success("Memory restored.")
         router.push("/memory")
         return
       }
 
-      const data = await response.json().catch(() => ({}))
-      const message = (data as { error?: string }).error ?? "Failed to restore memory"
-      setError(message)
-      toast.error(message)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to restore memory"
-      setError(message)
-      toast.error(message)
+      toast.error("Could not restore this memory.")
+    } catch {
+      toast.error("Something went wrong.")
     } finally {
       setIsRestoring(false)
     }
   }
 
-  const confidenceLabel = useMemo(() => {
-    if (!memory) return ""
-    return `${(memory.score * 100).toFixed(0)}% confidence`
-  }, [memory])
+  // ── Loading ──
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[--durham-page-bg]" style={{ backgroundImage: DURHAM_GRADIENTS.page }}>
-        <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="space-y-4 rounded-[28px] border border-white/70 bg-white/70 p-6 shadow-[--durham-shadow-base]/8 shadow-xl backdrop-blur">
-            <Skeleton className="h-10 w-40" />
-            <Skeleton className="h-10 w-2/3" />
-            <Skeleton className="h-48 w-full" />
-            <Skeleton className="h-32 w-full" />
-          </div>
-        </div>
+      <div className="flex min-h-screen items-center justify-center" style={{ background: "var(--allura-white)" }}>
+        <Spinner />
       </div>
     )
   }
+
+  // ── Error ──
 
   if (error && !memory) {
     return (
-      <div className="min-h-screen bg-[--durham-page-bg]" style={{ backgroundImage: DURHAM_GRADIENTS.page }}>
-        <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="rounded-[28px] border border-white/70 bg-white/80 p-6 text-center shadow-[--durham-shadow-base]/8 shadow-xl backdrop-blur">
-            <p className="text-xs font-semibold tracking-[0.28em] text-[--durham-amber-ochre] uppercase">
-              Memory detail
-            </p>
-            <h1 className="mt-3 text-2xl font-semibold text-[--durham-deep-graphite]">
-              We could not open this memory.
-            </h1>
-            <p className="mt-3 text-base text-[--durham-muted-text]">{error}</p>
-            <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <Button variant="outline" onClick={() => router.push("/memory")}>
-                Back to memories
-              </Button>
-              <Button
-                onClick={() => void fetchMemory()}
-                className="bg-[--durham-rich-navy] text-[--durham-warm-mist] hover:bg-[--durham-hover-navy]"
-              >
-                Try again
-              </Button>
-            </div>
-          </div>
+      <div className="flex min-h-screen flex-col" style={{ background: "var(--allura-white)" }}>
+        <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center px-4 text-center">
+          <h1
+            className="font-display text-2xl font-black"
+            style={{ fontFamily: "var(--font-family-display)", color: "var(--allura-charcoal)" }}
+          >
+            Can&apos;t open this memory
+          </h1>
+          <p className="mt-2 text-sm" style={{ color: "var(--allura-text-2)" }}>{error}</p>
+          <button
+            type="button"
+            onClick={() => router.push("/memory")}
+            className="mt-6 rounded-xl px-5 py-2.5 text-sm font-medium transition-colors hover:bg-[var(--allura-muted)]"
+            style={{ border: "1px solid var(--allura-border-1)", color: "var(--allura-charcoal)" }}
+          >
+            <ArrowLeft className="mr-1.5 inline size-3.5" />
+            Back to memories
+          </button>
+          <button
+            type="button"
+            onClick={() => void fetchMemory()}
+            className="mt-3 text-sm font-medium underline underline-offset-4 transition-colors hover:text-[var(--allura-charcoal)]"
+            style={{ color: "var(--allura-text-2)" }}
+          >
+            Try again
+          </button>
         </div>
       </div>
     )
   }
 
-  if (!memory) {
-    return (
-      <div className="min-h-screen bg-[--durham-page-bg]" style={{ backgroundImage: DURHAM_GRADIENTS.page }}>
-        <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="rounded-[28px] border border-white/70 bg-white/80 p-6 text-center shadow-[--durham-shadow-base]/8 shadow-xl backdrop-blur">
-            <h1 className="text-2xl font-semibold text-[--durham-deep-graphite]">Memory not found</h1>
-            <p className="mt-3 text-base text-[--durham-muted-text]">
-              This memory may have been removed or the link is no longer current.
-            </p>
-            <Button variant="outline" onClick={() => router.push("/memory")} className="mt-6">
-              Back to memories
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  if (!memory) return null
+
+  // ── Render ──
 
   return (
-    <div className="min-h-screen bg-[--durham-page-bg]" style={{ backgroundImage: DURHAM_GRADIENTS.page }}>
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-        <div className="rounded-[30px] border border-white/70 bg-white/72 p-4 shadow-[--durham-shadow-base]/8 shadow-xl backdrop-blur sm:p-6 lg:p-8">
-          <div className="flex flex-col gap-4 border-b border-[--durham-inner-border-alt] pb-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push("/memory")}
-                className="-ml-3 text-[--durham-rich-navy] hover:bg-white/60"
-              >
-                <ArrowLeft className="mr-2 size-4" />
-                Back to memories
-              </Button>
-              <p className="text-xs font-semibold tracking-[0.28em] text-[--durham-amber-ochre] uppercase">
-                Memory detail
-              </p>
-              <h1 className="text-3xl leading-tight font-semibold text-[--durham-deep-graphite] sm:text-4xl">
-                A closer look at what Allura remembers.
-              </h1>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <div className="rounded-full border border-[--durham-inner-border] bg-white px-3 py-1.5 text-sm text-[--durham-warm-slate]">
-                {toNaturalSource(memory)}
-              </div>
-              {memory.version != null && (
-                <div className="rounded-full border border-[--durham-inner-border] bg-white px-3 py-1.5 text-sm text-[--durham-warm-slate]">
-                  Version {memory.version}
-                </div>
-              )}
-              <div className="rounded-full border border-[--durham-confidence-border] bg-[--durham-confidence-bg] px-3 py-1.5 text-sm text-[--durham-confidence-text]">
-                {confidenceLabel}
-              </div>
-            </div>
-          </div>
-
-          {isDeleted && deletedAt && (
-            <div className="mt-6 rounded-2xl border border-[--durham-status-failed-border] bg-[--durham-status-failed-bg] p-4">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-medium text-[--durham-status-failed-text]">
-                    This memory was forgotten on {new Date(deletedAt).toLocaleDateString()}
-                  </p>
-                  <p className="mt-1 text-sm text-[--durham-muted-text]">
-                    It is in the 30-day recovery window and can be restored to active use.
-                  </p>
-                </div>
-                <Button
-                  onClick={restoreMemory}
-                  disabled={isRestoring}
-                  className="bg-[--durham-rich-navy] text-[--durham-warm-mist] hover:bg-[--durham-hover-navy]"
-                >
-                  <RotateCcw className="mr-2 size-4" />
-                  {isRestoring ? "Restoring…" : "Restore memory"}
-                </Button>
-              </div>
-            </div>
+    <div className="flex min-h-screen flex-col" style={{ background: "var(--allura-white)" }}>
+      {/* ── Top bar ── */}
+      <div
+        className="sticky top-0 z-20 border-b backdrop-blur"
+        style={{
+          borderColor: "var(--allura-border-1)",
+          background: "color-mix(in srgb, var(--allura-white) 92%, transparent)",
+          backdropFilter: "blur(12px)",
+        }}
+      >
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3 sm:px-6">
+          <button
+            type="button"
+            onClick={() => router.push("/memory")}
+            className="flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-[var(--allura-charcoal)]"
+            style={{ color: "var(--allura-text-2)" }}
+          >
+            <ArrowLeft className="size-4" />
+            Back to memories
+          </button>
+          {isForgotten ? (
+            <button
+              type="button"
+              onClick={restoreMemory}
+              disabled={isRestoring}
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
+              style={{
+                background: "var(--allura-blue)",
+                color: "var(--allura-white)",
+              }}
+            >
+              <RotateCcw className="size-3.5" />
+              {isRestoring ? "Restoring…" : "Restore"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowForgetConfirm(true)}
+              className="text-sm font-medium underline-offset-2 transition-colors hover:underline"
+              style={{ color: "var(--allura-text-2)" }}
+            >
+              Forget this memory
+            </button>
           )}
-
-          {error && memory && (
-            <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-              {error}
-              <button className="ml-2 underline" onClick={() => setError(null)}>
-                Dismiss
-              </button>
-            </div>
-          )}
-
-          <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(280px,0.95fr)]">
-            <Card className="border-[--durham-border] bg-white/92 shadow-sm">
-              <CardContent className="p-6 sm:p-8">
-                <div className="flex items-center gap-2 text-sm text-[--durham-muted-text]">
-                  <Sparkles className="size-4 text-[--durham-amber-ochre]" />
-                  <span>{formatRelativeTime(memory.created_at)}</span>
-                </div>
-
-                {isEditing ? (
-                  <div className="mt-5 space-y-4">
-                    <Textarea
-                      value={editContent}
-                      onChange={(event) => setEditContent(event.target.value)}
-                      className="min-h-48 border-[--durham-border-light] bg-[--durham-surface] text-base leading-7"
-                      autoFocus
-                      disabled={isSaving}
-                    />
-                    <div className="flex flex-wrap justify-end gap-2">
-                      <Button variant="ghost" onClick={cancelEditing} disabled={isSaving}>
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={saveEdit}
-                        disabled={isSaving || !editContent.trim() || editContent.trim() === memory.content}
-                        className="bg-[--durham-rich-navy] text-[--durham-warm-mist] hover:bg-[--durham-hover-navy]"
-                      >
-                        {isSaving ? (
-                          <>
-                            <Spinner className="mr-2" />
-                            Saving…
-                          </>
-                        ) : (
-                          "Save changes"
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mt-5 space-y-6">
-                    <div
-                      className="group rounded-[24px] border border-transparent bg-[--durham-surface] p-5 transition hover:border-[--durham-border]"
-                      onClick={startEditing}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") startEditing()
-                      }}
-                    >
-                      <p className="text-2xl leading-10 font-semibold text-[--durham-deep-graphite] sm:text-[2rem]">
-                        {memory.content}
-                      </p>
-                      <p className="mt-4 flex items-center gap-2 text-sm text-[--durham-subtle-text] opacity-0 transition-opacity group-hover:opacity-100">
-                        <PencilLine className="size-4" />
-                        Click to edit the wording while keeping version history intact.
-                      </p>
-                    </div>
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="rounded-[22px] border border-[--durham-border] bg-[--durham-panel-subtle] p-5">
-                        <div className="flex items-center gap-2 text-sm font-medium text-[--durham-rich-navy]">
-                          <ShieldCheck className="size-4 text-[--durham-amber-ochre]" />
-                          Provenance
-                        </div>
-                        <p className="mt-3 text-sm leading-6 text-[--durham-warm-slate]">
-                          {memory.provenance === "conversation"
-                            ? `Captured from a conversation on ${new Date(memory.created_at).toLocaleString()}.`
-                            : `Added manually on ${new Date(memory.created_at).toLocaleString()}.`}
-                        </p>
-                        <p className="mt-3 text-sm text-[--durham-muted-text]">{toStoreLabel(memory.source)}</p>
-                      </div>
-
-                      {toUsageMessage(memory.recent_usage_count) != null && (
-                        <div className="rounded-[22px] border border-[--durham-border] bg-[--durham-panel-subtle] p-5">
-                          <div className="flex items-center gap-2 text-sm font-medium text-[--durham-rich-navy]">
-                            <Clock3 className="size-4 text-[--durham-amber-ochre]" />
-                            Usage
-                          </div>
-                          <p className="mt-3 text-sm leading-6 text-[--durham-warm-slate]">
-                            {toUsageMessage(memory.recent_usage_count)}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <div className="space-y-4">
-              <Card className="border-[--durham-border] bg-white/92 shadow-sm">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-2 text-sm font-medium text-[--durham-rich-navy]">
-                    <FileSearch className="size-4 text-[--durham-amber-ochre]" />
-                    Trust signals
-                  </div>
-
-                  <div className="mt-4 space-y-4 text-sm">
-                    <div>
-                      <p className="text-[--durham-caption-text]">Created</p>
-                      <p className="mt-1 font-medium text-[--durham-deep-graphite]">
-                        {new Date(memory.created_at).toLocaleString()}
-                      </p>
-                    </div>
-                    <Separator className="bg-[--durham-border]" />
-                    <div>
-                      <p className="text-[--durham-caption-text]">Confidence</p>
-                      <p className="mt-1 font-medium text-[--durham-deep-graphite]">{confidenceLabel}</p>
-                    </div>
-                    <Separator className="bg-[--durham-border]" />
-                    <div>
-                      <p className="text-[--durham-caption-text]">Status</p>
-                      <p className="mt-1 font-medium text-[--durham-deep-graphite]">
-                        {isDeleted
-                          ? "Forgotten — in recovery window"
-                          : memory.superseded_by
-                            ? "A newer version exists"
-                            : "Current version in view"}
-                      </p>
-                      {memory.superseded_by && !isDeleted && (
-                        <button
-                          className="mt-2 text-sm font-medium text-[--durham-rich-navy] underline underline-offset-4"
-                          onClick={() => router.push(`/memory/${memory.superseded_by}`)}
-                        >
-                          Open the newer version
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-[--durham-border] bg-white/92 shadow-sm">
-                <CardContent className="p-6">
-                  <p className="text-sm font-medium text-[--durham-rich-navy]">Reference details</p>
-                  <div className="mt-4 space-y-4 text-sm text-[--durham-warm-slate]">
-                    <div>
-                      <p className="text-[--durham-caption-text]">Memory ID</p>
-                      <p className="mt-1 font-mono text-xs break-all text-[--durham-deep-graphite]">{memory.id}</p>
-                    </div>
-                    <div>
-                      <p className="text-[--durham-caption-text]">Workspace</p>
-                      <p className="mt-1 font-mono text-xs break-all text-[--durham-deep-graphite]">{groupId}</p>
-                    </div>
-                    {memory.user_id && (
-                      <div>
-                        <p className="text-[--durham-caption-text]">User</p>
-                        <p className="mt-1 font-mono text-xs break-all text-[--durham-deep-graphite]">
-                          {memory.user_id}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-[--durham-border] bg-white/92 shadow-sm">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-2 text-sm font-medium text-[--durham-rich-navy]">
-                    <History className="size-4 text-[--durham-amber-ochre]" />
-                    Version history
-                  </div>
-
-                  <div className="mt-4 space-y-3 text-sm">
-                    {memory.version != null && memory.version > 1 ? (
-                      <>
-                        <div className="flex items-start gap-3">
-                          <div className="mt-1.5 size-2 shrink-0 rounded-full bg-[--durham-amber-ochre]" />
-                          <div>
-                            <p className="font-medium text-[--durham-deep-graphite]">Version 1</p>
-                            <p className="text-[--durham-muted-text]">
-                              Created on {new Date(memory.created_at).toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="ml-1 h-4 w-px bg-[--durham-border]" />
-                        <div className="flex items-start gap-3">
-                          <div className="mt-1.5 size-2 shrink-0 rounded-full bg-[--durham-steel-blue]" />
-                          <div>
-                            <p className="font-medium text-[--durham-deep-graphite]">Version {memory.version}</p>
-                            <p className="text-[--durham-muted-text]">
-                              Replaced on {new Date(memory.created_at).toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <p className="leading-6 text-[--durham-muted-text]">
-                        This is the original version. It hasn&apos;t been edited yet.
-                      </p>
-                    )}
-
-                    {memory.superseded_by && (
-                      <>
-                        <Separator className="bg-[--durham-border]" />
-                        <div>
-                          <p className="text-[--durham-caption-text]">Newer version available</p>
-                          <button
-                            className="mt-1 text-sm font-medium text-[--durham-rich-navy] underline underline-offset-4"
-                            onClick={() => router.push(`/memory/${memory.superseded_by}`)}
-                          >
-                            Open version {typeof memory.version === "number" ? memory.version + 1 : "?"}
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="flex flex-wrap gap-2">
-                {!isDeleted && (
-                  <Button
-                    onClick={startEditing}
-                    variant="outline"
-                    className="border-[--durham-border-light] bg-white text-[--durham-rich-navy] hover:bg-[--durham-hover-amber-bg]"
-                  >
-                    Edit wording
-                  </Button>
-                )}
-                {isDeleted ? (
-                  <Button
-                    onClick={restoreMemory}
-                    disabled={isRestoring}
-                    className="bg-[--durham-rich-navy] text-[--durham-warm-mist] hover:bg-[--durham-hover-navy]"
-                  >
-                    <RotateCcw className="mr-2 size-4" />
-                    {isRestoring ? "Restoring…" : "Restore memory"}
-                  </Button>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    className="text-red-700 hover:bg-red-50 hover:text-red-800"
-                    onClick={() => setShowDeleteConfirm(true)}
-                  >
-                    Forget memory
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
-      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
+        {/* ── Forgotten banner ── */}
+        {isForgotten && forgottenAt && (
+          <div className="memory-forgotten mb-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-medium" style={{ color: "var(--allura-charcoal)" }}>
+                  This memory was forgotten on{" "}
+                  {new Date(forgottenAt).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
+                <p className="memory-forgotten-recovery-note">
+                  It&apos;s in the 30-day recovery window and can be restored.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="memory-forgotten-undo"
+                onClick={restoreMemory}
+                disabled={isRestoring}
+              >
+                Undo & restore
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Content card ── */}
+        <div className="memory-card mb-6">
+          {/* Timestamp & sparkle */}
+          <div className="mb-5 flex items-center gap-2">
+            <Sparkles className="size-4 shrink-0" style={{ color: "var(--allura-text-3)" }} />
+            <span className="text-xs" style={{ color: "var(--allura-text-3)" }}>
+              {formatRelativeTime(memory.created_at)}
+            </span>
+          </div>
+
+          {isEditing ? (
+            <div className="space-y-4">
+              <Textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                className="min-h-36 text-base leading-relaxed"
+                autoFocus
+                disabled={isSaving}
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={cancelEditing}
+                  disabled={isSaving}
+                  className="rounded-lg px-4 py-2 text-sm font-medium transition-colors hover:bg-[var(--allura-muted)]"
+                  style={{ color: "var(--allura-text-2)" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={saveEdit}
+                  disabled={isSaving || !editContent.trim() || editContent.trim() === memory.content}
+                  className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                  style={{
+                    background: "var(--allura-blue)",
+                    color: "var(--allura-white)",
+                  }}
+                >
+                  {isSaving ? "Saving…" : "Save changes"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div
+              className="group cursor-pointer rounded-xl p-3 transition-colors hover:bg-[var(--allura-muted)]"
+              onClick={startEditing}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === "Enter") startEditing() }}
+            >
+              <p className="text-xl leading-relaxed font-medium" style={{ color: "var(--allura-charcoal)" }}>
+                {memory.content}
+              </p>
+              <p
+                className="mt-3 flex items-center gap-1.5 text-xs opacity-0 transition-opacity group-hover:opacity-100"
+                style={{ color: "var(--allura-text-3)" }}
+              >
+                <PencilLine className="size-3.5" />
+                Click to edit the wording
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* ── Provenance + Confidence ── */}
+        <div className="mb-6 grid gap-4 sm:grid-cols-2">
+          <div className="memory-card">
+            <p
+              className="text-xs font-semibold tracking-wider uppercase"
+              style={{ color: "var(--allura-text-2)" }}
+            >
+              Where this came from
+            </p>
+            <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--allura-charcoal)" }}>
+              {toSourceProse(memory)}
+            </p>
+            <p className="mt-2 text-xs" style={{ color: "var(--allura-text-3)" }}>
+              {toStoreProse(memory.source)}
+            </p>
+          </div>
+
+          <div className="memory-card">
+            <p
+              className="text-xs font-semibold tracking-wider uppercase"
+              style={{ color: "var(--allura-text-2)" }}
+            >
+              Confidence
+            </p>
+            <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--allura-charcoal)" }}>
+              {toConfidenceProse(memory.score)}
+            </p>
+          </div>
+        </div>
+
+        {/* ── Evidence section ── */}
+        <div
+          className="mb-6 rounded-xl p-6"
+          style={{ background: "var(--allura-cream)" }}
+        >
+          <div className="mb-3 flex items-center gap-2">
+            <Clock className="size-4" style={{ color: "var(--allura-text-2)" }} />
+            <p className="text-sm font-medium" style={{ color: "var(--allura-text-2)" }}>
+              Timeline
+            </p>
+          </div>
+
+          <div className="space-y-3 pl-6 border-l-2" style={{ borderColor: "var(--allura-border-1)" }}>
+            {memory.version != null && memory.version > 1 ? (
+              <>
+                <div>
+                  <p className="text-sm font-medium" style={{ color: "var(--allura-charcoal)" }}>
+                    Version 1
+                  </p>
+                  <p className="text-xs" style={{ color: "var(--allura-text-3)" }}>
+                    Created{" "}
+                    {new Date(memory.created_at).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium" style={{ color: "var(--allura-charcoal)" }}>
+                    Version {memory.version}
+                  </p>
+                  <p className="text-xs" style={{ color: "var(--allura-text-3)" }}>
+                    Updated most recently
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div>
+                <p className="text-sm font-medium" style={{ color: "var(--allura-charcoal)" }}>
+                  Original version
+                </p>
+                <p className="text-xs" style={{ color: "var(--allura-text-3)" }}>
+                  This memory has never been edited.
+                </p>
+              </div>
+            )}
+
+            {memory.superseded_by && (
+              <div>
+                <p className="text-xs italic" style={{ color: "var(--allura-text-3)" }}>
+                  A newer version of this memory exists.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Actions ── */}
+        <div className="flex flex-wrap gap-3">
+          {!isForgotten && (
+            <button
+              type="button"
+              onClick={startEditing}
+              className="rounded-lg px-4 py-2 text-sm font-medium transition-colors hover:bg-[var(--allura-muted)]"
+              style={{
+                border: "1px solid var(--allura-border-1)",
+                color: "var(--allura-charcoal)",
+              }}
+            >
+              Edit wording
+            </button>
+          )}
+          {isForgotten ? (
+            <button
+              type="button"
+              onClick={restoreMemory}
+              disabled={isRestoring}
+              className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+              style={{
+                background: "var(--allura-blue)",
+                color: "var(--allura-white)",
+              }}
+            >
+              {isRestoring ? "Restoring…" : "Restore this memory"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowForgetConfirm(true)}
+              className="rounded-lg px-4 py-2 text-sm font-medium transition-colors hover:bg-[var(--allura-muted)]"
+              style={{ color: "var(--allura-text-2)" }}
+            >
+              Forget
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── Forget confirmation dialog ── */}
+      <AlertDialog open={showForgetConfirm} onOpenChange={setShowForgetConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Forget this memory?</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes it from active use while keeping the backend flow intact. You can restore it within 30 days.
+              It will be hidden from view. You can restore it within 30 days if you change your mind.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isForgetting}>Keep it</AlertDialogCancel>
             <AlertDialogAction
-              onClick={deleteMemory}
-              disabled={isDeleting}
+              onClick={forgetMemory}
+              disabled={isForgetting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? (
-                <>
-                  <Spinner className="mr-2" />
-                  Forgetting…
-                </>
-              ) : (
-                "Forget"
-              )}
+              {isForgetting ? "Forgetting…" : "Forget it"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

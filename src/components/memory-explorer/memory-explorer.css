@@ -44,6 +44,13 @@
 /* ── 4. Node Labels — tooltip-only (§3) ────────────────────────── */
 .memory-explorer__node-label {
   display: none;
+  /* Bug 2: Label color — dark for light bg, overridden in .dark context below */
+  color: var(--allura-charcoal);
+}
+
+/* Bug 2: .dark override — light text on dark abyss canvas */
+.dark .memory-explorer__node-label {
+  color: var(--allura-gray-100);
 }
 
 .memory-explorer__node:hover .memory-explorer__node-label,
@@ -53,7 +60,7 @@
   transform: translate(-50%, calc(-100% - 8px));
   left: 50%;
   background: var(--dashboard-surface-muted);
-  color: var(--dashboard-text-primary);
+  color: var(--allura-charcoal);
   border: 1px solid var(--dashboard-border);
   border-radius: var(--allura-r-md);
   padding: var(--allura-xs) var(--allura-md);
@@ -63,6 +70,12 @@
   white-space: nowrap;
   pointer-events: none;
   z-index: 10;
+}
+
+/* Bug 2: Dark-mode hover label — light text on dark tooltip bg */
+.dark .memory-explorer__node:hover .memory-explorer__node-label,
+.dark .memory-explorer__graph-container:hover .memory-explorer__node:hover .memory-explorer__node-label {
+  color: var(--allura-gray-100);
 }
 
 /* ── 5. Node SVG rendering ─────────────────────────────────────── */
@@ -517,6 +530,9 @@
 
   .memory-explorer__search input {
     width: 100%;
+    /* Bug 4: iOS minimum tap target — 44px per WCAG 2.5.5 */
+    min-height: 44px;
+    height: 44px;
   }
 
   .memory-explorer__result-list {

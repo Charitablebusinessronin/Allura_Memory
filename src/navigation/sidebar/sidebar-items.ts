@@ -1,4 +1,4 @@
-import { Activity, BookOpen, Brain, FileText, Folder, GitBranch, Home, Lightbulb, type LucideIcon, Map, Settings, Users, Wand2 } from "lucide-react"
+import { Activity, BookOpen, Brain, ExternalLink, FileText, Folder, GitBranch, Home, Lightbulb, type LucideIcon, Map, Settings, Users, Wand2 } from "lucide-react"
 
 export interface NavSubItem {
   title: string
@@ -32,6 +32,7 @@ export const sidebarItems: NavGroup[] = [
     label: "Allura Brain",
     items: [
       { title: "Overview", url: "/dashboard", icon: Home },
+      { title: "Memories", url: "/memory", icon: ExternalLink, newTab: true },
       { title: "Memory Explorer", url: "/dashboard/memory-explorer", icon: Map, isNew: true },
       { title: "Memory Feed", url: "/dashboard/feed", icon: Brain },
       { title: "Graph", url: "/dashboard/graph", icon: GitBranch },

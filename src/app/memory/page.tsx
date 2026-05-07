@@ -1,389 +1,273 @@
 "use client"
 
-import { BrainCircuit, Clock, Plus, Search, Settings2 } from "lucide-react"
-import dynamic from "next/dynamic"
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { EmptyState } from "@/components/allura/empty-state"
-import { AlluraMemoryCard } from "@/components/allura/memory-card"
-import { PanelDrawer } from "@/components/allura/panel-drawer"
-import { AddMemoryDialog } from "@/components/memory/add-memory-dialog"
-import { DeleteConfirmDialog } from "@/components/memory/delete-confirm-dialog"
-import { DeletedMemoryCard } from "@/components/memory/deleted-memory-card"
-import { SettingsSheet } from "@/components/memory/settings-sheet"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { Clock, Search, X } from "lucide-react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useMemo, useState } from "react"
+import { toast } from "sonner"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Spinner } from "@/components/ui/spinner"
+import { DEFAULT_GROUP_ID, DEFAULT_USER_ID } from "@/lib/defaults/scope"
+import { formatRelativeTime } from "@/lib/utils/date"
 import { useMemoryList } from "@/hooks/use-memory-list"
 import type { Memory } from "@/hooks/use-memory-list"
-import { DEFAULT_GROUP_ID, DEFAULT_USER_ID } from "@/lib/defaults/scope"
-import { buildScopeLabel } from "@/lib/scope/display-names"
 
-const GraphTabLoader = dynamic(
-  () => import("@/components/allura/graph-tab").then((mod) => mod.GraphTab),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex h-[400px] items-center justify-center rounded-xl border border-[var(--allura-deep-navy)]/10 bg-white">
-        <div className="text-center">
-          <div className="mx-auto mb-3 size-8 animate-spin rounded-full border-2 border-[var(--allura-deep-navy)] border-t-transparent" />
-          <p className="text-sm text-[var(--allura-warm-gray)]">Loading graph...</p>
-        </div>
-      </div>
-    ),
+// ── Plain-English provenance labels ───────────────────────────────────────
+
+function provenanceLabel(memory: Memory): string {
+  if (memory.provenance === "conversation") {
+    const time = formatRelativeTime(memory.created_at)
+    return `Learned from a conversation ${time}`
   }
-)
+  return `Added by you ${formatRelativeTime(memory.created_at)}`
+}
 
-type TabValue = "memories" | "forgotten" | "graph"
+function confidenceLabel(score: number): string {
+  const pct = Math.round(score * 100)
+  if (pct >= 90) return "High confidence"
+  if (pct >= 70) return "Fairly confident"
+  if (pct >= 50) return "Some confidence"
+  return "Low confidence"
+}
 
-export default function MemoryViewerPage() {
+// ── Page ──────────────────────────────────────────────────────────────────
+
+export default function ConsumerMemoryPage() {
+  const router = useRouter()
+
   const {
     memories,
-    deletedMemories,
     hasMore,
     isLoading,
     isLoadingMore,
-    viewStatus,
-    setViewStatus,
     searchQuery,
     setSearchQuery,
     groupId,
-    setGroupId,
     userId,
-    setUserId,
-    allUsers,
-    setAllUsers,
     loadMore,
     deleteMemory,
-    addMemory,
-    restoreMemory,
-    toggleExpand,
-    recentlyDeleted,
-    undoDelete,
-    showUndo,
-    formatRelativeTime,
+    formatRelativeTime: fmt,
   } = useMemoryList({
     groupId: DEFAULT_GROUP_ID,
     userId: DEFAULT_USER_ID,
+    limit: 30,
   })
 
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [showAddModal, setShowAddModal] = useState(false)
-  const [addContent, setAddContent] = useState("")
-  const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [restoringId, setRestoringId] = useState<string | null>(null)
-  const [scopeLabel, setScopeLabel] = useState<string>("Loading...")
-  const [activeTab, setActiveTab] = useState<TabValue>("memories")
-  const [drawerMemory, setDrawerMemory] = useState<Memory | null>(null)
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [forgetTarget, setForgetTarget] = useState<Memory | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [forgottenIds, setForgottenIds] = useState<Set<string>>(new Set())
 
-  useEffect(() => {
-    let mounted = true
-    buildScopeLabel(groupId, userId, allUsers).then((label) => {
-      if (mounted) setScopeLabel(label)
-    })
-    return () => { mounted = false }
-  }, [groupId, userId, allUsers])
-
-  const handleAddSubmit = async () => {
-    if (!addContent.trim()) return
-    await addMemory(addContent.trim())
-    setAddContent("")
-    setShowAddModal(false)
+  const handleForget = async () => {
+    if (!forgetTarget) return
+    setIsDeleting(true)
+    try {
+      await deleteMemory(forgetTarget)
+      setForgottenIds((prev) => new Set(prev).add(forgetTarget.id))
+    } finally {
+      setIsDeleting(false)
+      setForgetTarget(null)
+    }
   }
-
-  const handleRestore = async (memoryId: string) => {
-    setRestoringId(memoryId)
-    await restoreMemory(memoryId)
-    setRestoringId(null)
-  }
-
-  const handleViewSource = useCallback((memory: Memory) => {
-    setDrawerMemory(memory)
-    setDrawerOpen(true)
-  }, [])
-
-  const handleForget = useCallback((memory: Memory) => {
-    setSelectedMemory(memory)
-    setShowDeleteConfirm(true)
-  }, [])
-
-  const tabToViewStatus = useCallback((tab: TabValue) => {
-    if (tab === "forgotten") return "deleted" as const
-    return "active" as const
-  }, [])
-
-  const handleTabChange = useCallback((tab: TabValue) => {
-    setActiveTab(tab)
-    setViewStatus(tabToViewStatus(tab))
-  }, [setViewStatus, tabToViewStatus])
 
   const resultsLabel = useMemo(() => {
-    if (activeTab === "forgotten") {
-      return `${deletedMemories.length} forgotten memor${deletedMemories.length === 1 ? "y" : "ies"} in recovery window`
-    }
     if (searchQuery) {
       return `${memories.length} result${memories.length === 1 ? "" : "s"} for "${searchQuery}"`
     }
-    return `${memories.length} memor${memories.length === 1 ? "y" : "ies"} ready to review`
-  }, [memories.length, deletedMemories.length, searchQuery, activeTab])
+    return `${memories.length} memor${memories.length === 1 ? "y" : "ies"}`
+  }, [memories.length, searchQuery])
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--allura-pure-white)]">
-      {/* Navbar */}
-      <nav className="sticky top-0 z-30 flex items-center justify-between bg-[var(--allura-deep-navy)] px-4 py-3 sm:px-6">
-        <div className="flex items-center gap-3">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-[var(--allura-coral)]">
-            <BrainCircuit className="size-4 text-white" />
-          </div>
-          <span className="font-display text-lg text-[var(--allura-pure-white)]">Allura</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={() => setShowAddModal(true)}
-            className="bg-[var(--allura-coral)] text-white hover:bg-[var(--allura-coral)]/90"
-            style={{ borderRadius: "var(--allura-radius-button)" }}
-          >
-            <Plus className="mr-1.5 size-4" />
-            <span className="hidden sm:inline">Add Memory</span>
-            <span className="sm:hidden">Add</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSettingsOpen(true)}
-            className="text-[var(--allura-pure-white)] hover:bg-white/10"
-            aria-label="Settings"
-          >
-            <Settings2 className="size-5" />
-          </Button>
-          <div className="flex size-8 items-center justify-center rounded-full bg-[var(--allura-clarity-blue)] text-xs font-semibold text-white">
-            U
-          </div>
-        </div>
-      </nav>
-
-      {/* Main content */}
-      <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Hero */}
-        <div className="mb-8">
-          <h1 className="font-display text-[40px] leading-tight text-[var(--allura-ink-black)]">
-            What does your system know?
-          </h1>
-          <p className="mt-2 text-base text-[var(--allura-warm-gray)]">
-            Start with a question, then review the memories behind it.
-          </p>
-        </div>
-
-        {/* Search bar */}
-        {(activeTab === "memories" || activeTab === "forgotten") && (
-          <div className="mb-6">
-            <div className="relative">
-              <Search className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-[var(--allura-warm-gray)]" />
-              <Input
-                placeholder="Search by person, preference, decision, or phrase"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-14 bg-white pr-12 pl-12 text-base shadow-[var(--allura-shadow-card)]"
-                style={{ borderRadius: "var(--allura-radius-input)" }}
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  className="absolute top-1/2 right-4 -translate-y-1/2 text-sm font-medium text-[var(--allura-warm-gray)] hover:text-[var(--allura-deep-navy)]"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-            <div className="mt-3 flex items-center justify-between">
-              <p className="text-sm font-medium text-[var(--allura-deep-navy)]">{resultsLabel}</p>
-              <p className="text-sm text-[var(--allura-warm-gray)]">{scopeLabel}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Tabs */}
-        <div className="mb-6 flex gap-1 rounded-xl bg-[var(--allura-navy-5)] p-1">
-          {(["memories", "forgotten", "graph"] as const).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => handleTabChange(tab)}
-              className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
-                activeTab === tab
-                  ? "bg-white text-[var(--allura-deep-navy)] shadow-[var(--allura-shadow-card)]"
-                  : "text-[var(--allura-warm-gray)] hover:text-[var(--allura-deep-navy)]"
-              }`}
-              style={{ borderRadius: "var(--allura-radius-button)" }}
-            >
-              {tab === "memories" && "Memories"}
-              {tab === "forgotten" && (
-                <span className="inline-flex items-center gap-1.5">
-                  <Clock className="size-4" />
-                  Recently Forgotten
-                </span>
-              )}
-              {tab === "graph" && "Graph"}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab Content */}
-        {activeTab === "memories" && (
-          <>
-            {/* Undo banner */}
-            {showUndo && recentlyDeleted.length > 0 && (
-              <div className="mb-4 rounded-xl border border-[var(--allura-coral-20)] bg-[var(--allura-coral-10)] p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium text-[var(--allura-deep-navy)]">
-                      Memory removed from view.
-                    </p>
-                    <p className="text-sm text-[var(--allura-warm-gray)]">
-                      You can restore it within 30 days if this was a mistake.
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={undoDelete}
-                    className="text-[var(--allura-deep-navy)] hover:bg-white/60"
-                    style={{ borderRadius: "var(--allura-radius-button)" }}
-                  >
-                    Undo
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {isLoading ? (
-              <div className="flex items-center justify-center py-16">
-                <div className="size-8 animate-spin rounded-full border-2 border-[var(--allura-deep-navy)] border-t-transparent" />
-              </div>
-            ) : memories.length === 0 ? (
-              searchQuery ? (
-                <EmptyState
-                  title={`No memories matched "${searchQuery}"`}
-                  description="Try a broader phrase or add it yourself."
-                  cta={{
-                    label: "Save this manually",
-                    onClick: () => {
-                      setAddContent(searchQuery)
-                      setShowAddModal(true)
-                    },
-                  }}
-                />
-              ) : (
-                <EmptyState
-                  title="Nothing has been saved here yet"
-                  description="Once conversations or notes are stored, they will show up here."
-                  cta={{ label: "Add the first memory", onClick: () => setShowAddModal(true) }}
-                />
-              )
-            ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {memories.map((memory) => (
-                  <AlluraMemoryCard
-                    key={memory.id}
-                    memory={memory}
-                    onViewSource={() => handleViewSource(memory)}
-                    onForget={() => handleForget(memory)}
-                    formatRelativeTime={formatRelativeTime}
-                  />
-                ))}
-              </div>
-            )}
-
-            {hasMore && memories.length > 0 && (
-              <div className="mt-6 flex justify-center">
-                <Button
-                  variant="outline"
-                  onClick={loadMore}
-                  disabled={isLoadingMore}
-                  className="border-[var(--allura-deep-navy)] text-[var(--allura-deep-navy)]"
-                  style={{ borderRadius: "var(--allura-radius-button)" }}
-                >
-                  {isLoadingMore ? "Loading more..." : "Load more"}
-                </Button>
-              </div>
-            )}
-          </>
-        )}
-
-        {activeTab === "forgotten" && (
-          <>
-            {isLoading ? (
-              <div className="flex items-center justify-center py-16">
-                <div className="size-8 animate-spin rounded-full border-2 border-[var(--allura-deep-navy)] border-t-transparent" />
-              </div>
-            ) : deletedMemories.length === 0 ? (
-              <EmptyState
-                title="Nothing in the recovery window"
-                description="When you forget a memory, it appears here for 30 days. Restore any that were removed."
-              />
-            ) : (
-              <div className="rounded-xl border border-[var(--allura-deep-navy)]/10 bg-white p-3 sm:p-4">
-                <ScrollArea className="h-[calc(100vh-24rem)] min-h-[24rem]">
-                  <div className="space-y-3">
-                    {deletedMemories.map((memory) => (
-                      <DeletedMemoryCard
-                        key={memory.id}
-                        memory={memory}
-                        onRestore={handleRestore}
-                        isRestoring={restoringId === memory.id}
-                        formatRelativeTime={formatRelativeTime}
-                      />
-                    ))}
-                  </div>
-                </ScrollArea>
-              </div>
-            )}
-          </>
-        )}
-
-        {activeTab === "graph" && (
-          <GraphTabLoader onNodeClick={handleViewSource} />
-        )}
-      </div>
-
-      {/* Dialogs */}
-      <AddMemoryDialog
-        open={showAddModal}
-        onOpenChange={setShowAddModal}
-        content={addContent}
-        onContentChange={setAddContent}
-        onSubmit={handleAddSubmit}
-      />
-      <DeleteConfirmDialog
-        open={showDeleteConfirm}
-        onOpenChange={setShowDeleteConfirm}
-        memory={selectedMemory}
-        onConfirm={deleteMemory}
-      />
-
-      {/* Panel Drawer */}
-      <PanelDrawer
-        memory={drawerMemory}
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        formatRelativeTime={formatRelativeTime}
-      />
-
-      <SettingsSheet
-        open={settingsOpen}
-        onOpenChange={setSettingsOpen}
-        groupId={groupId}
-        onGroupIdChange={setGroupId}
-        userId={userId}
-        onUserIdChange={(value) => {
-          setUserId(value)
-          setAllUsers(false)
+    <div className="flex min-h-screen flex-col" style={{ background: "var(--allura-white)" }}>
+      {/* ── Minimal consumer nav ── */}
+      <header
+        className="sticky top-0 z-20 border-b"
+        style={{
+          borderColor: "var(--allura-border-1)",
+          background: "color-mix(in srgb, var(--allura-white) 92%, transparent)",
+          backdropFilter: "blur(12px)",
         }}
-        allUsers={allUsers}
-      />
+      >
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4 sm:px-6">
+          <Link
+            href="/memory"
+            className="font-display text-xl font-black tracking-tight"
+            style={{ fontFamily: "var(--font-family-display)", color: "var(--allura-charcoal)" }}
+          >
+            Allura
+          </Link>
+          <nav className="flex items-center gap-6 text-sm font-medium" style={{ color: "var(--allura-text-2)" }}>
+            <Link href="/memory" className="transition-colors hover:text-[var(--allura-charcoal)]">
+              Memories
+            </Link>
+          </nav>
+        </div>
+      </header>
+
+      {/* ── Hero ── */}
+      <section className="px-4 pt-12 pb-8 text-center sm:pt-16 sm:pb-10">
+        <h1
+          className="font-display text-3xl font-black leading-tight tracking-tight sm:text-4xl"
+          style={{ fontFamily: "var(--font-family-display)", color: "var(--allura-charcoal)" }}
+        >
+          What your system remembers
+        </h1>
+        <p className="mx-auto mt-3 max-w-md text-base leading-relaxed" style={{ color: "var(--allura-text-2)" }}>
+          A warm, honest view into everything Allura has learned about your world.
+        </p>
+      </section>
+
+      {/* ── Search ── */}
+      <section className="px-4 pb-2 sm:px-6">
+        <div className="mx-auto max-w-[640px]">
+          <div className="memory-search">
+            <Search className="size-5 shrink-0" style={{ color: "var(--allura-text-3)" }} />
+            <input
+              type="text"
+              placeholder="Search memories by phrase or topic"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search memories"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="flex shrink-0 items-center justify-center rounded-full p-0.5 transition-colors hover:bg-[var(--allura-muted)]"
+                aria-label="Clear search"
+              >
+                <X className="size-4" style={{ color: "var(--allura-text-2)" }} />
+              </button>
+            )}
+          </div>
+          {!isLoading && (
+            <p className="mt-2 text-xs" style={{ color: "var(--allura-text-3)" }}>
+              {resultsLabel}
+            </p>
+          )}
+        </div>
+      </section>
+
+      {/* ── Memory list ── */}
+      <section className="flex-1 px-4 pt-4 pb-16 sm:px-6">
+        <div className="mx-auto max-w-[640px]">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Spinner />
+            </div>
+          ) : memories.length === 0 ? (
+            <div className="memory-empty">
+              <h2
+                className="font-display"
+                style={{ fontFamily: "var(--font-family-display)", color: "var(--allura-charcoal)" }}
+              >
+                Nothing has been saved yet
+              </h2>
+              <p style={{ color: "var(--allura-text-2)" }}>
+                Once conversations or notes are stored, they will appear here as a warm record
+                of what Allura has learned.
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-xl overflow-hidden border" style={{ borderColor: "var(--allura-border-1)" }}>
+              {memories.map((memory) => {
+                const isForgotten = forgottenIds.has(memory.id)
+                return (
+                  <button
+                    key={memory.id}
+                    type="button"
+                    className={`memory-list-item w-full text-left ${isForgotten ? "memory-forgotten opacity-60" : ""}`}
+                    onClick={() => router.push(`/memory/${memory.id}`)}
+                    style={isForgotten ? undefined : undefined}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className="line-clamp-2 text-base font-medium leading-relaxed"
+                          style={{ color: "var(--allura-charcoal)" }}
+                        >
+                          {memory.content}
+                        </p>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                          <span className="memory-provenance">
+                            {provenanceLabel(memory)}
+                          </span>
+                          <span
+                            className="rounded-full px-2 py-0.5 text-xs font-medium"
+                            style={{
+                              background: "var(--allura-muted)",
+                              color: "var(--allura-text-2)",
+                            }}
+                          >
+                            {confidenceLabel(memory.score)}
+                          </span>
+                        </div>
+                      </div>
+                      <Clock
+                        className="mt-0.5 size-4 shrink-0"
+                        style={{ color: "var(--allura-text-3)" }}
+                      />
+                    </div>
+                    {isForgotten && (
+                      <p className="memory-forgotten-recovery-note">
+                        This memory has been forgotten. It can be restored within 30 days.
+                      </p>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {hasMore && memories.length > 0 && (
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                onClick={loadMore}
+                disabled={isLoadingMore}
+                className="rounded-lg px-5 py-2.5 text-sm font-medium transition-colors"
+                style={{
+                  border: "1px solid var(--allura-border-1)",
+                  background: "var(--allura-white)",
+                  color: "var(--allura-charcoal)",
+                }}
+              >
+                {isLoadingMore ? "Loading…" : "Load more memories"}
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── Forget confirmation ── */}
+      <AlertDialog open={forgetTarget !== null} onOpenChange={(open) => { if (!open) setForgetTarget(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Forget this memory?</AlertDialogTitle>
+            <AlertDialogDescription>
+              It will be moved aside and hidden from view. You can restore it within 30 days if you change your mind.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Keep it</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleForget}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Forgetting…" : "Forget it"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
-

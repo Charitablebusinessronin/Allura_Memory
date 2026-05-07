@@ -1,12 +1,14 @@
 "use client"
 
-import { useCallback, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { GraphEdge, GraphNode, SearchResult } from "./types"
 import { GraphCanvas } from "./GraphCanvas"
 import type { GraphCanvasHandle } from "./GraphCanvas"
 import { SearchBar } from "./SearchBar"
 import { DetailPane } from "./DetailPane"
 import { ResultList } from "./ResultList"
+
+const MOBILE_BREAKPOINT = 767
 
 interface MemoryExplorerProps {
   nodes: GraphNode[]
@@ -23,7 +25,33 @@ export function MemoryExplorer({ nodes, edges, className }: MemoryExplorerProps)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [query, setQuery] = useState("")
+  const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<GraphCanvasHandle>(null)
+
+  // Bug 1: Sync dark mode from OS-level prefers-color-scheme onto the component container.
+  // The .dark class on .memory-explorer scopes all dashboard-* variables to dark mode values,
+  // so graph canvas, labels, and UI surfaces render correctly regardless of stored pref.
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const mq = window.matchMedia("(prefers-color-scheme: dark)")
+    const apply = () => {
+      el.classList.toggle("dark", mq.matches)
+    }
+    apply()
+    mq.addEventListener("change", apply)
+    return () => mq.removeEventListener("change", apply)
+  }, [])
+
+  // Bug 3: Detect mobile viewport for graph → list fallback
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`)
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener("change", handler)
+    return () => mq.removeEventListener("change", handler)
+  }, [])
 
   const handleNodeClick = useCallback((id: string) => {
     setSelectedId((prev) => (prev === id ? null : id))
@@ -65,13 +93,23 @@ export function MemoryExplorer({ nodes, edges, className }: MemoryExplorerProps)
       }))
   }, [query, nodes])
 
+  // Mobile "all nodes" list (shown when no query on mobile)
+  const allNodesResults: SearchResult[] = useMemo(
+    () =>
+      nodes.map((n) => ({
+        node: n,
+        snippet: n.metadata?.content?.slice(0, 120),
+      })),
+    [nodes]
+  )
+
   const handleResultSelect = useCallback((nodeId: string) => {
     setSelectedId(nodeId)
     setQuery("")
   }, [])
 
   return (
-    <div className={`memory-explorer${className ? ` ${className}` : ""}`}>
+    <div ref={containerRef} className={`memory-explorer${className ? ` ${className}` : ""}`}>
       <SearchBar
         query={query}
         onChange={setQuery}
@@ -79,24 +117,35 @@ export function MemoryExplorer({ nodes, edges, className }: MemoryExplorerProps)
         hasResults={searchResults.length > 0}
       />
 
-      {/* Result list — shown when search has results */}
-      <ResultList
-        results={searchResults}
-        onSelect={handleResultSelect}
-        id="memory-explorer-result-list"
-      />
+      {isMobile ? (
+        /* Bug 3: Mobile — list view as primary surface; graph is hidden */
+        <ResultList
+          results={query.trim() ? searchResults : allNodesResults}
+          onSelect={handleResultSelect}
+          id="memory-explorer-result-list"
+        />
+      ) : (
+        <>
+          {/* Result list — shown when search has results */}
+          <ResultList
+            results={searchResults}
+            onSelect={handleResultSelect}
+            id="memory-explorer-result-list"
+          />
 
-      {/* Graph canvas — hidden on mobile (§8) */}
-      <GraphCanvas
-        ref={canvasRef}
-        nodes={nodes}
-        edges={edges}
-        selectedId={selectedId}
-        hoveredId={hoveredId}
-        detailOpenId={selectedId}
-        onNodeClick={handleNodeClick}
-        onNodeHover={handleNodeHover}
-      />
+          {/* Graph canvas — hidden below 768px via CSS */}
+          <GraphCanvas
+            ref={canvasRef}
+            nodes={nodes}
+            edges={edges}
+            selectedId={selectedId}
+            hoveredId={hoveredId}
+            detailOpenId={selectedId}
+            onNodeClick={handleNodeClick}
+            onNodeHover={handleNodeHover}
+          />
+        </>
+      )}
 
       {/* Single detail pane — overlays right side */}
       <DetailPane

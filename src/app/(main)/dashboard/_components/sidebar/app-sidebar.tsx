@@ -68,7 +68,7 @@ function NavLink({ item, isActive }: { item: NavMainItem; isActive: boolean }) {
           {Icon && <Icon className="size-5 shrink-0" />}
           <span>{item.title}</span>
           {item.isNew && (
-            <span className="ml-auto rounded-full bg-[var(--allura-orange)] px-1.5 py-0.5 text-[10px] font-semibold text-white">
+            <span className="ml-auto rounded-full bg-[var(--allura-orange)] px-1.5 py-0.5 text-[10px] font-semibold" style={{ color: "var(--allura-orange-on-text)" }}>
               New
             </span>
           )}
