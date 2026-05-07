@@ -5,6 +5,7 @@ mode: primary
 persona: Jobs
 category: Core
 type: primary
+path: core
 scope: harness
 platform: Both
 status: active

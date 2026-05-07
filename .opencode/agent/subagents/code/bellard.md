@@ -5,6 +5,7 @@ mode: subagent
 persona: Bellard
 category: Code Subagents
 type: specialist
+path: subagents/code
 scope: harness
 platform: Both
 status: active

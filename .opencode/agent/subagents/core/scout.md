@@ -5,6 +5,7 @@ mode: subagent
 persona: none
 category: Core Subagents
 type: utility
+path: subagents/core
 scope: harness
 platform: Both
 status: active

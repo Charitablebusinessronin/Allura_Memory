@@ -11,20 +11,34 @@ restored on the **OAC Core + Allura Overlay** architecture.
 
 ## Canonical Rule
 
-The flat files in `.opencode/agent/` are the only live agent definitions in this repo.
+The nested files in `.opencode/agent/` are the only live agent definitions in this repo.
+Structure follows the OAC Core pattern: `core/` for primary orchestrators, `subagents/` for
+delegated specialists grouped by domain.
 
 ```text
 .opencode/agent/
-├── brooks.md
-├── jobs.md
-├── woz.md
-├── scout.md
-├── pike.md
-├── fowler.md
-├── bellard.md
-├── carmack.md
-├── knuth.md
-└── hightower.md
+├── core/                          ← Primary orchestrators (mode: primary)
+│   ├── brooks.md                  ← Architect + Orchestrator
+│   ├── jobs.md                    ← Intent Gate
+│   ├── autopilot.md               ← YOLO execution mode
+│   └── openwork.md                ← Default safe agent
+│
+└── subagents/                     ← Delegated specialists (mode: subagent)
+    ├── code/                      ← Domain: coding & implementation
+    │   ├── woz.md                 ← Primary builder
+    │   ├── bellard.md             ← Diagnostics + perf
+    │   └── carmack.md             ← Performance & optimization
+    │
+    ├── core/                      ← Domain: cross-cutting services
+    │   └── scout.md               ← Recon + discovery (ContextScout)
+    │
+    ├── review/                    ← Domain: quality gates
+    │   ├── pike.md                ← Interface review
+    │   └── fowler.md              ← Refactor gate
+    │
+    └── infrastructure/            ← Domain: infra & data
+        ├── knuth.md               ← Data architect
+        └── hightower.md           ← DevOps
 ```
 
 ## ContextScout First Gate (MANDATORY)
@@ -71,18 +85,20 @@ Ralph may not execute unless this gate passes:
 
 ## Team RAM
 
-| Agent | Persona | Role |
-| --- | --- | --- |
-| Brooks | Frederick P. Brooks Jr. | Architecture and orchestration |
-| Jobs | Steve Jobs | Intent gate and scope owner |
-| Woz | Steve Wozniak | Primary builder |
-| Scout | Utility role | Discovery and recon (ContextScout) |
-| Pike | Rob Pike | Interface simplicity |
-| Fowler | Martin Fowler | Refactor safety |
-| Bellard | Fabrice Bellard | Deep diagnostics |
-| Carmack | John Carmack | Performance |
-| Knuth | Donald Knuth | Data and schema |
-| Hightower | Kelsey Hightower | Infra and deployment |
+| Agent | Persona | Role | Path |
+| --- | --- | --- | --- |
+| Brooks | Frederick P. Brooks Jr. | Architecture and orchestration | `core/` |
+| Jobs | Steve Jobs | Intent gate and scope owner | `core/` |
+| Autopilot | — | YOLO execution mode | `core/` |
+| OpenWork | — | Default safe agent | `core/` |
+| Woz | Steve Wozniak | Primary builder | `subagents/code/` |
+| Bellard | Fabrice Bellard | Deep diagnostics | `subagents/code/` |
+| Carmack | John Carmack | Performance | `subagents/code/` |
+| Scout | Utility role | Discovery and recon (ContextScout) | `subagents/core/` |
+| Pike | Rob Pike | Interface simplicity | `subagents/review/` |
+| Fowler | Martin Fowler | Refactor safety | `subagents/review/` |
+| Knuth | Donald Knuth | Data and schema | `subagents/infrastructure/` |
+| Hightower | Kelsey Hightower | Infra and deployment | `subagents/infrastructure/` |
 
 ## Team RAM as Overlay
 

@@ -5,6 +5,7 @@ mode: subagent
 persona: Wozniak
 category: Code Subagents
 type: subagent
+path: subagents/code
 scope: harness
 platform: Both
 status: active

@@ -2,14 +2,14 @@
 
 | Skill | Owner | Trigger | Required? | Overlaps With | Decision |
 |-------|-------|---------|-----------|---------------|----------|
-| roundtable | Brooks | Multi-agent discussion | ⬜ Overlay | party-mode | **Keep** — conversational multi-agent panel, complements execution-focused party-mode |
-| allura-memory-skill | Scout | Any Brain operation | ✅ Yes | none | **Keep** — mandatory Brain governance |
 | allura-approve-promotion | Brooks | HITL approval | ✅ Yes | allura-propose-promotion | **Keep** — promotion pipeline |
-| allura-propose-promotion | Brooks | Memory promotion | ✅ Yes | allura-approve-promotion | **Keep** — promotion pipeline |
 | allura-design | Durham agents | Brand/design tasks | ⬜ Overlay | huashu-design, figma-* | **Keep** — Allura-specific brand design |
 | allura-graph-debug | Bellard | Neo4j debugging | ⬜ Overlay | none | **Keep** — Neo4j diagnostics |
 | allura-health-observability | Hightower | Health checks | ⬜ Overlay | none | **Keep** — infra monitoring |
+| allura-memory-skill | Scout | Any Brain operation | ✅ Yes | none | **Keep** — mandatory Brain governance |
 | allura-menu | All | Navigation | ⬜ Overlay | none | **Keep** — Brain menu system |
+| allura-propose-promotion | Brooks | Memory promotion | ✅ Yes | allura-approve-promotion | **Keep** — promotion pipeline |
+| brainstorming | Woz | Design exploration | ⬜ Overlay | frontend-design, allura-design | **Keep** — ideation and concept development before design |
 | bun-security | Hightower | Security audit | ⬜ Overlay | none | **Keep** — Bun security checks |
 | code-review | Pike | Code review | ✅ Yes | none | **Keep** — review gate |
 | context7 | Scout | Library docs | ✅ Yes | none | **Keep** — external context discovery |
@@ -19,34 +19,39 @@
 | figma-generate-library | Woz | Library generation | ⬜ Overlay | none | **Keep** — Figma library |
 | figma-implement-design | Woz | Implementation | ⬜ Overlay | figma-code-connect | **Keep** — Figma implementation |
 | figma-use | Woz | Figma inspection | ⬜ Overlay | none | **Keep** — Figma inspection |
-| mcp-docker | All | MCP tool access | ✅ Yes | none | **Keep** — MCP gateway |
-| mcp-docker-ops | Hightower | MCP server lifecycle | ✅ Yes | mcp-docker | **Keep** — skill-embedded MCP operations wrapper; does not replace canonical mcp-docker gateway |
-| multi-search | Scout | Web search | ✅ Yes | context7 | **Keep** — search capability |
-| perplexica-search | Scout | External web research | ⬜ Overlay | multi-search | **Keep** — self-hosted Perplexica research path |
-| postgres-best-practices | Knuth | DB patterns | ⬜ Overlay | none | **Keep** — PostgreSQL guidance |
-| brainstorming | Woz | Design exploration | ⬜ Overlay | frontend-design, allura-design | **Keep** — ideation and concept development before design |
 | frontend-craft | Woz | Frontend engineering | ⬜ Overlay | frontend-design, impeccable | **Keep** — Brooksian frontend workflow, implementation companion |
 | frontend-design | Woz | UI/UX design | ⬜ Overlay | brainstorming, huashu-design, impeccable | **Keep** — production-grade design for Next.js + Tailwind + ForceGraph2D |
 | github | Pike | GitHub integration | ⬜ Overlay | code-review, mcp-docker | **Keep** — GitHub workflows, PRs, issues, secrets scanning |
+| mcp-docker | All | MCP tool access | ✅ Yes | none | **Keep** — MCP gateway |
+| mcp-docker-ops | Hightower | MCP server lifecycle | ✅ Yes | mcp-docker | **Keep** — skill-embedded MCP operations wrapper |
 | mcp-harness | Hightower | MCP orchestration | ⬜ Overlay | mcp-docker, mcp-docker-ops | **Keep** — MCP server discovery and governance |
-| memory-client | Scout | Brain field guide | ⬜ Overlay | allura-memory-skill | **Keep** — agent-oriented Allura Brain usage patterns |
+| multi-search | Scout | Web search | ✅ Yes | context7 | **Keep** — search capability |
 | party-mode | Brooks | Parallel dispatch | ⬜ Overlay | roundtable, mcp-harness | **Keep** — Team RAM surgical team coordination |
-| quick-update | Scout | Doc sync | ⬜ Overlay | memory-client, allura-memory-skill | **Keep** — quick documentation updates from memory context |
+| perplexica-search | Scout | External web research | ⬜ Overlay | multi-search | **Keep** — self-hosted Perplexica research path |
+| postgres-best-practices | Knuth | DB patterns | ⬜ Overlay | none | **Keep** — PostgreSQL guidance |
+| quick-update | Scout | Doc sync | ⬜ Overlay | allura-memory-skill | **Keep** — quick documentation updates from memory context |
+| roundtable | Brooks | Multi-agent discussion | ⬜ Overlay | party-mode | **Keep** — conversational multi-agent panel, complements execution-focused party-mode |
 | security-bluebook-builder | Pike | Security policy | ⬜ Overlay | code-review | **Keep** — threat model, auth, audit, retention policy |
-| skill-creator | Brooks | Skill authoring | ⬜ Overlay | mcp-harness, skill-creator | **Keep** — skill creation and optimization workflow |
-| systematic-debugging-memory | Bellard | Debugging + memory | ⬜ Overlay | memory-client, allura-memory-skill | **Keep** — 5-phase debugging with persistent knowledge |
+| skill-creator | Brooks | Skill authoring | ⬜ Overlay | mcp-harness | **Keep** — skill creation and optimization workflow |
 | task-creator | Woz | Task generation | ⬜ Overlay | task-management | **Keep** — structured task creation with Brain integration |
-| task-management | Woz | Task CLI | ⬜ Overlay | task-creator, memory-client | **Keep** — feature subtask tracking with memory linkage |
+| task-management | Woz | Task CLI | ⬜ Overlay | task-creator, allura-memory-skill | **Keep** — feature subtask tracking with memory linkage |
 | varlock | Hightower | Env var security | ⬜ Overlay | bun-security | **Keep** — secrets management and non-exposure guardrails |
 
-**Total: 37 skills** — 6 Required (core gates), 31 Overlay (project-specific, all owned)
+**Total: 35 skills** — 6 Required (core gates), 29 Overlay (project-specific)
 
-**No skills deleted.** All 37 skills have clear ownership, triggers, and documented relationships.
+**Deleted / archived:**
+- `systematic-debugging-memory` — archived to `.opencode/archive/skills-2026-05-07/`
+- `executing-plans` — removed (orphan)
+- `plugin-creator` — removed (orphan)
+- `subagent-driven-development` — removed (orphan)
+- `superpowers-memory` — removed (orphan)
+- `trailofbits-audit` — removed (orphan)
+- `writing-plans` — removed (orphan)
+- `readme-memory` — removed (orphan)
 
-**Decision Log:**
-- **Deleted 8 dead orphans** (executing-plans, impeccable, plugin-creator, subagent-driven-development, superpowers-memory, trailofbits-audit, writing-plans, readme-memory)
-- **Consolidated 0 skills** — all 14 live orphans have distinct purposes; kept all
-- **Promoted all 14 orphans to matrix** with explicit owner, trigger, and relationship documentation
+**Ghost entries removed:**
+- `penpot-design` — referenced in manifest but never on disk; removed from manifest.json
+- `memory-client` — former name for `allura-memory-skill`; table standardized
 
 **Special attention items:**
 - `allura-memory-skill`: Mandatory for all agents. Cannot be removed without breaking Brain integration.
@@ -56,4 +61,4 @@
 - Ralph-related: `ralph.md` is a command, not a skill. Ralph's execution is gated by the ContextScout + skill gate (R5).
 
 ---
-*Generated: 2026-05-03 | Part of OAC Core Restoration PRD*
+*Generated: 2026-05-07 | Part of Skill Triage Run*

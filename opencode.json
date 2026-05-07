@@ -18,6 +18,9 @@
     }
   },
   "model": "ollama-cloud/glm-5.1",
+  "permission": {
+    "*": "allow"
+  },
   "plugin": [
     "opencode-scheduler"
   ]

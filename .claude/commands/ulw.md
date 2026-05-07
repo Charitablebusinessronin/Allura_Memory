@@ -20,16 +20,16 @@ Parse the arguments. Default mode is **ulw**.
 1. **Read** `ralph/PROMPT_ulw.md` — follow instructions exactly (Team RAM routing, Allura rules)
 2. **Read** `ralph/IMPLEMENTATION_PLAN.md` — find the first unfinished [ ] task
 3. **Classify task type** and assume appropriate Team RAM persona:
-   - Architecture → Brooks (`.opencode/agent/brooks.md`)
-   - Code implementation → Woz (`.opencode/agent/woz.md`)
-   - Refactoring → Fowler (`.opencode/agent/fowler.md`)
-   - Performance diagnostics → Bellard (`.opencode/agent/bellard.md`)
-   - Performance optimization → Carmack (`.opencode/agent/carmack.md`)
-   - Database/schema → Knuth (`.opencode/agent/knuth.md`)
-   - DevOps/infra → Hightower (`.opencode/agent/hightower.md`)
-   - API/interface → Pike (`.opencode/agent/pike.md`)
-   - Scope/acceptance → Jobs (`.opencode/agent/jobs.md`)
-   - Discovery → Scout (`.opencode/agent/scout.md`)
+   - Architecture → Brooks (`.opencode/agent/core/brooks.md`)
+   - Code implementation → Woz (`.opencode/agent/subagents/code/woz.md`)
+   - Refactoring → Fowler (`.opencode/agent/subagents/review/fowler.md`)
+   - Performance diagnostics → Bellard (`.opencode/agent/subagents/code/bellard.md`)
+   - Performance optimization → Carmack (`.opencode/agent/subagents/code/carmack.md`)
+   - Database/schema → Knuth (`.opencode/agent/subagents/infrastructure/knuth.md`)
+   - DevOps/infra → Hightower (`.opencode/agent/subagents/infrastructure/hightower.md`)
+   - API/interface → Pike (`.opencode/agent/subagents/review/pike.md`)
+   - Scope/acceptance → Jobs (`.opencode/agent/core/jobs.md`)
+   - Discovery → Scout (`.opencode/agent/subagents/core/scout.md`)
 4. **Search codebase** before implementing — don't assume something is missing
 5. **Implement task completely** — no stubs, no placeholders
 6. **Validate:** `bun run typecheck && bun test`

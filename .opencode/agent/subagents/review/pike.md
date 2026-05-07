@@ -3,8 +3,9 @@ name: PIKE_INTERFACE_REVIEW
 description: "SPECIALIST — Interface + simplicity gate. Reviews surface area, concurrency hazards, and API ergonomics. Vetoes unnecessary complexity."
 mode: subagent
 persona: Pike
-category: Core Subagents
+category: Review Subagents
 type: specialist
+path: subagents/review
 scope: harness
 platform: Both
 status: active

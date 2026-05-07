@@ -3,8 +3,9 @@ name: FOWLER_REFACTOR_GATE
 description: "SPECIALIST — Maintainability gate. Ensures changes are incremental, reversible, and don't add debt. Owns refactor slices and documentation of design drift."
 mode: subagent
 persona: Fowler
-category: Core Subagents
+category: Review Subagents
 type: specialist
+path: subagents/review
 scope: harness
 platform: Both
 status: active

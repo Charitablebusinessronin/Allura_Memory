@@ -10,7 +10,7 @@
 - Validation Commands: Add Playwright/E2E commands for token compliance and layout validation  
 
 **Tech Stack:** Next.js App Router + Tailwind CSS + ForceGraph2D + Allura tokens (v2.0)  
-**Spec:** `.opencode/agent/woz.md`, `src/lib/brand/allura.ts`, `src/styles/brand-tokens.css`  
+**Spec:** `.opencode/agent/subagents/code/woz.md`, `src/lib/brand/allura.ts`, `src/styles/brand-tokens.css`  
 **Requirements:** This plan satisfies Token Authority, Blueprint brand canon, Graph View UI scope, and Memory Viewer alignment.
 
 ---
