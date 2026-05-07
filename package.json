@@ -56,6 +56,7 @@
     "registry:dry-run": "bun run scripts/opencode-registry/sync.ts --dry-run",
     "registry:log-audit": "bun run scripts/opencode-registry/log-audit.ts",
     "registry:drift": "bun run scripts/drift-detection.ts",
+    "check:skill-governance": "bun scripts/check-skill-governance.ts",
     "ports:check": "bun scripts/check-ports.ts",
     "ports:generate": "bun -e \"console.log(require('./src/lib/config/ports').generateEnvEntries(true))\"",
     "curator:process-pending": "bun run src/scripts/process-pending-proposals.ts",

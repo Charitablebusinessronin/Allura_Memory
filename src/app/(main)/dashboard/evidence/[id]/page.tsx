@@ -235,7 +235,7 @@ export default function EvidenceDetailPage({ params }: { params: Promise<{ id: s
   return (
     <div className="space-y-6">
       <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/evidence")} className="gap-1.5">
-        <ArrowLeft className="h-4 w-4" /> Back to Memory Feed
+        <ArrowLeft className="h-4 w-4" /> Back to Evidence
       </Button>
 
       <PageHeader

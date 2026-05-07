@@ -208,10 +208,15 @@ describe("BudgetMonitor", () => {
     });
 
     it("should update utilization", () => {
+      // Use custom limits to make the math simple
+      const customMonitor = createBudgetMonitor();
+      const customLimits: BudgetLimits = { ...DEFAULT_BUDGET_LIMITS, maxSteps: 50 };
+      const customSession: SessionId = { groupId: "test-group", agentId: "test-agent", sessionId: "session-util" };
+      customMonitor.startSession(customSession, customLimits);
       for (let i = 0; i < 25; i++) {
-        monitor.incrementStep(sessionId);
+        customMonitor.incrementStep(customSession);
       }
-      const status = monitor.getStatus(sessionId);
+      const status = customMonitor.getStatus(customSession);
       expect(status?.utilization.steps).toBe(50); // 25/50 = 50%
     });
   });
@@ -229,9 +234,9 @@ describe("BudgetMonitor", () => {
 
       warningMonitor.startSession(sessionId);
 
-      // Use 80% of tokens
+      // Use 80% of tokens (500000 * 0.8 = 400000)
       const usage: TokenUsage = {
-        inputTokens: 80000,
+        inputTokens: 400000,
         outputTokens: 0,
         model: "gpt-4o",
       };
@@ -252,9 +257,9 @@ describe("BudgetMonitor", () => {
 
       breachMonitor.startSession(sessionId);
 
-      // Use 100% of tokens
+      // Use 100% of tokens (500000)
       const usage: TokenUsage = {
-        inputTokens: 100000,
+        inputTokens: 500000,
         outputTokens: 0,
         model: "gpt-4o",
       };
@@ -272,9 +277,9 @@ describe("BudgetMonitor", () => {
 
       warningMonitor.startSession(sessionId);
 
-      // Use exactly 80% of tokens - triggers warning80
+      // Use exactly 80% of tokens (400000) - triggers warning80
       const usage: TokenUsage = {
-        inputTokens: 80000,
+        inputTokens: 400000,
         outputTokens: 0,
         model: "gpt-4o",
       };
@@ -282,9 +287,9 @@ describe("BudgetMonitor", () => {
       warningMonitor.trackTokens(sessionId, usage);
       expect(onWarning).toHaveBeenCalledTimes(1);
 
-      // Use more tokens but still below 90% - should NOT trigger another warning
+      // Use more tokens but still below 90% (425000/500000 = 85%) - should NOT trigger another warning
       const usage2: TokenUsage = {
-        inputTokens: 5000,
+        inputTokens: 25000,
         outputTokens: 0,
         model: "gpt-4o",
       };
@@ -365,26 +370,30 @@ describe("BudgetMonitor", () => {
     });
 
     it("should detect token breach", () => {
-      monitor.startSession(sessionId);
+      const customLimits: BudgetLimits = { ...DEFAULT_BUDGET_LIMITS, maxTokens: 100000 };
+      const breachSession: SessionId = { groupId: "test-group", agentId: "test-agent", sessionId: "session-breach-tok" };
+      monitor.startSession(breachSession, customLimits);
       const usage: TokenUsage = {
         inputTokens: 100000,
         outputTokens: 0,
         model: "gpt-4o",
       };
-      monitor.trackTokens(sessionId, usage);
+      monitor.trackTokens(breachSession, usage);
 
-      const result = monitor.hasBreachedLimit(sessionId);
+      const result = monitor.hasBreachedLimit(breachSession);
       expect(result.breached).toBe(true);
       expect(result.categories).toContain("tokens");
     });
 
     it("should detect step breach", () => {
-      monitor.startSession(sessionId);
+      const customLimits: BudgetLimits = { ...DEFAULT_BUDGET_LIMITS, maxSteps: 50 };
+      const breachSession: SessionId = { groupId: "test-group", agentId: "test-agent", sessionId: "session-breach-step" };
+      monitor.startSession(breachSession, customLimits);
       for (let i = 0; i < 50; i++) {
-        monitor.incrementStep(sessionId);
+        monitor.incrementStep(breachSession);
       }
 
-      const result = monitor.hasBreachedLimit(sessionId);
+      const result = monitor.hasBreachedLimit(breachSession);
       expect(result.breached).toBe(true);
       expect(result.categories).toContain("steps");
     });

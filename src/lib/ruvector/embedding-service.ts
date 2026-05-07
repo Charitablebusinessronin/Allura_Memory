@@ -31,6 +31,7 @@ const DEFAULT_BASE_URL = "http://localhost:11434";
 
 /** Request timeout in milliseconds */
 const REQUEST_TIMEOUT_MS = 30_000;
+const WARMUP_REQUEST_TIMEOUT_MS = 5_000;
 
 /** Max concurrent embedding requests in batch */
 const BATCH_CONCURRENCY = 5;
@@ -71,14 +72,14 @@ interface OpenAIEmbeddingResponse {
  * @param text - The text to embed
  * @returns Embedding vector (number[]) or null if generation failed
  */
-export async function generateEmbedding(text: string): Promise<number[] | null> {
+export async function generateEmbedding(text: string, timeoutMs: number = REQUEST_TIMEOUT_MS): Promise<number[] | null> {
   const baseUrl = getBaseUrl();
   const model = getModel();
   const url = `${baseUrl}/v1/embeddings`;
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     const response = await fetch(url, {
       method: "POST",
@@ -113,6 +114,15 @@ export async function generateEmbedding(text: string): Promise<number[] | null> 
     console.warn(`[RuVector Embedding] Failed to generate embedding: ${message}`);
     return null;
   }
+}
+
+/**
+ * Warm the embedding model during startup.
+ * Uses a shorter timeout so boot can continue even if Ollama is slow.
+ */
+export async function warmupEmbedding(): Promise<boolean> {
+  const embedding = await generateEmbedding("Allura embedding warmup", WARMUP_REQUEST_TIMEOUT_MS);
+  return embedding !== null;
 }
 
 /**

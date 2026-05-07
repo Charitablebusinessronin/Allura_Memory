@@ -22,6 +22,7 @@ import {
   generateEmbedding,
   generateEmbeddingBatch,
   getEmbeddingDimensions,
+  warmupEmbedding,
 } from "./embedding-service";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -278,5 +279,30 @@ describe("RuVector Embedding Service — getEmbeddingDimensions", () => {
     const second = getEmbeddingDimensions();
     expect(first).toBe(second);
     expect(first).toBe(1024);
+  });
+});
+
+describe("RuVector Embedding Service — warmupEmbedding", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    delete process.env.RUVECTOR_EMBEDDING_MODEL;
+    delete process.env.RUVECTOR_EMBEDDING_BASE_URL;
+  });
+
+  it("should warm the embedding model successfully", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: vi.fn().mockResolvedValueOnce(makeEmbeddingResponse()),
+      text: vi.fn(),
+    });
+
+    await expect(warmupEmbedding()).resolves.toBe(true);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("should return false when warmup fails", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("connection refused"));
+
+    await expect(warmupEmbedding()).resolves.toBe(false);
   });
 });

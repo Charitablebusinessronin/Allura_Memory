@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import { toast } from "sonner"
 
 import { EmptyState, ErrorState, InsightActions, InsightCard, LoadingState, PageHeader, SearchResultsSkeleton, WarningList } from "@/components/dashboard"
 import { approveProposal, rejectProposal } from "@/lib/dashboard/api"
@@ -24,6 +25,7 @@ export default function CuratorPage() {
     setActionError(null)
     try {
       await approveProposal(id)
+      toast.success("Insight approved")
       refresh()
     } catch (error) {
       setActionError(error instanceof Error ? error.message : "Approval failed")
@@ -37,6 +39,7 @@ export default function CuratorPage() {
     setActionError(null)
     try {
       await rejectProposal(id)
+      toast.success("Insight rejected")
       refresh()
     } catch (error) {
       setActionError(error instanceof Error ? error.message : "Rejection failed")

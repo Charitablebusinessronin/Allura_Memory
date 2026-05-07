@@ -25,6 +25,8 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js"
 
 import { coordinator } from "@/lib/memory/memory-coordinator"
+import { bootstrapMemoryServer } from "./startup"
+import { cleanupMemoryState } from "./cleanup"
 
 // Server setup
 const server = new Server(
@@ -351,6 +353,20 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["group_id"],
         },
       },
+      {
+        name: "memory_cleanup",
+        description:
+          "Reset halted budget sessions for a group (or all groups if omitted). Useful for clearing stale boot state without touching stored memories.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            group_id: {
+              type: "string",
+              description: "Optional: Tenant namespace (format: allura-*)",
+            },
+          },
+        },
+      },
     ],
   }
 })
@@ -396,6 +412,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "memory_list_deleted":
         envelope = await coordinator.memory_list_deleted(args as any)
         break
+      case "memory_cleanup":
+        envelope = {
+          data: cleanupMemoryState((args as any)?.group_id),
+          meta: { contract_version: "v1", degraded: false, stores_used: [], stores_attempted: [], warnings: [] },
+          error: null,
+        }
+        break
       default:
         return {
           content: [
@@ -438,6 +461,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 // Start server
 async function main() {
   const transport = new StdioServerTransport()
+  await bootstrapMemoryServer()
   await server.connect(transport)
   console.error("Allura Memory MCP Server (Canonical) running on stdio")
 }

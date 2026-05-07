@@ -2,6 +2,7 @@
 
 
 import { Activity, Brain, Lightbulb, MoreHorizontal, Users } from "lucide-react"
+import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 
 import {
@@ -12,6 +13,7 @@ import {
   PageHeader,
   WarningList,
 } from "@/components/dashboard"
+import { Button } from "@/components/ui/button"
 import { loadGraphNodes } from "@/lib/dashboard/queries"
 import type { DashboardResult, GraphEdge, GraphNode } from "@/lib/dashboard/types"
 import { cn } from "@/lib/utils"
@@ -131,8 +133,12 @@ function AgentCard({
           </div>
         </div>
         <div className="mt-4 flex items-center gap-2">
-          <button className="agency-btn secondary text-xs">View Graph</button>
-          <button className="agency-btn ghost text-xs">View Evidence</button>
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/dashboard/graph">View Graph</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/dashboard/evidence">View Evidence</Link>
+          </Button>
         </div>
       </div>
     </article>
@@ -160,9 +166,6 @@ function AgentsPageContent({ state }: { state: DashboardResult<{ nodes: GraphNod
       <PageHeader
         title="Agents"
         description="Agents observed in real Brain memory provenance and graph relationships."
-        action={
-          <button className="agency-btn primary text-sm">Manage Agents</button>
-        }
       />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map((m) => (

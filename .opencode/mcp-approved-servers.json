@@ -19,9 +19,10 @@
         "memory_delete",
         "memory_promote",
         "memory_export",
-        "memory_restore"
+        "memory_restore",
+        "memory_cleanup"
       ],
-      "rationale": "Core governed memory system. All agents must search before acting and write after completing."
+      "rationale": "Core governed memory system. All agents must search before acting and write after completing. memory_cleanup resets halted budget sessions for admin recovery."
     },
     "neo4j-memory": {
       "status": "approved",

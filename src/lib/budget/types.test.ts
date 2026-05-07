@@ -18,11 +18,11 @@ import type { BudgetLimits, LLMPricing, SessionId, TokenUsage } from "./types";
 describe("Budget Types", () => {
   describe("DEFAULT_BUDGET_LIMITS", () => {
     it("should have sensible default values", () => {
-      expect(DEFAULT_BUDGET_LIMITS.maxTokens).toBe(100000);
-      expect(DEFAULT_BUDGET_LIMITS.maxToolCalls).toBe(100);
-      expect(DEFAULT_BUDGET_LIMITS.maxTimeMs).toBe(300000);
-      expect(DEFAULT_BUDGET_LIMITS.maxCostUsd).toBe(10.0);
-      expect(DEFAULT_BUDGET_LIMITS.maxSteps).toBe(50);
+      expect(DEFAULT_BUDGET_LIMITS.maxTokens).toBe(500000);
+      expect(DEFAULT_BUDGET_LIMITS.maxToolCalls).toBe(300);
+      expect(DEFAULT_BUDGET_LIMITS.maxTimeMs).toBe(86400000);
+      expect(DEFAULT_BUDGET_LIMITS.maxCostUsd).toBe(250.0);
+      expect(DEFAULT_BUDGET_LIMITS.maxSteps).toBe(5000);
     });
   });
 

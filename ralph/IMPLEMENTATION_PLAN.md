@@ -413,6 +413,47 @@
   - Reference: AI-GUIDELINES.md §8 — "Stale documents (> 90 days) should be flagged in the next team retrospective"
   - Acceptance: CI workflow exists, runs on PRs, surfaces stale-doc warnings
 
+## S11 Tasks: Skill & Command Governance Hardening
+
+**Decision:** governance first, pruning second. `frontend-design` owns repo-native page intent; `allura-design` becomes the Brain membrane/router; `huashu-design` remains the external prototype engine.
+
+### P0 Tasks (MUST complete first)
+
+- [ ] **S11-1**: Create executable skill-governance check
+  - Files: `scripts/check-skill-governance.ts`, `package.json`
+  - Inputs: `.opencode/SKILL-OWNERSHIP.md`, `.opencode/agent/*.md`, `.opencode/skills/*/SKILL.md`, `.opencode/command/*.md`
+  - Checks:
+    - skills on disk vs ownership matrix
+    - ownership matrix vs live agent roster
+    - orphan skill count and missing skill count
+    - trigger overlap hotspots (`allura-design`, `frontend-design`, `frontend-craft`, `huashu-design`)
+    - dead skills with no owner / no route
+  - Output: human-readable table + JSON summary
+  - Acceptance: `bun run scripts/check-skill-governance.ts` reports current drift; `bun run scripts/check-skill-governance.ts --strict` fails once the triage list is enforced
+  - Validation: `bun run typecheck && bun test && bun run scripts/check-skill-governance.ts`
+
+### P1 Tasks (after P0)
+
+- [ ] **S11-2**: Add governance check to CI
+  - Files: `.github/workflows/ai-guidelines-check.yml`
+  - Run the new governance check in advisory mode on PRs
+  - Promote to blocking only after the current drift is triaged
+  - Acceptance: PR CI surfaces skill/command drift alongside stale-doc warnings
+
+- [ ] **S11-3**: Triage the 28 orphan skills and overlap hotspots
+  - Files: `.opencode/SKILL-OWNERSHIP.md`, `.opencode/skills/allura-design/SKILL.md`, `.opencode/skills/frontend-design/SKILL.md`, `.opencode/skills/frontend-craft/SKILL.md`, `.opencode/skills/huashu-design/SKILL.md`
+  - Classify each orphan as keep / merge / delete
+  - Narrow triggers so one intent maps to one owning surface
+  - Acceptance: no shared "design a page" ownership; `allura-design` is membrane-only
+
+### P2 Tasks (after P1)
+
+- [ ] **S11-4**: Reconcile command and roster drift
+  - Files: `.opencode/skills/party-mode/SKILL.md`, `.opencode/agent/brooks.md`, `.opencode/AGENTS.md`
+  - Add missing roster entries (notably Jobs)
+  - Reduce command synonym drift (`CA` vs `VA`, `NX` vs `GO`)
+  - Acceptance: roster and menu match the live agent surface and command names are non-overlapping
+
 ## Progress Log
 
 | Time | Task | Action | Result |

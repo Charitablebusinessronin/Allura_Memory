@@ -265,6 +265,13 @@ services:
       - GRAPH_BACKEND=${GRAPH_BACKEND:-neo4j}
       - DEFAULT_GROUP_ID=${DEFAULT_GROUP_ID:-allura-roninmemory}
       - RUVIX_KERNEL_SECRET=${RUVIX_KERNEL_SECRET:-}
+      # Budget circuit breaker tuning for agent memory writes.
+      # Prevents long-lived Brooks sessions from halting on timeMs during normal work.
+      - BUDGET_MAX_TIME_MS=${BUDGET_MAX_TIME_MS:-604800000}
+      - BUDGET_MAX_STEPS=${BUDGET_MAX_STEPS:-5000}
+      - BUDGET_MAX_RPM=${BUDGET_MAX_RPM:-120}
+      - BUDGET_MAX_TOKENS_PER_HOUR=${BUDGET_MAX_TOKENS_PER_HOUR:-500000}
+      - BUDGET_MAX_COST_USD=${BUDGET_MAX_COST_USD:-250.0}
     networks:
       - knowledge-network
     command: ["bun", "run", "src/mcp/canonical-http-gateway.ts"]

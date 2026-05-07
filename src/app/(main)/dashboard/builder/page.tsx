@@ -10,6 +10,7 @@ import {
   XCircle,
 } from "lucide-react"
 import { useEffect, useState, useTransition } from "react"
+import { toast } from "sonner"
 
 import {
   EmptyState,
@@ -252,6 +253,7 @@ export default function BuilderPage() {
     setActionError(null)
     try {
       await approveProposal(id)
+      toast.success("Insight approved")
       loadQueue()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Approval failed.")
@@ -262,6 +264,7 @@ export default function BuilderPage() {
     setActionError(null)
     try {
       await rejectProposal(id)
+      toast.success("Insight rejected")
       loadQueue()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Rejection failed.")

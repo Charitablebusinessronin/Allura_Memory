@@ -49,10 +49,10 @@ describe("BudgetEnforcer", () => {
     });
 
     it("should detect warnings at 80%", async () => {
-      // Use 80% of tokens
+      // Use 80% of tokens (500000 * 0.8 = 400000)
       const monitor = enforcer.getMonitor();
       monitor.trackTokens(sessionId, {
-        inputTokens: 80000,
+        inputTokens: 400000,
         outputTokens: 0,
         model: "gpt-4o",
       });
@@ -77,9 +77,9 @@ describe("BudgetEnforcer", () => {
       haltEnforcer.startSession(sessionId);
       const monitor = haltEnforcer.getMonitor();
 
-      // Exceed token limit — monitor auto-halts via onBreach callback
+      // Exceed token limit (500000) — monitor auto-halts via onBreach callback
       monitor.trackTokens(sessionId, {
-        inputTokens: 100000,
+        inputTokens: 500000,
         outputTokens: 0,
         model: "gpt-4o",
       });
@@ -105,15 +105,24 @@ describe("BudgetEnforcer", () => {
     });
 
     it("should halt when Kmax reached", async () => {
-      // Use default maxSteps of 50
+      // Use custom enforcer with small maxSteps for efficient testing
+      const smallEnforcer = createBudgetEnforcer({
+        budgetConfig: {
+          ...DEFAULT_BUDGET_CONFIG,
+          defaults: { ...DEFAULT_BUDGET_CONFIG.defaults, maxSteps: 50 },
+        },
+      });
+      const kmaxSession: SessionId = { groupId: "test-group", agentId: "test-agent", sessionId: "session-kmax" };
+      smallEnforcer.startSession(kmaxSession);
+
       // After 49 steps, we're still within limit
       for (let i = 0; i < 49; i++) {
-        const result = await enforcer.recordStep(sessionId);
+        const result = await smallEnforcer.recordStep(kmaxSession);
         expect(result.allowed).toBe(true);
       }
 
       // The 50th step should breach (50 >= 50)
-      const result = await enforcer.recordStep(sessionId);
+      const result = await smallEnforcer.recordStep(kmaxSession);
       expect(result.allowed).toBe(false);
       expect(result.haltReason?.type).toBe("kmax_exceeded");
     });
@@ -143,8 +152,9 @@ describe("BudgetEnforcer", () => {
 
     it("should return false when tokens limit reached", () => {
       const monitor = enforcer.getMonitor();
+      // Exceed token limit (500000)
       monitor.trackTokens(sessionId, {
-        inputTokens: 100000,
+        inputTokens: 500000,
         outputTokens: 0,
         model: "gpt-4o",
       });
@@ -152,10 +162,19 @@ describe("BudgetEnforcer", () => {
     });
 
     it("should return false when steps limit reached", () => {
+      // Use custom enforcer with small maxSteps for efficient testing
+      const smallEnforcer = createBudgetEnforcer({
+        budgetConfig: {
+          ...DEFAULT_BUDGET_CONFIG,
+          defaults: { ...DEFAULT_BUDGET_CONFIG.defaults, maxSteps: 50 },
+        },
+      });
+      const stepsSession: SessionId = { groupId: "test-group", agentId: "test-agent", sessionId: "session-steps" };
+      smallEnforcer.startSession(stepsSession);
       for (let i = 0; i < 50; i++) {
-        enforcer.getMonitor().incrementStep(sessionId);
+        smallEnforcer.getMonitor().incrementStep(stepsSession);
       }
-      expect(enforcer.canContinue(sessionId)).toBe(false);
+      expect(smallEnforcer.canContinue(stepsSession)).toBe(false);
     });
   });
 
@@ -230,9 +249,9 @@ describe("BudgetEnforcer", () => {
       enforcer.startSession(sessionId);
       const monitor = enforcer.getMonitor();
 
-      // Use 85% of tokens (between warning thresholds)
+      // Use 85% of tokens (500000 * 0.85 = 425000)
       monitor.trackTokens(sessionId, {
-        inputTokens: 85000,
+        inputTokens: 425000,
         outputTokens: 0,
         model: "gpt-4o",
       });
@@ -245,16 +264,16 @@ describe("BudgetEnforcer", () => {
       enforcer.startSession(sessionId);
       const monitor = enforcer.getMonitor();
 
-      // Use 95% of tokens (warning but not breach)
+      // Use 95% of tokens (500000 * 0.95 = 475000)
       monitor.trackTokens(sessionId, {
-        inputTokens: 95000,
+        inputTokens: 475000,
         outputTokens: 0,
         model: "gpt-4o",
       });
 
       // Then exceed — monitor auto-halts via onBreach callback
       monitor.trackTokens(sessionId, {
-        inputTokens: 10000,
+        inputTokens: 50000,
         outputTokens: 0,
         model: "gpt-4o",
       });

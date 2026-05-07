@@ -560,10 +560,13 @@ export class BudgetEnforcer {
       case "tokens":
         return { type: "token_limit", consumed: breach.consumed, limit: breach.limit };
       case "tool_calls":
+      case "toolCalls": // camelCase alias from BudgetMonitor.checkThresholds
         return { type: "tool_call_limit", consumed: breach.consumed, limit: breach.limit };
       case "time_ms":
+      case "timeMs": // camelCase alias from BudgetMonitor.checkThresholds
         return { type: "time_limit", elapsedMs: breach.consumed, limitMs: breach.limit };
       case "cost_usd":
+      case "costUsd": // camelCase alias from BudgetMonitor.checkThresholds
         return { type: "cost_limit", consumedUsd: breach.consumed, limitUsd: breach.limit };
       case "steps":
         return { type: "kmax_exceeded", currentStep: state.currentStep, maxSteps: breach.limit };
@@ -572,14 +575,30 @@ export class BudgetEnforcer {
     }
   }
 
+  /**
+   * Normalize category strings to canonical snake_case.
+   * BudgetMonitor.checkThresholds passes camelCase (e.g., "timeMs"),
+   * but BudgetCategory type is snake_case (e.g., "time_ms").
+   * This mapping ensures consistent halt reasons and logging.
+   */
+  private static normalizeCategory(category: string): BudgetCategory {
+    const aliases: Record<string, BudgetCategory> = {
+      toolCalls: "tool_calls",
+      timeMs: "time_ms",
+      costUsd: "cost_usd",
+    };
+    return aliases[category] ?? (category as BudgetCategory);
+  }
+
   private handleBreach(
     sessionId: SessionId,
     category: string,
     consumed: number,
     limit: number,
   ): void {
+    const normalized = BudgetEnforcer.normalizeCategory(category);
     const key = this.sessionKey(sessionId);
-    console.warn(`[BudgetEnforcer] Breach detected for ${key}: ${category} at ${consumed}/${limit}`);
+    console.warn(`[BudgetEnforcer] Breach detected for ${key}: ${normalized} at ${consumed}/${limit}`);
 
     // Auto-halt on breach — prevents ghosted sessions from spamming warnings.
     // Must be synchronous: this is called from the monitor's synchronous
@@ -590,7 +609,7 @@ export class BudgetEnforcer {
       if (state) {
         const haltReason = this.createHaltReason(
           {
-            category: category as BudgetCategory,
+            category: normalized,
             consumed,
             limit,
             utilizationPercent: 100,

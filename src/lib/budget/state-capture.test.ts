@@ -204,7 +204,7 @@ describe("StateCapture", () => {
       const report = capture.createBudgetReport(state);
 
       expect(report.tokens.total).toBe(50000);
-      expect(report.tokens.percentUtilized).toBe(50);
+      expect(report.tokens.percentUtilized).toBe(10); // 50000/500000 = 10%
     });
 
     it("should calculate tool call success rate", () => {
