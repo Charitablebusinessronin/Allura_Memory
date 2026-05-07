@@ -1,10 +1,12 @@
 "use client"
 
+import { useCallback, useRef } from "react"
 import type { SearchResult } from "./types"
 
 interface ResultListProps {
   results: SearchResult[]
   onSelect: (nodeId: string) => void
+  id?: string
 }
 
 /**
@@ -12,11 +14,53 @@ interface ResultListProps {
  * Used when graph is collapsed (<768px) or search has results
  * Replaces graph interaction on mobile
  */
-export function ResultList({ results, onSelect }: ResultListProps) {
+export function ResultList({ results, onSelect, id }: ResultListProps) {
+  const listRef = useRef<HTMLUListElement>(null)
+
+  const handleListKeyDown = useCallback((e: React.KeyboardEvent<HTMLUListElement>) => {
+    const items = listRef.current?.querySelectorAll<HTMLLIElement>('[role="option"]')
+    if (!items || items.length === 0) return
+
+    const currentIndex = Array.from(items).findIndex((el) => el === document.activeElement)
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault()
+        if (currentIndex < items.length - 1) {
+          items[currentIndex + 1].focus()
+        } else {
+          items[0].focus()
+        }
+        break
+      case "ArrowUp":
+        e.preventDefault()
+        if (currentIndex > 0) {
+          items[currentIndex - 1].focus()
+        } else {
+          items[items.length - 1].focus()
+        }
+        break
+      case "Home":
+        e.preventDefault()
+        items[0].focus()
+        break
+      case "End":
+        e.preventDefault()
+        items[items.length - 1].focus()
+        break
+    }
+  }, [])
   if (results.length === 0) return null
 
   return (
-    <ul className="memory-explorer__result-list">
+    <ul
+      ref={listRef}
+      id={id}
+      className="memory-explorer__result-list"
+      role="listbox"
+      aria-label="Search results"
+      onKeyDown={handleListKeyDown}
+    >
       {results.map((r) => (
         <li
           key={r.node.id}

@@ -119,6 +119,12 @@
   filter: drop-shadow(0 0 6px var(--ring));
 }
 
+/* Focus-visible ring for keyboard navigation */
+.memory-explorer__node:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
 /* ── 6. Search Bar — primary interaction surface (§6) ──────────── */
 .memory-explorer__search {
   position: absolute;
@@ -521,5 +527,21 @@
     border-radius: 0;
     border-left: none;
     border-right: none;
+  }
+}
+
+/* ── 16. Reduced motion — accessibility ─────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .memory-explorer__node {
+    transition: none;
+  }
+
+  .memory-explorer__edge {
+    transition: none;
+  }
+
+  .memory-explorer__canvas svg * {
+    animation: none !important;
+    transition: none !important;
   }
 }

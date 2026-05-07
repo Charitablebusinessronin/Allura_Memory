@@ -5,6 +5,9 @@ import type { GraphEdge as EdgeData, GraphNode as NodeData } from "./types"
 import { GraphEdge } from "./GraphEdge"
 import { GraphNode } from "./GraphNode"
 
+const PAN_STEP = 40
+const ZOOM_FACTOR = 0.9
+
 interface LayoutNode extends NodeData {
   x: number
   y: number
@@ -25,6 +28,7 @@ interface GraphCanvasProps {
   edges: EdgeData[]
   selectedId: string | null
   hoveredId: string | null
+  detailOpenId: string | null
   onNodeClick: (id: string) => void
   onNodeHover: (id: string | null) => void
 }
@@ -129,6 +133,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
   edges,
   selectedId,
   hoveredId,
+  detailOpenId,
   onNodeClick,
   onNodeHover,
 }, ref) {
@@ -254,6 +259,41 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     dragging.current = false
   }, [])
 
+  // Keyboard navigation: arrow keys to pan, +/- to zoom
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    switch (e.key) {
+      case "ArrowUp":
+        e.preventDefault()
+        setViewBox((vb) => ({ ...vb, y: vb.y - PAN_STEP * (vb.w / 800) }))
+        break
+      case "ArrowDown":
+        e.preventDefault()
+        setViewBox((vb) => ({ ...vb, y: vb.y + PAN_STEP * (vb.w / 800) }))
+        break
+      case "ArrowLeft":
+        e.preventDefault()
+        setViewBox((vb) => ({ ...vb, x: vb.x - PAN_STEP * (vb.w / 800) }))
+        break
+      case "ArrowRight":
+        e.preventDefault()
+        setViewBox((vb) => ({ ...vb, x: vb.x + PAN_STEP * (vb.w / 800) }))
+        break
+      case "+":
+      case "=":
+        e.preventDefault()
+        zoomIn()
+        break
+      case "-":
+        e.preventDefault()
+        zoomOut()
+        break
+      case "0":
+        e.preventDefault()
+        handleFitView()
+        break
+    }
+  }, [zoomIn, zoomOut, handleFitView])
+
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault()
     const scale = e.deltaY > 0 ? 1.1 : 0.9
@@ -281,7 +321,14 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
   }, [hoveredId, selectedId, edges])
 
   return (
-    <div className="memory-explorer__canvas" onMouseUp={handleMouseUp}>
+    <div
+      className="memory-explorer__canvas"
+      onMouseUp={handleMouseUp}
+      tabIndex={0}
+      role="application"
+      aria-label="Memory graph — use arrow keys to pan, + and - to zoom, 0 to fit view"
+      onKeyDown={handleKeyDown}
+    >
       <svg
         ref={svgRef}
         viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`}
@@ -291,6 +338,8 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onWheel={handleWheel}
+        role="presentation"
+        aria-hidden="true"
       >
         {/* Edges layer */}
         <g className="memory-explorer__edges">
@@ -321,6 +370,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
               y={ln.y}
               isSelected={selectedId === ln.id}
               isHovered={hoveredId === ln.id}
+              hasDetailOpen={detailOpenId === ln.id}
               onClick={onNodeClick}
               onHover={onNodeHover}
             />
@@ -329,10 +379,10 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
       </svg>
 
       {/* Zoom controls */}
-      <div className="memory-explorer__zoom-controls">
-        <button onClick={zoomIn} title="Zoom in">+</button>
-        <button onClick={zoomOut} title="Zoom out">−</button>
-        <button onClick={handleFitView} title="Fit view">⟲</button>
+      <div className="memory-explorer__zoom-controls" role="group" aria-label="Graph zoom controls">
+        <button onClick={zoomIn} title="Zoom in" aria-label="Zoom in">+</button>
+        <button onClick={zoomOut} title="Zoom out" aria-label="Zoom out">−</button>
+        <button onClick={handleFitView} title="Fit view" aria-label="Fit view">⟲</button>
       </div>
 
       {/* Legend */}

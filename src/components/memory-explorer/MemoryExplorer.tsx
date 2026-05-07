@@ -72,10 +72,19 @@ export function MemoryExplorer({ nodes, edges, className }: MemoryExplorerProps)
 
   return (
     <div className={`memory-explorer${className ? ` ${className}` : ""}`}>
-      <SearchBar query={query} onChange={setQuery} />
+      <SearchBar
+        query={query}
+        onChange={setQuery}
+        resultListId="memory-explorer-result-list"
+        hasResults={searchResults.length > 0}
+      />
 
       {/* Result list — shown when search has results */}
-      <ResultList results={searchResults} onSelect={handleResultSelect} />
+      <ResultList
+        results={searchResults}
+        onSelect={handleResultSelect}
+        id="memory-explorer-result-list"
+      />
 
       {/* Graph canvas — hidden on mobile (§8) */}
       <GraphCanvas
@@ -84,6 +93,7 @@ export function MemoryExplorer({ nodes, edges, className }: MemoryExplorerProps)
         edges={edges}
         selectedId={selectedId}
         hoveredId={hoveredId}
+        detailOpenId={selectedId}
         onNodeClick={handleNodeClick}
         onNodeHover={handleNodeHover}
       />

@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback } from "react"
+import { useCallback, useEffect, useRef } from "react"
 import type { GraphNode as NodeData } from "./types"
 import { EvidenceBlock } from "./EvidenceBlock"
 
@@ -21,16 +21,36 @@ interface DetailPaneProps {
  * d. Action buttons
  */
 export function DetailPane({ node, onClose, onPromote }: DetailPaneProps) {
+  const asideRef = useRef<HTMLElement>(null)
+
   const handlePromote = useCallback(() => {
     if (node && onPromote) onPromote(node.id)
   }, [node, onPromote])
+
+  // Focus trap: when detail pane opens, focus the first focusable element
+  useEffect(() => {
+    if (!node) return
+    // Small delay for React to render the DOM
+    const timer = setTimeout(() => {
+      const firstFocusable = asideRef.current?.querySelector<HTMLElement>(
+        'button, [tabindex]:not([tabindex="-1"])'
+      )
+      firstFocusable?.focus()
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [node?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!node) return null
 
   const meta = node.metadata
 
   return (
-    <aside className="memory-explorer__detail-pane">
+    <aside
+      ref={asideRef}
+      className="memory-explorer__detail-pane"
+      role="complementary"
+      aria-label={`Memory details: ${node.label}`}
+    >
       {/* a. Header */}
       <header className="memory-explorer__detail-pane__header">
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--allura-sm)" }}>

@@ -7,6 +7,8 @@ interface SearchBarProps {
   query: string
   onChange: (query: string) => void
   placeholder?: string
+  resultListId?: string
+  hasResults?: boolean
 }
 
 /**
@@ -14,7 +16,7 @@ interface SearchBarProps {
  * 48px height, centered, max 640px width
  * Uses all CSS custom properties for colors
  */
-export function SearchBar({ query, onChange, placeholder = "Search memories…" }: SearchBarProps) {
+export function SearchBar({ query, onChange, placeholder = "Search memories…", resultListId, hasResults }: SearchBarProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleChange = useCallback(
@@ -32,6 +34,10 @@ export function SearchBar({ query, onChange, placeholder = "Search memories…" 
         onChange={handleChange}
         placeholder={placeholder}
         aria-label="Search memories"
+        role="combobox"
+        aria-expanded={hasResults ?? false}
+        aria-controls={resultListId}
+        aria-autocomplete="list"
       />
     </div>
   )

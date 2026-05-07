@@ -10,6 +10,7 @@ interface GraphNodeProps {
   y: number
   isSelected: boolean
   isHovered: boolean
+  hasDetailOpen: boolean
   onClick: (id: string) => void
   onHover: (id: string | null) => void
 }
@@ -59,7 +60,7 @@ function roundedSquarePath(r: number, cr: number = 3): string {
  * GraphNode — SVG node group with shape-dependent rendering
  * Per spec §7: 6 types, distinct shapes & colors, hover/selected states via CSS classes
  */
-export function GraphNode({ node, x, y, isSelected, isHovered, onClick, onHover }: GraphNodeProps) {
+export function GraphNode({ node, x, y, isSelected, isHovered, hasDetailOpen, onClick, onHover }: GraphNodeProps) {
   const r = NODE_RADIUS[node.type]
   const shape = NODE_SHAPE[node.type]
   const colors = NODE_COLOR_VARS[node.type]
@@ -75,6 +76,12 @@ export function GraphNode({ node, x, y, isSelected, isHovered, onClick, onHover 
   const handleClick = useCallback(() => onClick(node.id), [onClick, node.id])
   const handleMouseEnter = useCallback(() => onHover(node.id), [onHover, node.id])
   const handleMouseLeave = useCallback(() => onHover(null), [onHover])
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault()
+      onClick(node.id)
+    }
+  }, [onClick, node.id])
 
   return (
     <g
@@ -83,6 +90,12 @@ export function GraphNode({ node, x, y, isSelected, isHovered, onClick, onHover 
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      tabIndex={0}
+      role="button"
+      aria-label={`${node.label} (${node.type}) — ${isSelected ? "selected" : "click to select"}`}
+      aria-selected={isSelected}
+      aria-expanded={hasDetailOpen}
+      onKeyDown={handleKeyDown}
       style={{ cursor: "pointer" }}
     >
       {shape === "circle" && (
