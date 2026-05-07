@@ -555,6 +555,11 @@
   justify-content: center;
 }
 
+/* Light-mode skeleton variant for consumer/brand surfaces */
+.memory-explorer__graph-skeleton--light {
+  background: var(--allura-cream);
+}
+
 .memory-explorer__graph-skeleton::after {
   content: "";
   width: 32px;
@@ -562,6 +567,10 @@
   border-radius: 50%;
   background: var(--dashboard-text-muted);
   animation: graph-pulse 1.5s ease-in-out infinite;
+}
+
+.memory-explorer__graph-skeleton--light::after {
+  background: var(--allura-gray-400);
 }
 
 @keyframes graph-pulse {
