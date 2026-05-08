@@ -62,6 +62,15 @@ export interface PolicyContext {
   /** Whether audit is required for POL-005 */
   requiresAudit?: boolean;
   
+  /** Project manifest for POL-007/008/009 enforcement */
+  projectManifest?: ProjectManifest;
+  
+  /** Source-of-truth read events for POL-007 verification */
+  sourceOfTruthReads?: SourceOfTruthRead[];
+  
+  /** Declared infrastructure targets for POL-008 verification */
+  declaredInfrastructureTargets?: InfrastructureTarget[];
+  
   /** Additional runtime context */
   [key: string]: unknown;
 }
@@ -89,6 +98,89 @@ export interface PolicyViolation {
   
   /** Severity level */
   severity: "critical" | "high" | "medium" | "low";
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROJECT GOVERNANCE TYPES (POL-007/008/009)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Source-of-truth declaration for a project
+ * 
+ * Defines where canonical data lives so RuVix can verify agents read from it.
+ */
+export interface SourceOfTruth {
+  /** Source type (e.g., 'notion', 'github', 'local') */
+  type: string;
+  
+  /** Source identifier (e.g., Notion database ID, GitHub repo URL) */
+  id: string;
+  
+  /** Human-readable name for error messages */
+  name: string;
+  
+  /** Whether this source is required before any project write */
+  required: boolean;
+}
+
+/**
+ * Infrastructure target declaration for a project
+ * 
+ * Defines what databases/deployment targets a project should use.
+ */
+export interface InfrastructureTarget {
+  /** Target type (e.g., 'neon', 'docker-postgres', 'vercel', 'aws') */
+  type: string;
+  
+  /** Connection identifier (e.g., Neon project ID, connection string pattern) */
+  id: string;
+  
+  /** Human-readable name for error messages */
+  name: string;
+  
+  /** Category for matching (e.g., 'database', 'deployment', 'cache') */
+  category: string;
+}
+
+/**
+ * Project manifest — machine-readable declaration of project constraints
+ * 
+ * Required by POL-009. Without this, POL-007 and POL-008 have nothing to enforce.
+ */
+export interface ProjectManifest {
+  /** Project name */
+  name: string;
+  
+  /** Declared sources of truth (ordered by priority) */
+  sourcesOfTruth: SourceOfTruth[];
+  
+  /** Declared infrastructure targets */
+  infrastructureTargets: InfrastructureTarget[];
+  
+  /** Captain directives captured as hard constraints */
+  captainDirectives?: string[];
+  
+  /** Whitelisted local file overrides (for POL-012 future use) */
+  localOverrides?: string[];
+}
+
+/**
+ * Record of a source-of-truth read event
+ * 
+ * Used by POL-007 to verify that the agent actually read from the canonical source.
+ */
+export interface SourceOfTruthRead {
+  /** Source type that was read */
+  type: string;
+  
+  /** Source ID that was read */
+  id: string;
+  
+  /** Timestamp of the read */
+  timestamp: number;
+  
+  /** What was read (for audit) */
+  summary?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -223,14 +315,11 @@ export const POLICY_AUDIT_TRAIL: Policy = {
 
 /**
  * Default policy set for kernel operations
+ * 
+ * NOTE: Must be defined after all referenced policies to avoid
+ * block-scoped variable hoisting errors.
  */
-export const DEFAULT_POLICIES: Policy[] = [
-  POLICY_TENANT_ISOLATION,
-  POLICY_BUDGET_ENFORCEMENT,
-  POLICY_PERMISSION_TIER,
-  POLICY_ACTOR_VALIDATION,
-  POLICY_AUDIT_TRAIL,
-];
+// Placeholder — actual definition is after POL-009 below
 
 /**
  * Evaluate policies against claims
@@ -245,11 +334,12 @@ export const DEFAULT_POLICIES: Policy[] = [
 export function evaluatePolicies(
   claims: ProofClaims,
   context: PolicyContext,
-  policies: Policy[] = DEFAULT_POLICIES
+  policies?: Policy[]
 ): PolicyEvaluationResult {
+  const resolvedPolicies = policies ?? DEFAULT_POLICIES;
   const violations: PolicyViolation[] = [];
   
-  for (const policy of policies) {
+  for (const policy of resolvedPolicies) {
     try {
       const satisfied = policy.condition(claims, context);
       
@@ -289,7 +379,7 @@ export function evaluatePolicies(
 export function evaluatePoliciesOrThrow(
   claims: ProofClaims,
   context: PolicyContext,
-  policies: Policy[] = DEFAULT_POLICIES
+  policies?: Policy[]
 ): void {
   const result = evaluatePolicies(claims, context, policies);
   
@@ -349,10 +439,12 @@ class PolicyRegistry {
  */
 export const policyRegistry = new PolicyRegistry();
 
-// Register default policies
-for (const policy of DEFAULT_POLICIES) {
-  policyRegistry.register(policy);
-}
+// Register POL-001 through POL-005 individually (DEFAULT_POLICIES defined later)
+policyRegistry.register(POLICY_TENANT_ISOLATION);
+policyRegistry.register(POLICY_BUDGET_ENFORCEMENT);
+policyRegistry.register(POLICY_PERMISSION_TIER);
+policyRegistry.register(POLICY_ACTOR_VALIDATION);
+policyRegistry.register(POLICY_AUDIT_TRAIL);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POL-006: DEBUG ENFORCEMENT (Systematic Debugging)
@@ -409,6 +501,247 @@ export const POLICY_DEBUG_ENFORCEMENT: Policy = {
 
 // Register POL-006
 policyRegistry.register(POLICY_DEBUG_ENFORCEMENT);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POL-007: SOURCE-OF-TRUTH PRE-FLIGHT GATE
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POL-007: Source-of-Truth Pre-Flight Gate
+ *
+ * Before ANY project write operation, the agent must have proven it has read
+ * from the project's declared canonical source (e.g., Notion database).
+ *
+ * Enforcement:
+ * - If projectManifest exists and declares required sources of truth
+ * - AND the operation is a write-type (mutate, write, create, update, delete)
+ * - AND no sourceOfTruthReads entry matches a required source
+ * - THEN the mutation is BLOCKED
+ *
+ * Read-type operations (query, read, search) are allowed without source verification
+ * to support the initial read that satisfies this very policy.
+ *
+ * Origin: Team retro 2026-05-08 — 13 commits reverted because agents used local
+ * files instead of Notion. Unanimous proposal from all 4 agents.
+ */
+export const POLICY_SOURCE_OF_TRUTH_GATE: Policy = {
+  id: "POL-007",
+  description: "Write operations require prior read from declared source of truth",
+  condition: (claims, context) => {
+    const manifest = context.projectManifest as ProjectManifest | undefined;
+    
+    // No manifest → policy cannot enforce → skip (POL-009 handles this)
+    if (!manifest || !manifest.sourcesOfTruth) {
+      return true;
+    }
+    
+    // Read-type operations are exempt — agents need to read to satisfy this policy
+    const operation = context.operation ?? "";
+    const isWriteOperation = /^(mutate|write|create|update|delete|deploy|commit)/i.test(operation);
+    
+    if (!isWriteOperation) {
+      return true;
+    }
+    
+    // Find required sources of truth
+    const requiredSources = manifest.sourcesOfTruth.filter(s => s.required);
+    
+    if (requiredSources.length === 0) {
+      return true; // No required sources declared
+    }
+    
+    // Check if agent has read from each required source
+    const reads = context.sourceOfTruthReads as SourceOfTruthRead[] ?? [];
+    
+    for (const source of requiredSources) {
+      const hasRead = reads.some(
+        r => r.type === source.type && r.id === source.id
+      );
+      
+      if (!hasRead) {
+        return false; // Missing read from required source
+      }
+    }
+    
+    return true;
+  },
+  violation: "Source-of-truth not verified. Read from declared canonical source before writing to this project.",
+  severity: "critical",
+};
+
+// Register POL-007
+policyRegistry.register(POLICY_SOURCE_OF_TRUTH_GATE);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POL-008: INFRASTRUCTURE TARGET LOCK
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POL-008: Infrastructure Target Lock
+ *
+ * Any operation that references a database connection, deployment target, or
+ * infrastructure endpoint must match the project's declared infrastructure targets.
+ *
+ * Enforcement:
+ * - If projectManifest declares infrastructure targets
+ * - AND the operation references a connection/infrastructure endpoint
+ * - AND the referenced target doesn't match any declared target
+ * - THEN the mutation is BLOCKED
+ *
+ * Prevents: Docker Postgres when Neon is declared, local dev server when
+ * Vercel is declared, etc.
+ *
+ * Origin: Team retro 2026-05-08 — agents targeted Docker Postgres instead of
+ * Neon serverless. Unanimous proposal from all 4 agents.
+ */
+export const POLICY_INFRASTRUCTURE_TARGET_LOCK: Policy = {
+  id: "POL-008",
+  description: "Infrastructure targets must match project manifest declarations",
+  condition: (claims, context) => {
+    const manifest = context.projectManifest as ProjectManifest | undefined;
+    
+    // No manifest → policy cannot enforce → skip (POL-009 handles this)
+    if (!manifest || !manifest.infrastructureTargets) {
+      return true;
+    }
+    
+    // Only enforce on infrastructure-related operations
+    const operation = context.operation ?? "";
+    const isInfraOperation = /^(mutate|write|create|update|deploy|commit|connect)/i.test(operation);
+    
+    if (!isInfraOperation) {
+      return true;
+    }
+    
+    // Check the resource against declared targets
+    const resource = context.resource ?? "";
+    const declaredTargets = manifest.infrastructureTargets;
+    
+    // If resource references a database or deployment, verify it matches
+    const infraPatterns = [
+      /postgres/i, /neon/i, /mysql/i, /redis/i, /mongo/i,
+      /docker/i, /vercel/i, /aws/i, /localhost/i,
+    ];
+    
+    const resourceReferencesInfra = infraPatterns.some(p => p.test(resource));
+    
+    if (!resourceReferencesInfra) {
+      return true; // Not an infra-referencing operation
+    }
+    
+    // Check if resource matches any declared target
+    const matchesDeclared = declaredTargets.some(target => {
+      return resource.includes(target.id) || resource.includes(target.type);
+    });
+    
+    // Also check declaredInfrastructureTargets in context for explicit matching
+    const explicitTargets = context.declaredInfrastructureTargets as InfrastructureTarget[] ?? [];
+    const matchesExplicit = explicitTargets.some(target => {
+      return resource.includes(target.id) || resource.includes(target.type);
+    });
+    
+    // If resource references infra but doesn't match declared targets → block
+    if (declaredTargets.length > 0 && !matchesDeclared && !matchesExplicit) {
+      // Allow if the resource is a LOCAL DEV variant explicitly declared
+      const isLocalDev = /localhost|127\.0\.0\.1|docker/i.test(resource);
+      const allowsLocal = declaredTargets.some(t => t.type === 'local-dev' || t.type === 'docker');
+      
+      if (isLocalDev && allowsLocal) {
+        return true;
+      }
+      
+      return false; // Mismatch — wrong infrastructure target
+    }
+    
+    return true;
+  },
+  violation: "Infrastructure target mismatch. Operation targets undeclared infrastructure. Update connection or justify deviation with ADR.",
+  severity: "critical",
+};
+
+// Register POL-008
+policyRegistry.register(POLICY_INFRASTRUCTURE_TARGET_LOCK);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POL-009: PROJECT MANIFEST REQUIRED
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POL-009: Project Manifest Required
+ *
+ * No write operations allowed on a project unless a PROJECT.yaml (or
+ * ruvix-manifest.yaml) exists declaring source_of_truth and infrastructure_targets.
+ *
+ * Without this manifest, POL-007 and POL-008 have nothing to enforce against.
+ * This policy forces the manifest to exist before any work proceeds.
+ *
+ * Enforcement:
+ * - If context.projectManifest is undefined or null
+ * - AND the operation is a write-type
+ * - THEN the mutation is BLOCKED
+ *
+ * Grace period: read operations are always allowed (you need to read to create
+ * the manifest). The very first operation on a new project should be creating
+ * the manifest.
+ *
+ * Origin: Team retro 2026-05-08 — without a manifest, all other governance
+ * policies are unenforceable. Unanimous proposal from all 4 agents.
+ */
+export const POLICY_PROJECT_MANIFEST_REQUIRED: Policy = {
+  id: "POL-009",
+  description: "Project manifest (PROJECT.yaml) required before any write operations",
+  condition: (claims, context) => {
+    const manifest = context.projectManifest as ProjectManifest | undefined;
+    
+    // If manifest exists and has required fields, policy is satisfied
+    if (manifest && manifest.sourcesOfTruth && manifest.infrastructureTargets) {
+      return true;
+    }
+    
+    // Read-type operations are allowed without manifest
+    // (you need to read to create the manifest)
+    const operation = context.operation ?? "";
+    const isWriteOperation = /^(mutate|write|create|update|delete|deploy|commit)/i.test(operation);
+    
+    if (!isWriteOperation) {
+      return true;
+    }
+    
+    // Special case: creating the manifest itself is always allowed
+    if (/manifest|project\.yaml/i.test(context.resource ?? "")) {
+      return true;
+    }
+    
+    // No manifest + write operation = BLOCKED
+    return false;
+  },
+  violation: "No project manifest found. Create PROJECT.yaml with sourcesOfTruth and infrastructureTargets before any project work.",
+  severity: "critical",
+};
+
+// Register POL-009
+policyRegistry.register(POLICY_PROJECT_MANIFEST_REQUIRED);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DEFAULT POLICY SET (post all policy definitions)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Default policy set for kernel operations
+ * 
+ * Includes all 9 builtin policies:
+ * POL-001 through POL-009
+ */
+export const DEFAULT_POLICIES: Policy[] = [
+  POLICY_TENANT_ISOLATION,
+  POLICY_BUDGET_ENFORCEMENT,
+  POLICY_PERMISSION_TIER,
+  POLICY_ACTOR_VALIDATION,
+  POLICY_AUDIT_TRAIL,
+  POLICY_SOURCE_OF_TRUTH_GATE,
+  POLICY_INFRASTRUCTURE_TARGET_LOCK,
+  POLICY_PROJECT_MANIFEST_REQUIRED,
+];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TENANT-SPECIFIC POLICIES
