@@ -242,7 +242,10 @@ JWT_SECRET=$(openssl rand -base64 32)
 ENCRYPTION_KEY=$(openssl rand -hex 32)
 
 # ── Embeddings ────────────────────────
-EMBEDDING_BASE_URL=http://localhost:11434  # Ollama
+# Runtime embedding service URL used by RuVector embedding code.
+# For host execution use http://localhost:11434.
+# For Docker services use http://host.docker.internal:11434 with extra_hosts host-gateway.
+RUVECTOR_EMBEDDING_BASE_URL=http://localhost:11434  # Ollama for host execution
 EMBEDDING_MODEL=qwen3-embedding:8b
 ```
 
