@@ -4,7 +4,7 @@ description: Memory that shows its work: warm, governed, inspectable AI memory f
 colors:
   cobalt-blue: "#1D4ED8"
   ember-orange: "#FF5A2E"
-  pine-green: "#157A44"
+  pine-green: "#157A4A"
   harvest-gold: "#C89B3C"
   midnight-charcoal: "#111827"
   warm-cream: "#F5F1E6"
@@ -14,6 +14,8 @@ colors:
   raised-abyss: "#1E2D47"
   border-gray: "#D1D5DB"
   muted-gray: "#6B7280"
+  light-gray-200: "#E5E7EB"
+  light-gray-100: "#F3F4F6"
 typography:
   display:
     fontFamily: "Montserrat, IBM Plex Sans, system-ui, -apple-system, sans-serif"
@@ -99,18 +101,41 @@ components:
 
 **Creative North Star: "The Illuminated Ledger"**
 
-Allura Memory is a governed archive with a human pulse. The interface must make every memory feel traceable, every promotion accountable, and every operational state legible without turning the product into a cold compliance console. The system combines Team Durham's warm and connected brand foundation with the product's harder truth: operators are inspecting evidence, failures, graph relationships, and approval queues.
+Allura Memory is a governed archive with a human pulse, built on a geometric, warm, and constructed brand language. The interface must make every memory feel traceable, every promotion accountable, and every operational state legible without turning the product into a cold compliance console.
 
-The design has two doors. Brand and public-facing surfaces are light-first, generous, and emotionally inviting. Product and dashboard surfaces are tool-first: dense, high-contrast, and built for sustained review of evidence trails. The distinction is intentional. A warm landing page sells the promise; a precise dashboard proves it.
+The design has two doors. Brand and public-facing surfaces are light-first, generous, and emotionally inviting, led by the five brand essence pillars (Memory, Connection, Clarity, Trust, Empowerment). Product and dashboard surfaces are tool-first: dense, high-contrast, and built for sustained review of evidence trails. The distinction is intentional. A warm landing page sells the promise; a precise dashboard proves it.
+
+The color palette has been unified to the canonical brand kit colors from the Allura Brand Identity (Figma: allura-gpt, 2026). The prior "Durham" variant (navy-forward, amber-dominant) has been retired as the primary theme in favor of the brighter, more distinctive cobalt-blue and ember-orange palette. Durham tokens remain available as a preset option (`data-theme-preset="durham"`) but the canonical product surface now uses `data-theme-preset="allura"`.
 
 Allura rejects generic SaaS gloss, hacker-terminal theater, academic graph-demo complexity, and decorative AI tropes. It should feel like a carefully kept ledger illuminated for human judgment: exact enough for curators, warm enough to reduce anxiety, and direct enough that the next action is never hidden.
 
 **Key Characteristics:**
 - Evidence-first hierarchy, with provenance and status always discoverable.
-- Warm brand primitives applied with operational restraint.
+- Five-pillar brand framework visible in color roles: Memory (blue), Connection (orange), Clarity (green), Trust (charcoal), Empowerment (gold).
+- Geometric construction with overlapping circle and rectangle forms — the signature blue + orange + green motif.
 - Dark-first dashboard depth for dense inspection work.
 - Light-first marketing warmth for public storytelling.
 - Plain, confident UI copy: learned, used, forget, evidence, promote, approve.
+
+### Design Language
+
+Allura's design language is geometric, warm, and constructed:
+
+- **Geometric construction:** All brand elements built from circles, rectangles, and organic overlaps. Transparency and layering create depth.
+- **Signature motif:** Overlapping blue circle + orange circle + green shape appearing in logos, backgrounds, and decorative elements.
+- **Human-centered iconography:** Value icons use simple line art in colored circles.
+- **Rounded corners:** 12px border radius on containers.
+- **Warm + Bold:** Institutional charcoal grounded by warm, approachable accent colors.
+
+### Logo System
+
+| Asset | File | Usage | Min Size |
+|-------|------|-------|----------|
+| **Wordmark** | `public/brand/wordmark.png` | Primary horizontal logo | 32px |
+| **Lettermark** | `public/brand/lettermark-AL.png` | App icon, monogram | 24px |
+| **Lockup** | "Allura Memory" with gold bar | Product and campaign sub-brands | — |
+
+**Rules:** Do not recolor, stretch, rotate, or alter the lockup. Clear space = height of the "ll" in the wordmark.
 
 ## 2. Colors
 
@@ -136,11 +161,14 @@ Allura's product palette is a brighter, higher-contrast operational translation 
 - **Muted Gray**: Secondary labels and low-priority metadata only.
 
 ### Named Rules
-**The Two-System Rule.** Marketing surfaces use the warm Brand Kit language: light-first, spacious, Inter-forward. Product surfaces use the Dashboard language: IBM Plex Sans, stronger contrast, denser structure, and operational colors.
 
-**The Evidence Contrast Rule.** Status and evidence colors must pass WCAG AA in their actual context. Gold and orange are never used as normal body text on white.
+**The Pillar-Driven Color Rule.** Every color on screen should map to one of the five brand pillars. Blue = Memory and trust cues. Orange = Connection, review, and intervention. Green = Clarity, success, and approved states. Charcoal = Trust, text, and structural weight. Gold = Empowerment, evidence, and premium moments. If a color does not trace to a pillar, question whether it belongs.
 
-**The No Decorative AI Rule.** No neon gradients, frosted glass, cyber glow, or generic AI purple. If color appears, it must carry status, navigation, evidence, or action.
+**The Two-System Rule.** Marketing surfaces use the warm Brand Kit language: light-first, spacious, and emotionally inviting. Product surfaces use the Dashboard language: IBM Plex Sans, stronger contrast, denser structure, and operational colors. The dashboard is dark-first (`data-theme-preset="allura"` with `.dark`).
+
+**The Evidence Contrast Rule.** Status and evidence colors must pass WCAG AA in their actual context. Gold and orange are never used as normal body text on white. Use WCAG-safe text variants (`--allura-gold-text`, `--allura-orange-on-text`).
+
+**The No Decorative AI Rule.** No neon gradients, frosted glass, cyber glow, or generic AI purple. If color appears, it must carry status, navigation, evidence, or action — and it must trace to a brand pillar.
 
 ## 3. Typography
 
@@ -221,11 +249,13 @@ Evidence panels are the signature component family. They must separate raw evide
 ### Do:
 - **Do** preserve the two-door model: consumer memory stays simple and personal; enterprise administration stays dense and operational.
 - **Do** show chain of custody for promoted knowledge: source, evidence, status, confidence, approval path, and graph relationship.
-- **Do** use `src/styles/brand-tokens.css` and `src/styles/presets/allura.css` as the product token source of truth.
+- **Do** use `src/styles/brand-tokens.css` and `src/styles/presets/allura.css` as the canonical product token source of truth.
+- **Do** use `public/brand/wordmark.png` and `public/brand/lettermark-AL.png` for logo display.
 - **Do** use IBM Plex Sans for product UI and IBM Plex Mono for logs, evidence, and trace excerpts.
-- **Do** keep dashboard color meaningful: blue for trust/action, orange for intervention, green for approved/healthy, gold for evidence/medium, red only for true danger.
+- **Do** map every color to a brand pillar: blue (Memory), orange (Connection), green (Clarity), charcoal (Trust), gold (Empowerment).
 - **Do** distinguish zero state, empty state, loading state, and error state with different copy and affordances.
 - **Do** respect reduced motion and keep transitions to color, border, shadow, and opacity.
+- **Do** incorporate the geometric overlapping-forms design language (circles, rectangles, signature blue+orange+green motif) where it supports the interface without becoming decorative.
 
 ### Don't:
 - **Don't** make Allura feel like a cold enterprise admin console.
@@ -234,7 +264,9 @@ Evidence panels are the signature component family. They must separate raw evide
 - **Don't** make Allura feel like an academic knowledge graph demo.
 - **Don't** expose `group_id`, `user_id`, raw event IDs, or ISO timestamps as primary consumer content.
 - **Don't** use decorative AI tropes, neon cyber aesthetics, frosted glass panels, generic gradient hero treatments, or repeated icon-card grids.
+- **Don't** recolor, stretch, rotate, or alter the logo lockup.
 - **Don't** use side-stripe borders as accents. Use full borders, tone fills, icons, or text hierarchy instead.
 - **Don't** use gradient text. Emphasis comes from weight, scale, contrast, and placement.
 - **Don't** use modals as the first solution. Prefer inline review, expandable provenance, drawers, and progressive disclosure.
 - **Don't** put raw gold or orange body text on white. Use WCAG-safe text variants.
+- **Don't** use color without a pillar. If a color does not trace to Memory, Connection, Clarity, Trust, or Empowerment, it probably does not belong.

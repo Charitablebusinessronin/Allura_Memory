@@ -413,6 +413,46 @@
   - Reference: AI-GUIDELINES.md §8 — "Stale documents (> 90 days) should be flagged in the next team retrospective"
   - Acceptance: CI workflow exists, runs on PRs, surfaces stale-doc warnings
 
+## S12 Tasks: Frontend Brand Kit Migration (Unify Durham → Allura)
+
+**Decision:** Migrate production frontend from legacy Durham palette to unified Allura brand kit palette (per BRAND-EXTRACTION.md + Figma allura-gpt, 2026-05-08)
+**Source:** Brooks teach pass completed — PRODUCT.md, DESIGN.md, brand-tokens.css, allura.css already migrated
+**Agent Routing:** Woz (implementation) → Pike (interface review)
+**Estimated:** 5 iterations, ~30 lines changed total
+
+### P0 Tasks (MUST complete first)
+
+- [ ] **S12-1**: Fix globals.css `--brand-green: #157A44` → `#157A4A`
+  - Files: `src/app/globals.css` (lines 109, 159)
+  - Validation: `grep -c '#157A44' src/app/globals.css` returns 0
+  - BLOCKED BY: None
+
+- [ ] **S12-2**: Remove dead Durham variables from globals.css
+  - Files: `src/app/globals.css`
+  - Remove lines 97-104 and 147-154 (8 legacy Durham variables in light + dark)
+  - Validation: `grep -c 'brand-graphite\|brand-warm-slate' src/app/globals.css` returns 0
+  - BLOCKED BY: None
+
+- [ ] **S12-3**: Update logo paths in app-sidebar.tsx
+  - Files: `src/app/(main)/dashboard/_components/sidebar/app-sidebar.tsx`
+  - `/design/allura-mark.svg` → `/brand/lettermark-AL.png`
+  - `/design/allura-wordmark.svg` → `/brand/wordmark.png`
+  - Also check `src/app/layout.tsx` metadata for logo references
+  - Validation: `grep -c 'allura-mark.svg\|allura-wordmark.svg' src/app/` returns 0
+  - BLOCKED BY: None
+
+### P1 Tasks (after P0)
+
+- [ ] **S12-4**: Verify import chain — brand-tokens.css → globals.css → layout.tsx
+  - Files: Audit only — verify tokens actually reach production bundle
+  - No edits unless import gap found
+  - BLOCKED BY: None
+
+- [ ] **S12-5**: Visual verify + commit
+  - Run `bun run typecheck`
+  - Commit: `feat(brand): migrate frontend to unified Allura brand kit palette`
+  - BLOCKED BY: S12-1, S12-2, S12-3, S12-4
+
 ## S11 Tasks: Skill & Command Governance Hardening
 
 **Decision:** governance first, pruning second. `frontend-design` owns repo-native page intent; `allura-design` becomes the Brain membrane/router; `huashu-design` remains the external prototype engine.

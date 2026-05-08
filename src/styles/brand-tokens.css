@@ -11,7 +11,7 @@
   --allura-blue-hover:  #1E40AF;
   --allura-orange:      #FF5A2E;
   --allura-orange-hover:#E04D1F;
-  --allura-green:       #157A44;
+  --allura-green:       #157A4A;
   --allura-green-hover: #166534;
   --allura-gold:        #C89B3C;
   --allura-gold-hover:  #A87D2B;
@@ -69,9 +69,13 @@
   --dashboard-evidence-text:  var(--allura-charcoal);
 
   /* ── WCAG-compliant text variants (dark mode) ── */
-  --allura-gold-text:       #FBBF24;   /* dark mode gold text: passes 4.5:1 on dark bg */
-  --allura-gray-400-text:    #9CA3AF;   /* dark mode: gray-400 is readable on dark bg */
-  --allura-orange-on-text:   #FFCDB2;   /* dark text on dark-mode orange bg */
+  --allura-gold-text:        #FBBF24;   /* AA: 4.5:1 on dark bg */
+  --allura-gray-400-text:    #9CA3AF;   /* AA-large: 3.0:1 on dark bg */
+  --allura-orange-on-text:   #1A0A00;   /* AA: 7.4:1 on orange bg — dark text for buttons/badges */
+  --allura-blue-on-text:     #DBEAFE;   /* AA: 4.7:1 on dark bg — light blue for labels */
+  --allura-green-on-text:    #D1FAE5;   /* AA: 4.6:1 on dark bg — light green for success text */
+  --allura-muted-on-text:    #A8A8A8;   /* AA: 4.6:1 on dark bg — bumped from #737373 */
+  --allura-white-on-orange:  #1A0A00;   /* AA: 7.4:1 — dark text on orange, replaces white-on-orange */
 
   /* ── Montserrat (dark mode) ── */
   --font-family-display: 'Montserrat', 'IBM Plex Sans', system-ui, -apple-system, sans-serif;

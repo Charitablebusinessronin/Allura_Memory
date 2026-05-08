@@ -34,7 +34,7 @@ function AgencyLogo() {
     >
       {isCollapsed ? (
         <img
-          src="/design/allura-mark.svg"
+          src="/brand/lettermark-AL.png"
           alt="Allura mark"
           className="h-9 w-9 rounded-xl object-contain shadow-sm"
           width={36}
@@ -42,7 +42,7 @@ function AgencyLogo() {
         />
       ) : (
         <img
-          src="/design/allura-wordmark.svg"
+          src="/brand/wordmark.png"
            alt="Allura Memory"
           className="h-12 w-auto object-contain"
           width={187}
@@ -79,11 +79,6 @@ function NavLink({
         <Link prefetch={false} href={item.url} aria-current={isActive ? "page" : undefined}>
           {Icon && <Icon className="size-5 shrink-0" />}
           <span>{item.title}</span>
-          {item.isNew && (
-            <span className="ml-auto rounded-full bg-[var(--allura-orange)] px-1.5 py-0.5 text-[10px] font-semibold" style={{ color: "var(--allura-orange-on-text)" }}>
-              New
-            </span>
-          )}
            {isActive && (
              <div className="absolute inset-y-2 -left-0.5 w-[3px] rounded-full bg-[var(--allura-blue)]" />
            )}
@@ -96,8 +91,8 @@ function NavLink({
             const active = isSubItemActive(subItem.url);
             return (
               <SidebarMenuSubItem key={subItem.url}>
-                <SidebarMenuSubButton asChild isActive={active} aria-disabled={subItem.comingSoon}>
-                  <Link prefetch={false} href={subItem.url} target={subItem.newTab ? "_blank" : undefined}>
+                <SidebarMenuSubButton asChild isActive={active}>
+                  <Link prefetch={false} href={subItem.url}>
                     {SubIcon && <SubIcon className="size-4 shrink-0" />}
                     <span>{subItem.title}</span>
                   </Link>

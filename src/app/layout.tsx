@@ -25,8 +25,8 @@ export const metadata: Metadata = {
   },
   description: APP_CONFIG.meta.description,
   icons: {
-    icon: [{ url: "/design/allura-mark.svg", type: "image/svg+xml" }],
-    shortcut: [{ url: "/design/allura-mark.svg", type: "image/svg+xml" }],
+    icon: [{ url: "/brand/lettermark-AL.png", type: "image/png" }],
+    shortcut: [{ url: "/brand/lettermark-AL.png", type: "image/png" }],
     apple: [{ url: "/apple-touch-icon.png" }],
   },
 }

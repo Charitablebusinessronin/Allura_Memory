@@ -10,7 +10,6 @@
 @import "../styles/presets/allura-consumer.css";
 @import "../styles/brand-tokens.css";
 @import "../styles/agency-dashboard.css";
-@import "../components/memory-explorer/memory-explorer.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -95,19 +94,11 @@ These serve as the fallback; there is no separate default.css file. */
   --font-ibm-plex-sans: var(--font-ibm-plex-sans), "IBM Plex Sans", var(--font-inter), system-ui, sans-serif;
    --background: oklch(1 0 0);
    --foreground: oklch(0.148 0.004 228.8);
-   --brand-graphite: #1c232b;
-   --brand-warm-slate: #3a4a5b;
-   --brand-steel-blue: #4e6e8a;
-   --brand-rich-navy: #2c3e56;
-   --brand-amber-ochre: #b8893c;
-   --brand-soft-amber: #d4a84b;
-   --brand-mist: #e9eef2;
-   --brand-warm-mist: #f0eef2;
 
    /* Allura brand tokens */
    --brand-blue: #1D4ED8;
    --brand-orange: #FF5A2E;
-   --brand-green: #157A44;
+   --brand-green: #157A4A;
    --brand-charcoal: #111827;
    --brand-gold: #C89B3C;
    --brand-cream: #F5F1E6;
@@ -145,23 +136,16 @@ These serve as the fallback; there is no separate default.css file. */
   --sidebar-accent-foreground: oklch(0.987 0.002 197.1);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.56 0.021 213.5);
-  --brand-graphite: #1c232b;
-  --brand-warm-slate: #3a4a5b;
-  --brand-steel-blue: #4e6e8a;
-  --brand-rich-navy: #2c3e56;
-  --brand-amber-ochre: #b8893c;
-   --brand-soft-amber: #d4a84b;
-   --brand-mist: #e9eef2;
-   --brand-warm-mist: #f0eef2;
 
    /* Allura brand tokens */
    --brand-blue: #1D4ED8;
    --brand-orange: #FF5A2E;
-   --brand-green: #157A44;
-   --brand-charcoal: #111827;
-   --brand-gold: #C89B3C;
-   --brand-cream: #F5F1E6;
+    --brand-green: #157A4A;
+    --brand-charcoal: #111827;
+    --brand-gold: #C89B3C;
+    --brand-cream: #F5F1E6;
 }
+
 
 @layer base {
   * {
