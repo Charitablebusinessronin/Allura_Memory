@@ -387,7 +387,7 @@ function buildAdapterBackend(): MemoryAPI {
         `INSERT INTO graph_structural_edges (from_id, to_id, rel_type, group_id, props, created_at)
          VALUES ($1, $2, $3, $4, $5, NOW()::timestamptz)
          ON CONFLICT (from_id, to_id, rel_type, group_id) DO NOTHING`,
-        [fromId, toId, type, process.env.DEFAULT_GROUP_ID ?? "allura-roninmemory", relProps]
+        [fromId, toId, type, process.env.DEFAULT_GROUP_ID ?? "allura-system", relProps]
       );
     },
 

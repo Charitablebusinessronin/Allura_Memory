@@ -69,7 +69,7 @@ describe("Allura Memory Configuration", () => {
       expect(config.neo4jUser).toBe("neo4j");
       
       // Multi-tenant defaults
-      expect(config.defaultGroupId).toBe("allura-default");
+      expect(config.defaultGroupId).toBe("allura-system");
       
       // Embedding defaults
       expect(config.embeddingProvider).toBe("ollama");
@@ -345,6 +345,7 @@ describe("Allura Memory Configuration", () => {
       delete process.env.EMBEDDING_PROVIDER;
       delete process.env.EMBEDDING_MODEL;
       delete process.env.EMBEDDING_BASE_URL;
+      delete process.env.RUVECTOR_EMBEDDING_BASE_URL;
       
       const { getConfig } = await import("./config");
       const config = getConfig();
@@ -367,13 +368,43 @@ describe("Allura Memory Configuration", () => {
       expect(config.opencodeBaseUrl).toBe("http://localhost:11434");
     });
 
+    it("should prioritize RUVECTOR_EMBEDDING_BASE_URL over EMBEDDING_BASE_URL", async () => {
+      process.env.RUVECTOR_EMBEDDING_BASE_URL = "http://host.docker.internal:11434";
+      process.env.EMBEDDING_BASE_URL = "http://localhost:11434";
+      
+      const { getConfig } = await import("./config");
+      const config = getConfig();
+      
+      expect(config.embeddingBaseUrl).toBe("http://host.docker.internal:11434");
+    });
+
+    it("should fall back to EMBEDDING_BASE_URL when RUVECTOR_EMBEDDING_BASE_URL is not set", async () => {
+      delete process.env.RUVECTOR_EMBEDDING_BASE_URL;
+      process.env.EMBEDDING_BASE_URL = "http://localhost:11434";
+      
+      const { getConfig } = await import("./config");
+      const config = getConfig();
+      
+      expect(config.embeddingBaseUrl).toBe("http://localhost:11434");
+    });
+
+    it("should default to http://localhost:11434 when neither env var is set", async () => {
+      delete process.env.RUVECTOR_EMBEDDING_BASE_URL;
+      delete process.env.EMBEDDING_BASE_URL;
+      
+      const { getConfig } = await import("./config");
+      const config = getConfig();
+      
+      expect(config.embeddingBaseUrl).toBe("http://localhost:11434");
+    });
+
     it("should match documented defaults for multi-tenant", async () => {
       delete process.env.DEFAULT_GROUP_ID;
       
       const { getConfig } = await import("./config");
       const config = getConfig();
       
-      expect(config.defaultGroupId).toBe("allura-default");
+      expect(config.defaultGroupId).toBe("allura-system");
     });
 
     it("should match documented defaults for web server", async () => {

@@ -107,12 +107,13 @@ export function getConfig(): AlluraMemoryConfig {
     neo4jPassword,
     
     // Multi-tenant
-    defaultGroupId: process.env.DEFAULT_GROUP_ID || 'allura-default',
+    defaultGroupId: process.env.DEFAULT_GROUP_ID || 'allura-system',
     
     // Embedding Provider
     embeddingProvider: (process.env.EMBEDDING_PROVIDER as 'ollama' | 'openai' | 'voyage') || 'ollama',
     embeddingModel: process.env.EMBEDDING_MODEL || 'qwen3-embedding:8b',
-    embeddingBaseUrl: process.env.EMBEDDING_BASE_URL || 'http://localhost:11434',
+    // Compatibility alias: prefer RUVECTOR_EMBEDDING_BASE_URL, fallback to EMBEDDING_BASE_URL
+    embeddingBaseUrl: process.env.RUVECTOR_EMBEDDING_BASE_URL || process.env.EMBEDDING_BASE_URL || 'http://localhost:11434',
     
     // LLM Provider
     opencodeProvider: (process.env.OPENCODE_PROVIDER as 'ollama' | 'openai' | 'anthropic') || 'ollama',
@@ -225,12 +226,14 @@ NEO4J_USER=neo4j
 NEO4J_PASSWORD=your-password-here
 
 # Multi-tenant
-DEFAULT_GROUP_ID=allura-default
+DEFAULT_GROUP_ID=allura-system
 
 # Embedding Provider (ollama, openai, voyage)
 EMBEDDING_PROVIDER=ollama
 EMBEDDING_MODEL=qwen3-embedding:8b
-EMBEDDING_BASE_URL=http://localhost:11434
+# Runtime embedding service URL used by RuVector embedding code.
+# For Docker services, use http://host.docker.internal:11434 with extra_hosts host-gateway.
+RUVECTOR_EMBEDDING_BASE_URL=http://localhost:11434
 
 # For OpenAI embeddings:
 # EMBEDDING_PROVIDER=openai

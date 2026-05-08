@@ -1,18 +1,25 @@
 /**
- * Embedding upgrade backfill: 768d → 4096d
- * Re-embeds all allura_memories rows with qwen3-embedding:8b
+ * LEGACY ONLY: Historical embedding backfill for 768d → 4096d.
+ * Current production contract is qwen3-embedding:8b with 1024 dimensions via /v1/embeddings.
+ * This script is intentionally guarded by ALLOW_LEGACY_4096_BACKFILL=true.
+ *
  * Run: npx tsx scripts/backfill-embeddings-4096.ts
  */
 
 import { config } from 'dotenv';
 config({ path: '../../docker/.env' });
 
+if (process.env.ALLOW_LEGACY_4096_BACKFILL !== 'true') {
+  console.error('[backfill] Refusing to run legacy 4096d /api/embed backfill. Current embedding contract is qwen3-embedding:8b at 1024d via /v1/embeddings. Set ALLOW_LEGACY_4096_BACKFILL=true only for historical recovery.');
+  process.exit(1);
+}
+
 const PG_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL || `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${process.env.POSTGRES_DB}`;
 if (!process.env.POSTGRES_PASSWORD && !process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
   console.error('[backfill] ERROR: POSTGRES_PASSWORD (or DATABASE_URL) is required. Set it in .env.local');
   process.exit(1);
 }
-const OLLAMA_URL = process.env.EMBEDDING_BASE_URL || 'http://localhost:11434';
+const OLLAMA_URL = process.env.RUVECTOR_EMBEDDING_BASE_URL || process.env.EMBEDDING_BASE_URL || 'http://localhost:11434';
 const MODEL = 'qwen3-embedding:8b';
 const BATCH_SIZE = 10;
 

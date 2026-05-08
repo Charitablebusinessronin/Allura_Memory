@@ -147,6 +147,8 @@ services:
       dockerfile: Dockerfile
     container_name: allura-web
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "${ALLURA_DASHBOARD_PORT:-3100}:3100"
     env_file:
@@ -168,12 +170,13 @@ services:
       - RUVECTOR_USER=${POSTGRES_USER}
       - RUVECTOR_PASSWORD=${POSTGRES_PASSWORD}
       - RUVECTOR_DB=${POSTGRES_DB}
+      - RUVECTOR_EMBEDDING_BASE_URL=http://host.docker.internal:11434
       - GRAPH_BACKEND=${GRAPH_BACKEND:-neo4j}
       - RUVIX_KERNEL_SECRET=${RUVIX_KERNEL_SECRET:-}
-      - DEFAULT_GROUP_ID=${DEFAULT_GROUP_ID:-allura-roninmemory}
+      - DEFAULT_GROUP_ID=${DEFAULT_GROUP_ID:-allura-system}
       - ALLURA_DEV_AUTH_ENABLED=${ALLURA_DEV_AUTH_ENABLED:-true}
       - ALLURA_DEV_AUTH_ROLE=${ALLURA_DEV_AUTH_ROLE:-admin}
-      - ALLURA_DEV_AUTH_GROUP_ID=${ALLURA_DEV_AUTH_GROUP_ID:-allura-roninmemory}
+      - ALLURA_DEV_AUTH_GROUP_ID=${ALLURA_DEV_AUTH_GROUP_ID:-allura-system}
     networks:
       - knowledge-network
     healthcheck:
@@ -207,6 +210,8 @@ services:
       dockerfile: Dockerfile.mcp
     container_name: allura-memory-mcp
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     env_file:
       - .env
       - .env.local
@@ -224,8 +229,9 @@ services:
       - RUVECTOR_DB=${POSTGRES_DB}
       - OLLAMA_API_KEY=${OLLAMA_API_KEY:-}
       - OLLAMA_CLOUD_URL=${OLLAMA_CLOUD_URL:-https://ollama.com}
+      - RUVECTOR_EMBEDDING_BASE_URL=http://host.docker.internal:11434
       - GRAPH_BACKEND=${GRAPH_BACKEND:-neo4j}
-      - DEFAULT_GROUP_ID=${DEFAULT_GROUP_ID:-allura-roninmemory}
+      - DEFAULT_GROUP_ID=${DEFAULT_GROUP_ID:-allura-system}
       - RUVIX_KERNEL_SECRET=${RUVIX_KERNEL_SECRET:-}
     networks:
       - knowledge-network
@@ -243,6 +249,8 @@ services:
       dockerfile: Dockerfile.mcp
     container_name: allura-http-gateway
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "5888:3201"
     env_file:
@@ -262,8 +270,9 @@ services:
       - RUVECTOR_DB=${POSTGRES_DB}
       - ALLURA_MCP_HTTP_PORT=3201
       - ALLURA_MCP_HTTP_ENABLED=true
+      - RUVECTOR_EMBEDDING_BASE_URL=http://host.docker.internal:11434
       - GRAPH_BACKEND=${GRAPH_BACKEND:-neo4j}
-      - DEFAULT_GROUP_ID=${DEFAULT_GROUP_ID:-allura-roninmemory}
+      - DEFAULT_GROUP_ID=${DEFAULT_GROUP_ID:-allura-system}
       - RUVIX_KERNEL_SECRET=${RUVIX_KERNEL_SECRET:-}
       # Budget circuit breaker tuning for agent memory writes.
       # Prevents long-lived Brooks sessions from halting on timeMs during normal work.
