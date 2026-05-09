@@ -9,6 +9,9 @@
 
 import { ProofClaims } from "./proof";
 
+// Re-export ProofClaims so consumers can import from policy.ts
+export type { ProofClaims } from "./proof";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────────────────────────────────────

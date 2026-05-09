@@ -78,3 +78,17 @@ export {
   DEFAULT_TIMEOUT,
   DEFAULT_RETRIES,
 } from "../../../packages/sdk/src/utils";
+
+// ── Zod Schemas ──────────────────────────────────────────────────────────────
+
+export {
+  GroupIdSchema,
+  MemoryIdSchema,
+  ConfidenceScoreSchema,
+  MemoryAddResponseSchema,
+  MemorySearchResponseSchema,
+  MemoryGetResponseSchema,
+  MemoryListResponseSchema,
+  MemoryDeleteResponseSchema,
+  HealthResponseSchema,
+} from "../../../packages/sdk/src/types";

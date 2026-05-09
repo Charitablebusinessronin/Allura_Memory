@@ -40,16 +40,18 @@ import type {
   MemoryGetResponse,
   MemoryListResponse,
   MemoryDeleteResponse,
-} from "@/lib/sdk/types";
+} from "@/lib/sdk";
 import {
   MemoryAddResponseSchema,
   MemorySearchResponseSchema,
   MemoryGetResponseSchema,
   MemoryListResponseSchema,
   MemoryDeleteResponseSchema,
-} from "@/lib/sdk/types";
+  MemoryIdSchema,
+  ValidationError,
+} from "@/lib/sdk";
 import { validateGroupId } from "@/lib/validation/group-id";
-import { ValidationError } from "@/lib/sdk/errors";
+import type { GroupId as BrandedGroupId, MemoryId as BrandedMemoryId } from "@/lib/memory/canonical-contracts";
 
 /**
  * Direct invocation of canonical MCP tools.
@@ -62,6 +64,27 @@ import { ValidationError } from "@/lib/sdk/errors";
  * - Or use agentMemory wrapper below (preferred for agents)
  */
 import { canonicalMemoryTools } from "@/mcp/canonical-tools";
+
+/**
+ * Cast a validated string to branded GroupId.
+ *
+ * Safe because validateGroupId() has already enforced the ^allura- pattern.
+ * The branded type exists for compile-time safety; at runtime it's a string.
+ */
+function asGroupId(id: string): BrandedGroupId {
+  return id as BrandedGroupId;
+}
+
+/**
+ * Validate and cast a string to branded MemoryId.
+ *
+ * Safe because MemoryIdSchema enforces the UUID format before the compile-time
+ * brand is applied. The branded type exists for canonical tool contracts; at
+ * runtime it's still a string.
+ */
+function asMemoryId(id: string): BrandedMemoryId {
+  return MemoryIdSchema.parse(id) as BrandedMemoryId;
+}
 
 export type AgentMemoryAddParams = Omit<MemoryAddParams, "threshold"> & {
   threshold?: number;
@@ -111,9 +134,9 @@ class AgentMemory implements AgentMemoryAPI {
       });
     }
 
-    // Call canonical MCP tool
+    // Call canonical MCP tool (cast to branded types — validation already performed)
     const response = await canonicalMemoryTools.memory_add({
-      group_id: params.group_id,
+      group_id: asGroupId(params.group_id),
       user_id: params.user_id,
       content: params.content,
       metadata: params.metadata,
@@ -147,7 +170,7 @@ class AgentMemory implements AgentMemoryAPI {
     }
 
     const response = await canonicalMemoryTools.memory_search({
-      group_id: params.group_id,
+      group_id: asGroupId(params.group_id),
       query: params.query,
       limit: params.limit,
       include_global: params.include_global,
@@ -175,8 +198,8 @@ class AgentMemory implements AgentMemoryAPI {
     }
 
     const response = await canonicalMemoryTools.memory_get({
-      group_id: params.group_id,
-      id: params.id,
+      group_id: asGroupId(params.group_id),
+      id: asMemoryId(params.id),
     });
 
     return MemoryGetResponseSchema.parse(response);
@@ -205,7 +228,7 @@ class AgentMemory implements AgentMemoryAPI {
     }
 
     const response = await canonicalMemoryTools.memory_list({
-      group_id: params.group_id,
+      group_id: asGroupId(params.group_id),
       user_id: params.user_id,
       limit: params.limit ?? 50,
       offset: params.offset ?? 0,
@@ -238,8 +261,8 @@ class AgentMemory implements AgentMemoryAPI {
     }
 
     const response = await canonicalMemoryTools.memory_delete({
-      group_id: params.group_id,
-      id: params.id,
+      group_id: asGroupId(params.group_id),
+      id: asMemoryId(params.id),
       user_id: params.user_id,
     });
 

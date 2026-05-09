@@ -12,8 +12,11 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { agentMemory } from "./memory-wrapper";
-import { ValidationError } from "@/lib/sdk/errors";
+import { ValidationError } from "@/lib/sdk";
 import * as canonicalTools from "@/mcp/canonical-tools";
+
+const TEST_MEMORY_ID = "550e8400-e29b-41d4-a716-446655440000";
+const OTHER_MEMORY_ID = "550e8400-e29b-41d4-a716-446655440001";
 
 // Mock canonical tools
 vi.mock("@/mcp/canonical-tools", () => ({
@@ -34,10 +37,10 @@ describe("Agent Memory Wrapper (Story 1.2)", () => {
   describe("add()", () => {
     it("should add a memory with valid parameters", async () => {
       const mockResponse = {
-        id: "mem_123",
-        storage_location: "postgres",
+        id: TEST_MEMORY_ID,
+        stored: "episodic" as const,
         score: 0.8,
-        promoted_to: null,
+        created_at: "2026-05-07T10:00:00Z",
       };
 
       vi.spyOn(canonicalTools.canonicalMemoryTools, "memory_add").mockResolvedValue(
@@ -78,7 +81,7 @@ describe("Agent Memory Wrapper (Story 1.2)", () => {
           user_id: "brooks-architect",
           content: "Test content",
         })
-      ).rejects.toThrow(ValidationError);
+      ).rejects.toThrow(); // GroupIdValidationError from validateGroupId
     });
 
     it("should reject missing user_id", async () => {
@@ -108,15 +111,16 @@ describe("Agent Memory Wrapper (Story 1.2)", () => {
       const mockResponse = {
         results: [
           {
-            id: "mem_123",
+            id: TEST_MEMORY_ID,
             content: "ADR: Memory wrapper",
             score: 0.95,
-            storage: "neo4j",
+            source: "semantic" as const,
+            provenance: "conversation" as const,
+            created_at: "2026-05-07T10:00:00Z",
           },
         ],
-        total: 1,
-        degraded: false,
-        stores_queried: ["neo4j", "postgres"],
+        count: 1,
+        latency_ms: 42,
       };
 
       vi.spyOn(canonicalTools.canonicalMemoryTools, "memory_search").mockResolvedValue(
@@ -160,9 +164,12 @@ describe("Agent Memory Wrapper (Story 1.2)", () => {
   describe("get()", () => {
     it("should get a memory by ID", async () => {
       const mockResponse = {
-        id: "mem_123",
+        id: TEST_MEMORY_ID,
         content: "ADR: Memory wrapper implementation",
-        storage: "neo4j",
+        score: 0.9,
+        source: "semantic" as const,
+        provenance: "conversation" as const,
+        user_id: "brooks-architect",
         created_at: "2026-05-07T10:00:00Z",
       };
 
@@ -172,13 +179,13 @@ describe("Agent Memory Wrapper (Story 1.2)", () => {
 
       const result = await agentMemory.get({
         group_id: "allura-system",
-        id: "mem_123",
+        id: TEST_MEMORY_ID,
       });
 
       expect(result).toEqual(mockResponse);
       expect(canonicalTools.canonicalMemoryTools.memory_get).toHaveBeenCalledWith({
         group_id: "allura-system",
-        id: "mem_123",
+        id: TEST_MEMORY_ID,
       });
     });
 
@@ -190,6 +197,17 @@ describe("Agent Memory Wrapper (Story 1.2)", () => {
         })
       ).rejects.toThrow(ValidationError);
     });
+
+    it("should reject non-UUID memory IDs before calling canonical tools", async () => {
+      await expect(
+        agentMemory.get({
+          group_id: "allura-system",
+          id: "not-a-uuid",
+        })
+      ).rejects.toThrow("id must be a valid UUID v4");
+
+      expect(canonicalTools.canonicalMemoryTools.memory_get).not.toHaveBeenCalled();
+    });
   });
 
   describe("list()", () => {
@@ -197,8 +215,12 @@ describe("Agent Memory Wrapper (Story 1.2)", () => {
       const mockResponse = {
         memories: [
           {
-            id: "mem_123",
+            id: TEST_MEMORY_ID,
             content: "ADR 1",
+            score: 0.85,
+            source: "episodic" as const,
+            provenance: "conversation" as const,
+            user_id: "brooks-architect",
             created_at: "2026-05-07T10:00:00Z",
           },
         ],
@@ -212,6 +234,7 @@ describe("Agent Memory Wrapper (Story 1.2)", () => {
 
       const result = await agentMemory.list({
         group_id: "allura-system",
+        user_id: "test-user",
         limit: 50,
       });
 
@@ -222,6 +245,7 @@ describe("Agent Memory Wrapper (Story 1.2)", () => {
       await expect(
         agentMemory.list({
           group_id: "allura-system",
+          user_id: "test-user",
           limit: 2000,
         })
       ).rejects.toThrow(ValidationError);
@@ -231,6 +255,7 @@ describe("Agent Memory Wrapper (Story 1.2)", () => {
       await expect(
         agentMemory.list({
           group_id: "allura-system",
+          user_id: "test-user",
           offset: -1,
         })
       ).rejects.toThrow(ValidationError);
@@ -240,9 +265,10 @@ describe("Agent Memory Wrapper (Story 1.2)", () => {
   describe("delete()", () => {
     it("should delete a memory", async () => {
       const mockResponse = {
-        id: "mem_123",
+        id: TEST_MEMORY_ID,
+        deleted: true,
         deleted_at: "2026-05-07T10:00:00Z",
-        recovery_until: "2026-06-06T10:00:00Z",
+        recovery_days: 30,
       };
 
       vi.spyOn(canonicalTools.canonicalMemoryTools, "memory_delete").mockResolvedValue(
@@ -251,7 +277,7 @@ describe("Agent Memory Wrapper (Story 1.2)", () => {
 
       const result = await agentMemory.delete({
         group_id: "allura-system",
-        id: "mem_123",
+        id: TEST_MEMORY_ID,
         user_id: "brooks-architect",
       });
 
@@ -262,10 +288,22 @@ describe("Agent Memory Wrapper (Story 1.2)", () => {
       await expect(
         agentMemory.delete({
           group_id: "allura-system",
-          id: "mem_123",
+          id: TEST_MEMORY_ID,
           user_id: "",
         })
       ).rejects.toThrow(ValidationError);
+    });
+
+    it("should reject non-UUID memory IDs before deletion", async () => {
+      await expect(
+        agentMemory.delete({
+          group_id: "allura-system",
+          id: "not-a-uuid",
+          user_id: "brooks-architect",
+        })
+      ).rejects.toThrow("id must be a valid UUID v4");
+
+      expect(canonicalTools.canonicalMemoryTools.memory_delete).not.toHaveBeenCalled();
     });
   });
 
@@ -273,7 +311,7 @@ describe("Agent Memory Wrapper (Story 1.2)", () => {
     it("should route through canonical tools without modification", async () => {
       const addMock = vi
         .spyOn(canonicalTools.canonicalMemoryTools, "memory_add")
-        .mockResolvedValue({ id: "mem_test", storage_location: "postgres", score: 0.7 } as any);
+        .mockResolvedValue({ id: OTHER_MEMORY_ID, stored: "episodic" as const, score: 0.7, created_at: "2026-05-07T10:00:00Z" } as any);
 
       await agentMemory.add({
         group_id: "allura-system",
@@ -295,9 +333,8 @@ describe("Agent Memory Wrapper (Story 1.2)", () => {
         .spyOn(canonicalTools.canonicalMemoryTools, "memory_search")
         .mockResolvedValue({
           results: [],
-          total: 0,
-          degraded: false,
-          stores_queried: [],
+          count: 0,
+          latency_ms: 10,
         } as any);
 
       await agentMemory.search({
