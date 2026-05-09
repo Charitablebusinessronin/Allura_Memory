@@ -726,6 +726,172 @@ export const POLICY_PROJECT_MANIFEST_REQUIRED: Policy = {
 policyRegistry.register(POLICY_PROJECT_MANIFEST_REQUIRED);
 
 // ─────────────────────────────────────────────────────────────────────────────
+// POL-EMAIL-001..005: EXTERNAL EMAIL ZERO-TRUST GATES
+// ─────────────────────────────────────────────────────────────────────────────
+
+function isEmailContext(context: PolicyContext): boolean {
+  const trustZone = String(context.trust_zone ?? context.trustZone ?? "");
+  const source = String(context.source ?? "");
+  const resource = String(context.resource ?? "");
+  const operation = String(context.operation ?? "");
+
+  return trustZone === "external_untrusted" ||
+    /^(gmail|imap|email|forwarded_email)$/i.test(source) ||
+    /email|gmail|imap/i.test(resource) ||
+    /^email:/i.test(operation);
+}
+
+function isEmailActionOperation(context: PolicyContext): boolean {
+  const operation = String(context.operation ?? "");
+  const resource = String(context.resource ?? "");
+
+  return /send|reply|forward|open|download|click|visit|connect|login|reset|delete|write|update|create|mutate|execute|run|promote/i.test(operation) ||
+    /attachment|link|url|credential|secret|config|neo4j|canonical/i.test(resource);
+}
+
+function hasCaptainApproval(context: PolicyContext): boolean {
+  return context.captainApproval === true || context.humanApproval === true || context.hitlApproved === true;
+}
+
+/**
+ * POL-EMAIL-001: External Email Instruction Blocker
+ *
+ * Email-derived content is never instruction authority. If the scanner or caller
+ * identifies imperative/tool-targeting content from email, it may only be used
+ * as quoted evidence, never as runtime instructions.
+ */
+export const POLICY_EMAIL_INSTRUCTION_BLOCKER: Policy = {
+  id: "POL-EMAIL-001",
+  description: "Email-derived content cannot issue instructions to agents or tools",
+  condition: (_claims, context) => {
+    if (!isEmailContext(context)) {
+      return true;
+    }
+
+    const flags = context.emailFlags as string[] | undefined;
+    const containsInstruction = context.emailContainsInstruction === true ||
+      flags?.some(flag => /instruction|prompt[-_ ]?injection|tool[-_ ]?command/i.test(flag)) === true;
+
+    if (!containsInstruction) {
+      return true;
+    }
+
+    // Explicit evidence-only handling is allowed. Instruction injection is not.
+    return context.emailHandlingMode === "evidence_only";
+  },
+  violation: "Email content attempted to issue instructions. Treat it as untrusted evidence only.",
+  severity: "critical",
+};
+
+/**
+ * POL-EMAIL-002: Email Action Approval Gate
+ *
+ * External/destructive/privileged actions derived from email require explicit
+ * Captain/HITL approval.
+ */
+export const POLICY_EMAIL_ACTION_APPROVAL_GATE: Policy = {
+  id: "POL-EMAIL-002",
+  description: "Email-derived privileged actions require explicit Captain approval",
+  condition: (_claims, context) => {
+    if (!isEmailContext(context) || !isEmailActionOperation(context)) {
+      return true;
+    }
+
+    return hasCaptainApproval(context);
+  },
+  violation: "Email-derived request requires explicit Captain approval before action.",
+  severity: "critical",
+};
+
+/**
+ * POL-EMAIL-003: High-Risk Email Quarantine
+ *
+ * High-risk emails may only be logged, read as evidence, or quarantined. They
+ * cannot trigger links, attachments, replies, promotions, or mutations.
+ */
+export const POLICY_HIGH_RISK_EMAIL_QUARANTINE: Policy = {
+  id: "POL-EMAIL-003",
+  description: "High-risk email cannot trigger actions beyond quarantine/logging",
+  condition: (_claims, context) => {
+    if (!isEmailContext(context)) {
+      return true;
+    }
+
+    const verdict = String(context.emailVerdict ?? context.verdict ?? "").toLowerCase();
+    if (verdict !== "high") {
+      return true;
+    }
+
+    const operation = String(context.operation ?? "");
+    return /^(query|read|scan|log|audit|quarantine|email:scan|email:log|email:quarantine)$/i.test(operation);
+  },
+  violation: "High-risk email cannot trigger actions. Quarantine/log only.",
+  severity: "high",
+};
+
+/**
+ * POL-EMAIL-004: Email Memory Promotion Requires HITL
+ *
+ * Email-derived facts may be stored as raw episodic traces. Promotion into
+ * canonical Neo4j memory requires curator/HITL approval.
+ */
+export const POLICY_EMAIL_MEMORY_PROMOTION_REQUIRES_HITL: Policy = {
+  id: "POL-EMAIL-004",
+  description: "Email-derived memory promotion requires human curator review",
+  condition: (_claims, context) => {
+    if (!isEmailContext(context)) {
+      return true;
+    }
+
+    const operation = String(context.operation ?? "");
+    const resource = String(context.resource ?? "");
+    const isPromotion = /promote|canonical|semantic|neo4j/i.test(operation) || /canonical|semantic|neo4j/i.test(resource);
+
+    if (!isPromotion) {
+      return true;
+    }
+
+    return context.curatorApproval === true || context.hitlApproved === true;
+  },
+  violation: "Email-derived content cannot auto-promote to canonical memory. Curator/HITL review required.",
+  severity: "high",
+};
+
+/**
+ * POL-EMAIL-005: Attachment Sandbox Requirement
+ *
+ * Attachment inspection is allowed only as inert data in quarantine/sandbox.
+ */
+export const POLICY_EMAIL_ATTACHMENT_SANDBOX_REQUIREMENT: Policy = {
+  id: "POL-EMAIL-005",
+  description: "Email attachments require quarantine/sandbox before inspection",
+  condition: (_claims, context) => {
+    if (!isEmailContext(context)) {
+      return true;
+    }
+
+    const operation = String(context.operation ?? "");
+    const resource = String(context.resource ?? "");
+    const isAttachmentOperation = /attachment|download|open|extract|inspect/i.test(operation) || /attachment/i.test(resource);
+    const hasAttachment = context.emailHasAttachment === true || context.attachmentPresent === true;
+
+    if (!isAttachmentOperation && !hasAttachment) {
+      return true;
+    }
+
+    return context.quarantined === true && context.sandboxed === true;
+  },
+  violation: "Email attachment cannot be opened outside quarantine/sandbox.",
+  severity: "high",
+};
+
+policyRegistry.register(POLICY_EMAIL_INSTRUCTION_BLOCKER);
+policyRegistry.register(POLICY_EMAIL_ACTION_APPROVAL_GATE);
+policyRegistry.register(POLICY_HIGH_RISK_EMAIL_QUARANTINE);
+policyRegistry.register(POLICY_EMAIL_MEMORY_PROMOTION_REQUIRES_HITL);
+policyRegistry.register(POLICY_EMAIL_ATTACHMENT_SANDBOX_REQUIREMENT);
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DEFAULT POLICY SET (post all policy definitions)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -744,6 +910,11 @@ export const DEFAULT_POLICIES: Policy[] = [
   POLICY_SOURCE_OF_TRUTH_GATE,
   POLICY_INFRASTRUCTURE_TARGET_LOCK,
   POLICY_PROJECT_MANIFEST_REQUIRED,
+  POLICY_EMAIL_INSTRUCTION_BLOCKER,
+  POLICY_EMAIL_ACTION_APPROVAL_GATE,
+  POLICY_HIGH_RISK_EMAIL_QUARANTINE,
+  POLICY_EMAIL_MEMORY_PROMOTION_REQUIRES_HITL,
+  POLICY_EMAIL_ATTACHMENT_SANDBOX_REQUIREMENT,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
