@@ -97,7 +97,6 @@ import {
   EpisodicMemoryRow,
   generateMemoryId,
   getAutoApprovalThreshold,
-  getPromotionMode,
   getRecentUsageCount,
   neo4jDateToISO,
   parseEpisodicTags,
@@ -119,16 +118,13 @@ import {
  * 1. Validate group_id and content
  * 2. Write to PostgreSQL (events table, append-only)
  * 3. Score content
- * 4. If score >= threshold:
- *    - auto mode: Promote to Neo4j immediately
- *    - soc2 mode: Queue in proposals table
+ * 4. If score >= threshold: queue in canonical_proposals for HITL review
  * 5. Return memory ID and storage location
  */
 export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddResponse> {
-  const PROMOTION_MODE = getPromotionMode()
   const AUTO_APPROVAL_THRESHOLD = getAutoApprovalThreshold()
 
-  console.log(`[DEBUG memory_add] PROMOTION_MODE=${PROMOTION_MODE}, AUTO_APPROVAL_THRESHOLD=${AUTO_APPROVAL_THRESHOLD}`)
+  console.log(`[DEBUG memory_add] AUTO_APPROVAL_THRESHOLD=${AUTO_APPROVAL_THRESHOLD}; HITL promotion enforced`)
 
   const groupId = validateGroupId(request.group_id)
   const agentId = request.metadata?.agent_id || request.scope?.agent_id || "api"
@@ -236,142 +232,14 @@ export async function memory_add(request: MemoryAddRequest): Promise<MemoryAddRe
       }
     }
 
-    // Score meets threshold
-    if (PROMOTION_MODE === "auto") {
-      // Auto mode: Promote immediately
-
-      // Check for duplicates (only in auto mode) — via graph adapter
-      let duplicateId: MemoryId | null = null
-      try {
-        const dupResult = await withCircuitBreaker("graph", groupId, "memory_add:duplicate_check", async () =>
-          graphAdapter.checkDuplicate({ group_id: groupId, user_id: request.user_id, content: request.content })
-        )
-        duplicateId = dupResult.existingId
-      } catch (error) {
-        if (error instanceof Error && error.message.startsWith("Circuit breaker open")) {
-          throw error
-        }
-        console.warn("[degraded] Graph adapter duplicate check unavailable in memory_add:", error)
-        return {
-          id: memoryId,
-          stored: "episodic",
-          score,
-          created_at: createdAt,
-          meta: degradedMeta(["postgres"]),
-        }
-      }
-
-      if (duplicateId) {
-        // Duplicate found: return existing ID
-        return {
-          id: duplicateId,
-          stored: "semantic",
-          score,
-          created_at: createdAt,
-          meta: baseMeta(["graph"]),
-        }
-      }
-
-      // Promote to graph layer
-      try {
-        await withCircuitBreaker("graph", groupId, "memory_add:create_memory", async () =>
-          graphAdapter.createMemory({
-            id: memoryId,
-            group_id: groupId,
-            user_id: request.user_id,
-            content: request.content,
-            score,
-            provenance: request.metadata?.source || "conversation",
-            created_at: createdAt,
-          })
-        )
-
-        // Phase 3 sync contract: wire AUTHORED_BY and RELATES_TO relationships
-        // to anchor the new Memory in the structural context layer.
-        // FR-3: Uses mapping tables to resolve user_id→Agent name and group_id→Project name.
-        // Best-effort: failure here does not block promotion.
-        try {
-          const linkResult = await graphAdapter.linkMemoryContext({
-            memory_id: memoryId,
-            group_id: groupId,
-            agent_id: request.metadata?.agent_id ?? request.scope?.agent_id ?? null,
-            project_id: request.scope?.project_id ?? null,
-          })
-          if (linkResult.authored_by || linkResult.relates_to) {
-            console.info(
-              `[sync-contract] memory_add: linked memory=${memoryId} ` +
-              `authored_by=${linkResult.authored_by} relates_to=${linkResult.relates_to}`
-            )
-          }
-        } catch (linkErr) {
-          // Best-effort — don't fail the promotion over relationship wiring
-          console.warn(`[sync-contract] linkMemoryContext failed in memory_add:`, linkErr)
-        }
-
-        // FR-3: Write PG audit event for sync contract
-        try {
-          await pg.query(
-            `INSERT INTO events (group_id, event_type, agent_id, status, metadata, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6)`,
-            [
-              groupId,
-              "sync_contract",
-              "system",
-              "completed",
-              JSON.stringify({
-                action: "auto_link",
-                memory_id: memoryId,
-                agent_id: request.metadata?.agent_id ?? request.scope?.agent_id ?? null,
-                project_id: request.scope?.project_id ?? groupId,
-              }),
-              createdAt,
-            ]
-          )
-        } catch (auditErr) {
-          console.warn(`[sync-contract] PG audit event failed in memory_add:`, auditErr)
-        }
-
-        // Log promotion event — circuit-breaker wrapped
-        await withCircuitBreaker("postgres", groupId, "memory_add:log_promotion", async () =>
-          pg.query(
-            `INSERT INTO events (
-          group_id, event_type, agent_id, status, metadata, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6)`,
-            [
-              groupId,
-              "memory_promoted",
-              "system",
-              "completed",
-              JSON.stringify({
-                memory_id: memoryId,
-                score,
-                tier,
-                reasoning,
-                trace_ref: eventId,
-              }),
-              createdAt,
-            ]
-          )
-        )
-
-        return {
-          id: memoryId,
-          stored: "both",
-          score,
-          created_at: createdAt,
-        }
-      } catch (error) {
-        console.warn("[degraded] Graph adapter promotion unavailable in memory_add:", error)
-        return {
-          id: memoryId,
-          stored: "episodic",
-          score,
-          created_at: createdAt,
-          meta: degradedMeta(["postgres"]),
-        }
-      }
-    } else {
-      // SOC2 mode: Queue for human approval with dedup check
+    // Score meets threshold: always queue for human approval.
+    //
+    // Governance invariant (HITL Promotion Lock): no memory_add path may write
+    // directly to the canonical graph. PROMOTION_MODE=auto is intentionally
+    // ignored here; promotion must flow through canonical_proposals and curator
+    // approval. This preserves the Allura canon rule: no autonomous promotion.
+    {
+      // Queue for human approval with dedup check
 
       // Check for near-duplicate proposals before inserting
       const dedupThreshold = getDedupThreshold()

@@ -48,7 +48,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "memory_add",
         description:
-          "Add a memory for a user. Writes to PostgreSQL (episodic), scores content, and conditionally promotes to Neo4j (semantic) based on PROMOTION_MODE.",
+          "Add a memory for a user. Writes to PostgreSQL (episodic), scores content, and queues eligible memories for HITL curator review before semantic promotion.",
         inputSchema: {
           type: "object",
           properties: {

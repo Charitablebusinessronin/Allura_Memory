@@ -330,16 +330,16 @@ describe.skipIf(!shouldRunE2E)("Curator Pipeline E2E", () => {
     E2E_TIMEOUT
   );
 
-  // ── Test 6: Auto-promote ───────────────────────────────────────────────────
+  // ── Test 6: Deprecated auto-promote compatibility shim ─────────────────────
 
   it(
-    "autoPromoteProposal — promotes eligible proposal to Neo4j without HITL",
+    "autoPromoteProposal — does not bypass HITL approval",
     async () => {
       const savedMode = process.env.PROMOTION_MODE;
       process.env.PROMOTION_MODE = "auto";
       process.env.AUTO_APPROVAL_THRESHOLD = "0.5";
 
-      expect(isAutoPromoteEnabled()).toBe(true);
+      expect(isAutoPromoteEnabled()).toBe(false);
 
       // Seed a pending proposal with a high score
       const proposalId = randomUUID();
@@ -357,29 +357,15 @@ describe.skipIf(!shouldRunE2E)("Curator Pipeline E2E", () => {
       );
 
       const result = await autoPromoteProposal(proposalId, GROUP_ID, "auto-promote-test");
-      expect(result).not.toBeNull();
-      expect(result!.memory_id).toBeDefined();
-      expect(result!.decided_at).toBeDefined();
+      expect(result).toBeNull();
 
-      // Verify proposal updated in PG
+      // Verify proposal remains pending for HITL review
       const row = await pgPool.query(
         "SELECT status, decided_by FROM canonical_proposals WHERE id = $1",
         [proposalId]
       );
-      expect(row.rows[0].status).toBe("approved");
-      expect(row.rows[0].decided_by).toBe("auto-promote-test");
-
-      // Verify InsightHead in Neo4j
-      const session = neo4jDriver.session();
-      try {
-        const neo4jResult = await session.run(
-          "MATCH (h:InsightHead {insight_id: $id, group_id: $groupId}) RETURN h",
-          { id: result!.memory_id, groupId: GROUP_ID }
-        );
-        expect(neo4jResult.records.length).toBe(1);
-      } finally {
-        await session.close();
-      }
+      expect(row.rows[0].status).toBe("pending");
+      expect(row.rows[0].decided_by).toBeNull();
 
       process.env.PROMOTION_MODE = savedMode;
     },

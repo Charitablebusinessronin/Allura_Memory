@@ -11,7 +11,7 @@
  * - group_id MUST match ^allura- (CHECK constraint)
  * - PostgreSQL is append-only (no UPDATE/DELETE on events table)
  * - Neo4j uses SUPERSEDES for versioning (never mutate nodes)
- * - PROMOTION_MODE controls autonomous promotion (auto | soc2)
+ * - Promotion is HITL-only: eligible memories queue proposals; no autonomous semantic promotion
  */
 
 // ── Core Types ─────────────────────────────────────────────────────────────
@@ -47,14 +47,16 @@ export type ConfidenceScore = number
  * Storage location indicator
  * - 'episodic': PostgreSQL only (below promotion threshold)
  * - 'semantic': Neo4j (promoted knowledge)
- * - 'both': Both stores (promoted in auto mode)
+ * - 'both': Both stores after approved semantic promotion
  */
 export type StorageLocation = "episodic" | "semantic" | "both"
 
 /**
  * Promotion mode
- * - 'auto': Promote immediately if score >= threshold
- * - 'soc2': Queue for human approval before promotion
+ *
+ * Historical compatibility accepts "auto", but canonical promotion remains
+ * HITL-only. Eligible memories queue proposals for human approval before any
+ * semantic promotion.
  */
 export type PromotionMode = "auto" | "soc2"
 
@@ -96,9 +98,7 @@ export interface MemoryResponseMeta {
  * 1. Validate group_id and content
  * 2. Write to PostgreSQL (events table, append-only)
  * 3. Score content (0.0 to 1.0)
- * 4. If score >= threshold:
- *    - auto mode: Promote to Neo4j immediately
- *    - soc2 mode: Queue in proposals table
+ * 4. If score >= threshold: queue in canonical_proposals for HITL review
  * 5. Return memory ID and storage location
  */
 /**

@@ -82,10 +82,9 @@ describe("Canonical Memory Operations", () => {
       expect(response.created_at).toBeDefined();
     });
 
-     itIfE2E("should add a memory and promote to Neo4j when score >= threshold in auto mode", async () => {
-       // This test requires PROMOTION_MODE=auto
-       // Content must start with "I always/never/prefer" to trigger specificity pattern
-       // and be long enough (>20 words) to score >= AUTO_APPROVAL_THRESHOLD (0.85)
+     itIfE2E("should queue for HITL review even when PROMOTION_MODE=auto", async () => {
+       // PROMOTION_MODE=auto is retained only for backwards-compatible env parsing.
+       // Canonical promotion is HITL-only: eligible memories queue proposals.
        const originalMode = process.env.PROMOTION_MODE;
        process.env.PROMOTION_MODE = "auto";
 
@@ -100,8 +99,9 @@ describe("Canonical Memory Operations", () => {
          const response = await memory_add(request);
 
          expect(response.id).toBeDefined();
-         expect(response.stored).toBe("both");
+         expect(response.stored).toBe("episodic");
          expect(response.score).toBeGreaterThanOrEqual(0.85);
+         expect(response.pending_review).toBe(true);
          expect(response.created_at).toBeDefined();
        } finally {
          process.env.PROMOTION_MODE = originalMode;
@@ -134,14 +134,12 @@ describe("Canonical Memory Operations", () => {
        }
      });
 
-     itIfE2E("should return episodic storage with degraded metadata when auto promotion cannot reach Neo4j", async () => {
-       // Content must score >= 0.85 to trigger promotion path
-       // which is the only path that returns degraded metadata when Neo4j is unavailable
+     itIfE2E("should not contact Neo4j from memory_add when eligible memory queues for HITL", async () => {
        const originalMode = process.env.PROMOTION_MODE;
        const originalNeo4jUri = process.env.NEO4J_URI;
        process.env.PROMOTION_MODE = "auto";
        process.env.NEO4J_URI = "bolt://127.0.0.1:1";
-       resetConnections(); // Force Neo4j driver to reconnect with bad URI
+       resetConnections();
 
        try {
          const response = await memory_add({
@@ -152,13 +150,12 @@ describe("Canonical Memory Operations", () => {
          });
 
          expect(response.stored).toBe("episodic");
-         expect(response.meta?.degraded).toBe(true);
-         expect(response.meta?.degraded_reason).toMatch(/^(neo4j_unavailable|graph_unavailable)$/);
-         expect(response.meta?.stores_used).toEqual(["postgres"]);
+         expect(response.pending_review).toBe(true);
+         expect(response.meta?.degraded).not.toBe(true);
        } finally {
          process.env.PROMOTION_MODE = originalMode;
          process.env.NEO4J_URI = originalNeo4jUri;
-         resetConnections(); // Restore working connections
+         resetConnections();
        }
      });
 
@@ -408,10 +405,9 @@ describe("Canonical Memory Operations", () => {
       expect(response.recovery_days).toBe(30);
     });
 
-    it("should mark memory as deprecated in Neo4j", async () => {
-      // First, promote to Neo4j (requires auto mode)
+    it("should soft-delete episodic memory without requiring graph promotion", async () => {
       const originalMode = process.env.PROMOTION_MODE;
-      process.env.PROMOTION_MODE = "auto";
+      process.env.PROMOTION_MODE = "soc2";
 
       try {
         const addResponse = await memory_add({
@@ -509,7 +505,7 @@ describe("Canonical Memory Operations", () => {
   });
 
   describe("Promotion Mode Behavior", () => {
-     itIfE2E("should auto-promote in auto mode", async () => {
+     itIfE2E("should still queue for HITL in auto mode", async () => {
        const originalMode = process.env.PROMOTION_MODE;
        process.env.PROMOTION_MODE = "auto";
 
@@ -522,8 +518,8 @@ describe("Canonical Memory Operations", () => {
            metadata: { source: "conversation" },
          });
 
-         expect(response.stored).toBe("both");
-         expect(response.pending_review).toBeUndefined();
+         expect(response.stored).toBe("episodic");
+         expect(response.pending_review).toBe(true);
        } finally {
          process.env.PROMOTION_MODE = originalMode;
        }

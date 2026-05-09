@@ -190,7 +190,7 @@ export interface IGraphAdapter {
 
   /**
    * Create a new memory node.
-   * Used by: memory_add (auto promotion)
+   * Used by: explicit curator-approved semantic promotion paths.
    *
    * @param node - Memory node data (id, group_id, user_id, content, score, provenance, created_at)
    * @returns The created node's ID
