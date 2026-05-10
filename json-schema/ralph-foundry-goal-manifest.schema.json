@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://allura.dev/schemas/ralph-foundry-goal-manifest.schema.json",
+  "title": "RalphFoundryGoalManifest",
+  "description": "Input contract for a Team-Gated Autonomous Ralph Foundry goal loop. JSON Schema is the source of truth for goal shape.",
+  "type": "object",
+  "required": ["goalId", "goal", "sourceRef", "successCriteria", "approvalMode", "internalGates", "allowedPaths", "blockedPaths", "maxRuns", "stopConditions", "validationCommands", "schemaVersion", "breakingChangePolicy"],
+  "properties": {
+    "goalId": { "type": "string", "pattern": "^rfg-[0-9]+$", "description": "Unique goal-loop identifier." },
+    "goal": { "type": "string", "minLength": 1, "description": "Plain-language outcome the autonomous loop must achieve." },
+    "sourceRef": { "type": "string", "minLength": 1, "description": "Planning source reference, such as a Notion page, story, or architecture prompt." },
+    "successCriteria": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "description": "Objective conditions that prove the goal is achieved." },
+    "approvalMode": { "type": "string", "const": "team-gated-autonomous", "description": "No routine human gate between runs; Team RAM internal gates review progress and only hard stops escalate." },
+    "internalGates": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["scout", "woz", "pike", "fowler", "knuth", "hightower", "bellard", "carmack", "judge", "learning"] },
+      "minItems": 3,
+      "uniqueItems": true,
+      "description": "Canonical Team RAM agents plus non-agent control phases allowed to review, redirect, or stop the autonomous loop. judge is the Brooks/Jobs decision phase; learning is Allura Brain write-back."
+    },
+    "runSelectionPolicy": { "type": "string", "enum": ["highest-risk-first", "dependency-order", "smallest-proving-slice"], "description": "How the judge selects the next bounded run." },
+    "allowedPaths": { "type": "array", "items": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*\\.\\.).+" }, "minItems": 1, "maxItems": 20, "description": "Repo-relative normalized path prefixes the loop may modify without escalation. Blocked paths take precedence over allowed paths." },
+    "blockedPaths": { "type": "array", "items": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*\\.\\.).+" }, "minItems": 1, "maxItems": 20, "description": "Repo-relative normalized path prefixes the loop must not modify. Blocked paths take precedence over allowed paths." },
+    "maxRuns": { "type": "integer", "minimum": 1, "maximum": 20, "description": "Maximum bounded runs before abandonment or escalation." },
+    "stopConditions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "goal-achieved",
+          "max-runs-reached",
+          "same-validation-failure-twice",
+          "three-failed-fixes-same-issue",
+          "blocked-path-touched",
+          "secret-or-destructive-action-required",
+          "deploy-action-required",
+          "architecture-decision-required",
+          "validation-unavailable",
+          "success-criteria-not-objective"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Hard stops that terminate or escalate the autonomous loop."
+    },
+    "validationCommands": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "description": "Goal-level validation or policy commands that must be runnable before the loop can claim success." },
+    "learningWriteBack": { "type": "boolean", "const": true, "description": "Every completed run writes a concise learning to Allura Brain." },
+    "extensions": {
+      "type": "object",
+      "description": "Optional extension point for non-core integrations. v0.1 keeps external systems out of the base contract.",
+      "properties": {
+        "notionPageUrl": { "type": "string", "format": "uri", "description": "Manual Notion bridge for the goal source." }
+      },
+      "additionalProperties": false
+    },
+    "schemaVersion": { "type": "string", "const": "0.1.0" },
+    "breakingChangePolicy": { "type": "string", "const": "Only patch-level bumps are non-breaking; minor bumps require a migration step." },
+    "deprecationDate": { "type": "string", "format": "date", "description": "Date after which this schema version may be removed when superseded." }
+  },
+  "allOf": [
+    { "properties": { "stopConditions": { "contains": { "const": "goal-achieved" } } } },
+    { "properties": { "stopConditions": { "contains": { "const": "max-runs-reached" } } } },
+    { "properties": { "stopConditions": { "contains": { "const": "same-validation-failure-twice" } } } },
+    { "properties": { "stopConditions": { "contains": { "const": "three-failed-fixes-same-issue" } } } },
+    { "properties": { "stopConditions": { "contains": { "const": "blocked-path-touched" } } } },
+    { "properties": { "stopConditions": { "contains": { "const": "secret-or-destructive-action-required" } } } },
+    { "properties": { "stopConditions": { "contains": { "const": "deploy-action-required" } } } },
+    { "properties": { "stopConditions": { "contains": { "const": "architecture-decision-required" } } } },
+    { "properties": { "stopConditions": { "contains": { "const": "validation-unavailable" } } } },
+    { "properties": { "stopConditions": { "contains": { "const": "success-criteria-not-objective" } } } }
+  ],
+  "additionalProperties": false
+}

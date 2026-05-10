@@ -25,6 +25,7 @@ Allura is a sovereign AI memory engine — a self-hosted, governed alternative t
 - [10) Admin Workflow](#10-admin-workflow)
 - [11) References](#11-references)
 - [12) Documentation Authority & Sync Contract](#12-documentation-authority--sync-contract)
+- [13) Ralph Foundry Goal Autonomy](#13-ralph-foundry-goal-autonomy)
 
 ---
 
@@ -856,6 +857,8 @@ This section defines the single authority map between Notion templates/policy an
 | Requirements Matrix                       | `docs/allura/REQUIREMENTS-MATRIX.md`                   | Repo canonical (no Notion twin) | Edit repo directly                      |
 | Risks & Decisions                         | `docs/allura/RISKS-AND-DECISIONS.md`                   | Repo canonical (no Notion twin) | Edit repo directly                      |
 | Data Dictionary                           | `docs/allura/DATA-DICTIONARY.md`                       | Repo canonical (no Notion twin) | Edit repo directly                      |
+| Ralph Foundry Harness                     | `docs/allura/RALPH-FOUNDRY-HARNESS.md`                 | Repo canonical (no Notion twin) | Edit repo directly                      |
+| Ralph Foundry Auto Loop                   | `docs/allura/RALPH-FOUNDRY-AUTO-LOOP.md`               | Repo canonical (no Notion twin) | Edit repo directly                      |
 | BROOKS_ARCHITECT persona                  | `.claude/agents/brooks.md`                             | Notion → repo                   | Edit Notion persona, sync to agent file |
 
 ### Preflight Gate (mandatory before doc writes)
@@ -864,6 +867,18 @@ Before creating or updating documentation artifacts, agents must read this autho
 
 - If target is not one of the approved authority-map files under `docs/allura/` and not an approved archive/memory destination, **abort and reroute**.
 - No net-new file creation is allowed in `docs/allura/` without updating this authority map and receiving explicit human approval.
+
+---
+
+## 13) Ralph Foundry Goal Autonomy
+
+Ralph Foundry goal autonomy sits above a bounded Ralph Foundry run. A goal manifest declares the desired outcome, objective success criteria, allowed paths, blocked paths, max runs, Team RAM gates, and hard stop conditions. The controller then creates one bounded run at a time and records run artifacts under `.ralph-runs/`.
+
+The canonical autonomy mode is **Team-Gated Autonomous**. Routine human approval is not required between runs, but Scout, Woz, Pike, Fowler, Knuth, Hightower, Judge, and Learning gates act as the control system. This preserves the surgical team model: autonomy is achieved through disciplined delegation, not by removing all brakes.
+
+Hard stops include repeated validation failure, the Brooksian three-failed-fixes rule, blocked path modification, secret or destructive action requirements, deploy action requirements, unavailable validation, and architecture decisions that require a new ADR. Goal-level learning must be written back to Allura Brain after each run so later runs avoid repeating failed strategies.
+
+See [RALPH-FOUNDRY-AUTO-LOOP.md](./RALPH-FOUNDRY-AUTO-LOOP.md), [ralph-foundry-goal-manifest.schema.json](../../json-schema/ralph-foundry-goal-manifest.schema.json), and [ralph-foundry-goal-result.schema.json](../../json-schema/ralph-foundry-goal-result.schema.json).
 
 ---
 

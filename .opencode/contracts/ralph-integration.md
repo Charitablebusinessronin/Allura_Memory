@@ -267,6 +267,9 @@ Ralph Foundry extends this integration contract with run-level structured contra
 - [ralph-foundry-run-manifest.schema.json](../../json-schema/ralph-foundry-run-manifest.schema.json) — run input contract
 - [ralph-foundry-run-log-event.schema.json](../../json-schema/ralph-foundry-run-log-event.schema.json) — run-level append-only event contract
 - [ralph-foundry-run-result.schema.json](../../json-schema/ralph-foundry-run-result.schema.json) — terminal result contract
+- [RALPH-FOUNDRY-AUTO-LOOP.md](../../docs/allura/RALPH-FOUNDRY-AUTO-LOOP.md) — Team-Gated Autonomous goal-loop controller
+- [ralph-foundry-goal-manifest.schema.json](../../json-schema/ralph-foundry-goal-manifest.schema.json) — goal input contract
+- [ralph-foundry-goal-result.schema.json](../../json-schema/ralph-foundry-goal-result.schema.json) — terminal goal result contract
 - [CONTRACT-INTEROPERABILITY.md](../ralph-foundry/CONTRACT-INTEROPERABILITY.md) — event taxonomy boundary
 
 Foundry events are run-level. Harness events are agent-level. No 1:1 semantic mapping is implied.

@@ -1,0 +1,30 @@
+{
+  "runId": "rf-001",
+  "epicRef": "Epic 1 — Persistent Knowledge Capture",
+  "storyRef": "Story 1.2 — TraceMiddleware Integration / Ralph Foundry MVP continuation",
+  "mode": "dry-run",
+  "goal": "Validate that Ralph Foundry run artifacts can be created from the v0.1 contract and used as evidence for the autonomous goal loop.",
+  "dod": [
+    "Run manifest is valid JSON",
+    "Run event log records start, validation, and completion events",
+    "Run result cites validation evidence",
+    "Artifacts stay within the declared Ralph Foundry documentation scope"
+  ],
+  "validationCommands": [
+    "python3 -m json.tool .ralph-runs/rf-001/manifest.json >/dev/null",
+    "python3 -m json.tool .ralph-runs/rf-001/result.json >/dev/null",
+    "while IFS= read -r line; do printf '%s\\n' \"$line\" | python3 -m json.tool >/dev/null; done < .ralph-runs/rf-001/events.jsonl",
+    "git diff --name-only | python3 -c \"import sys; blocked=('.env','.env.local','src/','docker/','docker-compose.yml'); bad=[p.strip() for p in sys.stdin if p.strip().startswith(blocked)]; sys.exit(1 if bad else 0)\""
+  ],
+  "contextPaths": [
+    ".opencode/context/development/principles/AI-GUIDELINES.md",
+    "docs/allura/RALPH-FOUNDRY-HARNESS.md",
+    "docs/allura/RALPH-FOUNDRY-AUTO-LOOP.md"
+  ],
+  "extensions": {
+    "notionPageUrl": "https://notion.so/example-ralph-foundry-story"
+  },
+  "schemaVersion": "0.1.0",
+  "breakingChangePolicy": "Only patch-level bumps are non-breaking; minor bumps require a migration step.",
+  "deprecationDate": "2026-12-31"
+}

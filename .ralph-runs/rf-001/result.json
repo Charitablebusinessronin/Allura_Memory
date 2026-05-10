@@ -1,0 +1,14 @@
+{
+  "runId": "rf-001",
+  "status": "executed",
+  "summary": "First Ralph Foundry dry-run artifact set was created to prove the file-level run contract for the Team-Gated Autonomous goal-loop design.",
+  "evidence": [
+    ".ralph-runs/rf-001/manifest.json",
+    ".ralph-runs/rf-001/events.jsonl",
+    ".ralph-runs/rf-001/result.json"
+  ],
+  "completedAt": "2026-05-10T07:47:00Z",
+  "schemaVersion": "0.1.0",
+  "breakingChangePolicy": "Only patch-level bumps are non-breaking; minor bumps require a migration step.",
+  "deprecationDate": "2026-12-31"
+}

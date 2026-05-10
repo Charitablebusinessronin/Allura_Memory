@@ -22,8 +22,13 @@ Ralph Foundry provides a small contract for running one bounded Ralph loop with 
 python3 -m json.tool json-schema/ralph-foundry-run-manifest.schema.json >/dev/null
 python3 -m json.tool json-schema/ralph-foundry-run-log-event.schema.json >/dev/null
 python3 -m json.tool json-schema/ralph-foundry-run-result.schema.json >/dev/null
+python3 -m json.tool json-schema/ralph-foundry-goal-manifest.schema.json >/dev/null
+python3 -m json.tool json-schema/ralph-foundry-goal-result.schema.json >/dev/null
 python3 -m json.tool .opencode/ralph-foundry/examples/run-manifest.example.json >/dev/null
+python3 -m json.tool .opencode/ralph-foundry/examples/goal-manifest.example.json >/dev/null
 ```
+
+These commands verify JSON syntax for the contract files. Full JSON Schema validation is a future automation slice; until then, Knuth review remains the schema gate.
 
 ## Dry-Run Flow
 
@@ -34,3 +39,13 @@ python3 -m json.tool .opencode/ralph-foundry/examples/run-manifest.example.json 
 5. Write the learning to Allura Brain after review.
 
 See [RALPH-FOUNDRY-HARNESS.md](../../docs/allura/RALPH-FOUNDRY-HARNESS.md) for governance rules.
+
+## Autonomous Goal Flow
+
+1. Copy [goal-manifest.example.json](./examples/goal-manifest.example.json).
+2. Replace `goalId`, `goal`, `sourceRef`, `successCriteria`, path boundaries, and validation commands.
+3. Confirm `stopConditions` contains the full required hard-stop set.
+4. Run `ralph-goal run <goal-manifest-path>` only after the goal gate passes.
+5. Stop immediately if a blocked path, deploy action, secret, destructive action, unavailable validation, or architecture decision is encountered.
+
+See [RALPH-FOUNDRY-AUTO-LOOP.md](../../docs/allura/RALPH-FOUNDRY-AUTO-LOOP.md) for the Team-Gated Autonomous controller.

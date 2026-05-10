@@ -14,8 +14,9 @@ Ralph Foundry is the minimum contract layer for running one bounded Ralph loop f
 - [`.opencode/contracts/harness-v1.md`](../../.opencode/contracts/harness-v1.md) defines DAY_BUILD/NIGHT_BUILD routing, agent-level events, and documentation compliance.
 - [`.opencode/contracts/ralph-integration.md`](../../.opencode/contracts/ralph-integration.md) defines when Ralph is appropriate and how it integrates with the harness.
 - [`.opencode/command/ralph.md`](../../.opencode/command/ralph.md) remains the execution command surface.
+- [RALPH-FOUNDRY-AUTO-LOOP.md](./RALPH-FOUNDRY-AUTO-LOOP.md) defines the goal-level controller above repeated bounded runs.
 
-Foundry wraps those contracts with run-level artifacts. It does not supersede them in v0.1.
+Foundry wraps those contracts with run-level artifacts. It does not supersede them in v0.1. Team-Gated Autonomous goal loops are a scoped extension above this run contract, not a replacement for the single-run contract.
 
 ## Contract Source of Truth
 
@@ -31,6 +32,8 @@ The v0.1 schemas are:
 - [ralph-foundry-run-manifest.schema.json](../../json-schema/ralph-foundry-run-manifest.schema.json)
 - [ralph-foundry-run-log-event.schema.json](../../json-schema/ralph-foundry-run-log-event.schema.json)
 - [ralph-foundry-run-result.schema.json](../../json-schema/ralph-foundry-run-result.schema.json)
+- [ralph-foundry-goal-manifest.schema.json](../../json-schema/ralph-foundry-goal-manifest.schema.json)
+- [ralph-foundry-goal-result.schema.json](../../json-schema/ralph-foundry-goal-result.schema.json)
 
 ## Event Taxonomy Boundary
 
@@ -53,7 +56,7 @@ Each run starts with a manifest, records progress as run-level events, and ends 
 ## Modes
 
 - `dry-run`: validates the contract flow, context, DoD, and validation commands without intentionally changing application code.
-- `real-execution`: executes a bounded story with human-in-the-loop gating for validation evidence, consistent with AD-11 in [RISKS-AND-DECISIONS.md](./RISKS-AND-DECISIONS.md).
+- `real-execution`: executes a bounded story with human-in-the-loop gating for validation evidence, consistent with AD-11 in [RISKS-AND-DECISIONS.md](./RISKS-AND-DECISIONS.md). When a run is a child of a Team-Gated Autonomous goal loop, AD-32 scopes routine approval to Team RAM internal gates instead.
 
 Ralph command modes such as `plan`, `build`, and `plan-work` remain in `.opencode/command/ralph.md`. Foundry `mode` is a run contract property, not a new command family.
 
@@ -80,9 +83,7 @@ Notion remains the planning and architecture source of truth. v0.1 uses a manual
   result.json
 ```
 
-Runtime creation of this layout is deferred until after the first dry-run proves the contract.
-
-v0.1 does not introduce a new runtime event plane. It defines the file contract that a later runtime may write after the first dry-run proves the loop.
+The first dry-run artifact set lives under `.ralph-runs/rf-001/`. v0.1 does not introduce a new runtime event plane; these files remain local run artifacts and are not PostgreSQL event types.
 
 ## Governance Integration
 
@@ -110,5 +111,6 @@ Before this harness is considered viable, the reviewer must verify:
 - [REQUIREMENTS-MATRIX.md](./REQUIREMENTS-MATRIX.md)
 - [RISKS-AND-DECISIONS.md](./RISKS-AND-DECISIONS.md)
 - [DATA-DICTIONARY.md](./DATA-DICTIONARY.md)
+- [RALPH-FOUNDRY-AUTO-LOOP.md](./RALPH-FOUNDRY-AUTO-LOOP.md)
 - [Ralph Integration Contract](../../.opencode/contracts/ralph-integration.md)
 - [Harness v1 Contract](../../.opencode/contracts/harness-v1.md)

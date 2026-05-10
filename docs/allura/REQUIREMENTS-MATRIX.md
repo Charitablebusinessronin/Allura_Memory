@@ -342,6 +342,11 @@ This section traces the governed memory pipeline requirements from business goal
 | <a name="f53"></a>F53 | Foundry contracts must be traceable in the Data Dictionary. | [DATA-DICTIONARY.md](./DATA-DICTIONARY.md#ralph-foundry-contracts) |
 | <a name="f54"></a>F54 | Foundry v0.1 must support manual Notion bridging without making Notion a core schema field. | `extensions.notionPageUrl` in [ralph-foundry-run-manifest.schema.json](../../json-schema/ralph-foundry-run-manifest.schema.json) |
 | <a name="f55"></a>F55 | Foundry learning must be captured after reviewed runs. | [RALPH-FOUNDRY-HARNESS.md](./RALPH-FOUNDRY-HARNESS.md#self-improvement) · Allura Brain write-back |
+| <a name="f56"></a>F56 | Ralph Foundry goal loops must start from a strict goal manifest schema. | [ralph-foundry-goal-manifest.schema.json](../../json-schema/ralph-foundry-goal-manifest.schema.json) · [RALPH-FOUNDRY-AUTO-LOOP.md](./RALPH-FOUNDRY-AUTO-LOOP.md) |
+| <a name="f57"></a>F57 | Autonomous goal execution must use Team RAM internal gates rather than routine human approval between runs. | `approvalMode = team-gated-autonomous` · [RALPH-FOUNDRY-AUTO-LOOP.md](./RALPH-FOUNDRY-AUTO-LOOP.md#team-ram-gates) |
+| <a name="f58"></a>F58 | Goal loops must declare allowed paths, blocked paths, max runs, validation commands, and hard stop conditions before execution. | `allowedPaths`, `blockedPaths`, `maxRuns`, `validationCommands`, `stopConditions` in [ralph-foundry-goal-manifest.schema.json](../../json-schema/ralph-foundry-goal-manifest.schema.json) |
+| <a name="f59"></a>F59 | Goal loops must end with one terminal goal result. | [ralph-foundry-goal-result.schema.json](../../json-schema/ralph-foundry-goal-result.schema.json) |
+| <a name="f60"></a>F60 | Goal-level learning must be written back to Allura Brain after each run so later runs do not repeat failed strategies. | `learningWriteBack = true` · [RALPH-FOUNDRY-AUTO-LOOP.md](./RALPH-FOUNDRY-AUTO-LOOP.md#loop-contract) |
 
 ### Section 3: Dashboard Rebuild Use Cases
 

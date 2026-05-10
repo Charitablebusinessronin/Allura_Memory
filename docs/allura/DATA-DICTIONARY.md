@@ -617,7 +617,7 @@ When the sync contract applies mappings, an event with `event_type = 'sync_contr
 
 ## Ralph Foundry Contracts
 
-Ralph Foundry contracts define one bounded Ralph run. They do not create new persistence stores or PostgreSQL event types in v0.1; runtime artifacts are expected under `.ralph-runs/<runId>/` once runtime support exists. Foundry `RUN_*` events are file-level run events, not values for PostgreSQL `events.event_type`.
+Ralph Foundry contracts define one bounded Ralph run and one Team-Gated Autonomous goal loop. They do not create new persistence stores or PostgreSQL event types in v0.1; runtime artifacts are expected under `.ralph-runs/<runId>/` and `.ralph-runs/goals/<goalId>/` once runtime support exists. Foundry `RUN_*` events are file-level run events, not values for PostgreSQL `events.event_type`.
 
 ### `RalphFoundryRunManifest`
 
@@ -634,6 +634,49 @@ Schema: [`ralph-foundry-run-manifest.schema.json`](../../json-schema/ralph-found
 | `validationCommands` | array<string> | Yes | REQUIRED | NONE | `#/properties/validationCommands` | Commands used to verify the run |
 | `contextPaths` | array<string> | No | OPTIONAL | NONE | `#/properties/contextPaths` | Optional local context files |
 | `extensions` | object | No | OPTIONAL | NONE | `#/properties/extensions` | Closed extension object for deferred integrations; v0.1 permits only `notionPageUrl` |
+| `schemaVersion` | string | Yes | REQUIRED | NONE | `#/properties/schemaVersion` | Schema version, currently `0.1.0` |
+| `breakingChangePolicy` | string | Yes | REQUIRED | NONE | `#/properties/breakingChangePolicy` | Versioning policy |
+| `deprecationDate` | date | No | OPTIONAL | NONE | `#/properties/deprecationDate` | Date after which this version may be removed |
+
+### `RalphFoundryGoalManifest`
+
+Schema: [`ralph-foundry-goal-manifest.schema.json`](../../json-schema/ralph-foundry-goal-manifest.schema.json)
+
+| Field | Type | Required | Nullability | Coercion Rule | Schema Ref | Description |
+|-------|------|----------|-------------|---------------|------------|-------------|
+| `goalId` | string | Yes | REQUIRED | NONE | `#/properties/goalId` | Unique goal-loop identifier, pattern `^rfg-[0-9]+$` |
+| `goal` | string | Yes | REQUIRED | NONE | `#/properties/goal` | Plain-language outcome the autonomous loop must achieve |
+| `sourceRef` | string | Yes | REQUIRED | NONE | `#/properties/sourceRef` | Planning source reference, such as a Notion page or story |
+| `successCriteria` | array<string> | Yes | REQUIRED | NONE | `#/properties/successCriteria` | Objective conditions that prove the goal is achieved |
+| `approvalMode` | enum | Yes | REQUIRED | NONE | `#/properties/approvalMode` | `team-gated-autonomous` only in v0.1 |
+| `internalGates` | array<enum> | Yes | REQUIRED | NONE | `#/properties/internalGates` | Team RAM gates allowed to review, redirect, or stop the loop |
+| `runSelectionPolicy` | enum | No | OPTIONAL | NONE | `#/properties/runSelectionPolicy` | `highest-risk-first`, `dependency-order`, or `smallest-proving-slice` |
+| `allowedPaths` | array<string> | Yes | REQUIRED | NONE | `#/properties/allowedPaths` | Repo-relative normalized path prefixes the loop may modify without escalation; blocked paths take precedence |
+| `blockedPaths` | array<string> | Yes | REQUIRED | NONE | `#/properties/blockedPaths` | Repo-relative normalized path prefixes the loop must not modify; blocked paths take precedence |
+| `maxRuns` | integer | Yes | REQUIRED | NONE | `#/properties/maxRuns` | Maximum bounded runs before abandonment or escalation |
+| `stopConditions` | array<enum> | Yes | REQUIRED | NONE | `#/properties/stopConditions` | Hard stops that terminate or escalate the loop |
+| `validationCommands` | array<string> | Yes | REQUIRED | NONE | `#/properties/validationCommands` | Goal-level validation or policy commands that must be runnable before success is claimed |
+| `learningWriteBack` | boolean | No | OPTIONAL | NONE | `#/properties/learningWriteBack` | `true` when every completed run writes learning to Allura Brain |
+| `extensions` | object | No | OPTIONAL | NONE | `#/properties/extensions` | Closed extension object; v0.1 permits only `notionPageUrl` |
+| `schemaVersion` | string | Yes | REQUIRED | NONE | `#/properties/schemaVersion` | Schema version, currently `0.1.0` |
+| `breakingChangePolicy` | string | Yes | REQUIRED | NONE | `#/properties/breakingChangePolicy` | Versioning policy |
+| `deprecationDate` | date | No | OPTIONAL | NONE | `#/properties/deprecationDate` | Date after which this version may be removed |
+
+### `RalphFoundryGoalResult`
+
+Schema: [`ralph-foundry-goal-result.schema.json`](../../json-schema/ralph-foundry-goal-result.schema.json)
+
+| Field | Type | Required | Nullability | Coercion Rule | Schema Ref | Description |
+|-------|------|----------|-------------|---------------|------------|-------------|
+| `goalId` | string | Yes | REQUIRED | NONE | `#/properties/goalId` | References `RalphFoundryGoalManifest.goalId` |
+| `status` | enum | Yes | REQUIRED | NONE | `#/properties/status` | `achieved`, `failed`, `escalated`, or `abandoned` |
+| `summary` | string | Yes | REQUIRED | NONE | `#/properties/summary` | Outcome summary or escalation reason |
+| `totalRuns` | integer | Yes | REQUIRED | NONE | `#/properties/totalRuns` | Number of bounded runs attempted under this goal |
+| `runIds` | array<string> | Yes | REQUIRED | NONE | `#/properties/runIds` | Run artifacts produced under this goal |
+| `stopConditionHit` | enum | Conditional | CONDITIONALLY_REQUIRED | NONE | `#/properties/stopConditionHit` | Stop condition that ended the loop; required for achieved, failed, and escalated |
+| `evidence` | array<string> | Conditional | CONDITIONALLY_REQUIRED | NONE | `#/properties/evidence` | Required for achieved, failed, and escalated; optional for abandoned |
+| `learningRefs` | array<string> | No | OPTIONAL | NONE | `#/properties/learningRefs` | Allura Brain memories or local learning artifacts written during the loop |
+| `completedAt` | date-time | No | OPTIONAL | NONE | `#/properties/completedAt` | Terminal timestamp |
 | `schemaVersion` | string | Yes | REQUIRED | NONE | `#/properties/schemaVersion` | Schema version, currently `0.1.0` |
 | `breakingChangePolicy` | string | Yes | REQUIRED | NONE | `#/properties/breakingChangePolicy` | Versioning policy |
 | `deprecationDate` | date | No | OPTIONAL | NONE | `#/properties/deprecationDate` | Date after which this version may be removed |

@@ -1,0 +1,55 @@
+{
+  "goalId": "rfg-001",
+  "goal": "Prove Ralph Foundry can advance from bounded run contracts to a Team-Gated Autonomous goal loop with evidence and learning write-back.",
+  "sourceRef": "Story 1.2 — TraceMiddleware Integration / Ralph Foundry MVP continuation",
+  "successCriteria": [
+    "Goal manifest schema is valid JSON and documented in the Data Dictionary",
+    "Goal result schema is valid JSON and documented in the Data Dictionary",
+    "Auto-loop harness explains Team RAM gates and hard stop conditions",
+    "First run artifacts exist under .ralph-runs/rf-001/",
+    "Validation commands are explicit and runnable"
+  ],
+  "approvalMode": "team-gated-autonomous",
+  "internalGates": ["scout", "woz", "pike", "fowler", "knuth", "hightower", "judge", "learning"],
+  "runSelectionPolicy": "smallest-proving-slice",
+  "allowedPaths": [
+    "json-schema/",
+    "docs/allura/",
+    ".opencode/command/",
+    ".opencode/ralph-foundry/",
+    ".ralph-runs/"
+  ],
+  "blockedPaths": [
+    ".env",
+    ".env.local",
+    "src/",
+    "docker/",
+    "docker-compose.yml"
+  ],
+  "maxRuns": 5,
+  "stopConditions": [
+    "goal-achieved",
+    "max-runs-reached",
+    "same-validation-failure-twice",
+    "three-failed-fixes-same-issue",
+    "blocked-path-touched",
+    "secret-or-destructive-action-required",
+    "deploy-action-required",
+    "architecture-decision-required",
+    "validation-unavailable",
+    "success-criteria-not-objective"
+  ],
+  "validationCommands": [
+    "python3 -m json.tool json-schema/ralph-foundry-goal-manifest.schema.json >/dev/null",
+    "python3 -m json.tool json-schema/ralph-foundry-goal-result.schema.json >/dev/null",
+    "python3 -m json.tool .opencode/ralph-foundry/examples/goal-manifest.example.json >/dev/null",
+    "git diff --name-only | python3 -c \"import sys; blocked=('.env','.env.local','src/','docker/','docker-compose.yml'); bad=[p.strip() for p in sys.stdin if p.strip().startswith(blocked)]; sys.exit(1 if bad else 0)\""
+  ],
+  "learningWriteBack": true,
+  "extensions": {
+    "notionPageUrl": "https://notion.so/example-ralph-foundry-goal"
+  },
+  "schemaVersion": "0.1.0",
+  "breakingChangePolicy": "Only patch-level bumps are non-breaking; minor bumps require a migration step.",
+  "deprecationDate": "2026-12-31"
+}
