@@ -1,0 +1,61 @@
+# Allura Memory ownership matrix
+# Roles are accountable functions, not person assignments. Named human owners must acknowledge before release.
+
+version: 1
+project: allura-memory
+required_acknowledgement: true
+roles:
+  platform_sre:
+    title: Platform / SRE Owner
+    responsibilities:
+      - uptime
+      - deployment health
+      - backup and restore drills
+      - incident response
+    assignee: TBD
+    acknowledged: false
+  security:
+    title: Security / Tenant Isolation Owner
+    responsibilities:
+      - tenant isolation seal
+      - RBAC and policy gates
+      - secret and vulnerability scans
+      - cross-tenant incident response
+    assignee: TBD
+    acknowledged: false
+  governance_hitl:
+    title: Governance / HITL Owner
+    responsibilities:
+      - canonical proposal workflow
+      - curator approval and rejection policy
+      - promotion SLA
+      - auditability gates
+    assignee: TBD
+    acknowledged: false
+  retrieval:
+    title: Retrieval Quality Owner
+    responsibilities:
+      - RuVector and graph retrieval quality
+      - benchmark corpus
+      - P@5 and MRR targets
+      - degraded retrieval behavior
+    assignee: TBD
+    acknowledged: false
+  canon_sync:
+    title: Canon Sync Owner
+    responsibilities:
+      - Notion canonical six
+      - repo mirror drift checks
+      - canon change traceability
+      - documentation sync failures
+    assignee: TBD
+    acknowledged: false
+  developer_experience:
+    title: Developer Experience Owner
+    responsibilities:
+      - onboarding guide
+      - API/MCP examples
+      - error documentation
+      - clean-clone setup timing
+    assignee: TBD
+    acknowledged: false
