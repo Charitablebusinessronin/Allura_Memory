@@ -256,3 +256,17 @@ ralph "Implement Story 1.1 from ralph/prd.json. All acceptance criteria must pas
 - [Harness Contract v1](./harness-v1.md)
 - [Brooksian Surgical Team](../.claude/rules/agent-routing.md)
 - [Agent Metadata](../config/agent-metadata.json)
+
+---
+
+## 12. Ralph Foundry Contracts
+
+Ralph Foundry extends this integration contract with run-level structured contracts for one bounded run. It does not replace this document or the agent-level harness events in [harness-v1.md](./harness-v1.md).
+
+- [RALPH-FOUNDRY-HARNESS.md](../../docs/allura/RALPH-FOUNDRY-HARNESS.md) — canonical Foundry harness documentation
+- [ralph-foundry-run-manifest.schema.json](../../json-schema/ralph-foundry-run-manifest.schema.json) — run input contract
+- [ralph-foundry-run-log-event.schema.json](../../json-schema/ralph-foundry-run-log-event.schema.json) — run-level append-only event contract
+- [ralph-foundry-run-result.schema.json](../../json-schema/ralph-foundry-run-result.schema.json) — terminal result contract
+- [CONTRACT-INTEROPERABILITY.md](../ralph-foundry/CONTRACT-INTEROPERABILITY.md) — event taxonomy boundary
+
+Foundry events are run-level. Harness events are agent-level. No 1:1 semantic mapping is implied.

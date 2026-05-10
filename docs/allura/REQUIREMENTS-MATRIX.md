@@ -331,6 +331,18 @@ This section traces the governed memory pipeline requirements from business goal
 | <a name="f47"></a>F47 | Every Mission Control route displays its source-of-truth declaration and degraded-state behavior. | Adapter registry UI contract · route shell acceptance tests |
 | <a name="f48"></a>F48 | The `3100` cutover requires documented route parity, visual parity, source-of-truth parity, smoke tests, auth validation, and rollback plan. | Cutover gate checklist · [SOLUTION-ARCHITECTURE.md](./SOLUTION-ARCHITECTURE.md) |
 
+### Section 2.5: Ralph Foundry Requirements
+
+| ID | Requirement | Satisfied by |
+|----|-------------|--------------|
+| <a name="f49"></a>F49 | Ralph Foundry runs must start from a strict manifest schema. | [ralph-foundry-run-manifest.schema.json](../../json-schema/ralph-foundry-run-manifest.schema.json) · [RALPH-FOUNDRY-HARNESS.md](./RALPH-FOUNDRY-HARNESS.md) |
+| <a name="f50"></a>F50 | Ralph Foundry runs must record append-only run-level events separate from harness agent-level events. | [ralph-foundry-run-log-event.schema.json](../../json-schema/ralph-foundry-run-log-event.schema.json) · [CONTRACT-INTEROPERABILITY.md](../../.opencode/ralph-foundry/CONTRACT-INTEROPERABILITY.md) |
+| <a name="f51"></a>F51 | Ralph Foundry runs must end with one terminal result. | [ralph-foundry-run-result.schema.json](../../json-schema/ralph-foundry-run-result.schema.json) |
+| <a name="f52"></a>F52 | Foundry documentation must explain existing harness compatibility and source-of-truth hierarchy. | [RALPH-FOUNDRY-HARNESS.md](./RALPH-FOUNDRY-HARNESS.md) · AD-31 |
+| <a name="f53"></a>F53 | Foundry contracts must be traceable in the Data Dictionary. | [DATA-DICTIONARY.md](./DATA-DICTIONARY.md#ralph-foundry-contracts) |
+| <a name="f54"></a>F54 | Foundry v0.1 must support manual Notion bridging without making Notion a core schema field. | `extensions.notionPageUrl` in [ralph-foundry-run-manifest.schema.json](../../json-schema/ralph-foundry-run-manifest.schema.json) |
+| <a name="f55"></a>F55 | Foundry learning must be captured after reviewed runs. | [RALPH-FOUNDRY-HARNESS.md](./RALPH-FOUNDRY-HARNESS.md#self-improvement) · Allura Brain write-back |
+
 ### Section 3: Dashboard Rebuild Use Cases
 
 | ID | Use Case | Trace |

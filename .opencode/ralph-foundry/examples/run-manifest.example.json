@@ -1,0 +1,26 @@
+{
+  "runId": "rf-001",
+  "epicRef": "Epic 1 — Persistent Knowledge Capture",
+  "storyRef": "Story 1.2 — TraceMiddleware Integration",
+  "mode": "dry-run",
+  "goal": "Validate that the story can be represented as a bounded Ralph Foundry run with explicit DoD and validation commands.",
+  "dod": [
+    "Ralph Foundry manifest is valid JSON",
+    "Validation commands are explicit and operator-safe",
+    "Run result can cite evidence or a blocker summary"
+  ],
+  "validationCommands": [
+    "bun run typecheck",
+    "python3 -m json.tool .opencode/ralph-foundry/examples/run-manifest.example.json >/dev/null"
+  ],
+  "contextPaths": [
+    ".opencode/context/development/principles/AI-GUIDELINES.md",
+    "docs/allura/RALPH-FOUNDRY-HARNESS.md"
+  ],
+  "extensions": {
+    "notionPageUrl": "https://notion.so/example-ralph-foundry-story"
+  },
+  "schemaVersion": "0.1.0",
+  "breakingChangePolicy": "Only patch-level bumps are non-breaking; minor bumps require a migration step.",
+  "deprecationDate": "2026-12-31"
+}

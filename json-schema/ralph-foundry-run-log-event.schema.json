@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://allura.dev/schemas/ralph-foundry-run-log-event.schema.json",
+  "title": "RalphFoundryRunEvent",
+  "description": "Append-only run-level event for a Ralph Foundry run. Harness events are agent-level and remain separate.",
+  "type": "object",
+  "required": ["runId", "eventType", "timestamp", "agentId", "schemaVersion", "breakingChangePolicy"],
+  "properties": {
+    "runId": { "type": "string", "pattern": "^rf-[0-9]+$", "description": "References RalphFoundryRunManifest.runId." },
+    "eventType": { "type": "string", "enum": ["RUN_STARTED", "RUN_PROGRESS", "RUN_VALIDATED", "RUN_REVIEWED", "RUN_COMPLETED"], "description": "Run-level event type. No 1:1 semantic mapping to harness agent events is implied." },
+    "timestamp": { "type": "string", "format": "date-time", "description": "ISO 8601 event timestamp." },
+    "agentId": { "type": "string", "minLength": 1, "description": "Agent or persona that produced the event." },
+    "detail": { "type": "string", "description": "Optional human-readable event detail." },
+    "evidence": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "Optional evidence references." },
+    "schemaVersion": { "type": "string", "const": "0.1.0" },
+    "breakingChangePolicy": { "type": "string", "const": "Only patch-level bumps are non-breaking; minor bumps require a migration step." },
+    "deprecationDate": { "type": "string", "format": "date" }
+  },
+  "additionalProperties": false
+}

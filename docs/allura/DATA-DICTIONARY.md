@@ -612,3 +612,59 @@ When the sync contract applies mappings, an event with `event_type = 'sync_contr
   "relationships_wired": ["AUTHORED_BY", "CONTRIBUTES_TO"]
 }
 ```
+
+---
+
+## Ralph Foundry Contracts
+
+Ralph Foundry contracts define one bounded Ralph run. They do not create new persistence stores or PostgreSQL event types in v0.1; runtime artifacts are expected under `.ralph-runs/<runId>/` once runtime support exists. Foundry `RUN_*` events are file-level run events, not values for PostgreSQL `events.event_type`.
+
+### `RalphFoundryRunManifest`
+
+Schema: [`ralph-foundry-run-manifest.schema.json`](../../json-schema/ralph-foundry-run-manifest.schema.json)
+
+| Field | Type | Required | Nullability | Coercion Rule | Schema Ref | Description |
+|-------|------|----------|-------------|---------------|------------|-------------|
+| `runId` | string | Yes | REQUIRED | NONE | `#/properties/runId` | Unique run identifier, pattern `^rf-[0-9]+$` |
+| `epicRef` | string | Yes | REQUIRED | NONE | `#/properties/epicRef` | Epic reference from planning source of truth |
+| `storyRef` | string | Yes | REQUIRED | NONE | `#/properties/storyRef` | Story reference from planning source of truth |
+| `mode` | enum | Yes | REQUIRED | NONE | `#/properties/mode` | `dry-run` or `real-execution` |
+| `goal` | string | Yes | REQUIRED | NONE | `#/properties/goal` | One-sentence run goal |
+| `dod` | array<string> | Yes | REQUIRED | NONE | `#/properties/dod` | Definition of Done checklist |
+| `validationCommands` | array<string> | Yes | REQUIRED | NONE | `#/properties/validationCommands` | Commands used to verify the run |
+| `contextPaths` | array<string> | No | OPTIONAL | NONE | `#/properties/contextPaths` | Optional local context files |
+| `extensions` | object | No | OPTIONAL | NONE | `#/properties/extensions` | Closed extension object for deferred integrations; v0.1 permits only `notionPageUrl` |
+| `schemaVersion` | string | Yes | REQUIRED | NONE | `#/properties/schemaVersion` | Schema version, currently `0.1.0` |
+| `breakingChangePolicy` | string | Yes | REQUIRED | NONE | `#/properties/breakingChangePolicy` | Versioning policy |
+| `deprecationDate` | date | No | OPTIONAL | NONE | `#/properties/deprecationDate` | Date after which this version may be removed |
+
+### `RalphFoundryRunEvent`
+
+Schema: [`ralph-foundry-run-log-event.schema.json`](../../json-schema/ralph-foundry-run-log-event.schema.json)
+
+| Field | Type | Required | Nullability | Coercion Rule | Schema Ref | Description |
+|-------|------|----------|-------------|---------------|------------|-------------|
+| `runId` | string | Yes | REQUIRED | NONE | `#/properties/runId` | References the Foundry run |
+| `eventType` | enum | Yes | REQUIRED | NONE | `#/properties/eventType` | `RUN_STARTED`, `RUN_PROGRESS`, `RUN_VALIDATED`, `RUN_REVIEWED`, or `RUN_COMPLETED` |
+| `timestamp` | date-time | Yes | REQUIRED | NONE | `#/properties/timestamp` | ISO 8601 event timestamp |
+| `agentId` | string | Yes | REQUIRED | NONE | `#/properties/agentId` | Agent or persona that produced the event |
+| `detail` | string | No | OPTIONAL | NONE | `#/properties/detail` | Human-readable event detail |
+| `evidence` | array<string> | No | OPTIONAL | NONE | `#/properties/evidence` | Evidence references |
+| `schemaVersion` | string | Yes | REQUIRED | NONE | `#/properties/schemaVersion` | Schema version, currently `0.1.0` |
+| `breakingChangePolicy` | string | Yes | REQUIRED | NONE | `#/properties/breakingChangePolicy` | Versioning policy |
+| `deprecationDate` | date | No | OPTIONAL | NONE | `#/properties/deprecationDate` | Date after which this version may be removed |
+
+### `RalphFoundryRunResult`
+
+Schema: [`ralph-foundry-run-result.schema.json`](../../json-schema/ralph-foundry-run-result.schema.json)
+
+| Field | Type | Required | Nullability | Coercion Rule | Schema Ref | Description |
+|-------|------|----------|-------------|---------------|------------|-------------|
+| `runId` | string | Yes | REQUIRED | NONE | `#/properties/runId` | References the Foundry run |
+| `status` | enum | Yes | REQUIRED | NONE | `#/properties/status` | `executed`, `failed`, `blocked`, or `cancelled` |
+| `summary` | string | Yes | REQUIRED | NONE | `#/properties/summary` | Outcome summary or blocker/cancel reason |
+| `evidence` | array<string> | Conditional | CONDITIONALLY_REQUIRED | NONE | `#/properties/evidence` | Required for `executed` and `failed`; optional for `blocked` and `cancelled` |
+| `completedAt` | date-time | No | OPTIONAL | NONE | `#/properties/completedAt` | Terminal timestamp |
+| `schemaVersion` | string | Yes | REQUIRED | NONE | `#/properties/schemaVersion` | Schema version, currently `0.1.0` |
+| `breakingChangePolicy` | string | Yes | REQUIRED | NONE | `#/properties/breakingChangePolicy` | Versioning policy |
+| `deprecationDate` | date | No | OPTIONAL | NONE | `#/properties/deprecationDate` | Date after which this version may be removed |

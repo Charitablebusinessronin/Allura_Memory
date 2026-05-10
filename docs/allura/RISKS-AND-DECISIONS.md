@@ -43,6 +43,7 @@
 | DDR-004 | Token Authority — Two-path design system | Enforced | CSS custom properties (`var(--allura-*)`, `var(--dashboard-*)`) for Tailwind/HTML contexts; `tokens.ts` for Canvas/JS runtime. Raw hex and generic shadcn utilities (`text-muted-foreground`, `bg-muted`) are prohibited in active dashboard scope. `button.tsx` shadow rgba documented as DD-004 build-tool exception. Committed 2026-04-30. |
 | AD-29 | Mission Control dashboard rebuild cutover strategy | Decided | `localhost:6420` is the visual/reference memory dashboard, `localhost:3334` is the Mission Control development integration target, and `localhost:3100` is the current Docker dashboard replacement target. The rebuild combines the memory dashboard and Mission Control cockpit; it must not create a separate product or replace `3100` before route parity, visual parity, source-of-truth declarations, auth validation, smoke tests, and rollback plan pass. Alternatives rejected: (1) ship 3334 as a separate dashboard — rejected because it creates duplicate surfaces; (2) overwrite 3100 directly — rejected because it removes rollback and hides parity gaps. |
 | AD-30 | Email-derived content is external untrusted evidence | Decided | Email/Gmail/IMAP content may enter Allura only as raw episodic evidence with `trust_zone=external_untrusted`. It cannot issue agent instructions, trigger privileged actions, or auto-promote to canonical Neo4j memory. RuVix policies POL-EMAIL-001 through POL-EMAIL-005 enforce instruction blocking, action approval, high-risk quarantine, HITL promotion, and attachment sandboxing. See [EMAIL-ALLURA-ENFORCEMENT.md](./EMAIL-ALLURA-ENFORCEMENT.md). |
+| AD-31 | Ralph Foundry minimum viable run contracts | Decided | Ralph Foundry uses JSON schemas as the canonical shape for one bounded run manifest, run-level event log, and terminal result. Foundry events are run-level; harness events remain agent-level. v0.1 proves the loop before adding approval automation, CI validation, or bidirectional Notion sync. See [RALPH-FOUNDRY-HARNESS.md](./RALPH-FOUNDRY-HARNESS.md). |
 
 ---
 
@@ -92,6 +93,7 @@
 | RK-18 | WCAG contrast failures in token system | Medium | 🔴 Open |
 | RK-19 | Mission Control route/source-of-truth drift before `3100` cutover | High | Active |
 | RK-20 | Email prompt injection/phishing drives agent actions | High | Mitigated |
+| RK-21 | Ralph Foundry contract drift | Medium | Active |
 
 ### Risk Detail
 
@@ -117,6 +119,7 @@
 | RK-18 | WCAG contrast failures in token system | Medium | 5 token pairings fail WCAG AA contrast ratio (4.5:1) — primarily light-background/low-contrast text combinations in `var(--allura-*)` and `var(--dashboard-*)` tokens. Audit needed across both token namespaces. | 🔴 Open |
 | RK-19 | Mission Control route/source-of-truth drift before `3100` cutover | High | Require route parity map, AdapterDeclaration for every route, explicit degraded behavior, no fabricated data, auth validation, smoke tests, and rollback plan before replacing the current Docker dashboard. | Active |
 | RK-20 | Email prompt injection/phishing drives agent actions | High | AD-30 + RuVix POL-EMAIL-001..005: email is external_untrusted evidence only; privileged actions require approval; high-risk mail quarantined; canonical memory promotion requires HITL; attachments require sandbox/quarantine. | Mitigated |
+| RK-21 | Contract drift between Foundry schemas and existing harness contracts | Medium | [CONTRACT-INTEROPERABILITY.md](../../.opencode/ralph-foundry/CONTRACT-INTEROPERABILITY.md) declares the event taxonomy boundary. Foundry schemas use `additionalProperties: false`; Knuth owns monthly schema drift audit until automation exists. | Active |
 
 | AD-25 | Phase 6 Closure — all deliverables shipped | Decided | DLQ shipped (curator watchdog). Knowledge Hub Bridge shipped (Notion sync worker). Auth layer shipped (dev-auth + config). CSV Export shipped (/admin/approvals CSV download). SDK not separately shipped — MCP tools are the SDK. CORS shipped (next.config). Sentry shipped (captureException in curator approve). Phase 6 scope is complete. Decision: close Phase 6 and record it. Alternatives rejected: (1) Continue tracking as open — rejected because all deliverables exist in code and pass tests. (2) Extend Phase 6 for k6 load testing — rejected because load testing is a separate concern (tracked as RK-14). Consequences: Phase 6 ADR is now closed. Next phases focus on Curator pipeline E2E (Sprint 1), Skills layer (Sprint 2), and MCP Catalog governance (Sprint 3). |
 

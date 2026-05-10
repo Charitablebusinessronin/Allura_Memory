@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://allura.dev/schemas/ralph-foundry-run-manifest.schema.json",
+  "title": "RalphFoundryRunManifest",
+  "description": "Input contract for one Ralph Foundry run. JSON Schema is the source of truth for manifest shape.",
+  "type": "object",
+  "required": ["runId", "epicRef", "storyRef", "mode", "goal", "dod", "validationCommands", "schemaVersion", "breakingChangePolicy"],
+  "properties": {
+    "runId": { "type": "string", "pattern": "^rf-[0-9]+$", "description": "Unique run identifier." },
+    "epicRef": { "type": "string", "minLength": 1, "description": "Epic reference from the planning source of truth." },
+    "storyRef": { "type": "string", "minLength": 1, "description": "Story reference from the planning source of truth." },
+    "mode": { "type": "string", "enum": ["dry-run", "real-execution"], "description": "dry-run validates contract flow without code changes; real-execution is bounded execution with HITL gating." },
+    "goal": { "type": "string", "minLength": 1, "description": "One-sentence run goal." },
+    "dod": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "description": "Definition of Done checklist." },
+    "validationCommands": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "description": "Commands that verify the run result." },
+    "contextPaths": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "Optional local context files to load before execution." },
+    "extensions": {
+      "type": "object",
+      "description": "Optional extension point for non-core integrations. v0.1 keeps external systems out of the base contract.",
+      "properties": {
+        "notionPageUrl": { "type": "string", "format": "uri", "description": "Manual Notion bridge for v0.1." }
+      },
+      "additionalProperties": false
+    },
+    "schemaVersion": { "type": "string", "const": "0.1.0" },
+    "breakingChangePolicy": { "type": "string", "const": "Only patch-level bumps are non-breaking; minor bumps require a migration step." },
+    "deprecationDate": { "type": "string", "format": "date", "description": "Date after which this schema version may be removed when superseded." }
+  },
+  "additionalProperties": false
+}
