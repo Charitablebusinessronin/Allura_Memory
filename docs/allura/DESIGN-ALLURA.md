@@ -36,6 +36,39 @@ The Allura Dashboard, Curator, and Settings surfaces provide the human-facing co
 
 The Dashboard is the primary operational surface. It surfaces real data from Allura Brain (PostgreSQL + Neo4j), not mocks. Every component consumes mapped UI contracts from `src/lib/dashboard/`; raw Brain API shapes stay behind `api.ts`, `queries.ts`, and `mappers.ts` (AD-26).
 
+## Mission Control Dashboard Rebuild Addendum
+
+The dashboard rebuild is an integration and cutover program, not a second dashboard product.
+
+| Surface | Role | Status |
+|---------|------|--------|
+| `localhost:6420` | Visual/reference memory dashboard experience to preserve | Reference/mockup input |
+| `localhost:3334` | Mission Control development integration target | Development/test surface |
+| `localhost:3100` | Current Docker dashboard to replace | Protected until cutover gates pass |
+
+Mission Control combines the operator cockpit with Allura memory governance. The rebuilt surface must preserve the memory capabilities already represented in the `6420` reference while adding cockpit routes for work, agents, telemetry, resources, and command overview.
+
+### Mission Control Route Parity
+
+| `6420` reference capability | Mission Control target | Source of truth |
+|-----------------------------|------------------------|-----------------|
+| Dashboard | `/command` | Aggregated adapter summaries |
+| Memories | `/allura` | Allura Brain APIs |
+| Insights | `/allura` | Allura Brain / Neo4j semantic layer through controlled API |
+| Trace logs | `/telemetry` or `/allura` | PostgreSQL append-only events through controlled API |
+| Provenance | `/allura` | Trace → proposal → approval → graph evidence chain |
+| Extracted | `/allura` | Allura extraction/memory APIs |
+| Agents | `/agents` | OpenClaw/Symphony/TALON/IRIS/Team RAM runtime adapters |
+| Approvals | `/allura` or `/work-board` | Curator proposals + Notion work state |
+| Settings | `/resources` or `/settings` | Resource manifest + dashboard configuration |
+| Search | Global command/search surface | Allura retrieval layer |
+| Add memory | Governed Allura action | Controlled memory write endpoint |
+| Approval Queue | `/allura` promotion/approval panel | `canonical_proposals` + audit events |
+
+### Cutover Rule
+
+The rebuilt dashboard may not replace `3100` until route parity, visual parity, adapter/source-of-truth declarations, auth validation, smoke tests, no-fabricated-data checks, and rollback documentation all pass.
+
 **What this document is:**
 - Functional requirements for what the dashboard, curator, and settings surfaces must do
 - API reference for all dashboard and curator endpoints
@@ -66,6 +99,14 @@ The Dashboard is the primary operational surface. It surfaces real data from All
 | F17 | Curator Dashboard — view pending proposals, approve/reject with rationale | `/dashboard/curator` · `GET /api/curator/proposals` · `POST /api/curator/approve` · `POST /api/curator/reject` |
 | F18 | Audit Log — view all memory events with filtering and CSV export | `/dashboard/audit` · `GET /api/audit/events` |
 | F19 | System Health Dashboard — view service status, metrics, and degradation warnings | `/dashboard` (overview) · `GET /api/health?detailed=true` · `GET /api/health/metrics` |
+| F41 | Mission Control route shell — `/command`, `/work-board`, `/agents`, `/telemetry`, `/allura`, `/resources` | Mission Control development surface on `3334`; future `3100` replacement after gates pass |
+| F42 | `/allura` preserves `6420` memory dashboard capabilities | Memories, insights, traces, provenance, extracted facts, approvals mapped into `/allura` |
+| F43 | `/work-board` reads planning state from Notion/tracker adapter | Notion Work Board adapter; no competing local planning DB |
+| F44 | `/resources` reads resource inventory from manifest endpoint or `RESOURCE-MANIFEST.md` | Resource Manifest adapter |
+| F45 | `/agents` distinguishes TALON/IRIS from Team RAM/Durham/external agents | Agent adapter + canonical agent taxonomy |
+| F46 | `/telemetry` reports real/unknown metrics honestly | Telemetry adapter with degraded/unknown state |
+| F47 | Every route displays source-of-truth and degraded behavior | Adapter registry UI contract |
+| F48 | `3100` cutover has parity, smoke, auth, and rollback gates | Cutover validation checklist |
 
 ### Curator Requirements
 

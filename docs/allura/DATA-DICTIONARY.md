@@ -13,7 +13,61 @@ This document describes every table and node type in Allura's dual-database data
 - [Neo4j: Team](#neo4j-team)
 - [Neo4j: Project](#neo4j-project)
 - [Neo4j: Relationships](#neo4j-relationships)
+- [Dashboard Adapter Contracts](#dashboard-adapter-contracts)
 - [Metadata Payloads](#metadata-payloads)
+
+---
+
+## Dashboard Adapter Contracts
+
+These are logical UI/adapter contracts for the Mission Control dashboard rebuild. They do not create new persistence stores. They define the fields the dashboard must display or consume so the rebuilt development surface on `3334` can safely replace the current Docker dashboard on `3100` after validation.
+
+### `DashboardRouteParityItem`
+
+Maps the `6420` visual/reference memory dashboard capability into the Mission Control route that must preserve it.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `source_surface` | string | Yes | Reference surface, e.g. `localhost:6420` |
+| `source_capability` | string | Yes | Capability observed on the reference surface, e.g. `Memories`, `Insights`, `Approval Queue` |
+| `target_surface` | string | Yes | Development integration target, e.g. `localhost:3334` |
+| `target_route` | string | Yes | Mission Control route, e.g. `/allura`, `/telemetry`, `/agents` |
+| `parity_status` | enum | Yes | `missing`, `partial`, `complete`, `intentionally_changed` |
+| `evidence_ref` | string | No | Screenshot, test, Notion page, or validation artifact proving parity status |
+| `notes` | string | No | Explanation of gaps or intentional differences |
+
+### `AdapterDeclaration`
+
+Declares each Mission Control route's source of truth and allowed behavior. Every route must expose this declaration in UI or validation evidence before `3100` cutover.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `adapter_id` | string | Yes | Stable identifier, e.g. `allura-brain`, `notion-work-board`, `resource-manifest` |
+| `display_name` | string | Yes | Human-readable name |
+| `route` | string | Yes | Mission Control route using the adapter |
+| `system_of_record` | string | Yes | Authoritative source, e.g. Notion, Allura Brain APIs, Resource Manifest |
+| `read_policy` | string | Yes | What the adapter may read |
+| `write_policy` | string | Yes | What writes are allowed, if any |
+| `memory_scope` | string | Yes | What memory/context may be persisted to Allura Brain |
+| `evidence_policy` | string | Yes | Required proof before status changes or cutover |
+| `retention_policy` | string | No | How long operational/evidence data is retained |
+| `degradation_behavior` | string | Yes | What UI shows when the adapter is unavailable or unknown |
+| `approved_actions` | list<string> | No | Explicit allowed actions |
+| `prohibited_actions` | list<string> | Yes | Actions that must never be performed by this adapter |
+
+### `CutoverGate`
+
+Defines the required validation gates before Mission Control replaces the current Docker dashboard on `3100`.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `gate_id` | string | Yes | Stable gate ID, e.g. `route-parity`, `auth-validation`, `rollback-ready` |
+| `description` | string | Yes | What must be proven |
+| `status` | enum | Yes | `pending`, `passed`, `failed`, `waived` |
+| `owner` | string | Yes | Responsible person or agent/team |
+| `evidence_ref` | string | No | Link to test output, screenshot, Notion validation page, or commit |
+| `decided_by` | string | No | Captain/human approver for pass/waive decisions |
+| `decided_at` | datetime | No | Decision timestamp |
 
 ---
 

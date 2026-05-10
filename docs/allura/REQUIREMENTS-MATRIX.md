@@ -219,6 +219,12 @@ This section traces the governed memory pipeline requirements from business goal
 | B27 | Agents must retrieve approved knowledge through a controlled retrieval layer | F10, F11, F35, F36 | MEM-UC6 |
 | B28 | All reads/writes must pass through controlled APIs with project-level access and audit | F12, F13, F37, F38 | MEM-UC7 |
 | B29 | The full loop from agent execution to knowledge reuse must be demonstrably end-to-end | F14, F15, F39, F40 | MEM-UC8 |
+| B30 | The rebuilt dashboard must replace the current Docker dashboard on port `3100` only after route, visual, adapter, auth, and rollback validation passes | F41, F48 | DASH-UC1, DASH-UC8 |
+| B31 | `localhost:6420` is the visual/reference memory-dashboard experience to preserve during the rebuild | F42, F48 | DASH-UC2 |
+| B32 | `localhost:3334` is the Mission Control development integration target for the rebuilt dashboard | F41, F48 | DASH-UC1 |
+| B33 | Mission Control must combine operator cockpit workflows with Allura memory governance rather than becoming a separate product surface | F41, F42, F47 | DASH-UC3 |
+| B34 | Every Mission Control route must declare its backing source of truth, read/write policy, degraded behavior, and evidence policy | F43, F44, F45, F46, F47 | DASH-UC4, DASH-UC5 |
+| B35 | The rebuilt dashboard must not fabricate live data; placeholders/sample data must be labeled or replaced before `3100` cutover | F46, F47, F48 | DASH-UC6, DASH-UC8 |
 
 ### Section 2: Functional Requirements Detail
 
@@ -311,6 +317,32 @@ This section traces the governed memory pipeline requirements from business goal
 | <a name="f38"></a>F38 | Agent permissions enforced and all access to trace/knowledge resources is audited | Auth middleware · audit event logging · [BLUEPRINT.md](./BLUEPRINT.md#9-logging--audit) |
 | <a name="f39"></a>F39 | A second agent can retrieve approved knowledge and use it correctly in a later task | Retrieval endpoint · validation gate scenario MEM-UC8 · [VALIDATION-GATE.md](../archive/allura/VALIDATION-GATE.md) |
 | <a name="f40"></a>F40 | The full lifecycle from trace capture to knowledge reuse is traceable, auditable, and reversible | Evidence chain: trace → proposal → approval → Neo4j → retrieval · [VALIDATION-GATE.md](../archive/allura/VALIDATION-GATE.md) · [RISKS-AND-DECISIONS.md](./RISKS-AND-DECISIONS.md) |
+
+#### Mission Control Dashboard Rebuild (F41–F48)
+
+| ID | Requirement | Satisfied by |
+|----|-------------|--------------|
+| <a name="f41"></a>F41 | Mission Control exposes `/command`, `/work-board`, `/agents`, `/telemetry`, `/allura`, and `/resources` as the rebuilt operator surface. | [DESIGN-ALLURA.md](./DESIGN-ALLURA.md#mission-control-dashboard-rebuild-addendum) · [SOLUTION-ARCHITECTURE.md](./SOLUTION-ARCHITECTURE.md) |
+| <a name="f42"></a>F42 | `/allura` preserves the `6420` memory dashboard capabilities: memory search/list, insights, trace logs, provenance, extracted facts, and approval queue. | Route parity map · Dashboard validation artifact · [DESIGN-ALLURA.md](./DESIGN-ALLURA.md#mission-control-route-parity) |
+| <a name="f43"></a>F43 | `/work-board` reads planning state from Notion or a declared tracker adapter; it must not create a competing planning database by default. | Notion Work Board adapter declaration · [RISKS-AND-DECISIONS.md](./RISKS-AND-DECISIONS.md) |
+| <a name="f44"></a>F44 | `/resources` reads skills, agents, MCP servers, containers, cron jobs, and drift warnings from a declared Resource Manifest or generated manifest endpoint. | Resource Manifest adapter declaration · [DATA-DICTIONARY.md](./DATA-DICTIONARY.md#dashboard-adapter-contracts) |
+| <a name="f45"></a>F45 | `/agents` distinguishes TALON/IRIS native subagents from Team RAM/Durham CLI harness agents and external runtime agents. | Agent adapter declaration · Team taxonomy in `AGENT_MANIFEST` |
+| <a name="f46"></a>F46 | `/telemetry` surfaces model, prompt, tool, retry, rate-limit, failure, and degraded-state metrics without inventing missing measurements. | Telemetry adapter declaration · degraded/unknown metric state |
+| <a name="f47"></a>F47 | Every Mission Control route displays its source-of-truth declaration and degraded-state behavior. | Adapter registry UI contract · route shell acceptance tests |
+| <a name="f48"></a>F48 | The `3100` cutover requires documented route parity, visual parity, source-of-truth parity, smoke tests, auth validation, and rollback plan. | Cutover gate checklist · [SOLUTION-ARCHITECTURE.md](./SOLUTION-ARCHITECTURE.md) |
+
+### Section 3: Dashboard Rebuild Use Cases
+
+| ID | Use Case | Trace |
+|----|----------|-------|
+| DASH-UC1 | Operator opens Mission Control dev build on `3334` to validate the future `3100` replacement. | B30, B32, F41, F48 |
+| DASH-UC2 | Operator compares `6420` memory dashboard reference against `/allura` in Mission Control. | B31, F42 |
+| DASH-UC3 | Operator uses one cockpit for work, agents, telemetry, resources, and Allura memory. | B33, F41, F42 |
+| DASH-UC4 | Developer verifies each route declares source of truth before wiring live data. | B34, F47 |
+| DASH-UC5 | `/resources` reports inventory and drift from a manifest instead of hardcoded cards. | B34, F44 |
+| DASH-UC6 | A degraded adapter shows honest unavailable/unknown state instead of fabricated data. | B35, F46, F47 |
+| DASH-UC7 | Human reviewer validates TALON/IRIS reports with evidence before status advances. | F45, F47 |
+| DASH-UC8 | Captain approves cutover to replace `3100`, with rollback ready. | B30, F48 |
 
 ### Section 6: Admin Requirements (B12–B23)
 

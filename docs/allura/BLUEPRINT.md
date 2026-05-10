@@ -161,6 +161,12 @@ The hard isolation boundary. Every read and write MUST include a valid `group_id
 | B27 | Agents must retrieve approved knowledge through a controlled retrieval layer                 |
 | B28 | All reads/writes must pass through controlled APIs with project-level access and audit        |
 | B29 | The full loop from agent execution to knowledge reuse must be demonstrably end-to-end        |
+| B30 | The rebuilt dashboard must replace the current Docker dashboard on port `3100` only after route, visual, adapter, auth, and rollback validation passes |
+| B31 | `localhost:6420` is the visual/reference memory-dashboard experience to preserve during the rebuild |
+| B32 | `localhost:3334` is the Mission Control development integration target for the rebuilt dashboard |
+| B33 | Mission Control must combine operator cockpit workflows with Allura memory governance rather than becoming a separate product surface |
+| B34 | Every Mission Control route must declare its backing source of truth, read/write policy, degraded behavior, and evidence policy |
+| B35 | The rebuilt dashboard must not fabricate live data; placeholders/sample data must be labeled or replaced before `3100` cutover |
 
 ---
 
@@ -231,6 +237,19 @@ The hard isolation boundary. Every read and write MUST include a valid `group_id
 | F39 | A second agent can retrieve approved knowledge and use it correctly in a later task                                |
 | F40 | The full lifecycle from trace capture to knowledge reuse is traceable, auditable, and reversible                   |
 
+#### Mission Control Dashboard Rebuild
+
+| #   | Requirement |
+| --- | ----------- |
+| F41 | Mission Control exposes `/command`, `/work-board`, `/agents`, `/telemetry`, `/allura`, and `/resources` as the rebuilt operator surface |
+| F42 | `/allura` preserves the `6420` memory dashboard capabilities: memory search/list, insights, trace logs, provenance, extracted facts, and approval queue |
+| F43 | `/work-board` reads planning state from Notion or a declared tracker adapter; it must not create a competing planning database by default |
+| F44 | `/resources` reads skills, agents, MCP servers, containers, cron jobs, and drift warnings from a declared Resource Manifest or generated manifest endpoint |
+| F45 | `/agents` distinguishes TALON/IRIS native subagents from Team RAM/Durham CLI harness agents and external runtime agents |
+| F46 | `/telemetry` surfaces model, prompt, tool, retry, rate-limit, failure, and degraded-state metrics without inventing missing measurements |
+| F47 | Every Mission Control route displays its source-of-truth declaration and degraded-state behavior |
+| F48 | The `3100` cutover requires documented route parity, visual parity, source-of-truth parity, smoke tests, auth validation, and rollback plan |
+
 ---
 
 ## 3) Architecture
@@ -252,6 +271,10 @@ The hard isolation boundary. Every read and write MUST include a valid `group_id
 | Retrieval Gateway | Typed contract enforcement at the retrieval boundary — all agent reads pass through `SearchRequest`/`MemoryResult` typed contract | `src/lib/retrieval/contract.ts`, `src/lib/retrieval/policy.ts`, `src/lib/retrieval/startup-validator.ts` |
 | Sync Contract Mappings | Resolves user_id→Agent and group_id→Project for relationship wiring on promoted memories | `src/lib/graph-adapter/sync-contract-mappings.ts` |
 | Budget Admin API | `POST /api/admin/reset-budget` — reset halted sessions per group or globally | `src/mcp/canonical-http-gateway.ts` |
+| Mission Control Dashboard Shell | Development integration target for the rebuilt dashboard; combines operator cockpit routes with Allura memory governance | `localhost:3334` during development; replaces Docker dashboard on `3100` only after cutover gates pass |
+| Allura Memory Reference Surface | Visual/product reference for the desired memory dashboard experience | `localhost:6420`; preserve capabilities in `/allura` |
+| Notion Work Board Adapter | Planning source-of-truth adapter for work-board state | Notion remains planning truth; no competing local planning DB by default |
+| Resource Manifest Adapter | Resource inventory adapter for skills, agents, MCP servers, containers, cron jobs, and drift warnings | `RESOURCE-MANIFEST.md` or generated manifest endpoint |
 | PostgreSQL 16            | Episodic memory + audit trail + proposals      | Docker service                                    |
 | Neo4j 5.26               | Semantic memory — versioned knowledge graph    | Docker service                                    |
 | Memory Viewer            | `/memory` page — list, search, delete          | `src/app/memory/page.tsx`                         |
@@ -816,7 +839,7 @@ This section defines the single authority map between Notion templates/policy an
 ### Authority Invariants
 
 1. **Policy and templates are upstream in Notion.**
-2. **Implementation canon is downstream in `docs/allura/` (exactly six files).**
+2. **Implementation canon is downstream in `docs/allura/` and is limited to the approved files listed in the authority map.**
 3. **Agents do not auto-write repo content back to Notion template pages.**
 4. **Canonical-now alignment:** PostgreSQL remains the append-only episodic evidence store, and Neo4j remains the canonical semantic knowledge graph. RuVector-derived capabilities may be adopted selectively for retrieval quality, witness receipts, and observability — but they do **not** replace canonical stores until a formal migration benchmark is approved.
 5. **Residue** (reports, deliverables, ADR standalones, validation snapshots, benchmarks, prompts) goes to `docs/archive/allura/` or Allura Brain.
@@ -829,6 +852,7 @@ This section defines the single authority map between Notion templates/policy an
 | Solution Architecture: Allura             | `docs/allura/SOLUTION-ARCHITECTURE.md`                 | Notion → repo                   | Edit Notion, sync to repo               |
 | ✨ AI Guidelines: Documentation Standards | `docs/AI-GUIDELINES.md` + `.opencode/AI-GUIDELINES.md` | Notion → repo                   | Edit Notion, patch both repo files      |
 | Design                                    | `docs/allura/DESIGN-ALLURA.md`                         | Repo canonical (no Notion twin) | Edit repo directly                      |
+| Memory System Design                      | `docs/allura/DESIGN-MEMORY-SYSTEM.md`                  | Repo canonical (no Notion twin) | Edit repo directly                      |
 | Requirements Matrix                       | `docs/allura/REQUIREMENTS-MATRIX.md`                   | Repo canonical (no Notion twin) | Edit repo directly                      |
 | Risks & Decisions                         | `docs/allura/RISKS-AND-DECISIONS.md`                   | Repo canonical (no Notion twin) | Edit repo directly                      |
 | Data Dictionary                           | `docs/allura/DATA-DICTIONARY.md`                       | Repo canonical (no Notion twin) | Edit repo directly                      |
@@ -838,8 +862,8 @@ This section defines the single authority map between Notion templates/policy an
 
 Before creating or updating documentation artifacts, agents must read this authority map and apply this check:
 
-- If target is not one of the canonical six under `docs/allura/` and not an approved archive/memory destination, **abort and reroute**.
-- No net-new file creation is allowed in `docs/allura/` beyond the canonical six.
+- If target is not one of the approved authority-map files under `docs/allura/` and not an approved archive/memory destination, **abort and reroute**.
+- No net-new file creation is allowed in `docs/allura/` without updating this authority map and receiving explicit human approval.
 
 ---
 

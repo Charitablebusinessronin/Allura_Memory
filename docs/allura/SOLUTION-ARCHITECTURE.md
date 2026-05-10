@@ -227,7 +227,41 @@ sequenceDiagram
     Engine->>PG: INSERT event (memory_delete)
     Engine->>N4J: SET deprecated = true
     API-->>UI: 200 OK
+    ```
+
+---
+
+### 3.6 Mission Control Dashboard Rebuild and Cutover
+
+The Mission Control rebuild combines the existing Allura memory dashboard experience with a cockpit-style operator shell before replacing the current Docker dashboard.
+
+| Surface | Architectural Role | Constraint |
+|---------|--------------------|------------|
+| `localhost:6420` | Visual/reference memory dashboard | Preserve memory search, insights, traces, provenance, extracted facts, agents, approvals, and settings behavior |
+| `localhost:3334` | Mission Control development integration target | Build and validate combined cockpit + memory surface here first |
+| `localhost:3100` | Current Docker dashboard | Do not replace until cutover gates pass |
+
+```mermaid
+flowchart LR
+    A[6420 Reference<br/>Memory dashboard UX] --> C[3334 Mission Control<br/>Development integration]
+    B[Notion<br/>Planning truth] --> C
+    D[Allura Brain APIs<br/>Memory truth] --> C
+    E[Resource Manifest<br/>Inventory truth] --> C
+    C -->|validated cutover only| F[3100 Docker Dashboard<br/>Replacement target]
 ```
+
+**Route ownership:**
+
+| Mission Control Route | Backing Source of Truth | Write Policy |
+|-----------------------|-------------------------|--------------|
+| `/command` | Aggregated adapter summaries | Read-only first version |
+| `/work-board` | Notion / tracker adapter | No write unless Captain approves |
+| `/agents` | OpenClaw/Symphony/TALON/IRIS/Team RAM runtime adapters | Runtime actions only through approved adapter actions |
+| `/telemetry` | Runtime/tool/model telemetry adapters | No mutation |
+| `/allura` | Allura Brain APIs | Governed memory actions only; no direct substrate writes |
+| `/resources` | `RESOURCE-MANIFEST.md` or generated manifest endpoint | Read-only inventory and drift warnings |
+
+**Cutover gates for replacing `3100`:** route parity, visual parity, source-of-truth parity, adapter declarations, no fabricated live data, authenticated/unauthenticated validation, smoke tests, and rollback command documentation.
 
 ---
 
@@ -237,6 +271,9 @@ sequenceDiagram
 |---|---|---|---|---|
 | AI Agent via Brooks / Team RAM | Inbound | Skills + packaged MCP servers | `neo4j-memory` first, `database-server` for evidence, `neo4j-cypher` only when needed | AD-23, AD-03 |
 | Dashboard UI | Inbound | REST HTTP | JSON — memory records | AD-05 |
+| Mission Control UI | Inbound | REST HTTP + adapter contracts | Route-scoped cockpit, work-board, agent, telemetry, Allura, and resource contracts | AD-29, RK-19 |
+| Notion Work Board Adapter | Outbound | Notion API | Planning/work item state; Notion remains source of truth | F43, AD-29 |
+| Resource Manifest Adapter | Outbound | File or generated endpoint | Skills, agents, MCP servers, containers, cron jobs, drift warnings | F44, AD-29 |
 | Curator Approve CLI | Inbound | CLI (`bun run curator:approve`) | Processes pending proposals from PostgreSQL, promotes approved ones to Neo4j via `createInsight()` | F6, B18, B19 |
 | PostgreSQL 16 | Outbound | TCP (pg driver) | SQL — append-only INSERTs + SELECTs | AD-01, RK-02 |
 | Neo4j 5.26 | Outbound | Bolt (neo4j driver) | Approved memory recall + read-only Cypher fallback + governed writes | AD-02, RK-01, AD-23 |
@@ -252,6 +289,7 @@ sequenceDiagram
 | §3.3 Graph Escalation | AD-02 (Neo4j for semantic), AD-23 (read-only graph fallback) |
 | §3.4 Governed Memory Write Path | AD-04 (promotion mode), RK-01 (dedup), RK-03 (low-quality promotion) |
 | §3.5 Dashboard Viewer | AD-05 (5-tool surface) |
+| §3.6 Mission Control Dashboard Rebuild and Cutover | AD-29 (dashboard rebuild cutover), RK-19 (route/source-of-truth drift) |
 
 ---
 
@@ -265,6 +303,8 @@ sequenceDiagram
 | Neo4j writes MUST be preceded by a dedup check | Prevents knowledge graph bloat — RK-01 |
 | `PROMOTION_MODE=soc2` MUST prevent all autonomous Neo4j writes | Regulatory compliance gate — AD-04 |
 | Circuit breaker MUST trip before budget exhaustion | Prevents agent runaway — kernel/circuit-breaker |
+| Mission Control MUST NOT replace `3100` until cutover gates pass | Prevents production dashboard regression and preserves rollback path — AD-29 |
+| Mission Control routes MUST declare source of truth and degraded behavior | Prevents silent drift, fabricated data, and competing planning/memory surfaces — RK-19 |
 
 ---
 

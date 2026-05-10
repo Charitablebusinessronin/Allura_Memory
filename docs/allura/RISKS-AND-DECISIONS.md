@@ -41,6 +41,8 @@
 | AD-27 | Budget enforcer TTL auto-expiry for halted sessions | Decided | Halted budget sessions auto-expire after `haltTtlMs` (default: 1 hour). `DEFAULT_HALT_TTL_MS = 60 * 60 * 1000` in `src/lib/budget/enforcer.ts`. Admin can reset manually via `POST /api/admin/reset-budget`. Auto-expiry prevents indefinite lockout of agents after a budget breach. Alternatives: (1) No auto-expiry — rejected because agents would require manual reset after every breach. (2) Immediate reset — rejected because it defeats the purpose of budget enforcement. |
 | AD-28 | Sync contract mapping table for relationship wiring | Decided | `src/lib/graph-adapter/sync-contract-mappings.ts` provides deterministic user_id→Agent and group_id→Project mappings. Used by curator approve and auto-promote paths to wire AUTHORED_BY and CONTRIBUTES_TO relationships on promoted memories. Alternatives: (1) Dynamic agent/project discovery from Neo4j — rejected because it adds latency and requires graph queries during promotion. (2) Convention-based naming (user_id = agent name) — rejected because it's fragile and breaks when names diverge. |
 | DDR-004 | Token Authority — Two-path design system | Enforced | CSS custom properties (`var(--allura-*)`, `var(--dashboard-*)`) for Tailwind/HTML contexts; `tokens.ts` for Canvas/JS runtime. Raw hex and generic shadcn utilities (`text-muted-foreground`, `bg-muted`) are prohibited in active dashboard scope. `button.tsx` shadow rgba documented as DD-004 build-tool exception. Committed 2026-04-30. |
+| AD-29 | Mission Control dashboard rebuild cutover strategy | Decided | `localhost:6420` is the visual/reference memory dashboard, `localhost:3334` is the Mission Control development integration target, and `localhost:3100` is the current Docker dashboard replacement target. The rebuild combines the memory dashboard and Mission Control cockpit; it must not create a separate product or replace `3100` before route parity, visual parity, source-of-truth declarations, auth validation, smoke tests, and rollback plan pass. Alternatives rejected: (1) ship 3334 as a separate dashboard — rejected because it creates duplicate surfaces; (2) overwrite 3100 directly — rejected because it removes rollback and hides parity gaps. |
+| AD-30 | Email-derived content is external untrusted evidence | Decided | Email/Gmail/IMAP content may enter Allura only as raw episodic evidence with `trust_zone=external_untrusted`. It cannot issue agent instructions, trigger privileged actions, or auto-promote to canonical Neo4j memory. RuVix policies POL-EMAIL-001 through POL-EMAIL-005 enforce instruction blocking, action approval, high-risk quarantine, HITL promotion, and attachment sandboxing. See [EMAIL-ALLURA-ENFORCEMENT.md](./EMAIL-ALLURA-ENFORCEMENT.md). |
 
 ---
 
@@ -88,6 +90,8 @@
 | RK-16 | Graph-Notion sync drift | Medium | ✅ Resolved — 2026-04-30 |
 | RK-17 | Dashboard API shape drift hides Brain data gaps | Medium | ✅ Resolved — 2026-04-30 |
 | RK-18 | WCAG contrast failures in token system | Medium | 🔴 Open |
+| RK-19 | Mission Control route/source-of-truth drift before `3100` cutover | High | Active |
+| RK-20 | Email prompt injection/phishing drives agent actions | High | Mitigated |
 
 ### Risk Detail
 
@@ -111,6 +115,8 @@
 | RK-16 | Graph-Notion sync drift | Medium | Sync contract mapping table (`src/lib/graph-adapter/sync-contract-mappings.ts`) now resolves user_id→Agent and group_id→Project relationships automatically. Notion sync worker uses mappings on approve/promote. | ✅ Resolved — 2026-04-30 |
 | RK-17 | Dashboard API shape drift hides Brain data gaps | Medium | `src/lib/dashboard/mappers.ts` now maps all Brain responses through typed UI contracts. Zod validation added. Mapper tests cover dashboard responses. DDR-004 token authority eliminates shadow utility classes. | ✅ Resolved — 2026-04-30 |
 | RK-18 | WCAG contrast failures in token system | Medium | 5 token pairings fail WCAG AA contrast ratio (4.5:1) — primarily light-background/low-contrast text combinations in `var(--allura-*)` and `var(--dashboard-*)` tokens. Audit needed across both token namespaces. | 🔴 Open |
+| RK-19 | Mission Control route/source-of-truth drift before `3100` cutover | High | Require route parity map, AdapterDeclaration for every route, explicit degraded behavior, no fabricated data, auth validation, smoke tests, and rollback plan before replacing the current Docker dashboard. | Active |
+| RK-20 | Email prompt injection/phishing drives agent actions | High | AD-30 + RuVix POL-EMAIL-001..005: email is external_untrusted evidence only; privileged actions require approval; high-risk mail quarantined; canonical memory promotion requires HITL; attachments require sandbox/quarantine. | Mitigated |
 
 | AD-25 | Phase 6 Closure — all deliverables shipped | Decided | DLQ shipped (curator watchdog). Knowledge Hub Bridge shipped (Notion sync worker). Auth layer shipped (dev-auth + config). CSV Export shipped (/admin/approvals CSV download). SDK not separately shipped — MCP tools are the SDK. CORS shipped (next.config). Sentry shipped (captureException in curator approve). Phase 6 scope is complete. Decision: close Phase 6 and record it. Alternatives rejected: (1) Continue tracking as open — rejected because all deliverables exist in code and pass tests. (2) Extend Phase 6 for k6 load testing — rejected because load testing is a separate concern (tracked as RK-14). Consequences: Phase 6 ADR is now closed. Next phases focus on Curator pipeline E2E (Sprint 1), Skills layer (Sprint 2), and MCP Catalog governance (Sprint 3). |
 
@@ -158,5 +164,6 @@
 - **Memory System Design**: `docs/allura/DESIGN-MEMORY-SYSTEM.md`
 - **Validation Gate**: `docs/archive/allura/VALIDATION-GATE.md`
 - **Validation Guide**: merged into `docs/allura/SOLUTION-ARCHITECTURE.md` §9 (Validation Topology)
+- **Dashboard Rebuild Cutover**: AD-29 and RK-19 in this document; route/data contracts in `DATA-DICTIONARY.md`; implementation topology in `SOLUTION-ARCHITECTURE.md`
 - **Operational Agent Access**: Packaged MCP servers (`neo4j-memory`, `database-server`) activated via `MCP_DOCKER`
 - **Durable Stores**: PostgreSQL (events/traces) + Neo4j (semantic graph) accessed through controlled services

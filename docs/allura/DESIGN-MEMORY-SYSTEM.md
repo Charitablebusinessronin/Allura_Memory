@@ -53,6 +53,21 @@ Governed writes do **not** go through MCP inspection servers; they remain contro
 
 This document is the consolidated design surface for the memory system. If the system later grows enough complexity, it can be split into `DESIGN-TRACE-INGESTION.md`, `DESIGN-CURATION.md`, `DESIGN-APPROVAL.md`, `DESIGN-RETRIEVAL.md`, and `DESIGN-KNOWLEDGE-GRAPH.md`, but until then this file is the authoritative implementation design.
 
+### Mission Control Integration Boundary
+
+The Mission Control dashboard rebuild does not change the memory system's source-of-truth model. The rebuild consumes the memory system through controlled Allura APIs and must preserve the existing memory dashboard capabilities in the Mission Control `/allura` route.
+
+| Dashboard capability from `6420` | Mission Control target | Memory-system boundary |
+|----------------------------------|------------------------|------------------------|
+| Memories | `/allura` | `GET /api/memory`, `memory_list`, `memory_search` through controlled tenant scope |
+| Insights | `/allura` | Approved Neo4j semantic knowledge through controlled APIs only |
+| Trace logs | `/allura` or `/telemetry` | PostgreSQL append-only events through trace/audit endpoints |
+| Provenance | `/allura` | Trace → proposal → approval → graph evidence chain |
+| Extracted | `/allura` | Extraction/memory API contracts; no direct substrate reads |
+| Approval Queue | `/allura` | `canonical_proposals` through curator endpoints |
+
+Mission Control must not write directly to PostgreSQL, Neo4j, RuVector, or any substrate service. All write actions remain governed memory operations with `group_id` validation, append-only evidence, and approval policy.
+
 ---
 
 ## Functional Requirements
