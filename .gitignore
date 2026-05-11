@@ -93,3 +93,7 @@ TOKEN_MIGRATION_REPORT.md
 OPERATIONS.md
 RAM-NEEDS-FROM-DURHAM.md
 brand-audit-results.json
+
+# Harness runtime directories (installed, not versioned)
+.agents/
+.codex/
