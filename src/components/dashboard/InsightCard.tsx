@@ -25,7 +25,7 @@ const STATE_STYLES: Record<
   candidate: {
     bg: "bg-[var(--dashboard-surface)]",
     border: "border-[var(--allura-orange)]",
-    badgeColor: "text-[var(--allura-orange)]",
+    badgeColor: "text-[var(--allura-orange-on-text)]",
     badgeLabel: "INSIGHT CANDIDATE",
   },
   approved: {

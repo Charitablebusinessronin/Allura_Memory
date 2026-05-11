@@ -44,7 +44,7 @@ const TYPE_CONFIG: Record<
   memory:   { label: "MEMORY",   bgClass: "bg-[var(--allura-blue)] text-white" },
   insight:  { label: "INSIGHT",  bgClass: "bg-[var(--allura-green)] text-white" },
   evidence: { label: "EVIDENCE", bgClass: "bg-[var(--dashboard-evidence)] text-[var(--allura-charcoal)]" },
-  agent:    { label: "AGENT",    bgClass: "bg-[var(--allura-orange)] text-white" },
+  agent:    { label: "AGENT",    bgClass: "bg-[var(--allura-orange)] text-[var(--allura-orange-on-text)]" },
   project:  { label: "PROJECT",  bgClass: "bg-[var(--dashboard-text-secondary)] text-white" },
 }
 

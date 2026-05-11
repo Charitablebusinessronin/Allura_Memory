@@ -34,7 +34,7 @@ export function NotificationBadge({
   return (
     <span
       className={cn(
-        `inline-flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--allura-orange)] px-1 text-[10px] font-bold leading-none text-white`,
+        `inline-flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--allura-orange)] px-1 text-[10px] font-bold leading-none text-[var(--allura-orange-on-text)]`,
         className
       )}
     >

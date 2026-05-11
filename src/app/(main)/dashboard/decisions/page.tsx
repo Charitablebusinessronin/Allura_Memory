@@ -13,7 +13,7 @@ function statusIcon(status: DecisionStatus) {
     case "proposed":
       return <Clock className="size-4 shrink-0 text-[var(--dashboard-evidence)]" />
     case "superseded":
-      return <XCircle className="size-4 shrink-0 text-[var(--allura-orange)]" />
+      return <XCircle className="size-4 shrink-0 text-[var(--allura-orange-on-text)]" />
     case "deferred":
       return <HelpCircle className="size-4 shrink-0 text-[var(--allura-gray-400-text)]" />
     default:
@@ -191,7 +191,7 @@ export default async function DecisionsPage(): Promise<React.ReactElement> {
                   </span>
                 </h2>
                 {result.degraded && (
-                  <span className="text-xs text-[var(--allura-orange)]">Partial data</span>
+                  <span className="text-xs text-[var(--allura-orange-on-text)]">Partial data</span>
                 )}
               </div>
               <div className="grid gap-4 lg:grid-cols-2">

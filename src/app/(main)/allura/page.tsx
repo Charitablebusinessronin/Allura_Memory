@@ -135,7 +135,7 @@ export default function AlluraRoutePage() {
             {section.label}: {section.readMode}
           </Badge>
         ))}
-        {isDegraded && <Badge className="bg-[var(--allura-orange)] text-white">Degraded</Badge>}
+        {isDegraded && <Badge className="bg-[var(--allura-orange)] text-[var(--allura-orange-on-text)]">Degraded</Badge>}
       </div>
 
       <WarningList warnings={warnings} />
