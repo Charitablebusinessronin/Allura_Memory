@@ -1,0 +1,209 @@
+/** 
+ * Permission Profiles API Routes - GET/PATCH /api/permission-profiles/:id
+ * 
+ * Story 2.3: Define Roles - Individual profile operations
+ * 
+ * Routes:
+ * - GET /api/permission-profiles/:id — Get a single profile by ID
+ * - PATCH /api/permission-profiles/:id — Update an existing profile
+ */
+
+import { NextRequest, NextResponse } from "next/server";
+
+import {
+  updatePermissionProfile,
+  PermissionProfileRequestBodySchema,
+  validatePermissionProfile,
+  type PermissionProfile,
+} from "@/lib/auth";
+import type { DashboardResult, DashboardWarning } from "@/lib/dashboard/types";
+
+const SOURCE = "dashboard-v2-api-permission-profiles";
+
+// In-memory seeded profiles (same as root route)
+const seededProfiles: PermissionProfile[] = [
+  {
+    id: "profile_admin",
+    group_id: "allura-system",
+    name: "Administrator",
+    description: "Can manage teams, roles, policies, and governed settings within tenant scope.",
+    role_ids: ["admin"],
+    allowed_actions: ["team:create", "team:update", "team:assign_member", "role:define", "role:assign", "policy:manage", "audit:read", "audit:export"],
+    memory_scope: ["allura:policy", "allura:audit", "allura:work-items"],
+    applies_to: ["human"],
+    created_at: "2025-01-01T00:00:00Z",
+    updated_at: "2025-01-01T00:00:00Z",
+  },
+  {
+    id: "profile_approver",
+    group_id: "allura-system",
+    name: "Approver",
+    description: "Can decide approval cards when separation-of-duties policy permits.",
+    role_ids: ["approver"],
+    allowed_actions: ["approval:decide", "audit:read", "memory:read"],
+    memory_scope: ["allura:approvals", "allura:audit", "allura:memory"],
+    applies_to: ["human"],
+    created_at: "2025-01-01T00:00:00Z",
+    updated_at: "2025-01-01T00:00:00Z",
+  },
+  {
+    id: "profile_auditor",
+    group_id: "allura-system",
+    name: "Auditor",
+    description: "Read-only access to audit, provenance, policy decisions, and export where allowed.",
+    role_ids: ["auditor"],
+    allowed_actions: ["audit:read", "audit:export", "memory:read"],
+    memory_scope: ["allura:audit", "allura:memory"],
+    applies_to: ["human"],
+    created_at: "2025-01-01T00:00:00Z",
+    updated_at: "2025-01-01T00:00:00Z",
+  },
+  {
+    id: "profile_viewer",
+    group_id: "allura-system",
+    name: "Viewer",
+    description: "Read-only scoped dashboard visibility.",
+    role_ids: ["viewer"],
+    allowed_actions: ["memory:read"],
+    memory_scope: ["allura:status"],
+    applies_to: ["human"],
+    created_at: "2025-01-01T00:00:00Z",
+    updated_at: "2025-01-01T00:00:00Z",
+  },
+  {
+    id: "profile_service_actor",
+    group_id: "allura-system",
+    name: "Service Actor",
+    description: "Adapter/runtime identity that can submit work, report status, and attach evidence without approving or bypassing policy.",
+    role_ids: ["service_actor"],
+    allowed_actions: ["work_item:create", "adapter:report_status", "evidence:attach", "policy:evaluate"],
+    memory_scope: ["allura:work-items", "allura:evidence"],
+    applies_to: ["service", "agent"],
+    created_at: "2025-01-01T00:00:00Z",
+    updated_at: "2025-01-01T00:00:00Z",
+  },
+];
+
+function response<T>(data: T | null, error: string | null, warnings: DashboardWarning[] = [], status = 200) {
+  const body: DashboardResult<T> = {
+    data,
+    error,
+    degraded: false,
+    warnings,
+    source: SOURCE,
+    fetched_at: new Date().toISOString(),
+  };
+
+  return NextResponse.json(body, { status });
+}
+
+// GET /api/permission-profiles/:id — Fetch a single profile by ID
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+): Promise<NextResponse> {
+  const { id } = await params;
+  const profile = seededProfiles.find((p) => p.id === id);
+
+  if (!profile) {
+    return response(null, `Profile not found: ${id}`, [
+      {
+        code: "not-found",
+        message: `No permission profile exists with id=${id}`,
+        severity: "info",
+      },
+    ], 404);
+  }
+
+  const validation = validatePermissionProfile(profile);
+
+  if (!validation.ok) {
+    return response(null, `Permission profile contract validation failed: ${validation.errors.join("; ")}`, [
+      {
+        code: "shape-drift",
+        message: validation.errors.join("; "),
+        severity: "critical",
+      },
+    ], 500);
+  }
+
+  return response(validation.data, null, [], 200);
+}
+
+// PATCH /api/permission-profiles/:id — Update an existing profile
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+): Promise<NextResponse> {
+  const { id } = await params;
+  const existingProfile = seededProfiles.find((p) => p.id === id);
+
+  if (!existingProfile) {
+    return response(null, `Profile not found: ${id}`, [
+      {
+        code: "not-found",
+        message: `No permission profile exists with id=${id}`,
+        severity: "info",
+      },
+    ], 404);
+  }
+
+  try {
+    const body = await request.json();
+    const parsed = PermissionProfileRequestBodySchema.safeParse(body);
+
+    if (!parsed.success) {
+      const message = parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ");
+      return response(null, `Permission profile validation failed: ${message}`, [
+        {
+          code: "validation-error",
+          message,
+          severity: "critical",
+        },
+      ], 400);
+    }
+
+    // Only allow updates to mutable fields (not id, group_id, created_at)
+    const updates: Partial<PermissionProfile> = {};
+    if (parsed.data.name !== undefined) updates.name = parsed.data.name;
+    if (parsed.data.description !== undefined) updates.description = parsed.data.description;
+    if (parsed.data.role_ids !== undefined) updates.role_ids = parsed.data.role_ids;
+    if (parsed.data.allowed_actions !== undefined) updates.allowed_actions = parsed.data.allowed_actions;
+    if (parsed.data.memory_scope !== undefined) updates.memory_scope = parsed.data.memory_scope;
+    if (parsed.data.applies_to !== undefined) updates.applies_to = parsed.data.applies_to;
+
+    const updatedProfile = updatePermissionProfile(existingProfile, updates);
+
+    const validation = validatePermissionProfile(updatedProfile);
+
+    if (!validation.ok) {
+      return response(null, `Permission profile contract validation failed: ${validation.errors.join("; ")}`, [
+        {
+          code: "shape-drift",
+          message: validation.errors.join("; "),
+          severity: "critical",
+        },
+      ], 500);
+    }
+
+    // Replace the old profile in our in-memory list
+    const index = seededProfiles.findIndex((p) => p.id === id);
+    seededProfiles[index] = updatedProfile;
+
+    return response(validation.data, null, [
+      {
+        code: "audit-persistence-pending",
+        message: "PermissionProfile updated; durable persistence/audit wiring remains required before production use.",
+        severity: "info",
+      },
+    ], 200);
+  } catch (error) {
+    return response(null, error instanceof Error ? error.message : "Unknown server error", [
+      {
+        code: "internal-error",
+        message: "Permission profile update encountered an error",
+        severity: "critical",
+      },
+    ], 500);
+  }
+}
