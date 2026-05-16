@@ -1,3 +1,6 @@
+# NON_AUTHORITATIVE_ONLY: do not execute as canonical source of truth
+# Canonical run contract binding is `ralph/PROMPT_plan.md`.
+
 # ULW Build Prompt — Ultra-Learning Workflow (Self-Referential Loop)
 
 **Iteration:** {{iteration}} / {{max_iterations}}

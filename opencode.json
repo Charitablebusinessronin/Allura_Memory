@@ -10,7 +10,7 @@
       "timeout": 60000
     }
   },
-  "model": "ollama-cloud/glm-5.1",
+  "model": "gpt-5.3-codex-spark",
   "permission": {
     "*": "allow"
   },

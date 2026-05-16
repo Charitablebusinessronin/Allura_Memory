@@ -1,0 +1,60 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "gpt-5.3-codex-spark",
+  "instructions": [
+    ".opencode/AGENTS.md",
+    ".opencode/manifest.json",
+    ".opencode/SKILL-OWNERSHIP.md",
+    ".opencode/context/core/context-system.md",
+    ".opencode/context/navigation.md",
+    ".opencode/agent/core/brooks.md",
+    ".opencode/agent/core/jobs.md"
+  ],
+  "mcp": {
+    "notion": {
+      "type": "remote",
+      "url": "http://host.docker.internal:3000/mcp"
+    },
+    "allura-brain": {
+      "type": "remote",
+      "url": "http://localhost:5888/mcp"
+    }
+  },
+  "permission": {
+    "read": "allow",
+    "glob": "allow",
+    "grep": "allow",
+    "bash": "allow",
+    "edit": "allow",
+    "write": "allow",
+    "skill": {
+      "allura-memory-skill": "allow",
+      "mcp-docker": "allow"
+    }
+  },
+  "runtime_contract": {
+    "active_notion_contract_scope": "https://www.notion.so/ce13dc069ff347689fcc7cbe188232c8",
+    "canonical_plan_id": "ce13dc069ff347689fcc7cbe188232c8",
+    "canonical_plan_path": "ralph/PROMPT_plan.md",
+    "required_context_files": [
+      ".opencode/AGENTS.md",
+      ".opencode/manifest.json",
+      ".opencode/SKILL-OWNERSHIP.md",
+      ".opencode/context/core/context-system.md",
+      ".opencode/context/navigation.md",
+      ".opencode/agent/core/brooks.md",
+      ".opencode/agent/core/jobs.md"
+    ],
+    "required_skills": [
+      "allura-memory-skill",
+      "mcp-docker"
+    ],
+    "validation_commands": [
+      "bun test src/lib/validation/group-id.test.ts"
+    ],
+    "discovery_preference": [
+      "notion",
+      "notion-remote"
+    ]
+  }
+}
