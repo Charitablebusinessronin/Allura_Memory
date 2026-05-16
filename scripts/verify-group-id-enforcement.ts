@@ -35,14 +35,14 @@ console.log('-'.repeat(60));
 // Test cases for EnforcedMcpClient (allura- prefix enforcement)
 const alluraTestCases = [
   { input: 'allura-faith-meats', expected: 'valid', description: 'Valid workspace ID' },
-  { input: 'allura-default', expected: 'valid', description: 'Valid default ID' },
+  { input: 'allura-system', expected: 'valid', description: 'Valid default ID' },
   { input: 'invalid', expected: 'invalid', description: 'Missing allura- prefix' },
   { input: 'allura-INVALID', expected: 'invalid', description: 'Uppercase characters' },
   { input: '', expected: 'invalid', description: 'Empty string' },
   { input: 'allura-', expected: 'invalid', description: 'Trailing hyphen' },
   { input: 'allura-123', expected: 'valid', description: 'Numeric suffix' },
   { input: 'ALLURA-default', expected: 'invalid', description: 'Uppercase ALLURA' },
-  { input: 'allura-default-workspace', expected: 'valid', description: 'Multi-part name' },
+  { input: 'allura-system-workspace', expected: 'valid', description: 'Multi-part name' },
 ];
 
 console.log('Test 1: validateGroupId() Function');
@@ -54,14 +54,14 @@ console.log('-'.repeat(60));
 // Test cases for validateGroupId (format validation)
 const formatTestCases = [
   { input: 'allura-faith-meats', expected: 'valid', description: 'Valid workspace ID' },
-  { input: 'allura-default', expected: 'valid', description: 'Valid default ID' },
+  { input: 'allura-system', expected: 'valid', description: 'Valid default ID' },
   { input: 'lowercase-name', expected: 'valid', description: 'Valid lowercase format (no allura- required for format)' },
   { input: 'allura-INVALID', expected: 'invalid', description: 'Uppercase characters' },
   { input: '', expected: 'invalid', description: 'Empty string' },
   { input: 'allura-', expected: 'invalid', description: 'Trailing hyphen' },
   { input: 'allura-123', expected: 'valid', description: 'Numeric suffix' },
   { input: 'ALLURA-default', expected: 'invalid', description: 'Uppercase ALLURA' },
-  { input: 'allura-default-workspace', expected: 'valid', description: 'Multi-part name' },
+  { input: 'allura-system-workspace', expected: 'valid', description: 'Multi-part name' },
 ];
 
 let passed = 0;

@@ -17,7 +17,7 @@
  *         Only episodic PG rows in allura_memories are affected.
  *         Semantic/procedural memory_type rows are excluded.
  *
- * Usage: bun scripts/retention-worker.ts [--dry-run] [--group-id allura-default]
+ * Usage: bun scripts/retention-worker.ts [--dry-run] [--group-id allura-system]
  */
 
 import { config } from "dotenv";
@@ -256,7 +256,7 @@ async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes("--dry-run");
   const groupIdArg = args.find((a) => !a.startsWith("--"));
-  const groupId = groupIdArg || process.env.GROUP_ID || "allura-default";
+  const groupId = groupIdArg || process.env.GROUP_ID || "allura-system";
 
   console.log(`\n🧹 Memory Retention Worker (FR-4)`);
   console.log(`   Group: ${groupId}`);

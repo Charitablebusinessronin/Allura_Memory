@@ -47,7 +47,7 @@ async function logGitHubEvent() {
       INSERT INTO events (group_id, event_type, agent_id, metadata, status)
       VALUES ($1, $2, $3, $4, $5)
     `, [
-      'allura-roninmemory',
+      'allura-system',
       `github_${event.event}`,
       'github-webhook',
       JSON.stringify({

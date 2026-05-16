@@ -124,11 +124,97 @@ Team RAM personas consume OAC context — they do not replace it.
 
 **Scout before build. Skills before Ralph. Validate before done.**
 
+## Codex Invocation Gate (MANDATORY)
+
+Codex must run this gate before answering or routing when Ronin invokes Brooks,
+Team RAM, Allura, Scout, Woz, Ralph, memory work, architecture work, debugging,
+or project-status work.
+
+Codex treats `.opencode/agent/core/brooks.md` as the canonical Brooks behavior.
+`.codex/agents/brooks.toml` is only the Codex adapter for that behavior.
+
+Required startup order:
+
+```text
+Brooks/Team RAM invoked
+  ↓
+Apply team-ram-cowork
+  ↓
+Apply allura-memory-skill
+  ↓
+Scout local context hydration
+  ↓
+Allura Brain search with group_id = allura-system
+  ↓
+RuVix governance receipt
+  ↓
+Brooks route / answer / build plan
+```
+
+Before Brooks answers, Codex must show this receipt shape:
+
+```text
+Brooks active.
+Skills: team-ram-cowork, allura-memory-skill, <task skills>
+Scout hydration:
+- Local context: <files checked>
+- Brain: <query, group_id, status>
+RuVix:
+- mutate: <intent/no mutation>
+- attest: <evidence>
+- verify: <validation path>
+- isolate: <group_id/project boundary>
+- sandbox: <safe tool path>
+- audit: <logging plan>
+Route:
+- <Brooks decision>
+```
+
+RuVix is not optional. The receipt must explicitly cover `mutate`, `attest`,
+`verify`, `isolate`, `sandbox`, and `audit`.
+
+Memory claims require real MCP receipts. If Allura Brain tools are unavailable,
+Codex must say that plainly and continue with local context only. Codex may say
+"Brooks active" only as the repo role chair; it must not claim Scout, Woz,
+OpenCode, OpenClaw, Claude, or any runtime subagent actually ran unless a real
+tool or subagent invocation happened.
+
+## Team RAM Runtime Bridge
+
+Codex, OpenCode, and Claude do not load agents the same way. This repo bridges
+them through `.agents/TEAM-RAM-RUNTIME.md`.
+
+If the user invokes Brooks, Scout, Woz, Team RAM, Ralph, or Allura project work:
+
+```text
+Scout → Allura Brain → Skills → Brooks route → Build/review → Log outcome
+```
+
+Expected behavior:
+
+- Say which role is active.
+- Use `allura-memory-skill` for governed memory work.
+- Scout loads local context and searches Allura Brain with `group_id: allura-system`.
+- Brooks summarizes status and routes work.
+- Woz builds only after Scout context and skills are loaded.
+- Important outcomes are logged back to Allura Brain.
+
+## Development Readiness
+
+Before feature development, use `.opencode/DEVELOPMENT-READINESS.md`.
+
+The short gate is:
+
+```text
+Brain running → MCP reachable → Scout context loaded → skills resolved → validation chosen
+```
+
 ## Source of Truth
 
 - `.opencode/manifest.json` — Machine-readable architecture manifest
 - `.opencode/SKILL-OWNERSHIP.md` — Skill ownership matrix
 - `.opencode/config.json` — Top-level OpenCode configuration
+- `.opencode/DEVELOPMENT-READINESS.md` — Pre-development readiness checklist
 - `.opencode/agent/` — Active Team RAM agent definitions
 - `.opencode/command/` — Reusable workflow commands
 - `.opencode/skills/` — Skill definitions and supporting assets

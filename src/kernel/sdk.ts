@@ -47,7 +47,7 @@ export interface SDKConfig {
  */
 const DEFAULT_CONFIG: SDKConfig = {
   actor: "system",
-  group_id: "allura-default",
+  group_id: "allura-system",
   permission_tier: "plugin",
   default_budget_cost: 10,
   debug: false,

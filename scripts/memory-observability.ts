@@ -5,7 +5,7 @@
  * Provides health metrics for Allura memory operations.
  * Designed to be queried by dashboards, cron checks, or operator inspection.
  *
- * Usage: bun scripts/memory-observability.ts [--group-id allura-default] [--json]
+ * Usage: bun scripts/memory-observability.ts [--group-id allura-system] [--json]
  *
  * Metrics exposed:
  * - Trace write count (24h, 7d, 30d)
@@ -199,7 +199,7 @@ async function main() {
   const args = process.argv.slice(2);
   const asJson = args.includes("--json");
   const groupIdArg = args.find((a) => !a.startsWith("--"));
-  const groupId = groupIdArg || process.env.GROUP_ID || "allura-default";
+  const groupId = groupIdArg || process.env.GROUP_ID || "allura-system";
 
   const report = await getMemoryHealth(groupId);
 

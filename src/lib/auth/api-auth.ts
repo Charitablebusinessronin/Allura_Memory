@@ -59,7 +59,7 @@ export function getAuthUser(request: NextRequest): AuthUser | null {
     email: email ?? "",
     name: name ?? undefined,
     role: parseRole(role, "viewer"),
-    groupId: groupId ?? "allura-default",
+    groupId: groupId ?? "allura-system",
     imageUrl: imageUrl ?? undefined,
   };
 }
@@ -138,9 +138,9 @@ export function forbiddenResponse(
  *
  * If the request has an authenticated user, uses their group_id.
  * Falls back to the query parameter or body parameter.
- * Falls back to "allura-default" if nothing is available.
+ * Falls back to "allura-system" if nothing is available.
  *
- * This replaces the hardcoded `allura-default` pattern in UI components.
+ * This replaces hardcoded tenant defaults in UI components.
  */
 export function getGroupIdFromAuth(
   request: NextRequest,
@@ -158,5 +158,5 @@ export function getGroupIdFromAuth(
   }
 
   // Use provided fallback or default
-  return fallbackGroupId ?? "allura-default";
+  return fallbackGroupId ?? "allura-system";
 }

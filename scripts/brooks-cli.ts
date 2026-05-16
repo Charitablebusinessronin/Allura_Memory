@@ -59,7 +59,7 @@ Quick Start:
   bun run session:verify           # Verify checkpoints working
 
 Environment:
-  GROUP_ID    Override default group ID (default: allura-roninmemory)
+  GROUP_ID    Override default group ID (default: allura-system)
 `);
 }
 

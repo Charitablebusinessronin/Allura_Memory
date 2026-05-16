@@ -88,7 +88,7 @@ async function testScopeIsolation() {
   console.log("\nTest 3: Approved-only search returns only canonical insights");
   const approvedResults = await memory_search({
     query: "architecture",
-    group_id: "allura-default" as any,
+    group_id: "allura-system" as any,
     limit: 5,
   });
 

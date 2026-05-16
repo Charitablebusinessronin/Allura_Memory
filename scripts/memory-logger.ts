@@ -86,7 +86,7 @@ Actions:
 Examples:
   # Log session start event
   bunx tsx scripts/memory-logger.ts --action log-event --data '{
-    "group_id": "allura-roninmemory",
+    "group_id": "allura-system",
     "event_type": "skill:brainstorming:start",
     "agent_id": "openagent",
     "workflow_id": "feature-123",

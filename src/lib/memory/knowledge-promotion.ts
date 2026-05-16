@@ -9,7 +9,7 @@
  *   Human → Notion (Approve) → Neo4j (Knowledge) → Notion (Knowledge Hub)
  * 
  * Steel Frame Versioning: All Neo4j insights use SUPERSEDES relationships
- * Tenant Isolation: All nodes carry group_id = 'allura-default'
+ * Tenant Isolation: All nodes carry group_id = 'allura-system'
  * 
  * ## Knowledge Hub Bridge (Flow 2)
  * 
@@ -305,12 +305,12 @@ export interface NotionMCPClient {
  * 
  * Uses PostgreSQL directly for reliable, transactional reads.
  * 
- * @param groupId - Tenant identifier (defaults to 'allura-default')
+ * @param groupId - Tenant identifier (defaults to 'allura-system')
  * @param limit - Max items to return (default: 50)
  * @returns Array of approved proposal rows
  */
 export async function queryApprovedInsights(
-  groupId: string = 'allura-default',
+  groupId: string = 'allura-system',
   limit: number = 50
 ): Promise<ApprovalQueueItem[]> {
   console.log('[knowledge-promotion] Querying approved insights for group:', groupId);
@@ -981,13 +981,13 @@ export async function logPromotionEvent(
  *      e. Create CONTRIBUTED relationship to agent
  *      f. Log promotion event to PostgreSQL
  * 
- * @param groupId - Tenant identifier (default: 'allura-default')
+ * @param groupId - Tenant identifier (default: 'allura-system')
  * @param batchSize - Max items to process in one batch (default: 10)
  * @param mcpClient - Notion MCP client (injected for testability)
  * @returns Array of promotion results
  */
 export async function processApprovedInsights(
-  groupId: string = 'allura-default',
+  groupId: string = 'allura-system',
   batchSize: number = 10,
   mcpClient?: NotionMCPClient
 ): Promise<PromotionResult[]> {

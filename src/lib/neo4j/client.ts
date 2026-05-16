@@ -6,7 +6,7 @@
  * @example
  * import { searchInsights, getInsightById } from '@/lib/neo4j/client';
  *
- * const insights = await searchInsights("architecture", { group_id: "roninmemory" });
+ * const insights = await searchInsights("architecture", { group_id: "allura-system" });
  */
 
 // Connection utilities

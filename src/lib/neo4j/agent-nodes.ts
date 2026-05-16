@@ -38,7 +38,7 @@ export interface AgentNode {
   model: string;
   /** Fallback model identifier (e.g., 'ollama-cloud/glm-5.1') */
   fallback_model: string;
-  /** Tenant isolation identifier (e.g., 'allura-default') */
+  /** Tenant isolation identifier (e.g., 'allura-system') */
   group_id: string;
   /** Creation timestamp */
   created_at: Date;
@@ -632,7 +632,7 @@ export async function linkAgentToGroup(
  * role, and runtime state.
  */
 export async function initializeDefaultAgents(
-  group_id: string = "allura-default"
+  group_id: string = "allura-system"
 ): Promise<AgentNode[]> {
   const teamRamAgents: AgentInsert[] = [
     {

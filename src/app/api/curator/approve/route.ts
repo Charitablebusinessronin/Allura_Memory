@@ -25,7 +25,7 @@ import { captureException } from "@/lib/observability/sentry"
 import { getPool } from "@/lib/postgres/connection"
 import { GroupIdValidationError, validateGroupId } from "@/lib/validation/group-id"
 
-const DEFAULT_GROUP_ID = process.env.DEFAULT_GROUP_ID || "allura-default"
+const DEFAULT_GROUP_ID = process.env.DEFAULT_GROUP_ID || "allura-system"
 
 /**
  * POST /api/curator/approve

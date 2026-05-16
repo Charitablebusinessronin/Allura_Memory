@@ -96,4 +96,6 @@ brand-audit-results.json
 
 # Harness runtime directories (installed, not versioned)
 .agents/
-.codex/
+.codex/*
+!.codex/agents/
+!.codex/agents/brooks.toml

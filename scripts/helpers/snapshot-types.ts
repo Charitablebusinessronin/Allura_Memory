@@ -7,7 +7,7 @@ export const SNAPSHOT_INGESTION_METADATA_FILENAME = "ingestion.meta.json";
 export const SNAPSHOT_INGESTION_SCHEMA_VERSION = 1;
 export const SNAPSHOT_DEFAULT_OUTPUT_DIR = "memory-bank";
 export const DEFAULT_SOURCE_DIRS = [
-  "docs/roninmemory",
+  "docs/allura",
   "docs/Carlos_plan_framework",
 ];
 export const DEFAULT_SUMMARY_LENGTH = 500;

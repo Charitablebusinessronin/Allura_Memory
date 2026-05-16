@@ -28,7 +28,7 @@ class SessionBootstrapper {
   constructor() {
     this.startTime = performance.now();
     this.config = {
-      group_id: process.env.GROUP_ID || "allura-roninmemory",
+      group_id: process.env.GROUP_ID || "allura-system",
       session_id: `session-${Date.now()}`,
       timestamp: new Date().toISOString(),
     };

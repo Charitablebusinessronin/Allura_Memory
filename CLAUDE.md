@@ -65,7 +65,7 @@ At the start of each session, dispatch Scout to hydrate from Allura Brain:
 
 1. **Scout Recon** — Search PostgreSQL events for recent activity (agent_id='brooks', ORDER BY created_at DESC LIMIT 5)
 2. **Blocker Query** — Search events WHERE event_type IN ('BLOCKER', 'ARCHITECTURE_DECISION')
-3. **Insight Search** — Query Neo4j for recent insights matching 'allura-roninmemory.\*'
+3. **Insight Search** — Query Neo4j for recent insights matching `allura-system`
 4. **Synthesize** — Scout returns: what's active, what's blocking, what was decided last session
 
 Use MCP_DOCKER tools for Brain connectivity and governed writes. Do not rely on a local allura-memory MCP server.

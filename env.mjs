@@ -70,7 +70,7 @@ export const env = createEnv({
       .default("true")
       .transform((v) => v === "true"),
     ALLURA_DEV_AUTH_ROLE: z.enum(["admin", "curator", "viewer"]).default("admin"),
-    ALLURA_DEV_AUTH_GROUP_ID: z.string().default("allura-roninmemory"),
+    ALLURA_DEV_AUTH_GROUP_ID: z.string().default("allura-system"),
     ALLURA_DEV_AUTH_USER_ID: z.string().default("dev-user-allura"),
     ALLURA_DEV_AUTH_EMAIL: z.string().default("dev@allura.local"),
 

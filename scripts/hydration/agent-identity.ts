@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-export const DEFAULT_NOTION_GROUP_ID = "allura-roninmemory";
+export const DEFAULT_NOTION_GROUP_ID = "allura-system";
 
 interface AgentMetadataEntry {
   id: string;

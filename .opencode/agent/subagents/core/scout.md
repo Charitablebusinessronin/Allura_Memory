@@ -10,6 +10,7 @@ scope: harness
 platform: Both
 status: active
 model: ollama-cloud/nemotron-3-super
+fallback_model: openai/gpt-5.4-mini
 permission:
   edit: deny
   bash:

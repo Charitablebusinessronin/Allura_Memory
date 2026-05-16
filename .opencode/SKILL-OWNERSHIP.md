@@ -9,6 +9,7 @@
 | allura-memory-skill | Scout | Any Brain operation | ✅ Yes | none | **Keep** — mandatory Brain governance |
 | allura-menu | All | Navigation | ⬜ Overlay | none | **Keep** — Brain menu system |
 | allura-propose-promotion | Brooks | Memory promotion | ✅ Yes | allura-approve-promotion | **Keep** — promotion pipeline |
+| bmad-agent-builder | Brooks | Agent skill build/edit/analyze | ⬜ Overlay | skill-creator, bmad-module-builder | **Keep** — BMAD-native agent construction for Team RAM |
 | brainstorming | Woz | Design exploration | ⬜ Overlay | frontend-design, allura-design | **Keep** — ideation and concept development before design |
 | bun-security | Hightower | Security audit | ⬜ Overlay | none | **Keep** — Bun security checks |
 | code-review | Pike | Code review | ✅ Yes | none | **Keep** — review gate |
@@ -35,9 +36,10 @@
 | skill-creator | Brooks | Skill authoring | ⬜ Overlay | mcp-harness | **Keep** — skill creation and optimization workflow |
 | task-creator | Woz | Task generation | ⬜ Overlay | task-management | **Keep** — structured task creation with Brain integration |
 | task-management | Woz | Task CLI | ⬜ Overlay | task-creator, allura-memory-skill | **Keep** — feature subtask tracking with memory linkage |
+| team-ram-cowork | Brooks | Codex/OpenCode/Claude co-work explanation and role routing | ✅ Yes | party-mode, roundtable | **Keep** — explains and enforces Team RAM perspective workflow across tools |
 | varlock | Hightower | Env var security | ⬜ Overlay | bun-security | **Keep** — secrets management and non-exposure guardrails |
 
-**Total: 35 skills** — 6 Required (core gates), 29 Overlay (project-specific)
+**Total: 37 skills** — 7 Required (core gates), 30 Overlay (project-specific)
 
 **Deleted / archived:**
 - `systematic-debugging-memory` — archived to `.opencode/archive/skills-2026-05-07/`

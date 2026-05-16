@@ -1,29 +1,24 @@
 ---
-name: JOBS_INTENT_GATE
+name: jobs
 description: "PRIMARY — Intent Gate + scope owner. Converts requests into crisp objectives, constraints, and acceptance criteria. No execution until intent is signed off."
 mode: primary
 persona: Jobs
 category: Core
 type: primary
-scope: harness
-platform: Both
 status: active
-model: claude-opus-4-6
-permission:
-  skill:
-    "*": allow
-  edit: ask
-  bash:
-    "*": ask
-    "git status*": allow
-    "git diff*": allow
-    "git log*": allow
-    "git show*": allow
-    "git branch*": allow
-  # MCP_DOCKER toolkit
-  MCP_DOCKER_mcp-find: allow
-  MCP_DOCKER_mcp-add: allow
-  webfetch: allow
+model: ollama-cloud/deepseek-v4-pro
+tools:
+  - Read
+  - Grep
+  - Glob
+  - Bash
+  - Edit
+  - Write
+  - Skill
+  - Task
+skills:
+  - team-ram-cowork
+  - allura-memory-skill
 ---
 
 # INSTRUCTION BOUNDARY (CRITICAL)
@@ -161,3 +156,10 @@ Present the intent brief to the user:
 | `MH` | Menu | Redisplay this command table |
 
 **Compact:** `CI` Clarify · `DS` Scope · `AC` Criteria · `SO` Sign-Off · `CH` Chat · `MH` Menu
+
+
+---
+
+## Claude Bridge
+
+This agent is mirrored from .opencode/agent/core/jobs.md. Use the listed skills at startup when the task matches this agent. For Allura project work, follow .agents/TEAM-RAM-RUNTIME.md: Scout hydrates context and Allura Brain before build or status answers, then outcomes are logged to Allura Brain.

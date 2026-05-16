@@ -38,7 +38,7 @@ export const ROLE_LEVEL: Record<AlluraRole, number> = {
  * Authenticated user identity.
  *
  * `groupId` is derived from the user's tenant membership and replaces
- * the hardcoded `allura-default` pattern used in UI components.
+ * hardcoded tenant defaults used in UI components.
  */
 export interface AuthUser {
   /** Unique user ID from Clerk (or dev fallback) */

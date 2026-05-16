@@ -10,6 +10,7 @@ scope: harness
 platform: Both
 status: active
 model: openai/gpt-5.4-mini
+fallback_model: ollama-cloud/deepseek-v4-pro
 permission:
   edit: deny
   bash:

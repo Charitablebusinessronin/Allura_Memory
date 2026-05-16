@@ -13,7 +13,7 @@ import {
   verifyAgentNodes,
 } from "../src/lib/neo4j/client";
 
-const GROUP_ID = "allura-default";
+const GROUP_ID = "allura-system";
 const GROUP_NAME = "Allura Agent Team";
 
 async function main() {

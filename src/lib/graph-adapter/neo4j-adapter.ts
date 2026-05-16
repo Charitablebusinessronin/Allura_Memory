@@ -309,6 +309,7 @@ export class Neo4jGraphAdapter implements IGraphAdapter {
         `CALL db.index.fulltext.queryNodes('memory_search_index', $query)
          YIELD node AS m, score
          WHERE m.group_id = $groupId
+           AND coalesce(m.deprecated, false) = false
            AND NOT (m)<-[:SUPERSEDES]-()
          RETURN m.id AS id,
                 m.content AS content,

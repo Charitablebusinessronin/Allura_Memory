@@ -61,7 +61,7 @@ export async function approveAdr001(): Promise<ApprovalResult> {
   console.log('Consequences:');
   console.log('Establishes 3-tier RTM (B-Tier, F-Tier, Components)');
   console.log('Implements AEGIS quality gates for high-stakes decisions');
-  console.log('Affects all Agent-OS layers (Dashboard, ADAS, OpenClaw, roninmemory)');
+  console.log('Affects all Agent-OS layers (Dashboard, ADAS, OpenClaw, Allura memory)');
   console.log();
   console.log('Key Decisions:');
   console.log('Approve Three-Tier RTM Architecture');

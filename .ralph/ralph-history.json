@@ -1,26 +1,6 @@
 {
-  "iterations": [
-    {
-      "iteration": 1,
-      "startedAt": "2026-05-16T03:03:13.512Z",
-      "endedAt": "2026-05-16T03:52:12.028Z",
-      "durationMs": 2936417,
-      "agent": "opencode",
-      "model": "",
-      "toolsUsed": {},
-      "filesModified": [
-        ".ralph/ralph-opencode.config.json",
-        "memory-bank/progress.md",
-        "opencode.json",
-        ".opencode/config.json",
-        ".ralph/ralph-loop.state.json"
-      ],
-      "exitCode": 137,
-      "completionDetected": false,
-      "errors": []
-    }
-  ],
-  "totalDurationMs": 2936417,
+  "iterations": [],
+  "totalDurationMs": 0,
   "struggleIndicators": {
     "repeatedErrors": {},
     "noProgressIterations": 0,

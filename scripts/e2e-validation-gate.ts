@@ -40,7 +40,7 @@ interface GateResult {
 
 // ── Config ─────────────────────────────────────────────────────────────────
 
-const GROUP_ID = "allura-roninmemory";
+const GROUP_ID = "allura-system";
 const VALIDATION_AGENT = "validation-agent";
 const VALIDATION_AGENT_2 = "validation-agent-2";
 const SKIP_NEO4J = process.argv.includes("--skip-neo4j");
