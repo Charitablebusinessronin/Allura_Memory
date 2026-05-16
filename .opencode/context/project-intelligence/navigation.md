@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/nav | Priority: critical | Version: 1.1 | Updated: 2026-04-11 -->
+<!-- Context: project-intelligence/nav | Priority: critical | Version: 1.2 | Updated: 2026-05-16 -->
 
 # Project Intelligence Navigation
 
@@ -10,6 +10,9 @@
 |---------------|------|-------------|
 | **Start here** | `navigation.md` | This file - quick overview |
 | **How to build** | `technical-domain.md` | Stack, patterns, conventions |
+| **API patterns** | `technical-domain.md#api-route-handler` | Route handlers, role gates, group_id validation |
+| **Component patterns** | `technical-domain.md#react-component` | Props, `cn(...)`, design-token classes |
+| **Security rules** | `technical-domain.md#security-requirements` | Auth, tenant isolation, audit, no secrets |
 | **Why this exists** | `business-domain.md` | Positioning vs mem0 |
 | **Architecture** | `business-tech-bridge.md` | Business → tech mapping |
 | **Decisions** | `decisions-log.md` | Why decisions were made |
