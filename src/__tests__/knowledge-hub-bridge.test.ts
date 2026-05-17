@@ -448,6 +448,7 @@ describe("promoteToKnowledgeHub", () => {
 describe("validateInsightForPromotion", () => {
   const validInsight = {
     id: "ins_test",
+    proposal_id: "prop_test",
     topic: "Test topic",
     category: "Architecture" as const,
     content: "Test content",
@@ -465,6 +466,11 @@ describe("validateInsightForPromotion", () => {
   it("should reject missing id", () => {
     const insight = { ...validInsight, id: "" };
     expect(() => validateInsightForPromotion(insight)).toThrow("Insight ID is required");
+  });
+
+  it("should reject missing proposal_id", () => {
+    const insight = { ...validInsight, proposal_id: "" };
+    expect(() => validateInsightForPromotion(insight)).toThrow("Proposal ID is required");
   });
 
   it("should reject missing group_id", () => {

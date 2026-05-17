@@ -25,6 +25,7 @@
 import type { Pool } from 'pg';
 import { z } from 'zod';
 import { Neo4jPromotionError } from '../errors/neo4j-errors';
+import { requireApprovalBeforePromotion } from './approval-audit';
 import { createInsight, createInsightVersion, type InsightRecord } from '../neo4j/queries/insert-insight';
 import { getPool } from '../postgres/connection';
 import { type EventRecord, insertEvent } from '../postgres/queries/insert-trace';
@@ -64,6 +65,8 @@ const TIER_TO_SOURCE: Record<string, string> = {
  * Knowledge insight from Neo4j
  */
 export interface KnowledgeInsight {
+  /** Canonical proposal identifier whose approval audit event gates promotion */
+  proposal_id: string;
   /** Stable identifier across versions */
   id: string;
   /** Topic or title of the insight */
@@ -99,6 +102,8 @@ export interface KnowledgeInsight {
  *   - Rejected: Human rejected, not promoted
  */
 export interface ApprovalQueueItem {
+  /** Canonical proposal identifier from canonical_proposals */
+  proposal_id: string;
   /** Notion page ID */
   notion_page_id: string;
   /** Topic or title */
@@ -339,6 +344,7 @@ export async function queryApprovedInsights(
     const category = TIER_TO_CATEGORY[tier] || 'Research';
 
     return {
+      proposal_id: row.id as string,
       notion_page_id: (row.notion_page_id as string) || (row.id as string),
       topic: (row.content as string).slice(0, 100),
       content: row.content as string,
@@ -389,6 +395,7 @@ export async function queryApprovedInsightById(
   const category = TIER_TO_CATEGORY[tier] || 'Research';
 
   return {
+    proposal_id: row.id as string,
     notion_page_id: (row.notion_page_id as string) || (row.id as string),
     topic: (row.content as string).slice(0, 100),
     content: row.content as string,
@@ -725,6 +732,12 @@ export async function promoteToNeo4j(insight: KnowledgeInsight): Promise<string>
     group_id: insight.group_id,
   });
 
+  if (!insight.proposal_id || insight.proposal_id.trim().length === 0) {
+    throw new Error('Proposal ID is required for promotion approval');
+  }
+
+  await requireApprovalBeforePromotion(insight.proposal_id, insight.group_id);
+
   // Build Neo4j insight payload
   const insightPayload = {
     insight_id: insight.id,
@@ -1014,6 +1027,7 @@ export async function processApprovedInsights(
       // Step 2: Promote to Neo4j
       const neo4jId = await promoteToNeo4j({
         id: item.postgres_trace_id, // Use trace ID as stable insight ID
+        proposal_id: item.proposal_id,
         topic: item.topic,
         category: item.category,
         content: item.content,
@@ -1163,6 +1177,7 @@ export async function promoteSingleInsight(
     // Step 2: Promote to Neo4j
     const neo4jId = await promoteToNeo4j({
       id: item.postgres_trace_id,
+      proposal_id: proposalId,
       topic: item.topic,
       category: item.category,
       content: item.content,
@@ -1266,6 +1281,10 @@ export async function promoteSingleInsight(
 export function validateInsightForPromotion(insight: KnowledgeInsight): boolean {
   if (!insight.id || insight.id.trim().length === 0) {
     throw new Error('Insight ID is required for promotion');
+  }
+
+  if (!insight.proposal_id || insight.proposal_id.trim().length === 0) {
+    throw new Error('Proposal ID is required for promotion');
   }
 
   if (!insight.group_id || insight.group_id.trim().length === 0) {
