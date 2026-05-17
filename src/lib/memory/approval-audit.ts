@@ -15,7 +15,7 @@
 
 import type { Pool } from "pg"
 import { getPool } from "@/lib/postgres/connection"
-import { GroupIdValidationError, validateGroupId } from "@/lib/validation/group-id"
+import { validateGroupId } from "@/lib/validation/group-id"
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -63,8 +63,8 @@ export class ApprovalRequiredError extends Error {
 
 // ── Event type constants ──────────────────────────────────────────────────
 
-const EVENT_TYPE_APPROVED = "memory_promotion_approved" as const
-const EVENT_TYPE_REJECTED = "memory_promotion_rejected" as const
+const EVENT_TYPE_APPROVED = "proposal_approved" as const
+const EVENT_TYPE_REJECTED = "proposal_rejected" as const
 
 // ── Core Functions ────────────────────────────────────────────────────────
 
@@ -134,7 +134,7 @@ export async function logApprovalEvent(
 /**
  * Guard function: require an approval event before allowing Neo4j promotion.
  *
- * Queries the events table for a `memory_promotion_approved` event matching
+ * Queries the events table for a `proposal_approved` event matching
  * the given proposal_id and group_id. Returns true if found.
  * Throws ApprovalRequiredError if no approval event exists.
  *

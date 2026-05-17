@@ -16,6 +16,13 @@ export { getMemory, getCurrentMemory, getMemoryHistory, memoryExists } from "./g
 
 // Knowledge Promotion (HITL governance)
 export {
+  ApprovalRequiredError,
+  logApprovalEvent,
+  requireApprovalBeforePromotion,
+  hasApprovalEvent,
+} from "./approval-audit";
+
+export {
   type KnowledgeInsight,
   type ApprovalQueueItem,
   type PromotionResult,
