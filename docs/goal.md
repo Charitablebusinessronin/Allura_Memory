@@ -87,11 +87,16 @@ All AI-assisted work in this repo must follow these rules:
 
 Team RAM is the thinking and review crew. Codex/OpenCode/Claude are the hands.
 
-Default routing:
+Default routing for one card:
 
 ```text
 Jobs -> Brooks -> Scout -> Woz -> Pike/Fowler -> Ralph/validation -> Allura log
 ```
+
+Default routing for finishing epics is defined in
+`_bmad/FINISH-ALL-EPICS-WORKFLOW.md`. That workflow is the canonical
+Scout-first Kanban lane for moving from current review debt through the
+remaining epics without opening new work too early.
 
 Role responsibilities:
 
@@ -305,8 +310,25 @@ Allura Memory is stable enough for ongoing maintenance, external review, and fut
 5. Record Phase 0 closure.
 6. Start Phase 1 board config only after Phase 0 closure.
 
+## Finish-All-Epics Execution Order
+
+After Phase 0 is closed or formally waived, use
+`_bmad/FINISH-ALL-EPICS-WORKFLOW.md` for the remaining epic sequence:
+
+1. Finish current review debt.
+2. Finish Epic 2 Frontend Tightening.
+3. Finish E1 Host Stability.
+4. Finish E2 Dashboard Quality.
+5. Finish E3/E4 Hardening Deploy.
+6. Finish E4 Kernel Completion.
+7. Finish E5 Infrastructure Polish.
+
+No epic is complete until every story is `Done`, evidence is attached, and the
+epic retrospective is complete.
+
 ## Related Canon
 
+- `_bmad/FINISH-ALL-EPICS-WORKFLOW.md`
 - `docs/allura/BLUEPRINT.md`
 - `docs/allura/SOLUTION-ARCHITECTURE.md`
 - `docs/allura/DESIGN-MEMORY-SYSTEM.md`
