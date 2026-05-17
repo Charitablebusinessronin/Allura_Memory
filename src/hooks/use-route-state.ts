@@ -57,19 +57,12 @@ export function useRouteStateClassified<T>(
   const source = result?.source ?? null
   const fetchedAt = result?.fetched_at ?? null
 
-  // Map legacy warnings to new shape if needed
   const normalizedWarnings = warnings.map((w) => {
-    // If already has code field, it's the new shape
-    if ("code" in w && w.code !== undefined) {
-      return w as { code: string; message: string; source?: string; severity: "info" | "warning" | "critical" }
-    }
-    // Legacy shape: convert {id, message, source, severity} to {code, message, source, severity}
-    const legacy = w as unknown as { id?: string; message?: string; source?: string; severity?: string }
     return {
-      code: legacy.id || "LEGACY",
-      message: legacy.message || "Unknown",
-      source: legacy.source,
-      severity: (legacy.severity || "info") as "info" | "warning" | "critical",
+      code: w.code ?? w.id ?? "warning",
+      message: w.message,
+      source: w.source,
+      severity: w.severity ?? "info",
     }
   })
 

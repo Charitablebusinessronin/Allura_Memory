@@ -108,8 +108,10 @@ export async function GET(
   if (!profile) {
     return response(null, `Profile not found: ${id}`, [
       {
+        id: "not-found",
         code: "not-found",
         message: `No permission profile exists with id=${id}`,
+        source: SOURCE,
         severity: "info",
       },
     ], 404);
@@ -120,8 +122,10 @@ export async function GET(
   if (!validation.ok) {
     return response(null, `Permission profile contract validation failed: ${validation.errors.join("; ")}`, [
       {
+        id: "shape-drift",
         code: "shape-drift",
         message: validation.errors.join("; "),
+        source: SOURCE,
         severity: "critical",
       },
     ], 500);
@@ -141,8 +145,10 @@ export async function PATCH(
   if (!existingProfile) {
     return response(null, `Profile not found: ${id}`, [
       {
+        id: "not-found",
         code: "not-found",
         message: `No permission profile exists with id=${id}`,
+        source: SOURCE,
         severity: "info",
       },
     ], 404);
@@ -156,8 +162,10 @@ export async function PATCH(
       const message = parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ");
       return response(null, `Permission profile validation failed: ${message}`, [
         {
+          id: "validation-error",
           code: "validation-error",
           message,
+          source: SOURCE,
           severity: "critical",
         },
       ], 400);
@@ -179,8 +187,10 @@ export async function PATCH(
     if (!validation.ok) {
       return response(null, `Permission profile contract validation failed: ${validation.errors.join("; ")}`, [
         {
+          id: "shape-drift",
           code: "shape-drift",
           message: validation.errors.join("; "),
+          source: SOURCE,
           severity: "critical",
         },
       ], 500);
@@ -192,16 +202,20 @@ export async function PATCH(
 
     return response(validation.data, null, [
       {
+        id: "audit-persistence-pending",
         code: "audit-persistence-pending",
         message: "PermissionProfile updated; durable persistence/audit wiring remains required before production use.",
+        source: SOURCE,
         severity: "info",
       },
     ], 200);
   } catch (error) {
     return response(null, error instanceof Error ? error.message : "Unknown server error", [
       {
+        id: "internal-error",
         code: "internal-error",
         message: "Permission profile update encountered an error",
+        source: SOURCE,
         severity: "critical",
       },
     ], 500);

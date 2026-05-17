@@ -77,3 +77,17 @@ export {
   forbiddenResponse,
   getGroupIdFromAuth,
 } from "./api-auth";
+
+// ── Permission Profiles ─────────────────────────────────────────────────────
+export {
+  PermissionProfileRequestBodySchema,
+  PermissionProfileSchema,
+  updatePermissionProfile,
+  validatePermissionProfile,
+} from "./permission-profiles";
+
+export type {
+  PermissionProfile,
+  PermissionProfileRequestBody,
+  PermissionProfileValidation,
+} from "./permission-profiles";
