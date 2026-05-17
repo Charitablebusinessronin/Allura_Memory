@@ -22,10 +22,9 @@
  * Curator Proposals Data Source: 42894678-aedb-4c90-9371-6494a9fe5270
  */
 
-import type { Pool } from 'pg';
 import { z } from 'zod';
-import { Neo4jPromotionError } from '../errors/neo4j-errors';
 import { requireApprovalBeforePromotion } from './approval-audit';
+import { Neo4jPromotionError } from '../errors/neo4j-errors';
 import { createInsight, createInsightVersion, type InsightRecord } from '../neo4j/queries/insert-insight';
 import { getPool } from '../postgres/connection';
 import { type EventRecord, insertEvent } from '../postgres/queries/insert-trace';
@@ -566,7 +565,6 @@ export async function promoteToKnowledgeHub(
     topic,
     category,
     confidence,
-    source,
     group_id,
     postgres_trace_id,
     neo4j_id,

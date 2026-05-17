@@ -7,10 +7,6 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-vi.mock("../approval-audit", () => ({
-  requireApprovalBeforePromotion: vi.fn(async () => true),
-}))
-
 vi.mock("../../neo4j/queries/insert-insight", () => ({
   createInsight: vi.fn(async () => ({
     id: "neo4j-insight-001",
@@ -26,13 +22,22 @@ vi.mock("../../neo4j/queries/insert-insight", () => ({
   })),
 }))
 
-import { requireApprovalBeforePromotion } from "../approval-audit"
-import { createInsight } from "../../neo4j/queries/insert-insight"
-import { promoteToNeo4j, type KnowledgeInsight } from "../knowledge-promotion"
+vi.mock("../../postgres/connection", () => ({
+  getPool: vi.fn(),
+}))
 
-const mockRequireApprovalBeforePromotion =
-  requireApprovalBeforePromotion as unknown as ReturnType<typeof vi.fn>
+import { createInsight } from "../../neo4j/queries/insert-insight"
+import { getPool } from "../../postgres/connection"
+import { type KnowledgeInsight, promoteToNeo4j } from "../knowledge-promotion"
+
 const mockCreateInsight = createInsight as unknown as ReturnType<typeof vi.fn>
+const mockGetPool = getPool as unknown as ReturnType<typeof vi.fn>
+
+function createApprovalPool(rows: Array<{ id: number }> = [{ id: 42 }]) {
+  return {
+    query: vi.fn(async () => ({ rows, rowCount: rows.length })),
+  }
+}
 
 const APPROVED_INSIGHT: KnowledgeInsight = {
   id: "trace-001",
@@ -50,7 +55,7 @@ const APPROVED_INSIGHT: KnowledgeInsight = {
 describe("promoteToNeo4j approval guard", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockRequireApprovalBeforePromotion.mockResolvedValue(true)
+    mockGetPool.mockReturnValue(createApprovalPool())
     mockCreateInsight.mockResolvedValue({
       id: "neo4j-insight-001",
       insight_id: "prop-001",
@@ -60,21 +65,22 @@ describe("promoteToNeo4j approval guard", () => {
   })
 
   it("requires approval before creating a Neo4j insight", async () => {
+    const pool = createApprovalPool()
+    mockGetPool.mockReturnValue(pool)
+
     await promoteToNeo4j(APPROVED_INSIGHT)
 
-    expect(mockRequireApprovalBeforePromotion).toHaveBeenCalledWith(
-      "prop-001",
-      "allura-system"
+    expect(pool.query).toHaveBeenCalledWith(
+      expect.stringContaining("metadata->>'proposal_id' = $3"),
+      ["allura-system", "proposal_approved", "prop-001"]
     )
-    expect(mockRequireApprovalBeforePromotion.mock.invocationCallOrder[0]).toBeLessThan(
+    expect(pool.query.mock.invocationCallOrder[0]).toBeLessThan(
       mockCreateInsight.mock.invocationCallOrder[0]
     )
   })
 
   it("does not create a Neo4j insight when approval is missing", async () => {
-    mockRequireApprovalBeforePromotion.mockRejectedValueOnce(
-      new Error("Approval required before promotion")
-    )
+    mockGetPool.mockReturnValue(createApprovalPool([]))
 
     await expect(promoteToNeo4j(APPROVED_INSIGHT)).rejects.toThrow(
       "Approval required before promotion"
@@ -93,7 +99,7 @@ describe("promoteToNeo4j approval guard", () => {
       "Proposal ID is required for promotion approval"
     )
 
-    expect(mockRequireApprovalBeforePromotion).not.toHaveBeenCalled()
+    expect(mockGetPool).not.toHaveBeenCalled()
     expect(mockCreateInsight).not.toHaveBeenCalled()
   })
 })

@@ -17,7 +17,7 @@
  * Reference: docs/allura/BLUEPRINT.md (F-003: Approval Audit Flow)
  */
 
-import { beforeEach, describe, expect, it, vi, type MockInstance } from "vitest"
+import { beforeEach, describe, expect, it, type MockInstance, vi } from "vitest"
 import {
   type ApprovalAuditEvent,
   ApprovalRequiredError,

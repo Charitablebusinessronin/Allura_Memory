@@ -7,12 +7,10 @@
  * Run with: bun vitest run src/__tests__/knowledge-hub-bridge.test.ts
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
-  type ApprovalQueueItem,
   KNOWLEDGE_HUB_DATA_SOURCE_ID,
   KNOWLEDGE_HUB_DB_ID,
-  type KnowledgeHubEntry,
   type KnowledgeHubPromotionParams,
   KnowledgeHubPromotionParamsSchema,
   type NotionMCPClient,
@@ -47,15 +45,6 @@ const MOCK_KNOWLEDGE_HUB_PARAMS: KnowledgeHubPromotionParams = {
   tier: "mainstream",
   approved_by: "brooks-architect",
   tags: ["architecture", "database"],
-};
-
-const MOCK_KNOWLEDGE_HUB_ENTRY: KnowledgeHubEntry = {
-  notion_page_id: "page-existing-123",
-  neo4j_id: "ins_abc123def456",
-  postgres_trace_id: "evt_12345",
-  topic: "group_id enforcement invariant",
-  status: "Approved",
-  group_id: "allura-roninmemory",
 };
 
 // ── Zod Validation Tests ────────────────────────────────────────────────────
