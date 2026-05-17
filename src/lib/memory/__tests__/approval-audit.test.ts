@@ -17,7 +17,7 @@
  * Reference: docs/allura/BLUEPRINT.md (F-003: Approval Audit Flow)
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi, type MockInstance } from "vitest"
 import {
   type ApprovalAuditEvent,
   ApprovalRequiredError,
@@ -52,6 +52,8 @@ vi.mock("@/lib/validation/group-id", () => ({
 }))
 
 import { getPool } from "@/lib/postgres/connection"
+
+const mockGetPool = getPool as unknown as MockInstance<() => import("pg").Pool>
 
 // ── Test Fixtures ─────────────────────────────────────────────────────────
 
@@ -121,7 +123,7 @@ describe("Approval Audit Logger", () => {
   describe("logApprovalEvent", () => {
     it("should insert correct event_type and metadata for approval", async () => {
       const { pool, queryCalls } = createMockPool()
-      vi.mocked(getPool).mockReturnValue(pool)
+      mockGetPool.mockReturnValue(pool)
 
       await logApprovalEvent(VALID_APPROVAL_EVENT, pool)
 
@@ -134,7 +136,7 @@ describe("Approval Audit Logger", () => {
       expect(checkQuery.text).toContain("event_type = $2")
       expect(checkQuery.text).toContain("metadata->>'proposal_id' = $3")
       expect(checkQuery.params[0]).toBe(VALID_GROUP_ID) // group_id always first
-      expect(checkQuery.params[1]).toBe("memory_promotion_approved")
+      expect(checkQuery.params[1]).toBe("proposal_approved")
       expect(checkQuery.params[2]).toBe("prop-001")
 
       // Second query: INSERT
@@ -142,7 +144,7 @@ describe("Approval Audit Logger", () => {
       expect(insertQuery.text).toContain("INSERT INTO events")
       expect(insertQuery.text).toContain("VALUES ($1, $2, $3, $4, $5, $6)")
       expect(insertQuery.params[0]).toBe(VALID_GROUP_ID) // group_id always first
-      expect(insertQuery.params[1]).toBe("memory_promotion_approved")
+      expect(insertQuery.params[1]).toBe("proposal_approved")
       expect(insertQuery.params[2]).toBe("curator-alice") // agent_id = curator_id
 
       // Verify metadata JSON contains all required fields
@@ -159,17 +161,17 @@ describe("Approval Audit Logger", () => {
 
     it("should insert memory_promotion_rejected event_type for rejection", async () => {
       const { pool, queryCalls } = createMockPool()
-      vi.mocked(getPool).mockReturnValue(pool)
+      mockGetPool.mockReturnValue(pool)
 
       await logApprovalEvent(VALID_REJECTION_EVENT, pool)
 
       // Idempotency check should use rejected event type
       const checkQuery = queryCalls[0]
-      expect(checkQuery.params[1]).toBe("memory_promotion_rejected")
+      expect(checkQuery.params[1]).toBe("proposal_rejected")
 
       // Insert should use rejected event type
       const insertQuery = queryCalls[1]
-      expect(insertQuery.params[1]).toBe("memory_promotion_rejected")
+      expect(insertQuery.params[1]).toBe("proposal_rejected")
 
       const metadata = JSON.parse(insertQuery.params[4] as string)
       expect(metadata.decision).toBe("rejected")
@@ -180,9 +182,9 @@ describe("Approval Audit Logger", () => {
     it("should be idempotent — calling twice does not duplicate the event", async () => {
       // Simulate that the event already exists (idempotency check returns a row)
       const { pool, queryCalls, mockQuery } = createMockPool({
-        "memory_promotion_approved:prop-001": [{ id: 42 }],
+        "proposal_approved:prop-001": [{ id: 42 }],
       })
-      vi.mocked(getPool).mockReturnValue(pool)
+      mockGetPool.mockReturnValue(pool)
 
       await logApprovalEvent(VALID_APPROVAL_EVENT, pool)
 
@@ -194,7 +196,7 @@ describe("Approval Audit Logger", () => {
 
     it("should always include group_id in queries", async () => {
       const { pool, queryCalls } = createMockPool()
-      vi.mocked(getPool).mockReturnValue(pool)
+      mockGetPool.mockReturnValue(pool)
 
       await logApprovalEvent(VALID_APPROVAL_EVENT, pool)
 
@@ -208,7 +210,7 @@ describe("Approval Audit Logger", () => {
 
     it("should use parameterized queries — no string interpolation", async () => {
       const { pool, queryCalls } = createMockPool()
-      vi.mocked(getPool).mockReturnValue(pool)
+      mockGetPool.mockReturnValue(pool)
 
       await logApprovalEvent(VALID_APPROVAL_EVENT, pool)
 
@@ -223,7 +225,7 @@ describe("Approval Audit Logger", () => {
 
     it("should throw GroupIdValidationError for invalid group_id", async () => {
       const { pool } = createMockPool()
-      vi.mocked(getPool).mockReturnValue(pool)
+      mockGetPool.mockReturnValue(pool)
 
       const invalidEvent: ApprovalAuditEvent = {
         ...VALID_APPROVAL_EVENT,
@@ -237,7 +239,7 @@ describe("Approval Audit Logger", () => {
 
     it("should handle missing optional rationale field", async () => {
       const { pool, queryCalls } = createMockPool()
-      vi.mocked(getPool).mockReturnValue(pool)
+      mockGetPool.mockReturnValue(pool)
 
       const eventNoRationale: ApprovalAuditEvent = {
         ...VALID_APPROVAL_EVENT,
@@ -257,9 +259,9 @@ describe("Approval Audit Logger", () => {
   describe("requireApprovalBeforePromotion", () => {
     it("should return true when approval event exists", async () => {
       const { pool } = createMockPool({
-        "memory_promotion_approved:prop-001": [{ id: 42 }],
+        "proposal_approved:prop-001": [{ id: 42 }],
       })
-      vi.mocked(getPool).mockReturnValue(pool)
+      mockGetPool.mockReturnValue(pool)
 
       const result = await requireApprovalBeforePromotion(
         "prop-001",
@@ -272,7 +274,7 @@ describe("Approval Audit Logger", () => {
 
     it("should throw ApprovalRequiredError when no approval exists", async () => {
       const { pool } = createMockPool() // No existing rows
-      vi.mocked(getPool).mockReturnValue(pool)
+      mockGetPool.mockReturnValue(pool)
 
       await expect(
         requireApprovalBeforePromotion("prop-999", VALID_GROUP_ID, pool)
@@ -290,7 +292,7 @@ describe("Approval Audit Logger", () => {
 
     it("should throw ApprovalRequiredError with correct proposal and group info", async () => {
       const { pool } = createMockPool()
-      vi.mocked(getPool).mockReturnValue(pool)
+      mockGetPool.mockReturnValue(pool)
 
       try {
         await requireApprovalBeforePromotion("prop-missing", "allura-acme", pool)
@@ -304,9 +306,9 @@ describe("Approval Audit Logger", () => {
 
     it("should always include group_id in the query", async () => {
       const { pool, queryCalls } = createMockPool({
-        "memory_promotion_approved:prop-001": [{ id: 42 }],
+        "proposal_approved:prop-001": [{ id: 42 }],
       })
-      vi.mocked(getPool).mockReturnValue(pool)
+      mockGetPool.mockReturnValue(pool)
 
       await requireApprovalBeforePromotion("prop-001", VALID_GROUP_ID, pool)
 
@@ -317,7 +319,7 @@ describe("Approval Audit Logger", () => {
 
     it("should throw GroupIdValidationError for invalid group_id", async () => {
       const { pool } = createMockPool()
-      vi.mocked(getPool).mockReturnValue(pool)
+      mockGetPool.mockReturnValue(pool)
 
       await expect(
         requireApprovalBeforePromotion("prop-001", "bad-group", pool)
@@ -327,9 +329,9 @@ describe("Approval Audit Logger", () => {
     it("should not match rejection events as approvals", async () => {
       // Only a rejection event exists — should still throw
       const { pool } = createMockPool({
-        "memory_promotion_rejected:prop-001": [{ id: 43 }],
+        "proposal_rejected:prop-001": [{ id: 43 }],
       })
-      vi.mocked(getPool).mockReturnValue(pool)
+      mockGetPool.mockReturnValue(pool)
 
       await expect(
         requireApprovalBeforePromotion("prop-001", VALID_GROUP_ID, pool)
@@ -342,9 +344,9 @@ describe("Approval Audit Logger", () => {
   describe("hasApprovalEvent", () => {
     it("should return true when approval exists", async () => {
       const { pool } = createMockPool({
-        "memory_promotion_approved:prop-001": [{ id: 42 }],
+        "proposal_approved:prop-001": [{ id: 42 }],
       })
-      vi.mocked(getPool).mockReturnValue(pool)
+      mockGetPool.mockReturnValue(pool)
 
       const result = await hasApprovalEvent("prop-001", VALID_GROUP_ID, pool)
       expect(result).toBe(true)
@@ -352,7 +354,7 @@ describe("Approval Audit Logger", () => {
 
     it("should return false when no approval exists", async () => {
       const { pool } = createMockPool()
-      vi.mocked(getPool).mockReturnValue(pool)
+      mockGetPool.mockReturnValue(pool)
 
       const result = await hasApprovalEvent("prop-999", VALID_GROUP_ID, pool)
       expect(result).toBe(false)
@@ -360,7 +362,7 @@ describe("Approval Audit Logger", () => {
 
     it("should re-throw non-ApprovalRequiredError exceptions", async () => {
       const { pool, mockQuery } = createMockPool()
-      vi.mocked(getPool).mockReturnValue(pool)
+      mockGetPool.mockReturnValue(pool)
 
       // Simulate a database error
       mockQuery.mockRejectedValueOnce(new Error("Connection refused"))
