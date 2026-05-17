@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { type KeyboardEvent, useEffect, useMemo, useState } from "react"
 
 import {
   EmptyState,
@@ -48,6 +48,33 @@ function uniqueStrings(values: Array<string | undefined>): string[] {
 
 export default function AlluraRoutePage() {
   const [state, setState] = useState<AlluraRouteData | null>(null)
+  const [activeSection, setActiveSection] = useState<string>(ALLURA_ROUTE_SECTIONS[0].id)
+
+  const focusSectionTab = (sectionId: string) => {
+    requestAnimationFrame(() => {
+      document.querySelector<HTMLButtonElement>(`[data-allura-section-tab="${sectionId}"]`)?.focus()
+    })
+  }
+
+  const handleTabsKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const keyOffsets: Partial<Record<string, number>> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }
+    const currentIndex = ALLURA_ROUTE_SECTIONS.findIndex((section) => section.id === activeSection)
+    if (currentIndex < 0) return
+
+    let nextIndex: number | null = null
+    if (event.key === "Home") nextIndex = 0
+    if (event.key === "End") nextIndex = ALLURA_ROUTE_SECTIONS.length - 1
+    if (event.key in keyOffsets) {
+      const offset = keyOffsets[event.key] ?? 0
+      nextIndex = (currentIndex + offset + ALLURA_ROUTE_SECTIONS.length) % ALLURA_ROUTE_SECTIONS.length
+    }
+
+    if (nextIndex === null) return
+    event.preventDefault()
+    const nextSection = ALLURA_ROUTE_SECTIONS[nextIndex]
+    setActiveSection(nextSection.id)
+    focusSectionTab(nextSection.id)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -144,38 +171,38 @@ export default function AlluraRoutePage() {
       {!state ? (
         <SearchResultsSkeleton />
       ) : (
-        <Tabs defaultValue="memories" className="space-y-4">
-          <TabsList className="flex h-auto flex-wrap justify-start gap-2 bg-transparent p-0">
+        <Tabs value={activeSection} onValueChange={setActiveSection} className="flex min-w-0 flex-col space-y-4">
+          <TabsList onKeyDown={handleTabsKeyDown} className="flex h-auto w-full min-w-0 flex-wrap justify-start gap-2 bg-transparent p-0">
             {ALLURA_ROUTE_SECTIONS.map((section) => (
-              <TabsTrigger key={section.id} value={section.id} className="rounded-full border border-[var(--dashboard-border)] px-3 py-1.5">
+              <TabsTrigger key={section.id} value={section.id} data-allura-section-tab={section.id} className="rounded-full border border-[var(--dashboard-border)] px-3 py-1.5">
                 {section.label}
               </TabsTrigger>
             ))}
           </TabsList>
 
-          <TabsContent value="memories" className="space-y-3">
+          <TabsContent value="memories" className="min-w-0 space-y-3">
             {memories.length === 0 ? <EmptyState title="No memories returned" description="Allura Brain returned no memory rows for this group." /> : memories.slice(0, 10).map((memory) => <MemoryCard key={memory.id} memory={memory} />)}
           </TabsContent>
 
-          <TabsContent value="insights" className="grid gap-3 md:grid-cols-2">
+          <TabsContent value="insights" className="grid min-w-0 gap-3 md:grid-cols-2">
             {insights.length === 0 ? <EmptyState title="No active insights" description="Curated semantic knowledge will appear after HITL approval." /> : insights.slice(0, 8).map((insight) => <InsightCard key={insight.id} insight={insight} />)}
           </TabsContent>
 
-          <TabsContent value="trace-logs" className="space-y-3">
+          <TabsContent value="trace-logs" className="min-w-0 space-y-3">
             {evidence.length === 0 ? <EmptyState title="No trace logs" description="Append-only evidence was not returned by the trace endpoint." /> : evidence.slice(0, 10).map((item) => <EvidenceCard key={item.id} evidence={item} />)}
           </TabsContent>
 
-          <TabsContent value="provenance" className="grid gap-3 md:grid-cols-3">
+          <TabsContent value="provenance" className="grid min-w-0 gap-3 md:grid-cols-3">
             <SummaryCard label="Agents" value={provenanceAgents.length} detail={provenanceAgents.slice(0, 5).join(", ") || "No agent provenance returned"} />
             <SummaryCard label="Graph nodes" value={graph.nodes.length} detail="Derived from Allura Brain graph endpoint" />
             <SummaryCard label="Graph edges" value={graph.edges.length} detail="Relationship evidence returned by graph endpoint" />
           </TabsContent>
 
-          <TabsContent value="extracted-facts" className="space-y-3">
+          <TabsContent value="extracted-facts" className="min-w-0 space-y-3">
             {extractedFacts.length === 0 ? <EmptyState title="No extracted facts" description="No fact-like evidence was returned from traces." /> : extractedFacts.map((item) => <EvidenceCard key={item.id} evidence={item} />)}
           </TabsContent>
 
-          <TabsContent value="approval-queue" className="grid gap-3 md:grid-cols-2">
+          <TabsContent value="approval-queue" className="grid min-w-0 gap-3 md:grid-cols-2">
             {queue.length === 0 ? <EmptyState title="Approval queue is empty" description="No pending canonical proposals require HITL review." /> : queue.slice(0, 10).map((insight) => <InsightCard key={insight.id} insight={insight} />)}
           </TabsContent>
         </Tabs>
