@@ -1,178 +1,99 @@
 /**
- * TraceMiddleware Tests — Story 1.2
+ * Proxy middleware tests.
  *
- * Tests for the Next.js middleware that intercepts HTTP requests
- * and logs trace events to PostgreSQL via fire-and-forget fetch.
- *
- * Three test cases:
- * 1. Positive: trace event sent on valid request with group_id header
- * 2. Negative: missing group_id → no trace, no error
- * 3. Edge: middleware doesn't block response (latency check)
+ * The request proxy now owns auth/RBAC header forwarding. Legacy request
+ * tracing lives in MCP/kernel wrappers and is not emitted from `src/proxy.ts`.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-
-// Mock fetch globally
-const mockFetch = vi.fn()
-vi.stubGlobal("fetch", mockFetch)
-
-// Import after mocking
-import proxy, { config } from "../proxy"
 import { NextRequest } from "next/server"
 
+import proxy, { config } from "../proxy"
+import { clearAuthConfig } from "@/lib/auth/config"
+
 function createMockRequest(path: string, headers: Record<string, string> = {}): NextRequest {
-  const url = `http://localhost:3000${path}`
-  return new NextRequest(url, {
+  return new NextRequest(`http://localhost:3000${path}`, {
     headers: new Headers(headers),
     method: "GET",
   })
 }
 
-describe("TraceMiddleware", () => {
+describe("ProxyMiddleware", () => {
   beforeEach(() => {
-    mockFetch.mockReset()
-    mockFetch.mockResolvedValue({ ok: true, status: 201 })
+    vi.stubEnv("NODE_ENV", "test")
+    vi.stubEnv("ALLURA_DEV_AUTH_ENABLED", "true")
+    vi.stubEnv("ALLURA_DEV_AUTH_ROLE", "admin")
+    vi.stubEnv("ALLURA_DEV_AUTH_GROUP_ID", "allura-system")
+    vi.stubEnv("ALLURA_DEV_AUTH_USER_ID", "dev-user-allura")
+    vi.stubEnv("ALLURA_DEV_AUTH_EMAIL", "dev@allura.local")
+    vi.stubEnv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", undefined)
+    vi.stubEnv("CLERK_SECRET_KEY", undefined)
+    clearAuthConfig()
   })
 
   afterEach(() => {
-    vi.clearAllMocks()
+    vi.unstubAllEnvs()
+    clearAuthConfig()
   })
 
-  describe("Positive: trace event on valid request with group_id", () => {
-    it("should fire-and-forget a trace fetch when x-group-id header is present", async () => {
-      const request = createMockRequest("/api/memory", {
-        "x-group-id": "allura-system",
-      })
+  it("forwards dev auth context on protected memory routes", async () => {
+    const request = createMockRequest("/api/memory")
 
-      const mockEvent = { waitUntil: vi.fn() } as unknown as NextFetchEvent
+    const response = await proxy(request)
+    const forwardedHeaders = response.headers.get("x-middleware-request-x-allura-group-id")
 
-      const response = await proxy(request, mockEvent)
-
-      // Response should be NextResponse.next() — middleware passes through
-      expect(response).toBeDefined()
-      expect(response.status).toBe(200)
-
-      // fetch should have been called with the trace endpoint
-      expect(mockFetch).toHaveBeenCalledTimes(1)
-
-      const [fetchUrl, fetchOptions] = mockFetch.mock.calls[0]
-      expect(fetchUrl).toContain("/api/trace")
-      expect(fetchOptions.method).toBe("POST")
-      expect(fetchOptions.headers["x-internal-trace"]).toBe("allura-trace-middleware")
-
-      const body = JSON.parse(fetchOptions.body)
-      expect(body.group_id).toBe("allura-system")
-      expect(body.event_type).toBe("request_trace")
-      expect(body.agent_id).toBe("trace-middleware")
-      expect(body.metadata.method).toBe("GET")
-      expect(body.metadata.path).toBe("/api/memory")
-      expect(body.metadata.duration_ms).toBeTypeOf("number")
-      expect(body.status).toBe("completed")
-    })
+    expect(response.status).toBe(200)
+    expect(forwardedHeaders).toBe("allura-system")
+    expect(response.headers.get("x-middleware-request-x-allura-user-id")).toBe("dev-user-allura")
+    expect(response.headers.get("x-middleware-request-x-allura-role")).toBe("admin")
   })
 
-  describe("Negative: missing group_id → no trace, no error", () => {
-    it("should skip tracing when x-group-id header is missing", async () => {
-      const request = createMockRequest("/api/memory")
-
-      const mockEvent = { waitUntil: vi.fn() } as unknown as NextFetchEvent
-
-      const response = await proxy(request, mockEvent)
-
-      // Response should still pass through
-      expect(response).toBeDefined()
-
-      // No fetch should have been made
-      expect(mockFetch).not.toHaveBeenCalled()
+  it("removes inbound auth headers on public routes", async () => {
+    const request = createMockRequest("/api/health/live", {
+      "x-allura-user-id": "spoofed-user",
+      "x-allura-role": "admin",
+      "x-allura-group-id": "allura-system",
     })
 
-    it("should skip tracing for health check paths", async () => {
-      const paths = ["/healthz", "/ping", "/health", "/api/health/live", "/api/health/metrics"]
+    const response = await proxy(request)
 
-      for (const path of paths) {
-        mockFetch.mockClear()
-
-        const request = createMockRequest(path, {
-          "x-group-id": "allura-system",
-        })
-        const mockEvent = { waitUntil: vi.fn() } as unknown as NextFetchEvent
-
-        await proxy(request, mockEvent)
-        expect(mockFetch).not.toHaveBeenCalled()
-      }
-    })
-
-    it("should skip tracing for /api/trace (prevent infinite loop)", async () => {
-      const request = createMockRequest("/api/trace", {
-        "x-group-id": "allura-system",
-      })
-      const mockEvent = { waitUntil: vi.fn() } as unknown as NextFetchEvent
-
-      await proxy(request, mockEvent)
-      expect(mockFetch).not.toHaveBeenCalled()
-    })
-
-    it("should skip tracing for static assets", async () => {
-      const request = createMockRequest("/_next/static/chunk.js", {
-        "x-group-id": "allura-system",
-      })
-      const mockEvent = { waitUntil: vi.fn() } as unknown as NextFetchEvent
-
-      await proxy(request, mockEvent)
-      expect(mockFetch).not.toHaveBeenCalled()
-    })
+    expect(response.status).toBe(200)
+    expect(response.headers.get("x-middleware-request-x-allura-user-id")).toBeNull()
+    expect(response.headers.get("x-middleware-request-x-allura-role")).toBeNull()
+    expect(response.headers.get("x-middleware-request-x-allura-group-id")).toBeNull()
   })
 
-  describe("Edge: middleware does not block response", () => {
-    it("should return immediately even if fetch would be slow", async () => {
-      // Make fetch take a long time
-      mockFetch.mockImplementation(
-        () => new Promise((resolve) => setTimeout(resolve, 5000))
-      )
+  it("returns 403 when the dev user lacks the required role", async () => {
+    vi.stubEnv("ALLURA_DEV_AUTH_ROLE", "viewer")
+    clearAuthConfig()
 
-      const request = createMockRequest("/api/memory", {
-        "x-group-id": "allura-system",
-      })
-      const mockEvent = { waitUntil: vi.fn() } as unknown as NextFetchEvent
+    const request = createMockRequest("/api/curator/approve")
 
-      const startTime = performance.now()
-      const response = await proxy(request, mockEvent)
-      const elapsed = performance.now() - startTime
+    const response = await proxy(request)
+    const body = await response.json()
 
-      // Middleware should return in <50ms even though fetch takes 5000ms
-      // (fire-and-forget means we don't wait for the fetch)
-      expect(elapsed).toBeLessThan(50)
-      expect(response).toBeDefined()
-
-      // fetch was initiated (even if not resolved yet)
-      expect(mockFetch).toHaveBeenCalledTimes(1)
-    })
-
-    it("should not throw even if fetch fails", async () => {
-      mockFetch.mockRejectedValue(new Error("Network error"))
-
-      const request = createMockRequest("/api/memory", {
-        "x-group-id": "allura-system",
-      })
-      const mockEvent = { waitUntil: vi.fn() } as unknown as NextFetchEvent
-
-      // Should not throw
-      const response = await proxy(request, mockEvent)
-      expect(response).toBeDefined()
-    })
+    expect(response.status).toBe(403)
+    expect(body.required).toBe("curator")
+    expect(body.actual).toBe("viewer")
   })
 
-  describe("Config", () => {
-    it("should have a matcher that excludes _next/static, _next/image, favicon", () => {
-      expect(config.matcher).toBeDefined()
-      expect(config.matcher).toHaveLength(1)
-      // The matcher should be a regex pattern string
-      expect(config.matcher[0]).toContain("_next/static")
-      expect(config.matcher[0]).toContain("_next/image")
-      expect(config.matcher[0]).toContain("favicon.ico")
-    })
+  it("returns 401 on protected API routes when dev auth is disabled", async () => {
+    vi.stubEnv("ALLURA_DEV_AUTH_ENABLED", "false")
+    clearAuthConfig()
+
+    const request = createMockRequest("/api/memory")
+
+    const response = await proxy(request)
+    const body = await response.json()
+
+    expect(response.status).toBe(401)
+    expect(body.error).toBe("Authentication required")
+  })
+
+  it("has matcher coverage for app pages plus API routes", () => {
+    expect(config.matcher).toEqual([
+      "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+      "/(api|trpc)(.*)",
+    ])
   })
 })
-
-// Need to import NextFetchEvent type
-import type { NextFetchEvent } from "next/server"
