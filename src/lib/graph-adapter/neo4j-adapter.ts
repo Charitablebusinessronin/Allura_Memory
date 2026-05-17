@@ -18,7 +18,7 @@ import neo4j from "neo4j-driver"
 import type { ConfidenceScore, GroupId, MemoryId, MemoryProvenance } from "@/lib/memory/canonical-contracts"
 import { CURRENT_SCHEMA_VERSION } from "@/lib/schema-version"
 import { resolveAgentName, resolveProjectName } from "./sync-contract-mappings"
-import { GraphAdapterError, GraphAdapterUnavailableError } from "./types"
+import { GraphAdapterError } from "./types"
 import type {
   CanonicalCheckResult,
   CountResult,
@@ -37,37 +37,80 @@ import type {
 
 // ── Helper: Neo4j DateTime → ISO string ──────────────────────────────────────
 
-function neo4jDateToISO(value: unknown): string {
-  if (typeof value === "string") return value
-  if (value && typeof value === "object" && "year" in value) {
-    if (typeof (value as { toString?: () => string }).toString === "function") {
-      const str = (value as { toString: () => string }).toString()
-      const parsed = new Date(str)
-      if (!isNaN(parsed.getTime())) return parsed.toISOString()
-    }
-    const d = value as Record<string, { low: number; high?: number }>
-    const get = (field: string): number => d[field]?.low ?? 0
-    return new Date(
-      Date.UTC(
-        get("year"),
-        get("month") - 1,
-        get("day"),
-        get("hour"),
-        get("minute"),
-        get("second"),
-        Math.floor(get("nanosecond") / 1_000_000)
-      )
-    ).toISOString()
+const UNKNOWN_DATE_ISO = "1970-01-01T00:00:00.000Z"
+
+type Neo4jIntegerLike = { low?: number; high?: number; toNumber?: () => number }
+type Neo4jRecordLike = { get?: (key: string) => unknown }
+
+function toNumber(value: unknown, fallback = 0): number {
+  if (typeof value === "number") return value
+  if (value && typeof value === "object") {
+    const integer = value as Neo4jIntegerLike
+    if (typeof integer.toNumber === "function") return integer.toNumber()
+    if (typeof integer.low === "number") return integer.low
   }
-  return new Date(value as string | number).toISOString()
+  return fallback
+}
+
+function dateToISO(date: Date): string {
+  return Number.isNaN(date.getTime()) ? UNKNOWN_DATE_ISO : date.toISOString()
+}
+
+function neo4jDateToISO(value: unknown): string {
+  if (value == null) return UNKNOWN_DATE_ISO
+  if (value instanceof Date) return dateToISO(value)
+  if (typeof value === "string" || typeof value === "number") return dateToISO(new Date(value))
+
+  if (typeof value === "object") {
+    const temporal = value as { toStandardDate?: () => Date; toString?: () => string }
+
+    if (typeof temporal.toStandardDate === "function") {
+      return dateToISO(temporal.toStandardDate())
+    }
+
+    if ("year" in value) {
+      if (typeof temporal.toString === "function") {
+        const parsed = new Date(temporal.toString())
+        if (!Number.isNaN(parsed.getTime())) return parsed.toISOString()
+      }
+
+      const d = value as Record<string, unknown>
+      return dateToISO(
+        new Date(
+          Date.UTC(
+            toNumber(d.year),
+            toNumber(d.month, 1) - 1,
+            toNumber(d.day, 1),
+            toNumber(d.hour),
+            toNumber(d.minute),
+            toNumber(d.second),
+            Math.floor(toNumber(d.nanosecond) / 1_000_000)
+          )
+        )
+      )
+    }
+  }
+
+  return UNKNOWN_DATE_ISO
+}
+
+function recordValue(record: Record<string, unknown> | Neo4jRecordLike, key: string): unknown {
+  if (typeof (record as Neo4jRecordLike).get === "function") {
+    try {
+      return (record as Neo4jRecordLike).get?.(key)
+    } catch {
+      return undefined
+    }
+  }
+  return (record as Record<string, unknown>)[key]
 }
 
 function toProvenance(value: string | null | undefined): MemoryProvenance {
   return value === "manual" ? "manual" : "conversation"
 }
 
-function recordToNode(record: Record<string, unknown>): GraphMemoryNode {
-  const get = (key: string) => record[key]
+function recordToNode(record: Record<string, unknown> | Neo4jRecordLike): GraphMemoryNode {
+  const get = (key: string) => recordValue(record, key)
   return {
     id: get("id") as MemoryId,
     content: get("content") as string,
@@ -80,7 +123,7 @@ function recordToNode(record: Record<string, unknown>): GraphMemoryNode {
     deprecated: (get("deprecated") as boolean) ?? false,
     deleted_at: get("deleted_at") ? neo4jDateToISO(get("deleted_at")) : null,
     restored_at: get("restored_at") ? neo4jDateToISO(get("restored_at")) : null,
-    group_id: get("group_id") as GroupId,
+    group_id: (get("group_id") as GroupId | undefined) ?? ("allura-system" as GroupId),
     schema_version: (get("schema_version") as { toNumber?: () => number })?.toNumber?.() ?? CURRENT_SCHEMA_VERSION,
   }
 }
@@ -373,12 +416,16 @@ export class Neo4jGraphAdapter implements IGraphAdapter {
                 m.created_at AS created_at,
                 m.version AS version,
                 m.tags AS tags,
+                m.deprecated AS deprecated,
+                m.deleted_at AS deleted_at,
+                m.restored_at AS restored_at,
+                m.group_id AS group_id,
                 m.schema_version AS schema_version
          ORDER BY m.created_at DESC`,
         { groupId: params.group_id, userId: params.user_id ?? null }
       )
 
-      const memories = result.records.map((record) => recordToNode(record as unknown as Record<string, unknown>))
+      const memories = result.records.map((record) => recordToNode(record as unknown as Neo4jRecordLike))
       return { memories, total }
     } catch (error) {
       throw new GraphAdapterError("neo4j", "listMemories", "List memories failed", error instanceof Error ? error : undefined)

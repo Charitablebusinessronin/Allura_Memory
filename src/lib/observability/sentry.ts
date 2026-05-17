@@ -104,9 +104,10 @@ export function initSentry(config?: SentryConfig): void {
   }
 
   try {
-    // Dynamic import to avoid bundling Sentry when not needed
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const Sentry = require("@sentry/nextjs");
+    // Keep require behind eval so Next does not try to bundle this optional
+    // dependency when Sentry is disabled in local/dev environments.
+    const optionalRequire = eval("require") as NodeRequire;
+    const Sentry = optionalRequire("@sentry/nextjs");
 
     Sentry.init({
       dsn: _config.dsn,
