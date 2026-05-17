@@ -92,8 +92,10 @@ export const ActivityItemSchema = z.object({
 
 export const DashboardWarningSchema = z.object({
   id: z.string().min(1),
+  code: z.string().min(1).optional(),
   message: z.string(),
   source: z.string(),
+  severity: z.enum(["info", "warning", "critical"]).optional(),
 })
 
 export const SystemStatusSchema = z.object({
@@ -143,12 +145,16 @@ export const DashboardResultSchema = z.union([
     error: z.string().min(1),
     degraded: z.boolean(),
     warnings: z.array(DashboardWarningSchema),
+    source: z.string().optional(),
+    fetched_at: z.string().datetime({ offset: true }).optional(),
   }),
   z.object({
     data: z.unknown(), // validated separately per-type
     error: z.null(),
     degraded: z.boolean(),
     warnings: z.array(DashboardWarningSchema),
+    source: z.string().optional(),
+    fetched_at: z.string().datetime({ offset: true }).optional(),
   }),
 ])
 

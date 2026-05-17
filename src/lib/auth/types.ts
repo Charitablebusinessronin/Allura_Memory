@@ -22,6 +22,48 @@
 export const ALLURA_ROLES = ["viewer", "curator", "admin"] as const;
 export type AlluraRole = (typeof ALLURA_ROLES)[number];
 
+export const CANONICAL_ROLE_IDS = [
+  "admin",
+  "approver",
+  "auditor",
+  "viewer",
+  "service_actor",
+  "curator",
+] as const;
+export type RoleId = (typeof CANONICAL_ROLE_IDS)[number];
+
+export type PermissionAction =
+  | "team:create"
+  | "team:update"
+  | "team:assign_member"
+  | "role:define"
+  | "role:assign"
+  | "policy:manage"
+  | "policy:evaluate"
+  | "approval:decide"
+  | "audit:read"
+  | "audit:export"
+  | "memory:read"
+  | "work_item:create"
+  | "adapter:report_status"
+  | "evidence:attach"
+  | string;
+
+export type PermissionPrincipalKind = "human" | "service" | "agent";
+
+export interface PermissionProfile {
+  id: string;
+  group_id: string;
+  name: string;
+  description: string;
+  role_ids: RoleId[];
+  allowed_actions: PermissionAction[];
+  memory_scope: string[];
+  applies_to: PermissionPrincipalKind[];
+  created_at: string;
+  updated_at: string;
+}
+
 /**
  * Role hierarchy level — higher number = more permissions.
  * Used for permission checks: `roleLevel(userRole) >= roleLevel(requiredRole)`.

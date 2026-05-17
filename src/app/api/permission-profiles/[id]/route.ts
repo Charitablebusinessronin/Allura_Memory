@@ -11,6 +11,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import {
+  forbiddenResponse,
+  requireRole,
+  unauthorizedResponse,
   updatePermissionProfile,
   PermissionProfileRequestBodySchema,
   validatePermissionProfile,
@@ -19,6 +22,11 @@ import {
 import type { DashboardResult, DashboardWarning } from "@/lib/dashboard/types";
 
 const SOURCE = "dashboard-v2-api-permission-profiles";
+
+type PermissionProfileWarning = Omit<DashboardWarning, "id" | "source"> & {
+  id?: string;
+  source?: string;
+};
 
 // In-memory seeded profiles (same as root route)
 const seededProfiles: PermissionProfile[] = [
@@ -84,12 +92,18 @@ const seededProfiles: PermissionProfile[] = [
   },
 ];
 
-function response<T>(data: T | null, error: string | null, warnings: DashboardWarning[] = [], status = 200) {
+function response<T>(data: T | null, error: string | null, warnings: PermissionProfileWarning[] = [], status = 200) {
+  const normalizedWarnings: DashboardWarning[] = warnings.map((warning) => ({
+    ...warning,
+    id: warning.id ?? warning.code ?? "permission-profile-warning",
+    source: warning.source ?? SOURCE,
+  }));
+
   const body: DashboardResult<T> = {
     data,
     error,
     degraded: false,
-    warnings,
+    warnings: normalizedWarnings,
     source: SOURCE,
     fetched_at: new Date().toISOString(),
   };
@@ -102,6 +116,10 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
+  const roleCheck = requireRole(request, "viewer");
+  if (!roleCheck.user) return unauthorizedResponse();
+  if (!roleCheck.allowed) return forbiddenResponse(roleCheck);
+
   const { id } = await params;
   const profile = seededProfiles.find((p) => p.id === id);
 
@@ -135,6 +153,10 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
+  const roleCheck = requireRole(request, "admin");
+  if (!roleCheck.user) return unauthorizedResponse();
+  if (!roleCheck.allowed) return forbiddenResponse(roleCheck);
+
   const { id } = await params;
   const existingProfile = seededProfiles.find((p) => p.id === id);
 
@@ -149,7 +171,19 @@ export async function PATCH(
   }
 
   try {
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return response(null, "Permission profile request body must be valid JSON", [
+        {
+          code: "invalid-json",
+          message: "PATCH /api/permission-profiles/:id requires a valid JSON request body",
+          severity: "critical",
+        },
+      ], 400);
+    }
+
     const parsed = PermissionProfileRequestBodySchema.safeParse(body);
 
     if (!parsed.success) {
