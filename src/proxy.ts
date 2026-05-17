@@ -27,6 +27,15 @@ import { getDevUserSync } from "@/lib/auth/dev-auth"
 import { hasPermission } from "@/lib/auth/roles"
 import type { AlluraRole } from "@/lib/auth/types"
 
+const AUTH_HEADER_NAMES = [
+  "x-allura-user-id",
+  "x-allura-role",
+  "x-allura-group-id",
+  "x-allura-email",
+  "x-allura-name",
+  "x-allura-image-url",
+] as const
+
 // ── Route Classification ─────────────────────────────────────────────────────
 
 function matchesRoute(pathname: string, pattern: string): boolean {
@@ -56,17 +65,58 @@ function getRequiredRole(pathname: string): AlluraRole | null {
 
 // ── Dev Auth Handler ──────────────────────────────────────────────────────────
 
+type AuthForwardHeaders = {
+  userId: string
+  role: AlluraRole
+  groupId: string
+  email?: string
+  name?: string
+  imageUrl?: string
+}
+
+export function nextWithAuthHeaders(request: NextRequest, auth: AuthForwardHeaders): NextResponse {
+  const requestHeaders = new Headers(request.headers)
+  for (const header of AUTH_HEADER_NAMES) {
+    requestHeaders.delete(header)
+  }
+  requestHeaders.set("x-allura-user-id", auth.userId)
+  requestHeaders.set("x-allura-role", auth.role)
+  requestHeaders.set("x-allura-group-id", auth.groupId)
+  if (auth.email) requestHeaders.set("x-allura-email", auth.email)
+  if (auth.name) requestHeaders.set("x-allura-name", auth.name)
+  if (auth.imageUrl) requestHeaders.set("x-allura-image-url", auth.imageUrl)
+
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  })
+}
+
+export function nextWithoutAuthHeaders(request: NextRequest): NextResponse {
+  const requestHeaders = new Headers(request.headers)
+  for (const header of AUTH_HEADER_NAMES) {
+    requestHeaders.delete(header)
+  }
+
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  })
+}
+
 function handleDevAuth(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl
 
   // Public routes — always pass through
   if (isPublicRoute(pathname)) {
-    return NextResponse.next()
+    return nextWithoutAuthHeaders(request)
   }
 
   // Static assets and Next.js internals
   if (pathname.startsWith("/_next/") || pathname.startsWith("/favicon") || pathname.includes(".")) {
-    return NextResponse.next()
+    return nextWithoutAuthHeaders(request)
   }
 
   const devUser = getDevUserSync()
@@ -74,7 +124,7 @@ function handleDevAuth(request: NextRequest): NextResponse {
 
   // Unprotected route — allow through
   if (requiredRole === null) {
-    return NextResponse.next()
+    return nextWithoutAuthHeaders(request)
   }
 
   // No dev user and route is protected — 401
@@ -106,12 +156,15 @@ function handleDevAuth(request: NextRequest): NextResponse {
     return NextResponse.redirect(url)
   }
 
-  // Authenticated and authorized — inject headers
-  const response = NextResponse.next()
-  response.headers.set("x-allura-user-id", devUser.id)
-  response.headers.set("x-allura-role", devUser.role)
-  response.headers.set("x-allura-group-id", devUser.groupId)
-  return response
+  // Authenticated and authorized — forward auth context to route handlers.
+  return nextWithAuthHeaders(request, {
+    userId: devUser.id,
+    role: devUser.role,
+    groupId: devUser.groupId,
+    email: devUser.email,
+    name: devUser.name,
+    imageUrl: devUser.imageUrl,
+  })
 }
 
 // ── Production Clerk Handler ─────────────────────────────────────────────────
@@ -146,6 +199,8 @@ async function handleClerkAuth(request: NextRequest): Promise<NextResponse> {
             "/api/curator/proposals",
             "/api/memory",
             "/api/memory/(.*)",
+            "/api/permission-profiles",
+            "/api/permission-profiles/(.*)",
             "/memory",
             "/memory/(.*)",
           ]),
@@ -158,12 +213,12 @@ async function handleClerkAuth(request: NextRequest): Promise<NextResponse> {
 
         // Public routes — always pass through
         if (isPublicMatcher(req)) {
-          return NextResponse.next()
+          return nextWithoutAuthHeaders(req)
         }
 
         // Static assets and Next.js internals
         if (pathname.startsWith("/_next/") || pathname.startsWith("/favicon") || pathname.includes(".")) {
-          return NextResponse.next()
+          return nextWithoutAuthHeaders(req)
         }
 
         // Determine required role
@@ -177,7 +232,7 @@ async function handleClerkAuth(request: NextRequest): Promise<NextResponse> {
 
         // Unprotected route — allow through
         if (!requiredRole) {
-          return NextResponse.next()
+          return nextWithoutAuthHeaders(req)
         }
 
         // Require auth
@@ -215,12 +270,12 @@ async function handleClerkAuth(request: NextRequest): Promise<NextResponse> {
           return NextResponse.redirect(url)
         }
 
-        // Authenticated and authorized — inject headers
-        const response = NextResponse.next()
-        response.headers.set("x-allura-user-id", userId)
-        response.headers.set("x-allura-role", role)
-        response.headers.set("x-allura-group-id", groupId)
-        return response
+        // Authenticated and authorized — forward auth context to route handlers.
+        return nextWithAuthHeaders(req, {
+          userId,
+          role,
+          groupId,
+        })
       })
 
       // Wrap clerkInstance to match our handler signature.
@@ -243,7 +298,7 @@ async function handleClerkAuth(request: NextRequest): Promise<NextResponse> {
             })
           }
           // Fallback — shouldn't normally happen
-          return NextResponse.next()
+          return nextWithoutAuthHeaders(req)
         } catch (err) {
           console.error("[proxy] Clerk handler error, falling back to dev auth:", err)
           return handleDevAuth(req)

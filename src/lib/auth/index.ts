@@ -15,14 +15,34 @@ export type {
   ClerkAlluraMetadata,
   ClerkPublicMetadata,
   DevAuthConfig,
+  PermissionProfile,
   PermissionCheckResult,
   RouteProtection,
 } from "./types";
 
 export {
   ALLURA_ROLES,
+  CANONICAL_ROLE_IDS,
   ROLE_LEVEL,
 } from "./types";
+
+export type {
+  PermissionAction,
+  PermissionPrincipalKind,
+  RoleId,
+} from "./types";
+
+export type {
+  PermissionProfileRequestBody,
+  PermissionProfileValidationResult,
+} from "./permission-profile";
+
+export {
+  PermissionProfileRequestBodySchema,
+  PermissionProfileSchema,
+  updatePermissionProfile,
+  validatePermissionProfile,
+} from "./permission-profile";
 
 // ── Role Utilities ──────────────────────────────────────────────────────────
 export {

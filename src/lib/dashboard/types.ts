@@ -84,8 +84,10 @@ export interface GraphEdge {
 
 export interface DashboardWarning {
   id: string
+  code?: string
   message: string
   source: string
+  severity?: "info" | "warning" | "critical"
 }
 
 export interface SystemStatus {
@@ -117,6 +119,8 @@ export interface DashboardResult<T> {
   error: string | null
   degraded: boolean
   warnings: DashboardWarning[]
+  source?: string
+  fetched_at?: string
 }
 
 export type DecisionStatus = "decided" | "proposed" | "superseded" | "deferred" | "unknown"

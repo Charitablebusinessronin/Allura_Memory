@@ -12,7 +12,7 @@
  * These tests verify the route implementation logic without full Next.js context.
  */
 
-import { describe, expect, it, vi, beforeEach } from "vitest"
+import { describe, expect, it } from "vitest"
 
 /**
  * Test the graph route API contract directly
@@ -24,6 +24,11 @@ import { describe, expect, it, vi, beforeEach } from "vitest"
  */
 
 describe("Graph API Route Contract (Story 2.8)", () => {
+  const readRouteFile = async () => {
+    const { readFileSync } = await import("fs")
+    return readFileSync(new URL("../app/api/memory/graph/route.ts", import.meta.url), "utf8")
+  }
+
   it("route file should exist and have expected exports", async () => {
     const routeModule = await import("@/app/api/memory/graph/route")
     
@@ -35,10 +40,7 @@ describe("Graph API Route Contract (Story 2.8)", () => {
 
   it("should contain header scoping logic for x-allura-group-id", async () => {
     const routeModule = await import("@/app/api/memory/graph/route")
-    const routeContent = (await import("fs")).readFileSync(
-      "/media/ronin704/Games/Projects/allura memory/src/app/api/memory/graph/route.ts",
-      "utf8"
-    )
+    const routeContent = await readRouteFile()
 
     // Verify header check is present
     expect(routeContent).toContain("request.headers.get(\"x-allura-group-id\")")
@@ -57,10 +59,7 @@ describe("Graph API Route Contract (Story 2.8)", () => {
   })
 
   it("should include Warning header for degraded responses", async () => {
-    const routeContent = (await import("fs")).readFileSync(
-      "/media/ronin704/Games/Projects/allura memory/src/app/api/memory/graph/route.ts",
-      "utf8"
-    )
+    const routeContent = await readRouteFile()
 
     // Check for Warning header usage
     expect(routeContent).toContain("Warning")
@@ -68,10 +67,7 @@ describe("Graph API Route Contract (Story 2.8)", () => {
   })
 
   it("should return 200 instead of 500 on Neo4j errors", async () => {
-    const routeContent = (await import("fs")).readFileSync(
-      "/media/ronin704/Games/Projects/allura memory/src/app/api/memory/graph/route.ts",
-      "utf8"
-    )
+    const routeContent = await readRouteFile()
 
     // Check that the catch block returns 200, not 500
     expect(routeContent).toContain('status: 200')
@@ -79,10 +75,7 @@ describe("Graph API Route Contract (Story 2.8)", () => {
   })
 
   it("should have degraded mode response with empty arrays", async () => {
-    const routeContent = (await import("fs")).readFileSync(
-      "/media/ronin704/Games/Projects/allura memory/src/app/api/memory/graph/route.ts",
-      "utf8"
-    )
+    const routeContent = await readRouteFile()
 
     // Check for degraded response with empty arrays
     expect(routeContent).toContain("nodes: []")

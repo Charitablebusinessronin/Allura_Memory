@@ -37,12 +37,8 @@ import type { AlluraRole, AuthUser, PermissionCheckResult } from "./types";
  * Returns null if no authenticated user is found.
  */
 export function getAuthUser(request: NextRequest): AuthUser | null {
-  // Development mode: use DevAuthProvider
-  if (!isClerkEnabled()) {
-    return getDevUserSync();
-  }
-
-  // Production mode: read from middleware headers
+  // Prefer middleware-injected headers when present. This keeps API route tests
+  // and server-to-server calls honest even when dev auth fallback is enabled.
   const userId = request.headers.get("x-allura-user-id");
   const role = request.headers.get("x-allura-role");
   const groupId = request.headers.get("x-allura-group-id");
@@ -50,18 +46,23 @@ export function getAuthUser(request: NextRequest): AuthUser | null {
   const name = request.headers.get("x-allura-name");
   const imageUrl = request.headers.get("x-allura-image-url");
 
-  if (!userId) {
-    return null;
+  if (userId) {
+    return {
+      id: userId,
+      email: email ?? "",
+      name: name ?? undefined,
+      role: parseRole(role, "viewer"),
+      groupId: groupId ?? "allura-system",
+      imageUrl: imageUrl ?? undefined,
+    };
   }
 
-  return {
-    id: userId,
-    email: email ?? "",
-    name: name ?? undefined,
-    role: parseRole(role, "viewer"),
-    groupId: groupId ?? "allura-system",
-    imageUrl: imageUrl ?? undefined,
-  };
+  // Development mode: use DevAuthProvider only when no auth headers exist.
+  if (!isClerkEnabled()) {
+    return getDevUserSync();
+  }
+
+  return null;
 }
 
 /**
