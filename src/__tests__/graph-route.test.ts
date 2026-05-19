@@ -39,7 +39,7 @@ describe("Graph API Route Contract (Story 2.8)", () => {
   })
 
   it("should contain header scoping logic for x-allura-group-id", async () => {
-    const routeModule = await import("@/app/api/memory/graph/route")
+    await import("@/app/api/memory/graph/route")
     const routeContent = await readRouteFile()
 
     // Verify header check is present

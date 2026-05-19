@@ -1,3 +1,2 @@
 import { redirect } from "next/navigation"
-export default function RootPage() { redirect("/dashboard/feed") }
-
+export default function RootPage() { redirect("/dashboard/memory-space") }
