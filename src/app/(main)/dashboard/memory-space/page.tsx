@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import ForceGraph2D from "react-force-graph-2d"
 import { toast } from "sonner"
 
+import { getGraphNodeColor, getResolvedColor } from "@/lib/brand/allura"
 import type { GraphEdge, GraphNode } from "@/lib/dashboard/types"
 import { DEFAULT_GROUP_ID } from "@/lib/defaults/scope"
 
@@ -27,17 +28,6 @@ interface MemoryDetail {
   provenance?: "conversation" | "manual"
   user_id?: string
   created_at?: string
-}
-
-const NODE_COLORS: Record<string, string> = {
-  agent: "#6366f1",
-  event: "#f59e0b",
-  outcome: "#22c55e",
-  insight: "#3b82f6",
-  project: "#a855f7",
-  system: "#6b7280",
-  memory: "#ec4899",
-  evidence: "#14b8a6",
 }
 
 function formatScore(score: MemoryDetail["score"]) {
@@ -160,7 +150,7 @@ export default function MemorySpacePage() {
   const nodeCanvasObject = useCallback(
     (node: ForceGraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
       const fontSize = 12 / globalScale
-      const color = NODE_COLORS[node.type] ?? "#6b7280"
+      const color = getGraphNodeColor(node.type)
       const isSelected = selectedNode?.id === node.id
       const isHovered = hoveredNode?.id === node.id
       const isDimmed = searchQuery.length > 0 && !node.label.toLowerCase().includes(searchQuery.toLowerCase())
@@ -175,7 +165,7 @@ export default function MemorySpacePage() {
       if (isSelected || isHovered) {
         ctx.beginPath()
         ctx.arc(node.x ?? 0, node.y ?? 0, radius + 3, 0, 2 * Math.PI)
-        ctx.strokeStyle = isSelected ? "#fbbf24" : "#ffffff"
+        ctx.strokeStyle = isSelected ? getResolvedColor("gold") : getResolvedColor("white")
         ctx.lineWidth = 2 / globalScale
         ctx.stroke()
       }
@@ -273,7 +263,7 @@ export default function MemorySpacePage() {
             <div className="space-y-2 text-xs">
               <div className="flex items-center gap-2">
                 <span className="text-slate-400">Type:</span>
-                <span className="rounded px-1.5 py-0.5 font-medium capitalize text-white" style={{ backgroundColor: NODE_COLORS[selectedNode.type] ?? "#6b7280" }}>{selectedNode.type}</span>
+                <span className="rounded px-1.5 py-0.5 font-medium capitalize text-white" style={{ backgroundColor: getGraphNodeColor(selectedNode.type) }}>{selectedNode.type}</span>
               </div>
               {selectedNode.metadata && Object.entries(selectedNode.metadata).map(([key, value]) => (
                 <div key={key} className="flex items-start gap-2">
