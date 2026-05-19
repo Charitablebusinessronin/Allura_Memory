@@ -9,7 +9,7 @@
  *   Human → Notion (Approve) → Neo4j (Knowledge) → Notion (Knowledge Hub)
  * 
  * Steel Frame Versioning: All Neo4j insights use SUPERSEDES relationships
- * Tenant Isolation: All nodes carry group_id = 'allura-default'
+ * Tenant Isolation: All nodes carry group_id = 'allura-system'
  * 
  * ## Knowledge Hub Bridge (Flow 2)
  * 
@@ -22,8 +22,8 @@
  * Curator Proposals Data Source: 42894678-aedb-4c90-9371-6494a9fe5270
  */
 
-import type { Pool } from 'pg';
 import { z } from 'zod';
+import { requireApprovalBeforePromotion } from './approval-audit';
 import { Neo4jPromotionError } from '../errors/neo4j-errors';
 import { createInsight, createInsightVersion, type InsightRecord } from '../neo4j/queries/insert-insight';
 import { getPool } from '../postgres/connection';
@@ -64,6 +64,8 @@ const TIER_TO_SOURCE: Record<string, string> = {
  * Knowledge insight from Neo4j
  */
 export interface KnowledgeInsight {
+  /** Canonical proposal identifier whose approval audit event gates promotion */
+  proposal_id: string;
   /** Stable identifier across versions */
   id: string;
   /** Topic or title of the insight */
@@ -99,6 +101,8 @@ export interface KnowledgeInsight {
  *   - Rejected: Human rejected, not promoted
  */
 export interface ApprovalQueueItem {
+  /** Canonical proposal identifier from canonical_proposals */
+  proposal_id: string;
   /** Notion page ID */
   notion_page_id: string;
   /** Topic or title */
@@ -305,12 +309,12 @@ export interface NotionMCPClient {
  * 
  * Uses PostgreSQL directly for reliable, transactional reads.
  * 
- * @param groupId - Tenant identifier (defaults to 'allura-default')
+ * @param groupId - Tenant identifier (defaults to 'allura-system')
  * @param limit - Max items to return (default: 50)
  * @returns Array of approved proposal rows
  */
 export async function queryApprovedInsights(
-  groupId: string = 'allura-default',
+  groupId: string = 'allura-system',
   limit: number = 50
 ): Promise<ApprovalQueueItem[]> {
   console.log('[knowledge-promotion] Querying approved insights for group:', groupId);
@@ -339,6 +343,7 @@ export async function queryApprovedInsights(
     const category = TIER_TO_CATEGORY[tier] || 'Research';
 
     return {
+      proposal_id: row.id as string,
       notion_page_id: (row.notion_page_id as string) || (row.id as string),
       topic: (row.content as string).slice(0, 100),
       content: row.content as string,
@@ -389,6 +394,7 @@ export async function queryApprovedInsightById(
   const category = TIER_TO_CATEGORY[tier] || 'Research';
 
   return {
+    proposal_id: row.id as string,
     notion_page_id: (row.notion_page_id as string) || (row.id as string),
     topic: (row.content as string).slice(0, 100),
     content: row.content as string,
@@ -559,7 +565,6 @@ export async function promoteToKnowledgeHub(
     topic,
     category,
     confidence,
-    source,
     group_id,
     postgres_trace_id,
     neo4j_id,
@@ -724,6 +729,12 @@ export async function promoteToNeo4j(insight: KnowledgeInsight): Promise<string>
     topic: insight.topic,
     group_id: insight.group_id,
   });
+
+  if (!insight.proposal_id || insight.proposal_id.trim().length === 0) {
+    throw new Error('Proposal ID is required for promotion approval');
+  }
+
+  await requireApprovalBeforePromotion(insight.proposal_id, insight.group_id);
 
   // Build Neo4j insight payload
   const insightPayload = {
@@ -981,13 +992,13 @@ export async function logPromotionEvent(
  *      e. Create CONTRIBUTED relationship to agent
  *      f. Log promotion event to PostgreSQL
  * 
- * @param groupId - Tenant identifier (default: 'allura-default')
+ * @param groupId - Tenant identifier (default: 'allura-system')
  * @param batchSize - Max items to process in one batch (default: 10)
  * @param mcpClient - Notion MCP client (injected for testability)
  * @returns Array of promotion results
  */
 export async function processApprovedInsights(
-  groupId: string = 'allura-default',
+  groupId: string = 'allura-system',
   batchSize: number = 10,
   mcpClient?: NotionMCPClient
 ): Promise<PromotionResult[]> {
@@ -1014,6 +1025,7 @@ export async function processApprovedInsights(
       // Step 2: Promote to Neo4j
       const neo4jId = await promoteToNeo4j({
         id: item.postgres_trace_id, // Use trace ID as stable insight ID
+        proposal_id: item.proposal_id,
         topic: item.topic,
         category: item.category,
         content: item.content,
@@ -1163,6 +1175,7 @@ export async function promoteSingleInsight(
     // Step 2: Promote to Neo4j
     const neo4jId = await promoteToNeo4j({
       id: item.postgres_trace_id,
+      proposal_id: proposalId,
       topic: item.topic,
       category: item.category,
       content: item.content,
@@ -1266,6 +1279,10 @@ export async function promoteSingleInsight(
 export function validateInsightForPromotion(insight: KnowledgeInsight): boolean {
   if (!insight.id || insight.id.trim().length === 0) {
     throw new Error('Insight ID is required for promotion');
+  }
+
+  if (!insight.proposal_id || insight.proposal_id.trim().length === 0) {
+    throw new Error('Proposal ID is required for promotion');
   }
 
   if (!insight.group_id || insight.group_id.trim().length === 0) {

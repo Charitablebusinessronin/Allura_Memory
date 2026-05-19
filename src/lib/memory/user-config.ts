@@ -92,7 +92,7 @@ export function writeUserConfig(config: UserMemoryConfig): void {
   // =============================================================================
 
   // Multi-tenant default group
-  "defaultGroupId": "${config.defaultGroupId || 'allura-default'}",
+  "defaultGroupId": "${config.defaultGroupId || 'allura-system'}",
 
   // Embedding Provider (ollama, openai, voyage)
   "embeddingProvider": "${config.embeddingProvider || 'ollama'}",
@@ -141,7 +141,7 @@ export function ensureUserConfig(): void {
   }
   
   const defaultConfig: UserMemoryConfig = {
-    defaultGroupId: 'allura-default',
+    defaultGroupId: 'allura-system',
     embeddingProvider: 'ollama',
     embeddingModel: 'qwen3-embedding:8b',
     embeddingBaseUrl: 'http://localhost:11434',

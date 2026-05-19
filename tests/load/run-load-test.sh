@@ -30,7 +30,7 @@ NC='\033[0m'
 
 BASE_URL="${BASE_URL:-http://localhost:3201}"
 AUTH_TOKEN="${ALLURA_MCP_AUTH_TOKEN:-}"
-GROUP_ID="${GROUP_ID:-allura-roninmemory}"
+GROUP_ID="${GROUP_ID:-allura-system}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RESULTS_DIR="${SCRIPT_DIR}/results"
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"

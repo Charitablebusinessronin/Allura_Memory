@@ -47,7 +47,7 @@ async function syncNotionAgents() {
     console.log('[sync] Fetching agent insights from Neo4j...');
     const neo4jResult = await session.run(`
       MATCH (i:Insight)
-      WHERE i.group_id = 'allura-roninmemory'
+      WHERE i.group_id = 'allura-system'
       RETURN count(i) as insight_count
     `);
     

@@ -196,6 +196,10 @@ export const PROTECTED_ROUTES = [
   { pattern: "/api/memory", requiredRole: "viewer" as AlluraRole },
   { pattern: "/api/memory/:path*", requiredRole: "viewer" as AlluraRole },
 
+  // Permission profiles — viewer may read; route handlers enforce admin for mutation
+  { pattern: "/api/permission-profiles", requiredRole: "viewer" as AlluraRole },
+  { pattern: "/api/permission-profiles/:path*", requiredRole: "viewer" as AlluraRole },
+
   // Memory UI — viewer or above
   { pattern: "/memory", requiredRole: "viewer" as AlluraRole },
   { pattern: "/memory/:path*", requiredRole: "viewer" as AlluraRole },

@@ -30,7 +30,7 @@ interface BootstrapOptions {
 
 function parseArgs(argv: string[]): BootstrapOptions {
   const options: BootstrapOptions = {
-    groupId: "roninmemory",
+    groupId: "allura-system",
     dryRun: false,
     skipSnapshotBuild: false,
     concurrency: 5,
@@ -71,7 +71,7 @@ Usage:
   bun run session:bootstrap [--options]
 
 Options:
-  --group <id>          Tenant/group identifier (default: roninmemory)
+  --group <id>          Tenant/group identifier (default: allura-system)
   --dry-run             Simulate without writing to database
   --skip-snapshot       Skip snapshot build (use existing cache)
   --concurrency <n>     Parallel ingestion limit (default: 5)

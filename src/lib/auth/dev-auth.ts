@@ -56,7 +56,7 @@ export class DevAuthProvider implements AuthProvider {
 
   async getGroupId(): Promise<string> {
     const user = await this.getCurrentUser();
-    return user?.groupId ?? "allura-default";
+    return user?.groupId ?? "allura-system";
   }
 }
 

@@ -24,7 +24,7 @@ const SESSION_CONFIG = {
   maxCheckpoints: 10,
   enableDbPersistence: true,
   memoryBankDir: "memory-bank",
-  groupId: process.env.GROUP_ID || "allura-roninmemory",
+  groupId: process.env.GROUP_ID || "allura-system",
 };
 
 // Command menu

@@ -167,6 +167,7 @@ The hard isolation boundary. Every read and write MUST include a valid `group_id
 | B33 | Mission Control must combine operator cockpit workflows with Allura memory governance rather than becoming a separate product surface |
 | B34 | Every Mission Control route must declare its backing source of truth, read/write policy, degraded behavior, and evidence policy |
 | B35 | The rebuilt dashboard must not fabricate live data; placeholders/sample data must be labeled or replaced before `3100` cutover |
+| B36 | Team RAM agents must integrate with BMAD planning and Allura Brain memory through a documented workflow, preserving `.opencode/agent/` as the live agent source of truth |
 
 ---
 
@@ -768,12 +769,14 @@ graph LR
 - [DESIGN-ALLURA.md](./DESIGN-ALLURA.md) — UI/UX wireframes and design rules
 - [Brand System](../branding/deliverables/README.md) — allura brand identity (colors, typography, voice, logos)
 - [DESIGN-MEMORY-SYSTEM.md](./DESIGN-MEMORY-SYSTEM.md) — Governed memory pipeline design
+- [TEAM-RAM-BMAD-INTEGRATION.md](./TEAM-RAM-BMAD-INTEGRATION.md) — Team RAM, BMAD, and Allura Brain operating contract
 - [REQUIREMENTS-MATRIX.md](./REQUIREMENTS-MATRIX.md) — Competitive analysis and use case fit
 - [VALIDATION-GATE.md](../archive/allura/VALIDATION-GATE.md) — Acceptance checklist and benchmark matrix
 - `.opencode/skills/allura-memory-skill/` — memory workflow behavior and guardrails
 - `.opencode/skills/memory-client/` — default search → work → log behavior
 - `.opencode/skills/mcp-docker-memory-system/` — packaged MCP server discovery and configuration guidance
 - `src/lib/memory/` — memory engine
+- `src/lib/graph-adapter/neo4j-adapter.ts` — graph memory search must exclude `deprecated: true` nodes in normal recall
 - `postgres-init/` — PostgreSQL schema SQL
 - [MCP Protocol](https://modelcontextprotocol.io)
 - [mem0.ai](https://mem0.ai) — primary competitor benchmark

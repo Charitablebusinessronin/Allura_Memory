@@ -133,7 +133,7 @@ function ComposePanel({ onSubmitSuccess }: { onSubmitSuccess: () => void }) {
           htmlFor="insight-content"
           className="block text-xs font-medium text-[var(--allura-gray-500)]"
         >
-          Content <span className="text-[var(--allura-orange)]">*</span>
+          Content <span className="text-[var(--allura-orange-on-text)]">*</span>
         </label>
         <textarea
           id="insight-content"
@@ -165,7 +165,7 @@ function ComposePanel({ onSubmitSuccess }: { onSubmitSuccess: () => void }) {
       </div>
 
       {form.error && (
-        <p className="text-xs text-[var(--allura-orange)]">{form.error}</p>
+        <p className="text-xs text-[var(--allura-orange-on-text)]">{form.error}</p>
       )}
 
       <div className="flex items-center justify-between pt-1">
@@ -308,7 +308,7 @@ export default function BuilderPage() {
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-[var(--allura-charcoal)]">Curator Queue</h2>
           {(activeResult?.degraded) && (
-            <span className="text-xs text-[var(--allura-orange)]">Partial data</span>
+            <span className="text-xs text-[var(--allura-orange-on-text)]">Partial data</span>
           )}
         </div>
 
@@ -324,7 +324,7 @@ export default function BuilderPage() {
 
             {actionError && (
               <div className="flex items-center gap-2 rounded-lg border border-[var(--allura-orange)]/30 bg-[var(--tone-orange-bg)] px-4 py-3">
-                <XCircle className="size-4 shrink-0 text-[var(--allura-orange)]" />
+                <XCircle className="size-4 shrink-0 text-[var(--allura-orange-on-text)]" />
                 <p className="text-sm text-[var(--tone-orange-text)]">{actionError}</p>
               </div>
             )}

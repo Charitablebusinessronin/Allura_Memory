@@ -117,7 +117,7 @@ async function curatorTeamPromote(traceId: string) {
         try {
           const result = await session.run(`
             MATCH (i:Insight)
-            WHERE i.group_id = 'allura-roninmemory'
+            WHERE i.group_id = 'allura-system'
             RETURN count(i) as total
           `);
           
@@ -193,7 +193,7 @@ async function curatorTeamPromote(traceId: string) {
       INSERT INTO events (group_id, event_type, agent_id, metadata, status)
       VALUES ($1, $2, $3, $4, $5)
     `, [
-      'allura-roninmemory',
+      'allura-system',
       'curator_team_decision',
       'brooks',
       JSON.stringify({

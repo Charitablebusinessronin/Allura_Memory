@@ -102,7 +102,7 @@ async function testCuratorTeam() {
       try {
         const result = await analystSession.run(`
           MATCH (i:Insight)
-          WHERE i.group_id = 'allura-roninmemory'
+          WHERE i.group_id = 'allura-system'
             AND i.summary CONTAINS $category
           RETURN count(i) as related_count
         `, { category: trace.event_type });
@@ -141,7 +141,7 @@ async function testCuratorTeam() {
         // Check SUPERSEDES chain validity
         const chainResult = await validatorSession.run(`
           MATCH (i:Insight)
-          WHERE i.group_id = 'allura-roninmemory'
+          WHERE i.group_id = 'allura-system'
           RETURN count(i) as total_insights
         `);
 

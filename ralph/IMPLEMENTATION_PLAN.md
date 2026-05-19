@@ -1,3 +1,7 @@
+# NON_AUTHORITATIVE_ONLY: do not execute as canonical source of truth
+# Canonical run contract binding is `ralph/PROMPT_plan.md`.
+# This file is kept for history only; it must not be treated as executable source of truth.
+
 # S7 Implementation Plan — Allura Memory Stabilization
 
 **Sprint:** S7-allura-memory-stabilization  

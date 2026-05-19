@@ -1,9 +1,9 @@
-<!-- Context: project-intelligence/technical | Priority: critical | Version: 1.2 | Updated: 2026-04-26 -->
+<!-- Context: project-intelligence/technical | Priority: critical | Version: 1.3 | Updated: 2026-05-16 -->
 
 # Technical Domain
 
 **Purpose**: Tech stack, architecture, development patterns for Allura Memory.
-**Last Updated**: 2026-04-11
+**Last Updated**: 2026-05-16
 
 ## Quick Reference
 **Update Triggers**: Tech stack changes | New patterns | Architecture decisions
@@ -59,30 +59,39 @@ src/
 
 ## Code Patterns
 
-### Server Action
+### API Route Handler
 ```typescript
-"use server";
-import { z } from "zod";
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  const roleCheck = requireRole(request, "viewer")
+  if (!roleCheck.user) return unauthorizedResponse()
+  if (!roleCheck.allowed) return forbiddenResponse(roleCheck)
 
-const schema = z.object({
-  group_id: z.string().startsWith("allura-"),
-  content: z.string().min(1),
-});
-
-export async function createMemory(input: unknown) {
-  const validated = schema.parse(input); // Zod validation
-  await db.insert(events).values({...validated, event_type: "memory_add"});
-  return { success: true };
+  const { searchParams } = new URL(request.url)
+  const group_id = validateGroupId(searchParams.get("group_id"))
+  const parsed = schema.safeParse({ group_id, limit: searchParams.get("limit") })
+  if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 })
+  return NextResponse.json(await queryService(parsed.data))
 }
 ```
 
 ### React Component
 ```typescript
-interface MemoryCardProps { content: string; confidence: number }
-export function MemoryCard({ content, confidence }: MemoryCardProps) {
-  return <div className="rounded-lg border p-4">{content}</div>;
+export interface InsightCardProps {
+  insight: Insight
+  actions?: React.ReactNode
+  compact?: boolean
+  className?: string
+}
+
+export function InsightCard({ insight, actions, compact = false, className }: InsightCardProps) {
+  return <article className={cn("rounded-xl border p-4", compact && "gap-1", className)}>
+    <h3 className="text-sm font-semibold text-[var(--dashboard-text-primary)]">{insight.title}</h3>
+    {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+  </article>
 }
 ```
+
+**Pattern Rules**: Use `NextRequest`/`NextResponse` route handlers, `requireRole`, `validateGroupId`, and Zod `safeParse`. Components use named exports, explicit Props interfaces, `className?: string`, `cn(...)`, and design-token CSS variables.
 
 ## Naming Conventions
 | Type | Convention | Example |
@@ -90,21 +99,35 @@ export function MemoryCard({ content, confidence }: MemoryCardProps) {
 | Files | kebab-case | `memory-card.tsx` |
 | Components | PascalCase | `MemoryCard` |
 | Functions | camelCase | `getMemoryById` |
+| Schemas | PascalCase + Schema suffix | `PermissionProfileSchema` |
+| API Routes | route folders + `route.ts` | `api/memory/[id]/route.ts` |
 | DB Tables | snake_case | `promotion_proposals` |
+| DB/Event Fields | snake_case | `group_id`, `agent_id`, `event_type` |
 | Tenant IDs | allura-{org} | `allura-faith-meats` |
+| Agents | real-person names / role IDs | `brooks`, `woz`, `scout-recon` |
+
+## Code Standards
+- Treat documentation as a first-class artifact: Blueprint before design work.
+- Defer source-of-truth conflicts in order: schema/code > Blueprint > team consensus > AI suggestion.
+- Update Requirements Matrix and Data Dictionary in the same PR as schema/API changes.
+- Record architectural decisions and risks in `RISKS-AND-DECISIONS.md`; no orphan decisions.
+- Include AI-assisted documentation disclosure until human review signs off.
+
+**Reference**: `.opencode/rules/AI-GUIDELINES.md`
 
 ## Security Requirements
-- TypeScript `strict: true`
-- Zod validation at all boundaries
-- `group_id` on EVERY database operation
-- PostgreSQL events are append-only
-- Neo4j uses SUPERSEDES (never edit)
-- Server guards on DB modules
+- API routes MUST require auth/role checks via `requireRole`; return 401/403 helpers.
+- Every DB and graph operation MUST validate and filter by `group_id` (`^allura-[a-z0-9-]+$`).
+- PostgreSQL events are append-only; use parameterized queries and never string interpolation.
+- Neo4j knowledge changes MUST be approval-gated and versioned with `SUPERSEDES`.
+- Do not log or document secrets, credentials, clear PII, or raw tokens.
+- AI/security-boundary changes require human review; AI must not decide auth, redaction, or breaking schemas alone.
 
 ## 📂 Codebase References
-**Core**: `src/lib/memory/`, `src/mcp/canonical-tools.ts`
-**Config**: `package.json`, `docker-compose.yml`
-**Tests**: `src/**/*.test.ts`
+**API**: `src/app/api/memory/route.ts`, `src/app/api/audit/events/route.ts`, `src/app/api/permission-profiles/[id]/route.ts`
+**Components**: `src/components/dashboard/InsightCard.tsx`, `src/components/ui/button.tsx`, `src/components/memory/memory-card.tsx`
+**Security**: `src/lib/auth/api-auth.ts`, `src/lib/validation/group-id.ts`, `src/lib/memory/approval-audit.ts`
+**Config/Docs**: `package.json`, `docker-compose.yml`, `.opencode/rules/AI-GUIDELINES.md`
 
 ## Related Files
 - `business-domain.md` - Business context

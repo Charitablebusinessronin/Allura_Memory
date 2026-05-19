@@ -43,7 +43,7 @@ export function extractAlluraMetadata(metadata: ClerkPublicMetadata | null | und
   if (!allura) {
     return {
       role: "viewer",
-      groupId: "allura-default",
+      groupId: "allura-system",
     };
   }
 
@@ -55,8 +55,8 @@ export function extractAlluraMetadata(metadata: ClerkPublicMetadata | null | und
     groupId = validateGroupId(groupId);
   } catch (error) {
     if (error instanceof GroupIdValidationError) {
-      console.warn(`[auth] Invalid groupId in Clerk metadata: "${allura.groupId}". Falling back to allura-default.`);
-      groupId = "allura-default";
+      console.warn(`[auth] Invalid groupId in Clerk metadata: "${allura.groupId}". Falling back to allura-system.`);
+      groupId = "allura-system";
     } else {
       throw error;
     }

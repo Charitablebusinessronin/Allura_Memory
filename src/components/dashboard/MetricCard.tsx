@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 
 const toneClasses: Record<Metric["tone"], string> = {
   blue:     `bg-[color-mix(in_srgb,var(--allura-blue)_10%,white)]              text-[var(--allura-blue)]`,
-  orange:   `bg-[color-mix(in_srgb,var(--allura-orange)_10%,white)]            text-[var(--allura-orange)]`,
+  orange:   `bg-[color-mix(in_srgb,var(--allura-orange)_10%,white)]            text-[var(--allura-orange-on-text)]`,
   green:    `bg-[color-mix(in_srgb,var(--allura-green)_10%,white)]             text-[var(--allura-green)]`,
   charcoal: `bg-[color-mix(in_srgb,var(--allura-charcoal)_10%,white)]            text-[var(--allura-charcoal)]`,
   gold:     `bg-[color-mix(in_srgb,var(--dashboard-evidence)_10%,white)]       text-[var(--allura-charcoal)]`,

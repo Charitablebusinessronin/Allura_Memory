@@ -73,7 +73,7 @@ function parseArgs(args: string[], cwd: string): InternalBuildOptions {
     sourceDirs: [],
     outputDir: path.resolve(cwd, SNAPSHOT_DEFAULT_OUTPUT_DIR),
     incremental: true,
-    groupId: "roninmemory",
+    groupId: "allura-system",
     summaryLength: DEFAULT_SUMMARY_LENGTH,
     priorityOverrides: {},
     cwd,

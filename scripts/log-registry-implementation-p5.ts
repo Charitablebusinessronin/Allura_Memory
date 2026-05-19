@@ -5,7 +5,7 @@ import { type EventInsert, insertEvent } from "../src/lib/postgres/queries/inser
 
 async function logImplementationEvents(): Promise<void> {
   const now = new Date().toISOString();
-  const groupId = "roninmemory";
+  const groupId = "allura-system";
   const agentId = "memory-architect";
   const workflowId = "openagents-control-registry";
 

@@ -71,7 +71,7 @@ async function testBackupRestore() {
   console.log("Step 1: Counting active memories...");
   try {
     const result = runCypher(
-      "MATCH (m:Memory {group_id: 'allura-default', status: 'active'}) RETURN COUNT(m) AS count"
+      "MATCH (m:Memory {group_id: 'allura-system', status: 'active'}) RETURN COUNT(m) AS count"
     );
     const { rows: dataRows } = parseRows(result);
     const count = parseInt(dataRows[0]?.[0] || "0");
@@ -92,7 +92,7 @@ async function testBackupRestore() {
   console.log("\nStep 2: Testing data export...");
   try {
     const result = runCypher(
-      "MATCH (m:Memory {group_id: 'allura-default', status: 'active'}) RETURN m.id, m.content, m.score ORDER BY m.id"
+      "MATCH (m:Memory {group_id: 'allura-system', status: 'active'}) RETURN m.id, m.content, m.score ORDER BY m.id"
     );
     const { headers, rows: dataRows } = parseRows(result);
     const recordCount = dataRows.length;
@@ -114,7 +114,7 @@ async function testBackupRestore() {
   console.log("\nStep 3: Verifying data integrity...");
   try {
     const result = runCypher(
-      "MATCH (m:Memory {group_id: 'allura-default', status: 'active'}) RETURN m.id, m.content, m.score, m.created_at ORDER BY m.id"
+      "MATCH (m:Memory {group_id: 'allura-system', status: 'active'}) RETURN m.id, m.content, m.score, m.created_at ORDER BY m.id"
     );
     const { rows: dataRows } = parseRows(result);
     const allHaveFields = dataRows.every(

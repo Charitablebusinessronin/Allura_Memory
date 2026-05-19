@@ -180,22 +180,65 @@ describe("Auth Middleware", () => {
   // ── Auth Headers ──────────────────────────────────────────────────────────
 
   describe("auth header injection", () => {
-    it("should inject x-allura-user-id header for authenticated requests", async () => {
+    it("should forward x-allura-user-id header upstream for authenticated requests", async () => {
       const request = new NextRequest(new URL("/memory", "http://localhost:3100"))
       const response = await middleware(request)
-      expect(response.headers.get("x-allura-user-id")).toBe("dev-user-allura")
+      expect(response.headers.get("x-middleware-request-x-allura-user-id")).toBe("dev-user-allura")
     })
 
-    it("should inject x-allura-role header for authenticated requests", async () => {
+    it("should forward x-allura-role header upstream for authenticated requests", async () => {
       const request = new NextRequest(new URL("/memory", "http://localhost:3100"))
       const response = await middleware(request)
-      expect(response.headers.get("x-allura-role")).toBe("admin")
+      expect(response.headers.get("x-middleware-request-x-allura-role")).toBe("admin")
     })
 
-    it("should inject x-allura-group-id header for authenticated requests", async () => {
+    it("should forward x-allura-group-id header upstream for authenticated requests", async () => {
       const request = new NextRequest(new URL("/memory", "http://localhost:3100"))
       const response = await middleware(request)
-      expect(response.headers.get("x-allura-group-id")).toBe("allura-roninmemory")
+      expect(response.headers.get("x-middleware-request-x-allura-group-id")).toBe("allura-roninmemory")
+    })
+
+    it("should overwrite spoofed incoming x-allura headers before forwarding upstream", async () => {
+      const request = new NextRequest(new URL("/memory", "http://localhost:3100"), {
+        headers: {
+          "x-allura-user-id": "spoofed-user",
+          "x-allura-role": "viewer",
+          "x-allura-group-id": "allura-attacker",
+          "x-allura-email": "spoof@example.test",
+          "x-allura-name": "Spoofed User",
+          "x-allura-image-url": "https://example.test/spoof.png",
+        },
+      })
+      const response = await middleware(request)
+
+      expect(response.headers.get("x-middleware-request-x-allura-user-id")).toBe("dev-user-allura")
+      expect(response.headers.get("x-middleware-request-x-allura-role")).toBe("admin")
+      expect(response.headers.get("x-middleware-request-x-allura-group-id")).toBe("allura-roninmemory")
+      expect(response.headers.get("x-middleware-request-x-allura-email")).toBe("dev@allura.local")
+      expect(response.headers.get("x-middleware-request-x-allura-name")).toBe("Dev User")
+      expect(response.headers.get("x-middleware-request-x-allura-image-url")).toBeNull()
+      expect(response.headers.get("x-allura-user-id")).toBeNull()
+    })
+
+    it("should strip spoofed x-allura headers on public routes", async () => {
+      const request = new NextRequest(new URL("/api/health", "http://localhost:3100"), {
+        headers: {
+          "x-allura-user-id": "spoofed-user",
+          "x-allura-role": "admin",
+          "x-allura-group-id": "allura-attacker",
+          "x-allura-email": "spoof@example.test",
+          "x-allura-name": "Spoofed User",
+          "x-allura-image-url": "https://example.test/spoof.png",
+        },
+      })
+      const response = await middleware(request)
+
+      expect(response.headers.get("x-middleware-request-x-allura-user-id")).toBeNull()
+      expect(response.headers.get("x-middleware-request-x-allura-role")).toBeNull()
+      expect(response.headers.get("x-middleware-request-x-allura-group-id")).toBeNull()
+      expect(response.headers.get("x-middleware-request-x-allura-email")).toBeNull()
+      expect(response.headers.get("x-middleware-request-x-allura-name")).toBeNull()
+      expect(response.headers.get("x-middleware-request-x-allura-image-url")).toBeNull()
     })
   })
 
@@ -217,6 +260,7 @@ describe("Auth Middleware", () => {
       // Check viewer routes
       const viewerRoutes = PROTECTED_ROUTES.filter((r) => r.requiredRole === "viewer")
       expect(viewerRoutes.some((r) => r.pattern.includes("/memory"))).toBe(true)
+      expect(viewerRoutes.some((r) => r.pattern.includes("/api/permission-profiles"))).toBe(true)
     })
 
     it("should define correct public routes", () => {

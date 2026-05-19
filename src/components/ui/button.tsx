@@ -25,7 +25,7 @@ const buttonVariants = cva(
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-[0_1px_2px_0_rgba(15,17,21,0.05)]",
         accent:
-          `bg-[var(--allura-orange)] text-white hover:bg-[var(--allura-orange-hover)] focus-visible:ring-[var(--allura-orange)] shadow-[0_1px_2px_0_rgba(15,17,21,0.05)]`,
+          `bg-[var(--allura-orange)] text-[var(--allura-orange-on-text)] hover:bg-[var(--allura-orange-hover)] focus-visible:ring-[var(--allura-orange)] shadow-[0_1px_2px_0_rgba(15,17,21,0.05)]`,
         ghost:
           `bg-transparent text-[var(--allura-blue)] border-[var(--allura-border-2)] hover:bg-[var(--allura-muted)] focus-visible:ring-[var(--allura-blue)]`,
         danger:

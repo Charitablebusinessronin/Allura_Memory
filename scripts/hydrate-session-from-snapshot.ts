@@ -179,7 +179,7 @@ function parseCliArgs(args: string[], cwd: string): HydrationOptions {
   let snapshotPath: string | undefined;
   let ingestionPath: string | undefined;
   let memoryBankDir = path.resolve(cwd, SNAPSHOT_DEFAULT_OUTPUT_DIR);
-  let groupId = "roninmemory";
+  let groupId = "allura-system";
   let dryRun = false;
   let concurrency = DEFAULT_INGESTION_CONCURRENCY;
 

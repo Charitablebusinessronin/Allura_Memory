@@ -16,7 +16,8 @@
     "MCP_DOCKER": {
       "command": "docker",
       "args": ["mcp", "gateway", "run"],
-      "type": "stdio"
+      "type": "stdio",
+      "timeout": 60000
     }
   }
 }

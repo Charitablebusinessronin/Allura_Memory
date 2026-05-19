@@ -81,6 +81,27 @@ BEGIN
     );
 
     -- ============================================================================
+    -- 1b. Create the SONA feedback table
+    -- ============================================================================
+    -- postFeedback() records one feedback row per retrieval trajectory when the
+    -- caller actually used retrieved memories. RuVector's native SONA functions are
+    -- best-effort in v0.3.0, so Allura keeps the evidence-gated feedback trace here
+    -- first and calls ruvector_sona_learn() only after this insert succeeds.
+    -- ============================================================================
+
+    CREATE TABLE IF NOT EXISTS allura_feedback (
+        id               UUID PRIMARY KEY,
+        trajectory_id    TEXT        NOT NULL,
+        relevance_scores JSONB       NOT NULL,
+        relevant_ids     TEXT[]      NOT NULL DEFAULT ARRAY[]::TEXT[],
+        irrelevant_ids   TEXT[]      NOT NULL DEFAULT ARRAY[]::TEXT[],
+        created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+        -- Tenant isolation: group_id must match Allura convention
+        group_id         TEXT        NOT NULL CHECK (group_id ~ '^allura-[a-z0-9-]+$')
+    );
+
+    -- ============================================================================
     -- 2. HNSW index for fast ANN vector search
     -- ============================================================================
     -- vector(1024) is under the pgvector HNSW 2000d limit, so we can create
@@ -155,6 +176,19 @@ BEGIN
         WHERE deleted_at IS NULL;
 
     -- ============================================================================
+    -- 9. Feedback indexes for tenant and trajectory lookups
+    -- ============================================================================
+    -- Supports: WHERE group_id = $1 ORDER BY created_at DESC
+    -- Supports: WHERE trajectory_id = $1
+    -- ============================================================================
+
+    CREATE INDEX IF NOT EXISTS allura_feedback_group_time
+        ON allura_feedback (group_id, created_at DESC);
+
+    CREATE INDEX IF NOT EXISTS allura_feedback_trajectory
+        ON allura_feedback (trajectory_id);
+
+    -- ============================================================================
     -- Comments for documentation
     -- ============================================================================
 
@@ -188,6 +222,17 @@ BEGIN
         'episodic: specific event recollection. '
         'semantic: generalized knowledge. '
         'procedural: skill/process memory.';
+
+    COMMENT ON TABLE allura_feedback IS
+        'Evidence-gated SONA feedback trace for RuVector retrieval trajectories. '
+        'Rows are inserted by postFeedback() before best-effort ruvector_sona_learn(). '
+        'group_id enforced to ^allura- via CHECK.';
+
+    COMMENT ON COLUMN allura_feedback.trajectory_id IS
+        'Correlation ID returned by retrieveMemories() and supplied to postFeedback().';
+
+    COMMENT ON COLUMN allura_feedback.relevance_scores IS
+        'JSON array with one 0.0-1.0 score per used memory ID.';
 
   ELSE
     RAISE NOTICE 'Skipping allura_memories — ruvector type not available (standard PG instance)';

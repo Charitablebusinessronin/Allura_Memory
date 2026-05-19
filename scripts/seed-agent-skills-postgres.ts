@@ -5,7 +5,7 @@
 
 import { getPool } from "../src/lib/postgres/connection";
 
-const GROUP_ID = "allura-roninmemory";
+const GROUP_ID = "allura-system";
 
 async function seedAgentSkills() {
   console.log("🌱 Seeding agent_skills to PostgreSQL...\n");

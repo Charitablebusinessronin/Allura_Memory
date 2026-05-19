@@ -70,7 +70,7 @@ function formatRelativeTime(dateString: string) {
 
 export default function CuratorDashboardPage() {
   const [activeTab, setActiveTab] = useState<CuratorTab>("pending")
-  const [groupId, setGroupId] = useState("allura-default")
+  const [groupId, setGroupId] = useState("allura-system")
   const [traces, setTraces] = useState<Trace[]>([])
   const [insights, setInsights] = useState<Insight[]>([])
   const [proposals, setProposals] = useState<Proposal[]>([])

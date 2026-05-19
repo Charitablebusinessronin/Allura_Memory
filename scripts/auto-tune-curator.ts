@@ -34,7 +34,7 @@ async function curatorTuner(): Promise<TuningProposal[]> {
     // Analyze historical promotion outcomes
     const result = await session.run(`
       MATCH (p:PromotionProposal)-[:PROMOTED_TO]->(i:Insight)
-      WHERE p.group_id = 'allura-roninmemory'
+      WHERE p.group_id = 'allura-system'
       RETURN p.confidence AS confidence,
              p.tier AS tier,
              i.status AS outcome

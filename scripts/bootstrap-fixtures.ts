@@ -20,7 +20,7 @@ config({ path: resolve(__dirname, "../.env") })
 
 import type { GroupId, MemoryId } from "../src/lib/memory/canonical-contracts"
 
-const GROUP_ID = "allura-default" as unknown as GroupId
+const GROUP_ID = "allura-system" as unknown as GroupId
 const USER_ID = "bootstrap-fixture"
 
 // 100 fixture memories covering different domains

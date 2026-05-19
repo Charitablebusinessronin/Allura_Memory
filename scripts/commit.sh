@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Commit script for roninmemory
+# Commit script for Allura memory
 # Usage: bash commit.sh ["commit message"]
 
 set -e
 
-echo "=== roninmemory Commit Script ==="
+echo "=== Allura memory Commit Script ==="
 
 # Default commit message if none provided
 if [ -z "$1" ]; then

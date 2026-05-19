@@ -9,6 +9,7 @@
  */
 import { describe, expect, it, vi } from "vitest"
 import {
+  DashboardResultSchema,
   ActivityItemSchema,
   DashboardWarningSchema,
   EvidenceSchema,
@@ -190,6 +191,41 @@ describe("Dashboard Zod schemas", () => {
         label: "invalid_relation",
       })
       expect(result.success).toBe(false)
+    })
+  })
+
+  describe("dashboard warning envelope metadata", () => {
+    it("accepts warning code and severity fields", () => {
+      const result = DashboardWarningSchema.safeParse({
+        id: "validation-error",
+        code: "validation-error",
+        message: "Validation failed",
+        source: "permission-profiles",
+        severity: "critical",
+      })
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.code).toBe("validation-error")
+        expect(result.data.severity).toBe("critical")
+      }
+    })
+
+    it("accepts dashboard result source and fetched_at fields", () => {
+      const result = DashboardResultSchema.safeParse({
+        data: { id: "profile_admin" },
+        error: null,
+        degraded: false,
+        warnings: [],
+        source: "dashboard-v2-api-permission-profiles",
+        fetched_at: "2026-05-17T00:00:00.000Z",
+      })
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.source).toBe("dashboard-v2-api-permission-profiles")
+        expect(result.data.fetched_at).toBe("2026-05-17T00:00:00.000Z")
+      }
     })
   })
 })

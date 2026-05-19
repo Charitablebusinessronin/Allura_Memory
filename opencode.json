@@ -6,10 +6,11 @@
       "enabled": true,
       "oauth": false,
       "type": "remote",
-      "url": "http://localhost:5888/mcp"
+      "url": "http://localhost:5888/mcp",
+      "timeout": 60000
     }
   },
-  "model": "ollama-cloud/glm-5.1",
+  "model": "gpt-5.3-codex-spark",
   "permission": {
     "*": "allow"
   },

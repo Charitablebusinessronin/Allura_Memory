@@ -29,6 +29,7 @@ Allura is a **memory data plane** — it holds no business logic about what an a
 | Consumer Class | Interaction Mode | Notes |
 |---|---|---|
 | AI Agents (Claude, GPT, etc.) | Brooks / Team RAM + skills | Skills enforce memory-first routing to packaged MCP servers |
+| BMAD / Team RAM Planning | `_bmad/` + `_bmad-output/` | BMAD artifacts map intent, PRDs, architecture, epics, and stories to Team RAM owners |
 | Dashboard UI | Sync REST | Next.js server actions → `/api/memory/` routes |
 | DevOps / Admin | Docker Compose + MCP_DOCKER config | Deployment, configuration, and packaged MCP server activation |
 
@@ -313,6 +314,7 @@ flowchart LR
 - [BLUEPRINT.md](./BLUEPRINT.md) — Core data model, API surface, execution rules
 - [DATA-DICTIONARY.md](./DATA-DICTIONARY.md) — Field-level definitions
 - [RISKS-AND-DECISIONS.md](./RISKS-AND-DECISIONS.md) — AD-## and RK-## entries
+- [TEAM-RAM-BMAD-INTEGRATION.md](./TEAM-RAM-BMAD-INTEGRATION.md) — Team RAM, BMAD, and Allura Brain operating contract
 - `.opencode/skills/allura-memory-skill/` — memory workflow rules
 - `.opencode/skills/memory-client/` — default retrieval behavior
 - `.opencode/skills/mcp-docker-memory-system/` — packaged MCP server discovery/configuration guidance

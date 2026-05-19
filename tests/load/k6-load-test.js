@@ -72,7 +72,7 @@ export var options = {
 
 var BASE_URL = __ENV.BASE_URL || "http://localhost:3201";
 var AUTH_TOKEN = __ENV.ALLURA_MCP_AUTH_TOKEN || "";
-var GROUP_ID = "allura-roninmemory-loadtest";
+var GROUP_ID = "allura-system-loadtest";
 
 // ── Helper Functions ─────────────────────────────────────────────────────────
 

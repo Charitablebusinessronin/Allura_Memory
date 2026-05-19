@@ -9,7 +9,7 @@
 #   psql $DATABASE_URL -f scripts/cleanup-stale-test-events.sql
 #
 # Safety: Only deletes rows with group_id LIKE 'allura-test-%', preserving
-# production data (allura-roninmemory and other non-test group IDs).
+# production data (allura-system and other non-test group IDs).
 
 -- Step 1: Verify scope before delete
 -- Shows count of test data per group_id
@@ -27,20 +27,20 @@ ORDER BY row_count DESC;
 -- TO '/tmp/stale_test_events_backup.csv' CSV HEADER;
 
 -- Step 3: Delete stale test events
--- Excludes allura-roninmemory (production data) and any other IDs you want to keep
+-- Excludes allura-system (production data) and any other IDs you want to keep
 -- Note: Must delete from outcomes first due to foreign key constraint
 DELETE FROM outcomes 
 WHERE group_id LIKE 'allura-test-%'
-  AND group_id NOT IN ('allura-roninmemory');
+  AND group_id NOT IN ('allura-system');
 
 DELETE FROM events 
 WHERE group_id LIKE 'allura-test-%'
-  AND group_id NOT IN ('allura-roninmemory');
+  AND group_id NOT IN ('allura-system');
 
 -- Step 4: Verify deletion
--- Should show 0 rows for allura-test-* group_ids (except allura-roninmemory)
+-- Should show 0 rows for allura-test-* group_ids (except allura-system)
 SELECT 
     COUNT(*) as remaining_test_rows
 FROM events 
 WHERE group_id LIKE 'allura-test-%'
-  AND group_id NOT IN ('allura-roninmemory');
+  AND group_id NOT IN ('allura-system');

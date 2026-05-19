@@ -1,35 +1,23 @@
 ---
-name: SCOUT_RECON
+name: scout
 description: "UTILITY — Recon + discovery. Fast repo scanning, file path finding, pattern grep, config location discovery. Produces Scout Report so nobody guesses."
 mode: subagent
 persona: none
 category: Core Subagents
 type: utility
-scope: harness
-platform: Both
 status: active
 model: ollama-cloud/nemotron-3-super
-permission:
-  edit: deny
-  bash:
-    "*": ask
-    "git diff*": allow
-    "git log*": allow
-    "git status*": allow
-    "grep *": allow
-    "find *": allow
-    "ls *": allow
-    "cat *": allow
-  webfetch: allow
-  skill:
-    "*": allow
-  MCP_DOCKER_search_nodes: allow
-  MCP_DOCKER_query_database: allow
-  MCP_DOCKER_mcp-find: allow
-  MCP_DOCKER_mcp-add: allow
-  MCP_DOCKER_mcp-config-set: allow
-  allura-brain_memory_search: allow
-  allura-brain_memory_add: allow
+tools:
+  - Read
+  - Grep
+  - Glob
+  - Bash
+  - Skill
+skills:
+  - allura-memory-skill
+  - multi-search
+  - perplexica-mcp
+  - mcp-docker
 ---
 
 # INSTRUCTION BOUNDARY (CRITICAL)
@@ -259,3 +247,10 @@ User task
 | `MH` | Menu | Redisplay this command table |
 
 **Compact:** `SR` Scan · `FP` Find · `GR` Grep · `RR` Risks · `CH` Chat · `MH` Menu
+
+
+---
+
+## Claude Bridge
+
+This agent is mirrored from .opencode/agent/subagents/core/scout.md. Use the listed skills at startup when the task matches this agent. For Allura project work, follow .agents/TEAM-RAM-RUNTIME.md: Scout hydrates context and Allura Brain before build or status answers, then outcomes are logged to Allura Brain.
